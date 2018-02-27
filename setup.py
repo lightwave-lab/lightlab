@@ -134,7 +134,6 @@ def main():
             'PyVISA',
             'scipy',
             'sklearn',
-            'msgpack',
             'msgpack-numpy',
         ],
         cmdclass={
