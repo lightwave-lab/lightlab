@@ -1,0 +1,467 @@
+{
+  "ACQUIRE": {
+    "MODE": "AVERAGE",
+    "NUMAVG": "16",
+    "NUMENV": "INFINITE",
+    "SAMPLINGMODE": "RT",
+    "STATE": "0",
+    "STOPAFTER": "SEQUENCE"
+  },
+  "ALIAS": {
+    "STATE": "0"
+  },
+  "AUXIN": {
+    "PROBE": {
+      "FORCEDRANGE": "0.0000",
+      "GAIN": "1.0000"
+    }
+  },
+  "CH1": {
+    "BANDWIDTH": "350.0000E+6",
+    "COUPLING": "AC",
+    "DESKEW": "0.0000",
+    "INVERT": "0",
+    "LABEL": "\"\"",
+    "OFFSET": "-25.2000E-3",
+    "POSITION": "220.0000E-3",
+    "PROBE": {
+      "FORCEDRANGE": "0.0000",
+      "GAIN": "100.0000E-3"
+    },
+    "SCALE": "20.0000E-3",
+    "TERMINATION": "1.0000E+6",
+    "YUNITS": "\"V\""
+  },
+  "CH2": {
+    "BANDWIDTH": "350.0000E+6",
+    "COUPLING": "AC",
+    "DESKEW": "0.0000",
+    "INVERT": "0",
+    "LABEL": "\"\"",
+    "OFFSET": "0.0000",
+    "POSITION": "-860.0000E-3",
+    "PROBE": {
+      "FORCEDRANGE": "0.0000",
+      "GAIN": "100.0000E-3"
+    },
+    "SCALE": "50.0000E-3",
+    "TERMINATION": "1.0000E+6",
+    "YUNITS": "\"V\""
+  },
+  "CURSOR": {
+    "FUNCTION": "OFF",
+    "HBARS": {
+      "POSITION1": "0.0000",
+      "POSITION2": "0.0000",
+      "UNITS": "BASE"
+    },
+    "MODE": "INDEPENDENT",
+    "VBARS": {
+      "POSITION1": "-3.0000E-3"
+    },
+    "XY": {
+      "RECTANGULAR": {
+        "X": {
+          "POSITION1": "0.0000",
+          "POSITION2": "0.0000"
+        },
+        "Y": {
+          "POSITION1": "0.0000",
+          "POSITION2": "0.0000"
+        }
+      }
+    }
+  },
+  "DATA": {
+    "DESTINATION": "REF1",
+    "ENCDG": "ASCII",
+    "SOURCE": "CH1",
+    "START": "1",
+    "STOP": "10000"
+  },
+  "DISPLAY": {
+    "CLOCK": "1",
+    "COLOR": {
+      "PALETTE": "NORMAL"
+    },
+    "FORMAT": "YT",
+    "GRATICULE": "FULL",
+    "INTENSITY": {
+      "WAVEFORM": "35"
+    },
+    "PERSISTENCE": "0.0000",
+    "STYLE": {
+      "DOTSONLY": "0"
+    }
+  },
+  "HARDCOPY": {
+    "INKSAVER": "1",
+    "LAYOUT": "LANDSCAPE",
+    "PREVIEW": "0"
+  },
+  "HEADER": "0",
+  "HORIZONTAL": {
+    "DELAY": {
+      "TIME": "0.0000"
+    },
+    "MAIN": {
+      "SCALE": "1.0000E-3"
+    },
+    "RECORDLENGTH": "10000"
+  },
+  "LOCK": "NONE",
+  "MATH": {
+    "DEFINE": "\"CH1+CH2\"",
+    "HORIZONTAL": {
+      "POSITION": "50.0000",
+      "SCALE": "100.0000E-6",
+      "UNITS": "\"s\""
+    },
+    "LABEL": "\"\"",
+    "SPECTRAL": {
+      "MAG": "DB",
+      "WINDOW": "HANNING"
+    },
+    "TYPE": "DUAL",
+    "VERTICAL": {
+      "SCALE": "100.0000E-3"
+    }
+  },
+  "MATHVAR": {
+    "VAR1": "0.0000",
+    "VAR2": "0.0000"
+  },
+  "MEASUREMENT": {
+    "GATING": "SCREEN",
+    "IMMED": {
+      "DELAY": {
+        "DIRECTION": "FORWARDS",
+        "EDGE1": "RISE",
+        "EDGE2": "RISE"
+      },
+      "SOURCE1": "CH1",
+      "SOURCE2": "CH2",
+      "TYPE": "PERIOD"
+    },
+    "INDICATORS": {
+      "STATE": "OFF"
+    },
+    "MEAS1": {
+      "DELAY": {
+        "DIRECTION": "FORWARDS",
+        "EDGE1": "RISE",
+        "EDGE2": "RISE"
+      },
+      "SOURCE1": "CH1",
+      "SOURCE2": "CH2",
+      "STATE": "0",
+      "TYPE": "PERIOD"
+    },
+    "MEAS2": {
+      "DELAY": {
+        "DIRECTION": "FORWARDS",
+        "EDGE1": "RISE",
+        "EDGE2": "RISE"
+      },
+      "SOURCE1": "CH1",
+      "SOURCE2": "CH2",
+      "STATE": "0",
+      "TYPE": "PERIOD"
+    },
+    "MEAS3": {
+      "DELAY": {
+        "DIRECTION": "FORWARDS",
+        "EDGE1": "RISE",
+        "EDGE2": "RISE"
+      },
+      "SOURCE1": "CH1",
+      "SOURCE2": "CH2",
+      "STATE": "0",
+      "TYPE": "PERIOD"
+    },
+    "MEAS4": {
+      "DELAY": {
+        "DIRECTION": "FORWARDS",
+        "EDGE1": "RISE",
+        "EDGE2": "RISE"
+      },
+      "SOURCE1": "CH1",
+      "SOURCE2": "CH2",
+      "STATE": "0",
+      "TYPE": "PERIOD"
+    },
+    "METHOD": "AUTO",
+    "REFLEVEL": {
+      "METHOD": "PERCENT",
+      "PERCENT": {
+        "HIGH": "90.0000",
+        "LOW": "10.0000",
+        "MID1": "50.0000",
+        "MID2": "50.0000"
+      }
+    },
+    "STATISTICS": {
+      "MODE": "ALL",
+      "WEIGHTING": "32"
+    }
+  },
+  "REF1": {
+    "HORIZONTAL": {
+      "DELAY": {
+        "TIME": "0.0000"
+      },
+      "SCALE": "4.0000E-6"
+    },
+    "VERTICAL": {
+      "POSITION": "0.0000",
+      "SCALE": "100.0000E-3"
+    }
+  },
+  "REF2": {
+    "HORIZONTAL": {
+      "DELAY": {
+        "TIME": "0.0000"
+      },
+      "SCALE": "4.0000E-6"
+    },
+    "VERTICAL": {
+      "POSITION": "0.0000",
+      "SCALE": "100.0000E-3"
+    }
+  },
+  "SAVE": {
+    "ASSIGN": {
+      "TYPE": "IMAGE"
+    },
+    "IMAGE": {
+      "FILEFORMAT": "PNG",
+      "LAYOUT": "LANDSCAPE"
+    },
+    "WAVEFORM": {
+      "FILEFORMAT": "SPREADSHEET"
+    }
+  },
+  "SEARCH": {
+    "SEARCH1": {
+      "STATE": "0",
+      "TRIGGER": {
+        "A": {
+          "EDGE": {
+            "SLOPE": "RISE",
+            "SOURCE": "CH1"
+          },
+          "LOGIC": {
+            "FUNCTION": "AND",
+            "INPUT": {
+              "CH1": "X",
+              "CH2": "X",
+              "CLOCK": {
+                "SOURCE": "NONE"
+              },
+              "MATH": "X",
+              "REF1": "X",
+              "REF2": "X"
+            },
+            "PATTERN": {
+              "INPUT": {
+                "CH1": "X",
+                "CH2": "X",
+                "MATH": "X",
+                "REF1": "X",
+                "REF2": "X"
+              },
+              "WHEN": {
+                "&": "TRUE",
+                "LESSLIMIT": "8.0000E-9"
+              }
+            },
+            "THRESHOLD": {
+              "CH1": "0.0000"
+            }
+          },
+          "LOWERTHRESHOLD": {
+            "CH1": "0.0000",
+            "CH2": "0.0000",
+            "MATH": "0.0000",
+            "REF1": "0.0000",
+            "REF2": "0.0000"
+          },
+          "PULSEWIDTH": {
+            "POLARITY": "POSITIVE",
+            "WHEN": "LESSTHAN",
+            "WIDTH": "8.0000E-9"
+          },
+          "RUNT": {
+            "POLARITY": "POSITIVE",
+            "WHEN": "OCCURS",
+            "WIDTH": "8.0000E-9"
+          },
+          "SETHOLD": {
+            "CLOCK": {
+              "EDGE": "RISE",
+              "SOURCE": "CH1",
+              "THRESHOLD": "0.0000"
+            },
+            "DATA": {
+              "SOURCE": "CH2",
+              "THRESHOLD": "0.0000"
+            },
+            "HOLDTIME": "8.0000E-9",
+            "SETTIME": "8.0000E-9"
+          },
+          "TRANSITION": {
+            "DELTATIME": "8.0000E-9",
+            "POLARITY": "POSITIVE",
+            "WHEN": "SLOWER"
+          },
+          "TYPE": "EDGE",
+          "UPPERTHRESHOLD": {
+            "CH1": "139.2000E-3",
+            "CH2": "357.0000E-3",
+            "MATH": "800.0000E-3",
+            "REF1": "800.0000E-3",
+            "REF2": "800.0000E-3"
+          }
+        }
+      }
+    }
+  },
+  "SELECT": {
+    "CH1": "1",
+    "CH2": "0",
+    "CONTROL": "CH1",
+    "MATH": "0",
+    "REF1": "0",
+    "REF2": "0"
+  },
+  "TRIGGER": {
+    "A": {
+      "EDGE": {
+        "COUPLING": "DC",
+        "SLOPE": "RISE",
+        "SOURCE": "AUX"
+      },
+      "HOLDOFF": {
+        "TIME": "20.0000E-9"
+      },
+      "LEVEL": {
+        "&": "2.4840",
+        "CH1": "-4.0000E-3"
+      },
+      "LOGIC": {
+        "CLASS": "LOGIC",
+        "FUNCTION": "AND",
+        "INPUT": {
+          "CH1": "X",
+          "CH2": "X",
+          "CLOCK": {
+            "SOURCE": "NONE"
+          }
+        },
+        "PATTERN": {
+          "DELTATIME": "8.0000E-9",
+          "WHEN": {
+            "&": "TRUE",
+            "LESSLIMIT": "8.0000E-9"
+          }
+        },
+        "THRESHOLD": {
+          "CH1": "-4.0000E-3"
+        }
+      },
+      "LOWERTHRESHOLD": {
+        "CH1": "-4.0000E-3",
+        "CH2": "50.0000E-3",
+        "EXT": "2.4840"
+      },
+      "MODE": "NORMAL",
+      "PULSE": {
+        "CLASS": "WIDTH"
+      },
+      "PULSEWIDTH": {
+        "POLARITY": "POSITIVE",
+        "WHEN": "LESSTHAN",
+        "WIDTH": "8.0000E-9"
+      },
+      "RUNT": {
+        "POLARITY": "POSITIVE",
+        "WHEN": "OCCURS",
+        "WIDTH": "8.0000E-9"
+      },
+      "SETHOLD": {
+        "CLOCK": {
+          "EDGE": "RISE",
+          "SOURCE": "CH1",
+          "THRESHOLD": "-4.0000E-3"
+        },
+        "DATA": {
+          "SOURCE": "CH2",
+          "THRESHOLD": "50.0000E-3"
+        },
+        "HOLDTIME": "8.0000E-9",
+        "SETTIME": "8.0000E-9"
+      },
+      "TRANSITION": {
+        "DELTATIME": "8.0000E-9",
+        "POLARITY": "POSITIVE",
+        "WHEN": "SLOWER"
+      },
+      "TYPE": "EDGE",
+      "UPPERTHRESHOLD": {
+        "CH1": "130.4000E-3",
+        "CH2": "443.0000E-3"
+      },
+      "VIDEO": {
+        "HOLDOFF": {
+          "FIELD": "0.0000"
+        },
+        "LINE": "1",
+        "POLARITY": "POSITIVE",
+        "STANDARD": "NTSC",
+        "SYNC": "ALLLINES"
+      }
+    },
+    "B": {
+      "BY": "TIME",
+      "EDGE": {
+        "SOURCE": "CH1"
+      },
+      "EVENTS": {
+        "COUNT": "1"
+      },
+      "LEVEL": {
+        "&": "-4.0000E-3",
+        "CH1": "-4.0000E-3"
+      },
+      "LOWERTHRESHOLD": {
+        "CH1": "-4.0000E-3",
+        "CH2": "50.0000E-3"
+      },
+      "STATE": "0",
+      "TIME": "8.0000E-9",
+      "TYPE": "EDGE",
+      "UPPERTHRESHOLD": {
+        "CH1": "130.4000E-3",
+        "CH2": "443.0000E-3"
+      }
+    },
+    "EXTERNAL": {
+      "PROBE": "1.0000"
+    }
+  },
+  "VERBOSE": "1",
+  "ZOOM": {
+    "GRATICULE": {
+      "SIZE": "80"
+    },
+    "MODE": "0",
+    "ZOOM1": {
+      "HORIZONTAL": {
+        "POSITION": "50.0000"
+      },
+      "POSITION": "50.0000",
+      "SCALE": "4.0000E-6",
+      "STATE": "0"
+    }
+  }
+}

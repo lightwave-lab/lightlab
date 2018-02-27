@@ -1,0 +1,1410 @@
+{
+  "*SRE": "0",
+  "ACQUIRE": {
+    "MODE": "AVERAGE",
+    "NUMAVG": "16",
+    "CONDITION": "AVGCOMP",
+    "SAVEFILE": {
+      "SAVESCREEN": "\"\""
+    },
+    "STATE": "1",
+    "STOPAFTER": {
+      "MODE": "RUNSTOP"
+    }
+  },
+  "APPLICATION": {
+    "SCOPEAPP": {
+      "WINDOW": "FULLSCREEN"
+    }
+  },
+  "AUTOSET": {
+    "HORIZONTAL": "1",
+    "TDR": {
+      "INCIDENT": "0"
+    },
+    "TRIGGER": "1",
+    "TYPE": "EYE",
+    "VERTICAL": "1"
+  },
+  "CALIBRATE": {
+    "DCCALIBRATOR": "0.0000"
+  },
+  "CH1": {
+    "DELAY": {
+      "&": "0.0000",
+      "TIME": "0.0000"
+    },
+    "DESKEW": "0.0000",
+    "EXTATTEN": {
+      "MODE": "LINEAR"
+    },
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "PTPEAK": "1000.00000000000E-6",
+    "SCALE": "1000.00000000000E-6",
+    "UNITS": "AUTO",
+    "WFMLABEL": "\"C1\""
+  },
+  "CH2": {
+    "DELAY": {
+      "&": "0.0000",
+      "TIME": "0.0000"
+    },
+    "DESKEW": "0.0000",
+    "EXTATTEN": {
+      "MODE": "LINEAR"
+    },
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "PTPEAK": "1.99999996965E+30",
+    "SCALE": "1.99999996965E+30",
+    "UNITS": "AUTO",
+    "WFMLABEL": "\"C2\""
+  },
+  "CH3": {
+    "DELAY": {
+      "&": "0.0000",
+      "TIME": "0.0000"
+    },
+    "DESKEW": "0.0000",
+    "EXTATTEN": {
+      "MODE": "LINEAR"
+    },
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "PTPEAK": "1000.00000000000E-6",
+    "SCALE": "1000.00000000000E-6",
+    "UNITS": "AUTO",
+    "WFMLABEL": "\"C3\""
+  },
+  "CH4": {
+    "DELAY": {
+      "&": "0.0000",
+      "TIME": "0.0000"
+    },
+    "DESKEW": "0.0000",
+    "EXTATTEN": {
+      "MODE": "LINEAR"
+    },
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "PTPEAK": "1.99999996965E+30",
+    "SCALE": "1.99999996965E+30",
+    "UNITS": "AUTO",
+    "WFMLABEL": "\"C4\""
+  },
+  "CH5": {
+    "DELAY": {
+      "&": "0.0000",
+      "TIME": "0.0000"
+    },
+    "DESKEW": "0.0000",
+    "EXTATTEN": {
+      "MODE": "LINEAR"
+    },
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "PTPEAK": "0.10000000000",
+    "SCALE": "0.10000000000",
+    "UNITS": "AUTO",
+    "WFMLABEL": "\"C5\""
+  },
+  "CH6": {
+    "DELAY": {
+      "&": "0.0000",
+      "TIME": "0.0000"
+    },
+    "DESKEW": "0.0000",
+    "EXTATTEN": {
+      "MODE": "LINEAR"
+    },
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "PTPEAK": "1.99999996965E+30",
+    "SCALE": "1.99999996965E+30",
+    "UNITS": "AUTO",
+    "WFMLABEL": "\"C6\""
+  },
+  "CH7": {
+    "DELAY": {
+      "&": "0.0000",
+      "TIME": "0.0000"
+    },
+    "DESKEW": "0.0000",
+    "EXTATTEN": {
+      "MODE": "LINEAR"
+    },
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "PTPEAK": "0.10000000000",
+    "SCALE": "0.10000000000",
+    "UNITS": "AUTO",
+    "WFMLABEL": "\"C7\""
+  },
+  "CH8": {
+    "DELAY": {
+      "&": "0.0000",
+      "TIME": "0.0000"
+    },
+    "DESKEW": "0.0000",
+    "EXTATTEN": {
+      "MODE": "LINEAR"
+    },
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "PTPEAK": "0.10000000000",
+    "SCALE": "0.10000000000",
+    "UNITS": "AUTO",
+    "WFMLABEL": "\"C8\""
+  },
+  "CURSOR": {
+    "CURSOR1": {
+      "COLOR": "255",
+      "SOURCE": "CH7,MAIN"
+    },
+    "CURSOR2": {
+      "COLOR": "255",
+      "SOURCE": "CH7,MAIN"
+    },
+    "DIV2": "0",
+    "FUNCTION": "OFF",
+    "HBARS": {
+      "POSITION1": "-0.01914893617"
+    },
+    "SELECT": "CURSOR1",
+    "VBARS": {
+      "POSITION1": "27.25000000000E-9",
+      "POSITION2": "35.50000000000E-9"
+    },
+    "WAVEFORM": {
+      "POSITION1": "21.05000000000E-9",
+      "POSITION2": "23.10000000000E-9"
+    }
+  },
+  "DATA": {
+    "ACCUMULATE": "0",
+    "DESTINATION": "REF1",
+    "ENCDG": "ASCII",
+    "SOURCE": "CH7",
+    "START": "1",
+    "STOP": "4000",
+    "TIMEBASE": "MAIN"
+  },
+  "DESE": "0",
+  "DISPLAY": {
+    "COLOR": {
+      "BACKGROUND": "0",
+      "CURSOR1": "255",
+      "CURSOR2": "255",
+      "FOREGROUND": "12632256",
+      "HISTOGRAM": "16776960",
+      "MASK": "16711935"
+    },
+    "CURSREADOUT": "0",
+    "DATE": "1",
+    "GRATICULE": {
+      "STYLE": "FULL"
+    },
+    "HISTREADOUT": "0",
+    "INTERPOLAT": "SINX",
+    "MASKREADOUT": "0",
+    "MEASBAR": "1",
+    "MEASREADOUT": "0",
+    "PERSISTENCE": "0.20001000000",
+    "SHOWVECTOR": "0",
+    "STYLE": "NORMAL",
+    "WFMREADOUT": "1"
+  },
+  "EXPORT": {
+    "TYPE": "NUMERICTXT"
+  },
+  "HARDCOPY": {
+    "FORMAT": "BMP",
+    "INKSAVER": "0"
+  },
+  "HEADER": "0",
+  "HISTOGRAM": {
+    "BOX": "34.00000000000E-9,0.00249000000,54.00000000000E-9,-0.00252000000",
+    "BOXPCNT": "30.00000000000,25.10000000000,70.00000000000,75.20000000000",
+    "COLOR": "16776960",
+    "DISPLAY": "0",
+    "ENABLE": "0",
+    "MODE": "HORIZONTAL",
+    "SIZE": "2.00000000000",
+    "SOURCE": "CH1,MAIN",
+    "TYPE": "LINEAR",
+    "WFMDB": {
+      "STATE": "0"
+    }
+  },
+  "HORIZONTAL": {
+    "BITS": {
+      "BITRATE": "2.48832000000E+9",
+      "STANDARD": "NONE"
+    },
+    "DISPLAYSCALE": {
+      "BITS": "PERSCREEN",
+      "DISTANCE": "PERSCREEN",
+      "SECONDS": "PERDIVISION"
+    },
+    "DISTANCE": {
+      "PVELOCITY": "299.79200000000E+6"
+    },
+    "EXT10MHZREF": {
+      "FREQ": "10.00000000000E+6"
+    },
+    "FRAMESCAN": {
+      "SCANBITS": "127",
+      "STATE": "0"
+    },
+    "MAGNIFY1": {
+      "POSITION": "19.75000000000E-9",
+      "RECORDLENGTH": "4000",
+      "REFPOINT": "0.50000000000",
+      "SCALE": "50.00000000000E-12",
+      "VIEW": "0"
+    },
+    "MAGNIFY2": {
+      "POSITION": "23.25000000000E-9",
+      "RECORDLENGTH": "4000",
+      "REFPOINT": "0.50000000000",
+      "SCALE": "50.00000000000E-12",
+      "VIEW": "0"
+    },
+    "MAIN": {
+      "BITS": {
+        "SCALE": "12.44160000000"
+      },
+      "POSITION": "21.50000000000E-9",
+      "RECORDLENGTH": "4000",
+      "REFPOINT": "0.05000000000",
+      "SCALE": "5.00000000000E-9"
+    },
+    "UNITS": "S"
+  },
+  "LOCK": "NONE",
+  "MASK": {
+    "AUTOSEEK": {
+      "HITRATIO": "50.00000000000E-6",
+      "MASKCOUNT": "0"
+    },
+    "AUTOSET": {
+      "HILOW": {
+        "METHOD": "MEAN"
+      },
+      "MODE": "MANUAL"
+    },
+    "COLOR": "16711935",
+    "COUNT": {
+      "STATE": "0"
+    },
+    "DISPLAY": "0",
+    "MARGIN": {
+      "MODE": "OFF"
+    },
+    "MASK1": {
+      "POINTS": "0,0",
+      "POINTSPCNT": "0,0"
+    },
+    "MASK2": {
+      "POINTS": "0,0",
+      "POINTSPCNT": "0,0"
+    },
+    "MASK3": {
+      "POINTS": "0,0",
+      "POINTSPCNT": "0,0"
+    },
+    "MASK4": {
+      "POINTS": "0,0",
+      "POINTSPCNT": "0,0"
+    },
+    "MASK5": {
+      "POINTS": "0,0",
+      "POINTSPCNT": "0,0"
+    },
+    "MASK6": {
+      "POINTS": "0,0",
+      "POINTSPCNT": "0,0"
+    },
+    "MASK7": {
+      "POINTS": "0,0",
+      "POINTSPCNT": "0,0"
+    },
+    "MASK8": {
+      "POINTS": "0,0",
+      "POINTSPCNT": "0,0"
+    },
+    "SOURCE": "CH1,MAIN",
+    "STANDARD": "NONE",
+    "WFMDB": {
+      "STATE": "0"
+    }
+  },
+  "MATH1": {
+    "DEFINE": "\" \"",
+    "FILTER": {
+      "RISETIME": "1000.00000000000E-12"
+    },
+    "NUMAVG": "2",
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"M1\""
+  },
+  "MATH2": {
+    "DEFINE": "\" \"",
+    "FILTER": {
+      "RISETIME": "1000.00000000000E-12"
+    },
+    "NUMAVG": "2",
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"M2\""
+  },
+  "MATH3": {
+    "DEFINE": "\" \"",
+    "FILTER": {
+      "RISETIME": "1000.00000000000E-12"
+    },
+    "NUMAVG": "2",
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"M3\""
+  },
+  "MATH4": {
+    "DEFINE": "\" \"",
+    "FILTER": {
+      "RISETIME": "1000.00000000000E-12"
+    },
+    "NUMAVG": "2",
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"M4\""
+  },
+  "MATH5": {
+    "DEFINE": "\" \"",
+    "FILTER": {
+      "RISETIME": "1000.00000000000E-12"
+    },
+    "NUMAVG": "2",
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"M5\""
+  },
+  "MATH6": {
+    "DEFINE": "\" \"",
+    "FILTER": {
+      "RISETIME": "1000.00000000000E-12"
+    },
+    "NUMAVG": "2",
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"M6\""
+  },
+  "MATH7": {
+    "DEFINE": "\" \"",
+    "FILTER": {
+      "RISETIME": "1000.00000000000E-12"
+    },
+    "NUMAVG": "2",
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"M7\""
+  },
+  "MATH8": {
+    "DEFINE": "\" \"",
+    "FILTER": {
+      "RISETIME": "1000.00000000000E-12"
+    },
+    "NUMAVG": "2",
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"M8\""
+  },
+  "MEASUREMENT": {
+    "ANNOTATIONS": {
+      "STATE": "0"
+    },
+    "MEAS1": {
+      "EYEWINDOW": "20.00000000000",
+      "GATING": {
+        "STATE": "0"
+      },
+      "JITTER": "EYECROSS",
+      "NOISE": "HIGH",
+      "REFLEVEL1": {
+        "ABSOLUTE": {
+          "HIGH": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "HIGH": "90.00000000000",
+          "LOW": "10.00000000000",
+          "MID": "50.00000000000"
+        }
+      },
+      "REFLEVEL2": {
+        "ABSOLUTE": {
+          "MID": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "MID": "50.00000000000"
+        }
+      },
+      "SOURCE1": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "SOURCE2": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "STATE": "0",
+      "TYPE": "UNDEFINED"
+    },
+    "MEAS2": {
+      "EYEWINDOW": "20.00000000000",
+      "GATING": {
+        "STATE": "0"
+      },
+      "JITTER": "EYECROSS",
+      "NOISE": "HIGH",
+      "REFLEVEL1": {
+        "ABSOLUTE": {
+          "HIGH": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "HIGH": "90.00000000000",
+          "LOW": "10.00000000000",
+          "MID": "50.00000000000"
+        }
+      },
+      "REFLEVEL2": {
+        "ABSOLUTE": {
+          "MID": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "MID": "50.00000000000"
+        }
+      },
+      "SOURCE1": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "SOURCE2": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "STATE": "0",
+      "TYPE": "UNDEFINED"
+    },
+    "MEAS3": {
+      "EYEWINDOW": "20.00000000000",
+      "GATING": {
+        "STATE": "0"
+      },
+      "JITTER": "EYECROSS",
+      "NOISE": "HIGH",
+      "REFLEVEL1": {
+        "ABSOLUTE": {
+          "HIGH": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "HIGH": "90.00000000000",
+          "LOW": "10.00000000000",
+          "MID": "50.00000000000"
+        }
+      },
+      "REFLEVEL2": {
+        "ABSOLUTE": {
+          "MID": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "MID": "50.00000000000"
+        }
+      },
+      "SOURCE1": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "SOURCE2": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "STATE": "0",
+      "TYPE": "UNDEFINED"
+    },
+    "MEAS4": {
+      "EYEWINDOW": "20.00000000000",
+      "GATING": {
+        "STATE": "0"
+      },
+      "JITTER": "EYECROSS",
+      "NOISE": "HIGH",
+      "REFLEVEL1": {
+        "ABSOLUTE": {
+          "HIGH": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "HIGH": "90.00000000000",
+          "LOW": "10.00000000000",
+          "MID": "50.00000000000"
+        }
+      },
+      "REFLEVEL2": {
+        "ABSOLUTE": {
+          "MID": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "MID": "50.00000000000"
+        }
+      },
+      "SOURCE1": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "SOURCE2": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "STATE": "0",
+      "TYPE": "UNDEFINED"
+    },
+    "MEAS5": {
+      "EYEWINDOW": "20.00000000000",
+      "GATING": {
+        "STATE": "0"
+      },
+      "JITTER": "EYECROSS",
+      "NOISE": "HIGH",
+      "REFLEVEL1": {
+        "ABSOLUTE": {
+          "HIGH": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "HIGH": "90.00000000000",
+          "LOW": "10.00000000000",
+          "MID": "50.00000000000"
+        }
+      },
+      "REFLEVEL2": {
+        "ABSOLUTE": {
+          "MID": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "MID": "50.00000000000"
+        }
+      },
+      "SOURCE1": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "SOURCE2": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "STATE": "0",
+      "TYPE": "UNDEFINED"
+    },
+    "MEAS6": {
+      "EYEWINDOW": "20.00000000000",
+      "GATING": {
+        "STATE": "0"
+      },
+      "JITTER": "EYECROSS",
+      "NOISE": "HIGH",
+      "REFLEVEL1": {
+        "ABSOLUTE": {
+          "HIGH": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "HIGH": "90.00000000000",
+          "LOW": "10.00000000000",
+          "MID": "50.00000000000"
+        }
+      },
+      "REFLEVEL2": {
+        "ABSOLUTE": {
+          "MID": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "MID": "50.00000000000"
+        }
+      },
+      "SOURCE1": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "SOURCE2": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "STATE": "0",
+      "TYPE": "UNDEFINED"
+    },
+    "MEAS7": {
+      "EYEWINDOW": "20.00000000000",
+      "GATING": {
+        "STATE": "0"
+      },
+      "JITTER": "EYECROSS",
+      "NOISE": "HIGH",
+      "REFLEVEL1": {
+        "ABSOLUTE": {
+          "HIGH": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "HIGH": "90.00000000000",
+          "LOW": "10.00000000000",
+          "MID": "50.00000000000"
+        }
+      },
+      "REFLEVEL2": {
+        "ABSOLUTE": {
+          "MID": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "MID": "50.00000000000"
+        }
+      },
+      "SOURCE1": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "SOURCE2": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "STATE": "0",
+      "TYPE": "UNDEFINED"
+    },
+    "MEAS8": {
+      "EYEWINDOW": "20.00000000000",
+      "GATING": {
+        "STATE": "0"
+      },
+      "JITTER": "EYECROSS",
+      "NOISE": "HIGH",
+      "REFLEVEL1": {
+        "ABSOLUTE": {
+          "HIGH": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "HIGH": "90.00000000000",
+          "LOW": "10.00000000000",
+          "MID": "50.00000000000"
+        }
+      },
+      "REFLEVEL2": {
+        "ABSOLUTE": {
+          "MID": "0.0000"
+        },
+        "METHOD": "RELATIVE",
+        "RELATIVE": {
+          "MID": "50.00000000000"
+        }
+      },
+      "SOURCE1": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "SOURCE2": {
+        "EDGE": {
+          "DIRECTION": "FORWARD",
+          "SLOPE": "EITHER"
+        },
+        "GATE1": {
+          "PCTPOS": "0.0000"
+        },
+        "GATE2": {
+          "PCTPOS": "100.00000000000"
+        },
+        "HILOW": {
+          "METHOD": "AUTO",
+          "TRACK": {
+            "HIGH": {
+              "ENABLE": "1"
+            },
+            "LOW": {
+              "ENABLE": "1",
+              "VALUE": "0.0000"
+            }
+          }
+        },
+        "WFM": "CH1,MAIN",
+        "WFMDB": {
+          "STATE": "0"
+        }
+      },
+      "STATE": "0",
+      "TYPE": "UNDEFINED"
+    },
+    "STATISTICS": {
+      "ENABLE": "0",
+      "WEIGHTING": "32"
+    }
+  },
+  "PHASEREF": {
+    "CH1": {
+      "FREQUENCY": "10.31250000000E+9"
+    },
+    "CH2": {
+      "FREQUENCY": "10.31250000000E+9"
+    },
+    "CH3": {
+      "FREQUENCY": "10.31250000000E+9"
+    },
+    "CH4": {
+      "FREQUENCY": "10.31250000000E+9"
+    },
+    "CH5": {
+      "FREQUENCY": "10.31250000000E+9"
+    },
+    "CH6": {
+      "FREQUENCY": "10.31250000000E+9"
+    },
+    "CH7": {
+      "FREQUENCY": "10.31250000000E+9"
+    },
+    "CH8": {
+      "FREQUENCY": "10.31250000000E+9"
+    },
+    "MODE": "OFF",
+    "SORT": "1",
+    "SOURCE": "C1C2"
+  },
+  "REF1": {
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"R1\""
+  },
+  "REF2": {
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"R2\""
+  },
+  "REF3": {
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"R3\""
+  },
+  "REF4": {
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"R4\""
+  },
+  "REF5": {
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"R5\""
+  },
+  "REF6": {
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"R6\""
+  },
+  "REF7": {
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"R7\""
+  },
+  "REF8": {
+    "POSITION": "0.0000",
+    "SCALE": "1.00000000000",
+    "WFMLABEL": "\"R8\""
+  },
+  "SELECT": {
+    "CH1": "0",
+    "CH2": "0",
+    "CH3": "0",
+    "CH4": "0",
+    "CH5": "0",
+    "CH6": "0",
+    "CH7": "1",
+    "CH8": "0",
+    "CONTROL": "CH7,MAIN",
+    "MATH1": "0",
+    "MATH2": "0",
+    "MATH3": "0",
+    "MATH4": "0",
+    "MATH5": "0",
+    "MATH6": "0",
+    "MATH7": "0",
+    "MATH8": "0",
+    "REF1": "0",
+    "REF2": "0",
+    "REF3": "0",
+    "REF4": "0",
+    "REF5": "0",
+    "REF6": "0",
+    "REF7": "0",
+    "REF8": "0"
+  },
+  "STATUS": {
+    "OPERATION": {
+      "ENABLE": "32767",
+      "NTRANSITION": "32767",
+      "PTRANSITION": "32767"
+    },
+    "QUESTIONABLE": {
+      "ENABLE": "32767",
+      "NTRANSITION": "32767",
+      "PTRANSITION": "32767"
+    },
+    "QUEUE": {
+      "ENABLE": "(-499:-100)"
+    }
+  },
+  "SYNC": {
+    "TIMEOUT": "3"
+  },
+  "TDR": {
+    "CH1": {
+      "STEP": {
+        "POLARITY": "PLUS",
+        "STATE": "0"
+      },
+      "UNITS": "RHO"
+    },
+    "CH2": {
+      "STEP": {
+        "POLARITY": "PLUS",
+        "STATE": "0"
+      },
+      "UNITS": "RHO"
+    },
+    "CH3": {
+      "STEP": {
+        "POLARITY": "PLUS",
+        "STATE": "0"
+      },
+      "UNITS": "RHO"
+    },
+    "CH4": {
+      "STEP": {
+        "POLARITY": "PLUS",
+        "STATE": "0"
+      },
+      "UNITS": "RHO"
+    },
+    "CH5": {
+      "STEP": {
+        "POLARITY": "PLUS",
+        "STATE": "0"
+      },
+      "UNITS": "RHO"
+    },
+    "CH6": {
+      "STEP": {
+        "POLARITY": "PLUS",
+        "STATE": "0"
+      },
+      "UNITS": "RHO"
+    },
+    "CH7": {
+      "STEP": {
+        "POLARITY": "PLUS",
+        "STATE": "0"
+      },
+      "UNITS": "RHO"
+    },
+    "CH8": {
+      "STEP": {
+        "POLARITY": "PLUS",
+        "STATE": "0"
+      },
+      "UNITS": "RHO"
+    },
+    "EXT10MHZREF": {
+      "FREQ": "10.00000000000E+6"
+    },
+    "INTRATE": "200.00000000000E+3",
+    "REF10MHZ": "LOCKINT"
+  },
+  "TRIGGER": {
+    "AUTOSYNC": {
+      "DATARATE": "1",
+      "DCRATIO": "1",
+      "PLENGTH": "1"
+    },
+    "CH1": {
+      "CLKREC": {
+        "VALUE": "NONE"
+      }
+    },
+    "CH2": {
+      "CLKREC": {
+        "USER": "0.0000",
+        "VALUE": "NONE"
+      }
+    },
+    "CH3": {
+      "CLKREC": {
+        "USER": "0.0000",
+        "VALUE": "NONE"
+      }
+    },
+    "CH4": {
+      "CLKREC": {
+        "USER": "0.0000",
+        "VALUE": "NONE"
+      }
+    },
+    "CLKMODE": "EYE",
+    "GATED": "0",
+    "HIFREQ": "0",
+    "HOLDOFF": "5.00000000000E-6",
+    "INTRATE": "200.00000000000E+3",
+    "LEVEL": "-0.69530000000",
+    "METAREJECT": "0",
+    "MODE": "EYE",
+    "NOISEREJ": "1",
+    "PSYNC": {
+      "DATARATE": "2.48832000000E+9"
+    },
+    "SLOPE": "RISE",
+    "SOURCE": "EXTDIRECT"
+  },
+  "VARIABLE": {
+    "EVENT": {
+      "REPORT": "BOTH"
+    }
+  },
+  "VERBOSE": "1",
+  "WFMDB": {
+    "DISPLAY": {
+      "EMPHASIS": "50",
+      "GRADING": "COLOR",
+      "GRADMETHOD": "BIN8",
+      "INVERT": "0"
+    },
+    "WFMDB1": {
+      "DISPLAY": "0",
+      "ENABLE": "0",
+      "PERSISTENCE": {
+        "MODE": "INFPERSIST"
+      },
+      "SOURCE": "CH1,MAIN"
+    },
+    "WFMDB2": {
+      "DISPLAY": "0",
+      "ENABLE": "0",
+      "PERSISTENCE": {
+        "MODE": "INFPERSIST"
+      },
+      "SOURCE": "CH1,MAIN"
+    },
+    "WFMDB3": {
+      "DISPLAY": "0",
+      "ENABLE": "0",
+      "PERSISTENCE": {
+        "MODE": "INFPERSIST"
+      },
+      "SOURCE": "CH1,MAIN"
+    },
+    "WFMDB4": {
+      "DISPLAY": "0",
+      "ENABLE": "0",
+      "PERSISTENCE": {
+        "MODE": "INFPERSIST"
+      },
+      "SOURCE": "CH1,MAIN"
+    }
+  },
+  "WFMINPRE": {
+    "BN_FMT": "RI",
+    "BYT_OR": "MSB",
+    "ENCDG": "BINARY",
+    "NR_PT": "4000",
+    "PT_FMT": "Y",
+    "WFMLABEL": "\"\"",
+    "XINCR": "0.0000",
+    "XMULT": "100.00000000000E-12",
+    "XOFF": "21.50000000000E-9",
+    "XUNIT": "\"\"",
+    "XZERO": "19.00000000000E-9",
+    "YMULT": "0.10000000000",
+    "YOFF": "0.0000",
+    "YSCALE": "0.0000",
+    "YUNIT": "\"\"",
+    "YZERO": "0.0000"
+  },
+  "WFMOUTPRE": {
+    "BN_FMT": "RI",
+    "BYT_OR": "MSB",
+    "ENCDG": "ASCII"
+  }
+}

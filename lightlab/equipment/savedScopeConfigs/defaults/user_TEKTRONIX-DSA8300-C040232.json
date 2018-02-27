@@ -1,0 +1,93 @@
+{
+  "ACQUIRE": {
+    "MODE": "SAMPLE",
+    "NUMAVG": "16",
+    "STATE": "1",
+    "STOPAFTER": {
+      "MODE": "RUNSTOP"
+    }
+  },
+  "CH1": {
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "SCALE": "1000.00000000000E-6"
+  },
+  "CH2": {
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "SCALE": "1.99999996965E+30"
+  },
+  "CH3": {
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "SCALE": "1000.00000000000E-6"
+  },
+  "CH4": {
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "SCALE": "1.99999996965E+30"
+  },
+  "CH5": {
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "SCALE": "0.10000000000"
+  },
+  "CH6": {
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "SCALE": "1.99999996965E+30"
+  },
+  "CH7": {
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "SCALE": "0.10000000000"
+  },
+  "CH8": {
+    "OFFSET": "0.0000",
+    "POSITION": "0.0000",
+    "SCALE": "0.10000000000"
+  },
+  "DATA": {
+    "ACCUMULATE": "0",
+    "ENCDG": "RIBINARY",
+    "SOURCE": "CH1",
+    "START": "1",
+    "STOP": "4000",
+    "TIMEBASE": "MAIN"
+  },
+  "HEADER": "0",
+  "HORIZONTAL": {
+    "MAIN": {
+      "POSITION": "6.22080000000",
+      "RECORDLENGTH": "4000",
+      "REFPOINT": "0.05000000000",
+      "SCALE": "5.00000000000E-9"
+    },
+    "UNITS": "S"
+  },
+  "SELECT": {
+    "CH1": "0",
+    "CH2": "0",
+    "CH3": "0",
+    "CH4": "0",
+    "CH5": "0",
+    "CH6": "0",
+    "CH7": "1",
+    "CH8": "0"
+  },
+  "TRIGGER": {
+    "HIFREQ": "0",
+    "HOLDOFF": "5.00000000000E-6",
+    "INTRATE": "200.00000000000E+3",
+    "LEVEL": "-0.69530000000",
+    "MODE": "EYE",
+    "SLOPE": "RISE",
+    "SOURCE": "EXTDIRECT"
+  },
+  "VERBOSE": "1",
+  "WFMOUTPRE": {
+    "BN_FMT": "RI",
+    "BYT_OR": "MSB",
+    "ENCDG": "BINARY"
+  }
+}
