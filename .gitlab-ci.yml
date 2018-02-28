@@ -9,7 +9,9 @@ test:
   script:
   - pip install -U virtualenv pip
   - python --version
-  - make -j3 test test-nb test-lint
+  - make test
+  - make test-nb
+  - make test-lint
 
 test:
   image: python:3.6
@@ -22,5 +24,6 @@ test:
   script:
   - pip install -U virtualenv pip
   - python --version
-  - make -j3 test test-nb
+  - make test
+  - make test-nb
 
