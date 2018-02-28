@@ -1,8 +1,7 @@
-# Sphinx documentation variables
-CODEDIR       = lightlab
+SHELL := /bin/bash 
+
 # DOCDEFAULT can be html or latexpdf
 DOCDEFAULT       = html
-SPHINXOPTS    = -j4
 
 # Server ports (excluding Jupyter)
 DOCHOSTPORT = 8049
@@ -90,4 +89,4 @@ dochost: docs
 	cd docs/_build/$(DOCDEFAULT) && \
 	python3 -m http.server $(DOCHOSTPORT)
 
-.PHONY: test clean purge dochost monitorhost
+.PHONY: test clean purge dochost monitorhost test
