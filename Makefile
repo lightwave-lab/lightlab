@@ -11,14 +11,12 @@ venv/bin/activate:
 	test -d venv || virtualenv -p python3 --prompt "(lightlab-venv) " --distribute venv
 	touch venv/bin/activate
 
-dev-requirements: venv dev-requirements.txt
+devbuild: setup.py dev-requirements.txt
 	( \
 		source venv/bin/activate; \
-		pip install -r dev-requirements.txt; \
+		pip install -r dev-requirements.txt | grep -v 'Requirement already satisfied'; \
+		pip install -e . | grep -v 'Requirement already satisfied'; \
 	)
-
-devbuild: venv setup.py dev-requirements
-	source venv/bin/activate; pip install -e .
 	# ./cleannbline -v -r 5 lightlab
 
 test: devbuild
@@ -89,4 +87,4 @@ dochost: docs
 	cd docs/_build/$(DOCDEFAULT) && \
 	python3 -m http.server $(DOCHOSTPORT)
 
-.PHONY: test clean purge dochost monitorhost test
+.PHONY: test clean purge dochost monitorhost

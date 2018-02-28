@@ -115,9 +115,10 @@ def test_update_connections(lab):
     assert {device1: "output", instrument2: "channel"} not in lab.connections
     assert {device1: "output", instrument1: "front_source"} in lab.connections
 
-    # Using invalid port (behavior: do not effect any change. just warning.)
+    # Using invalid port (behavior: do not effect any change and throw error.)
     change_connections = [{device1: "output", instrument1: "front_sourcez"}]
-    lab.updateConnections(*change_connections)
+    with pytest.raises(RuntimeError, message="unidentified port not detected"):
+        lab.updateConnections(*change_connections)
     assert {device1: "output", instrument1: "front_sourcez"} not in lab.connections
     assert {device1: "output", instrument1: "front_source"} in lab.connections
 

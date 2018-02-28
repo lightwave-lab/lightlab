@@ -1,6 +1,5 @@
 from ..visa_drivers import VISAInstrumentDriver
 from ..configure.configurable import Configurable
-from .. import hostNS
 
 
 class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):

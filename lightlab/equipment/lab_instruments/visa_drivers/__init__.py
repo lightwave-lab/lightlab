@@ -1,4 +1,5 @@
 from ..visa_connection import VISAObject
+from lightlab import logger
 
 
 class VISAInstrumentDriver(VISAObject):
@@ -19,7 +20,7 @@ class VISAInstrumentDriver(VISAObject):
         self.__started = False
 
     def startup(self):
-        raise NotImplementedError()
+        logger.debug("{}startup method empty".format(self.__class__.__name__))
 
 
 DefaultDriver = VISAInstrumentDriver
