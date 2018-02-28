@@ -34,7 +34,7 @@ class SpectrumMeasurementAssistant(object):
     def setIsPeaks(arePeaks = False):
         self.arePeaks = arePeaks
 
-    ## Removed due to dependence on inst
+    # # Removed due to dependence on inst
     # def rawSpect(self, avgCnt=1):
     #     nm, dbm = inst.spectrum(self.wlRange, avgCnt)
     #     return Spectrum(nm, dbm)

@@ -4,7 +4,23 @@ test:
   tags:
   - docker-python
   - cassander
+  only:
+    - master
   script:
   - pip install -U virtualenv pip
   - python --version
   - make -j3 test test-nb test-lint
+
+test:
+  image: python:3.6
+  stage: test
+  tags:
+  - docker-python
+  - cassander
+  except:
+    - master
+  script:
+  - pip install -U virtualenv pip
+  - python --version
+  - make -j3 test test-nb
+
