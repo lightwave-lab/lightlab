@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import time
 from matplotlib.backends.backend_pdf import PdfPages
-import http.server
 import scipy.io as sio
-import pickle, gzip
+import pickle
+import gzip
 import lightlab.util.gitpath as gitpath
 from lightlab import logger
 import jsonpickle
@@ -21,32 +21,22 @@ import msgpack
 import msgpack_numpy
 msgpack_numpy.patch()
 
-# Used for gitpath
-from subprocess import check_output, CalledProcessError
-from functools import lru_cache
-import os.path
+try:
+    projectDir = Path(gitpath.root())
+except IOError as e:
+    # git repo not found, logging that.
+    logger.warning(e)
+    projectDir = Path(os.getcwd())
+    logger.warning("Default projectDir='{}'".format(projectDir))
+if not os.access(projectDir, 7):
+    logger.warning("Cannot write to this projectDir({}).".format(projectDir))
 
-# Monitor hosting
-monitorServerPort = 8050  # This is user-specific, will be deprecated
-# This must be registered on the DNS with your hostmaster
-domainHostName = 'lightwave-lab-olympias'
-domain = 'princeton.edu'
-
-@lru_cache(maxsize=1)
-def gitPath():
-    ''' returns the absolute path of the repository root '''
-    try:
-        base = check_output(['git', 'rev-parse', '--show-toplevel'])
-    except CalledProcessError:
-        raise IOError('Current working directory is not a git repository')
-    return base.decode('utf-8').strip()
-
-projectDir = Path(gitPath())
 # Monitor files
 monitorDir = projectDir / 'progress-monitor'
 # Data files
 dataHome = projectDir / 'data'
 fileDir = dataHome  # Set this in your experiment
+
 
 def printWait(*args):
     ''' Prints your message followed by ``...``
