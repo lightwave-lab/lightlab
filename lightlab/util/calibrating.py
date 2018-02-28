@@ -1,4 +1,3 @@
-from .. import instruments as inst
 from .data import Spectrum
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,9 +34,10 @@ class SpectrumMeasurementAssistant(object):
     def setIsPeaks(arePeaks = False):
         self.arePeaks = arePeaks
 
-    def rawSpect(self, avgCnt=1):
-        nm, dbm = inst.spectrum(self.wlRange, avgCnt)
-        return Spectrum(nm, dbm)
+    ## Removed due to dependence on inst
+    # def rawSpect(self, avgCnt=1):
+    #     nm, dbm = inst.spectrum(self.wlRange, avgCnt)
+    #     return Spectrum(nm, dbm)
 
     def fgSpect(self, avgCnt=1, raw=None, bgType=None):
         ''' Returns the current spectrum with background removed.

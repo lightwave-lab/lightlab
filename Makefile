@@ -19,13 +19,21 @@ devbuild: venv setup.py dev-requirements.txt
 	)
 	# ./cleannbline -v -r 5 lightlab
 
-test: devbuild
+testbuild: venv setup.py test-requirements.txt
+	( \
+		source venv/bin/activate; \
+		pip install -r test-requirements.txt | grep -v 'Requirement already satisfied'; \
+		pip install -e . | grep -v 'Requirement already satisfied'; \
+	)
+	# ./cleannbline -v -r 5 lightlab
+
+test: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test -s tests; \
 	)
 
-test-lint: devbuild
+test-lint: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test --pylint -m pylint --pylint-error-types=EF lightlab; \

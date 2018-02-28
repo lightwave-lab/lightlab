@@ -8,7 +8,9 @@ from lightlab.laboratory.experiments import Experiment, DualFunction
 import json
 import time
 import os
+import logging
 
+logging.disable(logging.CRITICAL)
 filename = 'test_{}.json'.format(int(time.time()))
 labstate.filename = filename
 
