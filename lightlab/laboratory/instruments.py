@@ -555,39 +555,17 @@ class VariableAttenuator(Instrument):
 
 
 class NetworkAnalyzer(Instrument):
-    def amplitude(self, amp=None):
-        return self.driver.amplitude(amp)
-
-    def frequency(self, freq=None):
-        return self.driver.frequency(freq)
-
-    def enable(self, enaState=None):
-        return self.driver.enable(enaState)
-
-    def run(self):
-        return self.driver.run()
-
-    def sweepSetup(self, startFreq, stopFreq, nPts=None, dwell=None, ifBandwidth=None):
-        return self.driver.sweepSetup(startFreq,stopFreq,nPts,dwell,ifBandwidth)
-
-    def sweepEnable(self, swpState=None):
-        return self.driver.sweepEnable(swpState)
-
-    def triggerSetup(self, useAux=None, handshake=None, isSlave=False):
-        return self.driver.triggerSetup(useAux,handshake,isSlave)
-
-    def getSwpDuration(self, forceHardware=False):
-        return self.driver.getSwpDuration(forceHardware)
-
-    def measurementSetup(self, measType='S21', chanNum=None):
-        return self.driver.measurementSetup(measType,chanNum)
-
-    def spectrum(self):
-        return self.driver.spectrum()
-
-    def multiSpectra(self, nSpect=1, livePlot=False):
-        return self.driver.multiSpectra(nSpect,livePlot)
-
+    essentialMethods = ['amplitude',
+        'frequency',
+        'enable',
+        'run',
+        'sweepSetup',
+        'sweepEnable',
+        'triggerSetup',
+        'getSwpDuration',
+        'measurementSetup',
+        'spectrum',
+        'multiSpectra']
 
 class ArduinoInstrument(Instrument):
     essentialMethods = ['write', 'query']
