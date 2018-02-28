@@ -126,7 +126,7 @@ def main():
         description='Lightwave Lab instrument automation tools',
         long_description=readme,
         license=license,
-        packages=['lightlab'],
+        packages=find_packages(exclude=('tests', 'docs', 'data')),
         install_requires=[
             'dpath',
             'jsonpickle',
