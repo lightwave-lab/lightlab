@@ -131,6 +131,7 @@ def main():
             'dpath',
             'jsonpickle',
             'matplotlib',
+            'IPython',
             'PyVISA',
             'scipy',
             'sklearn',

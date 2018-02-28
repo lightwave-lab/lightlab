@@ -10,8 +10,8 @@ test:
   - pip install -U virtualenv pip
   - python --version
   - make test
-  - make test-nb
   - make test-lint
+  - make test-nb
 
 test:
   image: python:3.6

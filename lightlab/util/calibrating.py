@@ -1,6 +1,6 @@
-from .data import Spectrum
 import numpy as np
-import matplotlib.pyplot as plt
+from . import plot
+
 
 class SpectrumMeasurementAssistant(object):
     ''' Class for preprocessing measured spectra
