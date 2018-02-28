@@ -1,0 +1,52 @@
+test-master:
+  image: python:3.6
+  stage: test
+  tags:
+  - docker-python
+  - cassander
+  only:
+    - master
+  script:
+  - pip install -U virtualenv pip
+  - python --version
+  - make test
+  - make test-lint
+  - make test-nb
+
+test-dev:
+  image: python:3.6
+  stage: test
+  tags:
+  - docker-python
+  - cassander
+  except:
+    - master
+  script:
+  - pip install -U virtualenv pip
+  - python --version
+  - make test
+  - make test-nb
+
+deploy-dev:
+  stage: deploy
+  tags:
+  - jupyter-shell
+  - cassander
+  only:
+    - development
+  script:
+  - source $VIRTUALENVWRAPPER_HOOK_DIR/development/bin/activate
+  - pip install -U -r dev-requirements.txt
+  - pip install --upgrade --no-deps --force-reinstall .
+
+deploy-master:
+  stage: deploy
+  tags:
+  - jupyter-shell
+  - cassander
+  only:
+    - master
+  script:
+  - source $VIRTUALENVWRAPPER_HOOK_DIR/master/bin/activate
+  - pip install -U -r dev-requirements.txt
+  - pip install --upgrade --no-deps --force-reinstall .

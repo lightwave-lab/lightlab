@@ -55,8 +55,8 @@ class CurrentSources(VISAInstrumentDriver):
 
         useChans, stateDict = self.useChans, self.stateDict
         if useChans is None and stateDict is None:
-            raise Exception(
-                'Must specify either useChans or stateDict when initializing current sources')
+            # raise Exception('Must specify either useChans or stateDict when initializing current sources')
+            useChans = list()
         if stateDict is None:
             self.channels = list(useChans)
             self.stateDict = dict([ch, 0] for ch in self.channels)

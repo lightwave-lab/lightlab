@@ -9,7 +9,7 @@ data/*
 notebooks/sketchpad/*
 
 # Monitoring dynamic information
-monitoring/sweep.html
+progress-monitor/*
 
 # User-specific ports
 .monitorhostport

@@ -1,8 +1,7 @@
-# Sphinx documentation variables
-CODEDIR       = lightlab
+SHELL := /bin/bash 
+
 # DOCDEFAULT can be html or latexpdf
 DOCDEFAULT       = html
-SPHINXOPTS    = -j4
 
 # Server ports (excluding Jupyter)
 DOCHOSTPORT = 8049
@@ -12,23 +11,29 @@ venv/bin/activate:
 	test -d venv || virtualenv -p python3 --prompt "(lightlab-venv) " --distribute venv
 	touch venv/bin/activate
 
-dev-requirements: venv dev-requirements.txt
+devbuild: venv setup.py dev-requirements.txt
 	( \
 		source venv/bin/activate; \
-		pip install -r dev-requirements.txt; \
+		pip install -r dev-requirements.txt | grep -v 'Requirement already satisfied'; \
+		pip install -e . | grep -v 'Requirement already satisfied'; \
 	)
+	# ./cleannbline -v -r 5 lightlab
 
-devbuild: venv setup.py dev-requirements
-	source venv/bin/activate; python setup.py develop
-	./cleannbline -v -r 5 notebooks lightlab docs
+testbuild: venv setup.py test-requirements.txt
+	( \
+		source venv/bin/activate; \
+		pip install -r test-requirements.txt | grep -v 'Requirement already satisfied'; \
+		pip install -e . | grep -v 'Requirement already satisfied'; \
+	)
+	# ./cleannbline -v -r 5 lightlab
 
-test: devbuild
+test: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test -s tests; \
 	)
 
-test-lint: devbuild
+test-lint: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test --pylint -m pylint --pylint-error-types=EF lightlab; \
@@ -37,7 +42,7 @@ test-lint: devbuild
 test-nb: devbuild
 	( \
 		source venv/bin/activate; \
-		py.test -s notebooks/Tests --nbval --sanitize-with ipynb_pytest_santize.cfg; \
+		py.test -s notebooks/Tests --nbval-lax --sanitize-with ipynb_pytest_santize.cfg; \
 	)
 
 clean:
@@ -72,12 +77,6 @@ pip-update: pip-freeze
 		pip freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U; \
 	)
 
-pip-update: pip-freeze
-	( \
-		source venv/bin/activate; \
-		pip freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U; \
-	)
-
 getjpass: venv
 	venv/bin/python -c 'from notebook.auth import passwd; print(passwd())'
 
@@ -96,4 +95,4 @@ dochost: docs
 	cd docs/_build/$(DOCDEFAULT) && \
 	python3 -m http.server $(DOCHOSTPORT)
 
-.PHONY: devbuild test clean purge dochost monitorhost
+.PHONY: test clean purge dochost monitorhost
