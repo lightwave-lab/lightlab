@@ -1,14 +1,3 @@
-test-nb:
-  image: python:3.6
-  stage: test
-  tags:
-  - docker-python
-  - cassander
-  script:
-  - pip install -U virtualenv pip
-  - python --version
-  - make test-nb
-
 test:
   image: python:3.6
   stage: test
@@ -18,15 +7,4 @@ test:
   script:
   - pip install -U virtualenv pip
   - python --version
-  - make test
-
-test-lint:
-  image: python:3.6
-  stage: test
-  tags:
-  - docker-python
-  - cassander
-  script:
-  - pip install -U virtualenv pip
-  - python --version
-  - make test-lint
+  - make -j3 test test-nb test-lint
