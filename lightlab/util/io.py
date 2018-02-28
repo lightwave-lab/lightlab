@@ -32,7 +32,7 @@ if not os.access(projectDir, 7):
     logger.warning("Cannot write to this projectDir({}).".format(projectDir))
 
 # Monitor files
-monitorDir = projectDir / 'monitoring'
+monitorDir = projectDir / 'progress-monitor'
 # Data files
 dataHome = projectDir / 'data'
 fileDir = dataHome  # Set this in your experiment
