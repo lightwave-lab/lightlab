@@ -1,4 +1,4 @@
-test:
+test-master:
   image: python:3.6
   stage: test
   tags:
@@ -13,7 +13,7 @@ test:
   - make test-lint
   - make test-nb
 
-test:
+test-dev:
   image: python:3.6
   stage: test
   tags:
@@ -27,3 +27,13 @@ test:
   - make test
   - make test-nb
 
+deploy-dev:
+  stage: deploy
+  tags:
+  - jupyter-shell
+  - cassander
+  only:
+    - gitlab-ci
+  script:
+  - workon development
+  - pip install .
