@@ -11,7 +11,7 @@ venv/bin/activate:
 	test -d venv || virtualenv -p python3 --prompt "(lightlab-venv) " --distribute venv
 	touch venv/bin/activate
 
-devbuild: setup.py dev-requirements.txt
+devbuild: venv setup.py dev-requirements.txt
 	( \
 		source venv/bin/activate; \
 		pip install -r dev-requirements.txt | grep -v 'Requirement already satisfied'; \
