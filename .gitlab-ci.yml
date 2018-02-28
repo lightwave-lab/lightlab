@@ -4,6 +4,6 @@ test:
   - docker-python
   - cassander
   script:
-  - pip install -r dev-requirements.txt
+  - pip install -U virtualenv pip
   - python --version
   - make test-nb
