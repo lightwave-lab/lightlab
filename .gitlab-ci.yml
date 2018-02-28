@@ -37,4 +37,7 @@ deploy-dev:
   script:
   - env
   - workon development
+  - pwd
+  - ls
+  - which pip
   - pip install .
