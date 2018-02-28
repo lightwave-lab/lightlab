@@ -1,0 +1,9 @@
+test:
+  image: python:3.6
+  tags:
+  - docker-python
+  - cassander
+  script:
+  - pip install -r dev-requirements.txt
+  - python --version
+  - make test-nb
