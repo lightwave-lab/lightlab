@@ -19,7 +19,7 @@ dev-requirements: venv dev-requirements.txt
 	)
 
 devbuild: venv setup.py dev-requirements
-	source venv/bin/activate; python setup.py develop
+	source venv/bin/activate; pip install -e .
 	# ./cleannbline -v -r 5 lightlab
 
 test: devbuild
