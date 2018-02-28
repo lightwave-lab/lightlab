@@ -35,5 +35,6 @@ deploy-dev:
   only:
     - gitlab-ci
   script:
+  - env
   - workon development
   - pip install .
