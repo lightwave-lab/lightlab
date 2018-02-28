@@ -36,7 +36,7 @@ deploy-dev:
     - gitlab-ci
   script:
   - env
-  - workon development
+  - source $VIRTUALENVWRAPPER_HOOK_DIR/development/bin/activate
   - pwd
   - ls
   - which pip
