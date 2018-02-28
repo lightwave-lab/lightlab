@@ -20,7 +20,7 @@ dev-requirements: venv dev-requirements.txt
 
 devbuild: venv setup.py dev-requirements
 	source venv/bin/activate; python setup.py develop
-	./cleannbline -v -r 5 notebooks lightlab docs
+	# ./cleannbline -v -r 5 lightlab
 
 test: devbuild
 	( \
@@ -37,7 +37,7 @@ test-lint: devbuild
 test-nb: devbuild
 	( \
 		source venv/bin/activate; \
-		py.test -s notebooks/Tests --nbval --sanitize-with ipynb_pytest_santize.cfg; \
+		py.test -s notebooks/Tests --nbval-lax --sanitize-with ipynb_pytest_santize.cfg; \
 	)
 
 clean:
@@ -72,12 +72,6 @@ pip-update: pip-freeze
 		pip freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U; \
 	)
 
-pip-update: pip-freeze
-	( \
-		source venv/bin/activate; \
-		pip freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U; \
-	)
-
 getjpass: venv
 	venv/bin/python -c 'from notebook.auth import passwd; print(passwd())'
 
@@ -96,4 +90,4 @@ dochost: docs
 	cd docs/_build/$(DOCDEFAULT) && \
 	python3 -m http.server $(DOCHOSTPORT)
 
-.PHONY: devbuild test clean purge dochost monitorhost
+.PHONY: test clean purge dochost monitorhost

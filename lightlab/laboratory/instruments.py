@@ -479,70 +479,20 @@ class Keithley(SourceMeter):
 
 
 class VectorGenerator(Instrument):
-    def amplitude(self, amp=None):
-        return self.driver.amplitude(amp)
-
-    def frequency(self, freq=None):
-        return self.driver.frequency(freq)
-
-    def enable(self, enaState=None):
-        return self.driver.enable(enaState)
-
-    def modulationEnable(self, enaState=None):
-        return self.driver.modulationEnable(enaState)
-
-    def addNoise(self, enaState=True, bandwidth=None, cnRatio=None):
-        return self.driver.addNoise(enaState,bandwidth,cnRatio)
-
-    def setPattern(self, bitArray):
-        return self.driver.setPattern(bitArray)
-
-    def digiMod(self, enaState=True, symbRate=None, amExtinct=None):
-        return self.driver.digiMod(enaState,symbRate,amExtinct)
-
-    def carrierMod(self, enaState=True, typMod=None, deviation=None, modFreq=None):
-        return self.driver.carrierMod(enaState,typMod,deviation,modFreq)
-
-    def listEnable(self, enaState=True, freqs=None, amps=None, isSlave=False, dwell=None):
-        return self.driver.listEnable(enaState,freqs,amps,isSlave,dwell)
-
-    def sweepSetup(self, startFreq, stopFreq, nPts=100, dwell=0.1):
-        return self.driver.sweepSetup(startFreq,stopFreq,nPts,dwell)
-
-    def sweepEnable(self, swpState=None):
-        return self.driver.sweepEnable(swpState)
-
+    essentialMethods = ['amplitude',
+        'frequency',
+        'enable',
+        'modulationEnable',
+        'addNoise',
+        'setPattern',
+        'digiMod',
+        'carrierMod',
+        'listEnable',
+        'sweepSetup',
+        'sweepEnable']
 
 class Clock(Instrument):
-    def on(self, turnOn=True):
-        return self.driver.on(turnOn=turnOn)
-
-    @property
-    def frequency(self):
-        return self.driver.frequency
-
-    @frequency.setter
-    def frequency(self, newFreq):
-        self.driver.frequency = newFreq
-
-
-class CommunicationAnalyzerScope(Instrument):
-    def autoAdjust(self, chans):
-        return self.driver.autoAdjust(chans)
-
-    def acquire(self, chans=None, avgCnt=None, duration=None, position=None, nPts=None):
-        return self.driver.acquire(chans,avgCnt,duration,position,nPts)
-
-    def wfmDb(self, chan, nWfms, untriggered=False):
-        return self.driver.wfmDb(chan, nWfms, untriggered)
-
-    def run(self):
-        return self.driver.run()
-
-    @classmethod
-    def generateDefaults(cls, isDPO, overwrite=False):
-        return self.driver.generateDefaults(isDPO,overwrite)
-
+    essentialMethods = ['on', 'frequency']
 
 
 class CurrentSource(Instrument):
@@ -556,39 +506,8 @@ class NICurrentSource(CurrentSource, ElectricalSource, MultiModalSource):
         super().__init__(*args, useChans=useChans, **kwargs)
 
 
-class DigitalPhosphorScope(Instrument):
-    def autoAdjust(self, chans):
-        return self.driver.autoAdjust(chans)
-
-    def acquire(self, chans=None, avgCnt=None, duration=None, position=None, nPts=None):
-        return self.driver.acquire(chans,avgCnt,duration,position,nPts)
-
-    def wfmDb(self, chan, nWfms, untriggered=False):
-        return self.driver.wfmDb(chan, nWfms, untriggered)
-
-    def run(self):
-        return self.driver.run()
-
-    @classmethod
-    def generateDefaults(cls, isDPO, overwrite=False):
-        return self.driver.generateDefaults(isDPO,overwrite)
-
-
 class FunctionGenerator(Instrument):
-    def instrID(self):
-        return self.driver.instrID()
-
-    def frequency(self, newFreq=None):
-        return self.driver.frequency(newFreq)
-
-    def waveform(self, newWave=None):
-        return self.driver.waveform(newWave)
-
-    def amplAndOffs(self, amplOffs=None):
-        return self.driver.amplAndOffs(amplOffs)
-
-    def duty(self, duty=None):
-        return self.driver.duty(duty)
+    essentialMethods = ['frequency', 'waveform', 'amplAndOffs', 'duty']
 
 
 class LaserSource(Instrument):
@@ -606,45 +525,29 @@ class OpticalSpectrumAnalyzer(Instrument):
 class Oscilloscope(Instrument):
     essentialMethods = ['acquire', 'wfmDb', 'run']
 
+class CommunicationAnalyzerScope(Oscilloscope):
+    pass
+
+class DigitalPhosphorScope(Oscilloscope):
+    pass
+
 
 class PulsePatternGenerator(Instrument):
-    def setPrbs(self, length):
-        return self.driver.setPrbs(length)
-
-    def setPattern(self, bitArray):
-        return self.driver.setPattern(bitArray)
-
-    def getPattern(self):
-        return self.driver.getPattern()
-
-    def on(self, turnOn=True):
-        return self.driver.on(turnOn)
-
-    def syncSource(self, src=None):
-        return self.driver.syncSource(src)
-
-    def amplAndOffs(self, amplOffs=None):
-        return self.driver.amplAndOffs(amplOffs)
+    essentialMethods = ['setPrbs',
+        'setPattern',
+        'getPattern',
+        'on',
+        'syncSource',
+        'amplAndOffs']
 
 
 class RFSpectrumAnalyzer(Instrument):
-    def getMeasurements(self):
-        return self.driver.getMeasurements()
-
-    def setMeasurement(self, measType='SPEC', append=False):
-        return self.driver.setMeasurement(measType,append)
-
-    def run(self, doRun=True):
-        return self.driver.run(doRun)
-
-    def sgramInit(self, freqReso=None, freqRange=None):
-        return self.driver.sgramInit(freqReso,freqRange)
-
-    def sgramTransfer(self, duration=1., nLines=100):
-        return self.driver.sgramTransfer(duration,nLines)
-
-    def spectrum(self, freqReso=None, freqRange=None, typAvg='none', nAvg=None):
-        return self.driver.spectrum(freqReso,freqRange,typAvg,nAvg)
+    essentialMethods = ['getMeasurements',
+        'setMeasurement',
+        'run',
+        'sgramInit',
+        'sgramTransfer',
+        'spectrum']
 
 
 class VariableAttenuator(Instrument):
@@ -652,51 +555,19 @@ class VariableAttenuator(Instrument):
 
 
 class NetworkAnalyzer(Instrument):
-    def amplitude(self, amp=None):
-        return self.driver.amplitude(amp)
-
-    def frequency(self, freq=None):
-        return self.driver.frequency(freq)
-
-    def enable(self, enaState=None):
-        return self.driver.enable(enaState)
-
-    def run(self):
-        return self.driver.run()
-
-    def sweepSetup(self, startFreq, stopFreq, nPts=None, dwell=None, ifBandwidth=None):
-        return self.driver.sweepSetup(startFreq,stopFreq,nPts,dwell,ifBandwidth)
-
-    def sweepEnable(self, swpState=None):
-        return self.driver.sweepEnable(swpState)
-
-    def triggerSetup(self, useAux=None, handshake=None, isSlave=False):
-        return self.driver.triggerSetup(useAux,handshake,isSlave)
-
-    def getSwpDuration(self, forceHardware=False):
-        return self.driver.getSwpDuration(forceHardware)
-
-    def measurementSetup(self, measType='S21', chanNum=None):
-        return self.driver.measurementSetup(measType,chanNum)
-
-    def spectrum(self):
-        return self.driver.spectrum()
-
-    def multiSpectra(self, nSpect=1, livePlot=False):
-        return self.driver.multiSpectra(nSpect,livePlot)
-
+    essentialMethods = ['amplitude',
+        'frequency',
+        'enable',
+        'run',
+        'sweepSetup',
+        'sweepEnable',
+        'triggerSetup',
+        'getSwpDuration',
+        'measurementSetup',
+        'spectrum',
+        'multiSpectra']
 
 class ArduinoInstrument(Instrument):
-    def write(self, writeStr):
-        return self.driver.write(writeStr)
-
-    def query(self):
-        return self.driver.query()
+    essentialMethods = ['write', 'query']
 
 
-class TempSourceMeter(Instrument):
-    def setCurrent(self, currDict):
-        return self.driver.setCurrent(currDict)
-
-    def measVoltage(self, subset=None):
-        return self.driver.measVoltage(subset)

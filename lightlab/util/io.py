@@ -43,7 +43,7 @@ def gitPath():
 
 projectDir = Path(gitPath())
 # Monitor files
-monitorDir = projectDir / 'monitoring'
+monitorDir = projectDir / 'progress-monitor'
 # Data files
 dataHome = projectDir / 'data'
 fileDir = dataHome  # Set this in your experiment
@@ -129,6 +129,7 @@ class ProgressWriter(object):
         if self.serving:
             print('See sweep progress online at')
             # print(getUrl())
+            monitorDir.mkdir(exist_ok=True)
             fp = Path(ProgressWriter.progFileDefault)
             fp.touch()
             self.filePath = fp.resolve()
