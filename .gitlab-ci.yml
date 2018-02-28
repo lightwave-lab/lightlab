@@ -36,4 +36,4 @@ deploy-dev:
     - gitlab-ci
   script:
   - source $VIRTUALENVWRAPPER_HOOK_DIR/development/bin/activate
-  - pip install --upgrade --force-reinstall .
+  - pip install -e .
