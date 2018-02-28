@@ -39,7 +39,7 @@ deploy-dev:
   - pip install -U -r dev-requirements.txt
   - pip install --upgrade --no-deps --force-reinstall .
 
-deploy-dev:
+deploy-master:
   stage: deploy
   tags:
   - jupyter-shell
