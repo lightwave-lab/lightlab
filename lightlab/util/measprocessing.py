@@ -4,8 +4,6 @@ Generally, these states are not device states, but could change from day to day
 '''
 import numpy as np
 
-from ..util import data, io, plot
-
 from lightlab import logger
 
 
@@ -18,7 +16,7 @@ class SpectrumMeasurementAssistant(object):
     useBgs = ['tracked', 'smoothed', 'const'] # The order matters
     bgSmoothDefault = 2.0 # in nm
 
-    def __init__(self, nChan=1, arePeaks=False, visualize=False, osaRef=None):
+    def __init__(self, nChan=1, arePeaks=False, osaRef=None):
         self.nChan = nChan
         self.arePeaks = arePeaks
         if osaRef is None:
@@ -28,13 +26,6 @@ class SpectrumMeasurementAssistant(object):
         # self.__bgSmoothed = None # Constant background spectrum due to fading, EDFA profile, etc.
         # self.__bgTuned = None # Constant background taking into account resonance tuning
         # self.__bgNulled = None # Constant background using resonance shapes
-        # Plotting
-        if visualize:
-            self.fig = {}
-            self.fig['spect'] = plot.DynamicLine('b-', geometry=[(0,0), (4,3)])
-            self.fig['peaks'] = [plot.DynamicLine('k', self.fig['spect']) for _ in range(self.nChan)]
-        else:
-            self.fig = None
         self.peakfinderOptions = {}
         self.filtShapesForConvolution = None
 
@@ -55,8 +46,6 @@ class SpectrumMeasurementAssistant(object):
         if 'smoothed' not in self.__backgrounds.keys():
             self.setBgSmoothed(raw)
         unbiased = raw - self.getBgSpect(bgType)
-        if self.fig is not None:
-            self.fig['spect'].refresh(*unbiased.getData())
         return unbiased
 
     def resonances(self, spect=None, avgCnt=1):
@@ -72,9 +61,6 @@ class SpectrumMeasurementAssistant(object):
         if self.filtShapesForConvolution is not None:
             fineRes, confidence = spect.refineResonanceWavelengths(self.filtShapesForConvolution, seedRes=res)
             res = fineRes
-        if self.fig is not None:
-            for iPk in range(self.nChan):
-                self.fig['peaks'][iPk].refresh(*res[iPk].plottingData())
         lamSort = np.argsort([r.lam for r in res])
         return res[lamSort]
 

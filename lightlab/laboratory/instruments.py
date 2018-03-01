@@ -233,6 +233,7 @@ class Instrument(Node):
     ports = None
 
     essentialMethods = []
+    essentialProperties = []
 
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
         self.__bench = kwargs.pop("bench", None)
@@ -248,6 +249,7 @@ class Instrument(Node):
             assert isinstance(self.__driver_object, self._driver_class)
 
         # make methods for feedthrough
+        # TODO does not work for properties
         for funName in type(self).essentialMethods:
             if type(self.driver) is not DefaultDriver:
                 try:
@@ -257,9 +259,25 @@ class Instrument(Node):
                     newm += '\nIt does do ' + str(callablePublicMethodsDir(self.driver))
                     err.args = (newm,) + err.args[1:]
                     raise err
+                assert callable(driverMethod)
                 setattr(self, funName, driverMethod)
             else:
                 setattr(self, funName, raiseAnException('Driver not present. Cannot use asReal'))
+
+        for propName in type(self).essentialProperties:
+            if type(self.driver) is not DefaultDriver:
+                try:
+                    driverProperty = getattr(type(self.driver), propName)
+                except AttributeError as err:
+                    newm = err.args[0] + '\nDriver does not implement ' + funName
+                    err.args = (newm,) + err.args[1:]
+                    raise err
+                assert isinstance(driverProperty, property)
+                setattr(type(self), propName, driverProperty)
+            else:
+                notImpFunc = raiseAnException('Driver not present. Cannot use asReal')
+                notImpProp = property(notImpFunc, notImpFunc)
+                setattr(type(self), propName, notImpProp)
 
         super().__init__(_name=name,
                          _id_string=id_string, **kwargs)
@@ -410,15 +428,29 @@ class DualInstrument(Virtualizable):
                 + '\n'.join(bas.__name__ for bas in self.__class__.mro()[1:]))
 
         # figure out all the callables in hardware version
-        # if not implemented by type(self), set virtual version ot notImp
+        # if not implemented by type(self), set virtual version to notImplemented
         for funName in self.essentialMethods:
             hwMethod = getattr(self, funName)
             try:
                 virtualMethod = getattr(self, 'v_' + funName)
             except AttributeError:
                 virtualMethod = raiseAnException('Virtual version not specified: v_' + funName)
+            assert callable(virtualMethod)
             dualizedMethod = DualMethod(self, virtual_function=virtualMethod, hardware_function=hwMethod)
             setattr(self, funName, dualizedMethod)
+
+        for propName in self.essentialProperties:
+            hwProp = getattr(type(self), propName)
+            try:
+                virtualProp = getattr(type(self), 'v_' + propName)
+            except AttributeError:
+                notImpFunc = raiseAnException('Virtual version not specified: v_' + propName)
+                virtualProp = property(notImpFunc, notImpFunc)
+            assert isinstance(virtualProp, property)
+            dualizedGetter = DualMethod(self, virtual_function=virtualProp.__get__, hardware_function=hwProp.__get__)
+            dualizedSetter = DualMethod(self, virtual_function=virtualProp.__set__, hardware_function=hwProp.__set__)
+            dualizedProperty = property(dualizedGetter, dualizedSetter)
+            setattr(type(self), propName, dualizedProperty)
 
     @classmethod
     def fromInstrument(cls, hwOnlyInstr, **kwargs):
@@ -492,7 +524,8 @@ class VectorGenerator(Instrument):
         'sweepEnable']
 
 class Clock(Instrument):
-    essentialMethods = ['on', 'frequency']
+    essentialMethods = ['on']
+    essentialProperties = ['frequency']
 
 
 class CurrentSource(Instrument):
@@ -519,7 +552,8 @@ class LaserSource(Instrument):
 
 
 class OpticalSpectrumAnalyzer(Instrument):
-    essentialMethods = ['wlRange', 'spectrum']
+    essentialMethods = ['spectrum']
+    essentialProperties = ['wlRange']
 
 
 class Oscilloscope(Instrument):
@@ -551,7 +585,8 @@ class RFSpectrumAnalyzer(Instrument):
 
 
 class VariableAttenuator(Instrument):
-    essentialMethods = ['on', 'off', 'attenDB', 'attenLin']
+    essentialMethods = ['on', 'off']
+    essentialProperties = ['attenDB', 'attenLin']
 
 
 class NetworkAnalyzer(Instrument):

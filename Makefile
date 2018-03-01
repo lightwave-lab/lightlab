@@ -87,7 +87,7 @@ jupyter-password: venv
 	)
 
 monitorhost:
-	cd monitoring && python3 -m http.server $(shell cat .monitorhostport)
+	cd progress-monitor && python3 -m http.server $(shell cat .monitorhostport)
 
 dochost: docs
 	source venv/bin/activate && \
