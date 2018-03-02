@@ -126,6 +126,13 @@ class CurrentSources(VISAInstrumentDriver):
             self.stateDict = dict(zip(self.channels, self.__tuneState))
             self.sendToHardware()
 
+    def getChannelTuning(self, mode='mwperohm'):
+        self.mode = mode
+        chanValDict = dict()
+        for iCh, chan in enumerate(self.channels):
+            chanValDict[chan] = self.tuneState[iCh]
+        return chanValDict
+
     def setChannelTuning(self, chanValDict, mode='mwperohm'):
         """Sets a number of channel values and updates hardware
         param: chanValDict: A dictionary specifying {channel: voltage}
