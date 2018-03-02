@@ -53,6 +53,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         # self.setConfigParam('VOLT:PROT', self.protectionVoltage)
         # self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
         # self._configCurrent(0)
+
     def startup(self):
         self.write('*RST')
 
