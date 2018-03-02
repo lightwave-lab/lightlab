@@ -25,10 +25,12 @@ def open_error(self):
     raise RuntimeError("self.open() function being called upon initialization.")
 
 
+__GETCURRENTTEST = 0.123
 Keithley_2400_SM.startup = lambda self: True
+Keithley_2400_SM.getCurrent = lambda self: __GETCURRENTTEST
 Keithley_2400_SM.open = open_error
 
-instrument1 = Keithley(name="instrument1", bench=Bench1, host=Host1,
+instrument1 = Keithley(name="keithley1", bench=Bench1, host=Host1,
                        ports=["front_source", "rear_source"], _driver_class=Keithley_2400_SM)
 instrument2 = Instrument(name="instrument2", bench=Bench1, host=Host1, ports=["port1", "channel"])
 device1 = Device(name="device1", bench=Bench1, ports=["input", "output"])
@@ -83,6 +85,12 @@ def test_reloadlabstate(lab):
 
     lab2 = labstate.LabState.loadState(filename=filename)
     assert lab == lab2
+
+
+def test_instrument_method_from_frozen(lab):
+    lab2 = labstate.LabState.loadState(filename=filename)
+    keithley = lab2.instruments_dict["keithley1"]
+    assert keithley.getCurrent() == __GETCURRENTTEST
 
 
 def test_corruptreload_extratext(lab):
