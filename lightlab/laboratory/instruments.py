@@ -207,7 +207,7 @@ class Bench(Node):
         return "Bench {}".format(self.name)
 
 
-def callablePublicMethodsDir(obj):
+def publicDir(obj):
     directory = dir(obj)
     iHidden = []
     for i, attr in enumerate(directory):
@@ -235,31 +235,50 @@ class Instrument(Node):
     essentialMethods = []
     essentialProperties = []
 
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.updateFeedthroughs()
+
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
         self.__bench = kwargs.pop("bench", None)
         self.__host = kwargs.pop("host", None)
         self.ports = kwargs.pop("ports", dict())
-        self.address = address
 
         # self._driver_class = kwargs.get("driver_class", None)
         if self._driver_class is None:
-            self._driver_class = kwargs.get("_driver_class", None)
-        self.__driver_object = kwargs.get("driver_object", None)
+            self._driver_class = kwargs.pop("_driver_class", None)
+        self.__driver_object = kwargs.pop("driver_object", None)
         if self._driver_class is not None and self.__driver_object is not None:
             assert isinstance(self.__driver_object, self._driver_class)
 
-        # make methods for feedthrough
-        # TODO does not work for properties
+        self.updateFeedthroughs()
+
+        super().__init__(_name=name,
+                         _id_string=id_string,
+                         address=address, **kwargs)
+
+    def updateFeedthroughs(self):
+        ''' Sets method attributes of this object to point to the methods of its driver
+        '''
+        def getDriverAttribute(attName):
+            try:
+                driverAttribute = getattr(self.driver, attName)
+            except AttributeError as err:
+                logger.error('Driver ' + self._driver_class + ' does not implement ' + attName +
+                    '\nIt does do ' + str(publicDir(self.driver)))
+                raise err
+            return driverAttribute
+
         for funName in type(self).essentialMethods:
             if type(self.driver) is not DefaultDriver:
                 try:
                     driverMethod = getattr(self.driver, funName)
                 except AttributeError as err:
-                    newm = err.args[0] + '\nDriver does not implement ' + funName
-                    newm += '\nIt does do ' + str(callablePublicMethodsDir(self.driver))
-                    err.args = (newm,) + err.args[1:]
+                    logger.error('Driver ' + self._driver_class + ' does not implement method ' + funName +
+                        '\nIt does do ' + str(publicDir(self.driver)))
                     raise err
-                assert callable(driverMethod)
+                if not callable(driverMethod):
+                    raise TypeError(type(self.driver).__name__ + '.' + funName + ' is not callable. It is a ' + type(driverMethod).__name__)
                 setattr(self, funName, driverMethod)
             else:
                 setattr(self, funName, raiseAnException('Driver not present. Cannot use asReal'))
@@ -269,19 +288,16 @@ class Instrument(Node):
                 try:
                     driverProperty = getattr(type(self.driver), propName)
                 except AttributeError as err:
-                    newm = err.args[0] + '\nDriver does not implement ' + funName
-                    err.args = (newm,) + err.args[1:]
+                    logger.error('Driver ' + self._driver_class + ' does not implement property ' + propName +
+                        '\nIt does do ' + str(publicDir(self.driver)))
                     raise err
-                assert isinstance(driverProperty, property)
+                if not isinstance(driverProperty, property):
+                    raise TypeError(type(self.driver).__name__ + '.' + propName + ' is not a property. It is a ' + type(driverProperty).__name__)
                 setattr(type(self), propName, driverProperty)
             else:
                 notImpFunc = raiseAnException('Driver not present. Cannot use asReal')
                 notImpProp = property(notImpFunc, notImpFunc)
                 setattr(type(self), propName, notImpProp)
-
-        super().__init__(_name=name,
-                         _id_string=id_string,
-                         address=address, **kwargs)
 
     @property
     def driver_object(self):
