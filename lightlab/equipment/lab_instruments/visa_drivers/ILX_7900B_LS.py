@@ -34,13 +34,11 @@ class ILX_7900B_LS(VISAInstrumentDriver):
 
     powerRange = np.array([-20, 13])
 
-    def __init__(self, name='The laser source', address=None, **kwargs):
-        self.useChans = kwargs.pop("useChans", None)
-        self.stateDict = kwargs.pop("stateDict", None)
+    def __init__(self, name='The laser source', address=None, useChans=[1], **kwargs):
         super().__init__(name=name, address=address, tempSess=False, **kwargs)
         self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
 
-        useChans, stateDict = self.useChans, self.stateDict
+        useChans, stateDict = useChans, kwargs.pop("stateDict", None)
         if useChans is None and stateDict is None:
             raise Exception(
                 'Must specify either useChans or stateDict when initializing laser sources')
