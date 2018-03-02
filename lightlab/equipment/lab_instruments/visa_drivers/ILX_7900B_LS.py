@@ -2,6 +2,7 @@ from ..visa_drivers import VISAInstrumentDriver
 import numpy as np
 from lightlab.util import io
 from lightlab.util.data import Spectrum
+from lightlab import logger
 import time
 
 
@@ -51,10 +52,10 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         # if any(ch > self.fullChannelNums - 1 for ch in self.useChans):
         #     raise Exception('Requested channel is more than there are available')
         if not set(self.ordering_left).isdisjoint(self.useChans):
-            print('hit left')
+            logger.debug('hit left')
             self.ordering = self.ordering_left
         elif not set(self.ordering_left).isdisjoint(self.useChans):
-            print('hit right')
+            logger.debug('hit right')
             self.ordering = self.ordering_right
 
     def startup(self):
