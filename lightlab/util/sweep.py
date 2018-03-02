@@ -29,7 +29,7 @@ class Sweeper(object):
             if self.savefile is not None:
                 savefile = self.savefile
             else:
-                print('Warning: No save file specified')
+                raise ValueError('No save file specified')
         io.savePickle(savefile, self.data)
 
     def load(self, savefile=None):
@@ -41,7 +41,7 @@ class Sweeper(object):
             if self.savefile is not None:
                 savefile = self.savefile
             else:
-                print('Warning: No save file specified')
+                raise ValueError('No save file specified')
         self.data = io.loadPickle(savefile)
 
     def setPlotOptions(self, **kwargs):
@@ -142,7 +142,7 @@ class NdSweeper(Sweeper):
                         pass
         try:
             if soakTime is not None:
-                print('Soaking for', soakTime, 'seconds.')
+                logger.debug('Soaking for', soakTime, 'seconds.')
                 for actu in self.actuate.values():
                     f = actu[0]
                     x = actu[1][0]
@@ -210,7 +210,7 @@ class NdSweeper(Sweeper):
                 display.clear_output(wait=True)
                 display.display(plt.gcf())
         except Exception as err:
-            print('Error while sweeping. Reloading old data')
+            logger.error('Error while sweeping. Reloading old data')
             self.data = oldData
             raise err
 
@@ -575,6 +575,11 @@ class NdSweeper(Sweeper):
                 ax.set_ylabel(actKeyList[0])
         return axArr
 
+    def load(self, savefile=None):
+        super().load(savefile)
+        self._recalcSwpShape()
+        print(self.swpShape)
+
 def simpleSweep(actuate, domain, measure=None):
     ''' Basic sweep in one dimension, without function keys, parsing, or plotting.
 
@@ -655,7 +660,7 @@ class CommandControlSweeper(Sweeper):
             if self.savefile is not None:
                 savefile = self.savefile
             else:
-                print('Warning: No save file specified')
+                raise ValueError('No save file specified')
         tempEvalRef = self.evaluate
         self.evaluate = None
         io.savePickle(savefile, self)
@@ -709,7 +714,9 @@ class CommandControlSweeper(Sweeper):
                     display.clear_output(wait=True)
                     display.display(plt.gcf())  # Note this may have to be interAx instead of gcf
             if self.monitorOptions['cmdCtrlPrint']:
-                print('(trial, gridIndex) =', index, ':', 'cmdArr =', cmdArr, ':', 'measArr =', measArr)
+                print('(trial, gridIndex) =', index)
+                print('  cmdArr  = ' + '   '.join(['{:.3f}'.format(v) for v in cmdArr]))
+                print('  measArr = ' + '   '.join(['{:.3f}'.format(v) for v in measArr]))
             prog.update()
         if autoSave:
             self.save()
@@ -1040,10 +1047,10 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=F
         worstInd = np.argmin(measuredVals)
         if measuredVals[bestInd] - measuredVals[worstInd] < yTol \
             or offsToMeasure[-1] - offsToMeasure[0] < xTol:
-            print('Converged on peak')
+            logger.debug('Converged on peak')
             break
         if worstInd == float(nSwarm - 1)/2:
-            print('Detected positive curvature')
+            logger.debug('Detected positive curvature')
             # break
         offsToMeasure = shrinkAround(offsToMeasure, bestInd)
     return (offsToMeasure[bestInd], measuredVals[bestInd])
