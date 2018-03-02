@@ -241,10 +241,10 @@ class Instrument(Node):
         self.ports = kwargs.pop("ports", dict())
         self.address = address
 
-        self._driver_class = kwargs.pop("driver_class", None)
+        # self._driver_class = kwargs.get("driver_class", None)
         if self._driver_class is None:
-            self._driver_class = kwargs.pop("_driver_class", None)
-        self.__driver_object = kwargs.pop("driver_object", None)
+            self._driver_class = kwargs.get("_driver_class", None)
+        self.__driver_object = kwargs.get("driver_object", None)
         if self._driver_class is not None and self.__driver_object is not None:
             assert isinstance(self.__driver_object, self._driver_class)
 
@@ -280,7 +280,8 @@ class Instrument(Node):
                 setattr(type(self), propName, notImpProp)
 
         super().__init__(_name=name,
-                         _id_string=id_string, **kwargs)
+                         _id_string=id_string,
+                         address=address, **kwargs)
 
     @property
     def driver_object(self):
