@@ -1,5 +1,8 @@
-SHELL := /bin/bash 
+SHELL := /bin/bash
 
+# different tests
+TESTARGS = -s --cov=lightlab --cov-config .coveragerc
+TESTARGSNB = --nbval-lax --sanitize-with ipynb_pytest_santize.cfg
 # DOCDEFAULT can be html or latexpdf
 DOCDEFAULT       = html
 
@@ -30,7 +33,7 @@ testbuild: venv setup.py test-requirements.txt
 test: testbuild
 	( \
 		source venv/bin/activate; \
-		py.test -s tests; \
+		py.test $(TESTARGS) tests; \
 	)
 
 test-lint: testbuild
@@ -42,7 +45,13 @@ test-lint: testbuild
 test-nb: devbuild
 	( \
 		source venv/bin/activate; \
-		py.test -s notebooks/Tests --nbval-lax --sanitize-with ipynb_pytest_santize.cfg; \
+		py.test $(TESTARGS) $(TESTARGSNB) notebooks/Tests; \
+	)
+
+test-all: testbuild devbuild
+	( \
+		source venv/bin/activate; \
+		py.test $(TESTARGS) $(TESTARGSNB) tests notebooks/Tests; \
 	)
 
 clean:
@@ -95,4 +104,4 @@ dochost: docs
 	cd docs/_build/$(DOCDEFAULT) && \
 	python3 -m http.server $(DOCHOSTPORT)
 
-.PHONY: test clean purge dochost monitorhost
+.PHONY: test test-nb test-all clean purge dochost monitorhost
