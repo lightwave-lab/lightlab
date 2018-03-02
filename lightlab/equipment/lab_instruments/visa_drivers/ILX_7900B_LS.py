@@ -52,10 +52,8 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         # if any(ch > self.fullChannelNums - 1 for ch in self.useChans):
         #     raise Exception('Requested channel is more than there are available')
         if not set(self.ordering_left).isdisjoint(self.useChans):
-            logger.debug('hit left')
             self.ordering = self.ordering_left
         elif not set(self.ordering_left).isdisjoint(self.useChans):
-            logger.debug('hit right')
             self.ordering = self.ordering_right
 
     def startup(self):
