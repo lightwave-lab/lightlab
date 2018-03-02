@@ -274,7 +274,7 @@ class Instrument(Node):
                 try:
                     driverMethod = getattr(self.driver, funName)
                 except AttributeError as err:
-                    logger.error('Driver ' + self._driver_class + ' does not implement ' + funName +
+                    logger.error('Driver ' + self._driver_class + ' does not implement method ' + funName +
                         '\nIt does do ' + str(publicDir(self.driver)))
                     raise err
                 if not callable(driverMethod):
@@ -288,10 +288,9 @@ class Instrument(Node):
                 try:
                     driverProperty = getattr(type(self.driver), propName)
                 except AttributeError as err:
-                    logger.error('Driver ' + self._driver_class + ' does not implement ' + propName +
+                    logger.error('Driver ' + self._driver_class + ' does not implement property ' + propName +
                         '\nIt does do ' + str(publicDir(self.driver)))
                     raise err
-                driverProperty = getDriverAttribute(propName)
                 if not isinstance(driverProperty, property):
                     raise TypeError(type(self.driver).__name__ + '.' + propName + ' is not a property. It is a ' + type(driverProperty).__name__)
                 setattr(type(self), propName, driverProperty)
