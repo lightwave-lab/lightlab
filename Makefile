@@ -90,7 +90,7 @@ monitorhost:
 	cd progress-monitor && python3 -m http.server $(shell cat .monitorhostport)
 
 dochost: docs
-	source venv/bin/activate && \
+	# source venv/bin/activate && \
 	$(MAKE) -C docs $(DOCDEFAULT) && \
 	cd docs/_build/$(DOCDEFAULT) && \
 	python3 -m http.server $(DOCHOSTPORT)
