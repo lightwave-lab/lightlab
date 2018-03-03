@@ -5,178 +5,7 @@ This is useful to keep track of what is connected to what.
 import numpy as np
 from lightlab import logger
 import lightlab.laboratory.state as labstate
-from contextlib import contextmanager
-from lightlab.util.data import Spectrum, argFlatten, Waveform
-
-
-virtualOnly = False
-
-
-class DualFunction(object):
-    """ This class implements a descriptor for a function whose behavior depends
-        on an instance's variable. This was inspired by core python's property
-        descriptor.
-
-        Example usage:
-
-        .. code-block:: python
-
-            @DualFunction
-            def measure(self, *args, **kwargs):
-                # use a model to simulate outputs based on args and kwargs and self.
-                return simulated_output
-
-            @measure.hardware
-            def measure(self, *args, **kwargs):
-                # collect data from hardware using args and kwargs and self.
-                return output
-
-
-        The "virtual" function will be called if ``self.virtual`` equals True,
-        otherwise the hardware decorated function will be called instead.
-
-    """
-
-    def __init__(self, virtual_function=None, hardware_function=None, doc=None):
-        self.virtual_function = virtual_function
-        self.hardware_function = hardware_function
-        if doc is None and virtual_function is not None:
-            doc = virtual_function.__doc__
-        self.__doc__ = doc
-
-    def __get__(self, experiment_obj, obj_type=None):
-        if experiment_obj is None:
-            return self
-
-        def wrapper(*args, **kwargs):
-            if experiment_obj.virtual:
-                return self.virtual_function(experiment_obj, *args, **kwargs)
-            else:
-                return self.hardware_function(experiment_obj, *args, **kwargs)
-        return wrapper
-
-    def hardware(self, func):
-        self.hardware_function = func
-        return self
-
-    def virtual(self, func):
-        self.virtual_function = func
-        return self
-
-
-class DualMethod(object):
-    ''' This differs from DualFunction because it exists outside
-        of the object instance. Instead it takes the object when initializing.
-
-        It uses __call__ instead of __get__ because it is its own object
-    '''
-    def __init__(self, dualInstrument=None, virtual_function=None, hardware_function=None, doc=None):
-        self.dualInstrument = dualInstrument
-        self.virtual_function = virtual_function
-        self.hardware_function = hardware_function
-        if doc is None and virtual_function is not None:
-            doc = virtual_function.__doc__
-        self.__doc__ = doc
-
-    def __call__(self, *args, **kwargs):
-        if self.dualInstrument.virtual:
-            return self.virtual_function(*args, **kwargs)
-        else:
-            return self.hardware_function(*args, **kwargs)
-
-
-class Virtualizable(object):
-    def __init__(self, *args, **kwargs):
-        try:
-            super().__init__(*args, **kwargs)
-        except TypeError:
-            super().__init__()
-        self._virtual = None
-        self.synced = list()  # These are put in the same virtual state as this one
-
-    def hardware_warmup(self):
-        pass
-
-    def global_hardware_warmup(self):
-        try:
-            self.instruments
-        except AttributeError:
-            return
-        else:
-            for instrument in self.instruments:
-                instrument.startup()
-
-    def hardware_cooldown(self):
-        pass
-
-    def synchronize(self, *newVirtualizables):
-        ''' Adds an experiment that this one will put in the same virtual state as itself.
-
-            Args:
-                newExp (Experiment)
-        '''
-        # if not issubclass(type(newExp), Experiment):
-        #     raise TypeError(str(newExp) + ' of type ' + str(type(newExp)) + ' must be an Experiment (sub)class.')
-        for virtualObject in argFlatten(*newVirtualizables):
-            try:
-                virtualObject._virtual
-            except AttributeError:
-                raise TypeError('virtualObject of type {} is not a Virtualizable subclass'.format(type(virtualObject)))
-            self.synced.append(virtualObject)
-
-
-    @property
-    def virtual(self):
-        if self._virtual is None:
-            raise VirtualizationError("Virtual context unknown. Please refer to method asVirtual().")
-        else:
-            return self._virtual
-
-    @contextmanager
-    def asVirtual(self):
-        old_value = self._virtual
-        self._virtual = True
-        old_subvalues = dict()
-        for iSub, sub in enumerate(self.synced):
-            old_subvalues[iSub] = sub._virtual
-            sub._virtual = True
-        try:
-            yield self
-        finally:
-            self._virtual = old_value
-            for iSub, sub in enumerate(self.synced):
-                sub._virtual = old_subvalues[iSub]
-
-    @contextmanager
-    def asReal(self):
-        global virtualOnly
-        if virtualOnly:
-            try:
-                yield self
-            except VirtualizationError:
-                pass
-            finally:
-                return
-
-        old_value = self._virtual
-        self._virtual = False
-        old_subvalues = dict()
-        for iSub, sub in enumerate(self.synced):
-            old_subvalues[iSub] = sub._virtual
-            sub._virtual = False
-        try:
-            self.global_hardware_warmup()
-            self.hardware_warmup()
-            for sub in self.synced:
-                # sub.global_hardware_warmup()
-                sub.hardware_warmup()
-            yield self
-        finally:
-            self.hardware_cooldown()
-            self._virtual = old_value
-            for iSub, sub in enumerate(self.synced):
-                sub.hardware_cooldown()
-                sub._virtual = old_subvalues[iSub]
+from lightlab.laboratory.virtualization import DualFunction, Virtualizable
 
 
 class Experiment(Virtualizable):
@@ -261,6 +90,16 @@ class Experiment(Virtualizable):
         if not self.valid:
             raise RuntimeError("Experiment is offline.")
         return super().asReal()
+
+    def global_hardware_warmup(self):
+        try:
+            self.instruments
+        except AttributeError:
+            return
+        else:
+            for instrument in self.instruments:
+                instrument.startup()
+
 
     def registerInstrument(self, instrument, host=None, bench=None):
         if host is None and bench is None:
@@ -389,13 +228,9 @@ class MasterExperiment(Experiment):
     def startup(self):
         pass
 
-class VirtualizationError(RuntimeError):
-    pass
-
 
 #### Some common ones
 from lightlab.util.io import ChannelError
-
 
 ## Predominantly sources
 
@@ -435,10 +270,6 @@ class VirtualNICurrentSource(Experiment, ElectricalSource, MultiModalSource):
                 if not hasattr(hwSrcRef, att):
                     raise AttributeError('{} must provide {}'.format(hwSrcRef, att))
         self.hwSrcRef = hwSrcRef
-
-    def hardware_warmup(self):
-        if self.hwSrcRef is None:
-            raise VirtualizationError('No hardware reference has been specified')
 
     @DualFunction
     def setChannelTuning(self, chanValDict, mode):
@@ -495,12 +326,7 @@ class VirtualMrrsSource(Experiment):
             raise ChannelError('Electrical channel blocked out by multiple devices')
 
     def hardware_warmup(self):
-        if self.hwRef is None:
-            raise VirtualizationError('No hardware reference has been specified')
-        # Make our internal representation reflect the hardware's
         fullHwState = self.hwRef.stateDict
-        # with self.asVirtual():
-        #     self.setChannelTuning(fullHwState)
 
     @DualFunction
     def setChannelTuning(self, currDict, mode='mwperohm'):

@@ -5,7 +5,6 @@ from lightlab.laboratory import Node
 from lightlab.laboratory.devices import Device
 import lightlab.laboratory.state as labstate
 from lightlab.equipment.lab_instruments import VISAObject, DefaultDriver
-from .experiments import DualMethod, Virtualizable
 
 from lightlab import logger
 import os
@@ -210,7 +209,12 @@ class Bench(Node):
 #TODO add instrument equality function
 class Instrument(Node):
     """ Class storing information about instruments, for the purpose of
-    facilitating verifying whether it is connected to the correct devices. """
+        facilitating verifying whether it is connected to the correct devices.
+
+        Driver feedthrough: methods, properties, and even regular attributes
+        that are in ``essentialMethods`` and ``essentialProperties`` of the class
+        will get/set/call through to the driver object.
+    """
     _driver_class = None
     __driver_object = None
     address = None
@@ -388,90 +392,9 @@ class NotFoundError(RuntimeError):
     pass
 
 
-def raiseAnException(text):
-    ''' Returns a function that just raises a NotImplementedError with the specified text
-
-        Sometimes it is good to have a method exist and be unspecified, even if it cannot be called.
-        That's when you would use this.
-    '''
-    def notImp(*args, **kwargs):
-        raise NotImplementedError(text)
-    return notImp
-
-
-class DualInstrument(Virtualizable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if not isinstance(self, Instrument):
-            raise TypeError('Something that is a DualInstrument must also inherit Instrument from elsewhere.\n'
-                + 'Class ' + self.__class__.__name__ + ', which inherits: \n'
-                + '\n'.join(bas.__name__ for bas in self.__class__.mro()[1:]))
-
-        # figure out all the callables in hardware version
-        # if not implemented by type(self), set virtual version to notImplemented
-        for funName in self.essentialMethods:
-            try:
-                hwMethod = getattr(self, funName)
-            except AttributeError:
-                hwMethod = raiseAnException('Driver version not specified: ' + funName)
-            try:
-                virtualMethod = getattr(self, 'v_' + funName)
-            except AttributeError:
-                virtualMethod = raiseAnException('Virtual version not specified: v_' + funName)
-            assert callable(virtualMethod)
-            dualizedMethod = DualMethod(self, virtual_function=virtualMethod, hardware_function=hwMethod)
-            setattr(self, funName, dualizedMethod)
-
-        for propName in self.essentialProperties:
-            try:
-                hwProp = getattr(type(self), propName)
-            except AttributeError:
-                notImpFunc = raiseAnException('Driver version not specified: ' + propName)
-                hwProp = property(notImpFunc, notImpFunc)
-            try:
-                virtualProp = getattr(type(self), 'v_' + propName)
-            except AttributeError:
-                notImpFunc = raiseAnException('Virtual version not specified: v_' + propName)
-                virtualProp = property(notImpFunc, notImpFunc)
-            assert isinstance(virtualProp, property)
-            dualizedGetter = DualMethod(self, virtual_function=virtualProp.__get__, hardware_function=hwProp.__get__)
-            dualizedSetter = DualMethod(self, virtual_function=virtualProp.__set__, hardware_function=hwProp.__set__)
-            dualizedProperty = property(dualizedGetter, dualizedSetter)
-            setattr(type(self), propName, dualizedProperty)
-
-    @classmethod
-    def fromInstrument(cls, hwOnlyInstr, **kwargs):
-        ''' Gives a new dual instrument that has all the same properties and references.
-            This is especially useful if you have an instrument stored in the JSON labstate,
-            and would then like to virtualize it in your notebook.
-
-            Does not reinitialize the driver. Keeps the same one.
-
-            The instrument base of hwOnlyInstr must be the same instrument base of this class
-        '''
-        instrumentBaseClass = None
-        for bas in cls.__bases__:
-            if issubclass(bas, Instrument):
-                instrumentBaseClass = bas
-                break
-        else:
-            raise TypeError('This DualInstrument subclass, {}, does not inherit from an Instrument class'.format(cls.__name__))
-        if not isinstance(hwOnlyInstr, instrumentBaseClass):
-            raise TypeError('The fromInstrument ({}) is not an instance of the expected Instrument class ({})'.format(hwOnlyInstr.__class__.__name__, instrumentBaseClass.__name__))
-
-        for attr in ['driver_class', 'driver_object', 'address', 'id_string', 'name', 'bench', 'host', 'ports']:
-            kwargs[attr] = getattr(hwOnlyInstr, attr)
-        return cls(**kwargs)
-
-    def asReal(self):
-        assert self.driver is not None
-        return super().asReal()
-
 
 # Aliases
 # TODO VERIFY CODE BELOW
-
 
 class PowerMeter(Instrument):
     essentialMethods = ['powerDbm', 'powerLin']
@@ -510,6 +433,7 @@ class VectorGenerator(Instrument):
         'listEnable',
         'sweepSetup',
         'sweepEnable']
+
 
 class Clock(Instrument):
     essentialMethods = ['on']
