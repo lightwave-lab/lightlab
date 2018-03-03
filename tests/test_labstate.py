@@ -2,9 +2,10 @@
 
 import pytest
 import lightlab.laboratory.state as labstate
-from lightlab.laboratory.instruments import Host, Bench, Instrument
+from lightlab.laboratory.instruments import Host, Bench, Instrument, Keithley
 from lightlab.laboratory.devices import Device
 from lightlab.laboratory.experiments import Experiment, DualFunction
+from lightlab.equipment.lab_instruments import Keithley_2400_SM
 import json
 import time
 import os
@@ -18,7 +19,19 @@ labstate.filename = filename
 Host1 = Host(name="Host1")
 Bench1 = Bench(name="Bench1")
 Bench2 = Bench(name="Bench2")
-instrument1 = Instrument(name="instrument1", bench=Bench1, host=Host1, ports=["front_source", "rear_source"])
+
+
+def open_error(self):
+    raise RuntimeError("self.open() function being called upon initialization.")
+
+
+__GETCURRENTTEST = 0.123
+Keithley_2400_SM.startup = lambda self: True
+Keithley_2400_SM.getCurrent = lambda self: __GETCURRENTTEST
+Keithley_2400_SM.open = open_error
+
+instrument1 = Keithley(name="keithley1", bench=Bench1, host=Host1,
+                       ports=["front_source", "rear_source"], _driver_class=Keithley_2400_SM)
 instrument2 = Instrument(name="instrument2", bench=Bench1, host=Host1, ports=["port1", "channel"])
 device1 = Device(name="device1", bench=Bench1, ports=["input", "output"])
 device2 = Device(name="device2", bench=Bench1, ports=["input", "output"])
@@ -72,6 +85,12 @@ def test_reloadlabstate(lab):
 
     lab2 = labstate.LabState.loadState(filename=filename)
     assert lab == lab2
+
+
+def test_instrument_method_from_frozen(lab):
+    lab2 = labstate.LabState.loadState(filename=filename)
+    keithley = lab2.instruments_dict["keithley1"]
+    assert keithley.getCurrent() == __GETCURRENTTEST
 
 
 def test_corruptreload_extratext(lab):
