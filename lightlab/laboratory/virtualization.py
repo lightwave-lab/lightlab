@@ -14,109 +14,6 @@ virtualOnly = False
 class VirtualizationError(RuntimeError):
     pass
 
-
-class Virtualizable(object):
-    ''' Virtualizable means that it can switch between two states, usually corresponding
-        to a real-life situation and a virtual/simulated situation.
-    '''
-    def __init__(self, *args, **kwargs):
-        try:
-            super().__init__(*args, **kwargs)
-        except TypeError:
-            super().__init__()
-        self._virtual = None
-        self.synced = list()  # These are put in the same virtual state as this one
-
-    def global_hardware_warmup(self):
-        pass
-
-    def hardware_warmup(self):
-        ''' Be warned that this only works when using the context manager
-        '''
-        pass
-
-    def hardware_cooldown(self):
-        ''' Be warned that this only works when using the context manager
-        '''
-        pass
-
-    def synchronize(self, *newVirtualizables):
-        ''' Adds another object that this one will put in the same virtual state as itself.
-
-            Args:
-                newVirtualizables (*args, tuples, lists): Other virtualizable things
-        '''
-        for virtualObject in argFlatten(*newVirtualizables):
-            try:
-                virtualObject._virtual
-            except AttributeError:
-                raise TypeError('virtualObject of type {} is not a Virtualizable subclass'.format(type(virtualObject)))
-            self.synced.append(virtualObject)
-
-    @property
-    def virtual(self):
-        if self._virtual is None:
-            raise VirtualizationError("Virtual context unknown. Please refer to method asVirtual().")
-        else:
-            return self._virtual
-
-    @virtual.setter
-    def virtual(self, toVirtual):
-        ''' An alternative to context managing. Note that hardware_warmup will not be called
-        '''
-        global virtualOnly
-        if virtualOnly and not toVirtual:
-            toVirtual = None
-        self._virtual = toVirtual
-        for iSub, sub in enumerate(self.synced):
-            sub._virtual = toVirtual
-
-    @contextmanager
-    def asVirtual(self):
-        old_value = self._virtual
-        self._virtual = True
-        old_subvalues = dict()
-        for iSub, sub in enumerate(self.synced):
-            old_subvalues[iSub] = sub._virtual
-            sub._virtual = True
-        try:
-            yield self
-        finally:
-            self._virtual = old_value
-            for iSub, sub in enumerate(self.synced):
-                sub._virtual = old_subvalues[iSub]
-
-    @contextmanager
-    def asReal(self):
-        global virtualOnly
-        if virtualOnly:
-            try:
-                yield self
-            except VirtualizationError:
-                pass
-            finally:
-                return
-
-        old_value = self._virtual
-        self._virtual = False
-        old_subvalues = dict()
-        for iSub, sub in enumerate(self.synced):
-            old_subvalues[iSub] = sub._virtual
-            sub._virtual = False
-        try:
-            self.global_hardware_warmup()
-            self.hardware_warmup()
-            for sub in self.synced:
-                sub.hardware_warmup()
-            yield self
-        finally:
-            self.hardware_cooldown()
-            self._virtual = old_value
-            for iSub, sub in enumerate(self.synced):
-                sub.hardware_cooldown()
-                sub._virtual = old_subvalues[iSub]
-
-
 class DualFunction(object):
     """ This class implements a descriptor for a function whose behavior depends
         on an instance's variable. This was inspired by core python's property
@@ -192,6 +89,108 @@ class DualMethod(object):
             return self.hardware_function(*args, **kwargs)
 
 
+class Virtualizable(object):
+    ''' Virtualizable means that it can switch between two states, usually corresponding
+        to a real-life situation and a virtual/simulated situation.
+    '''
+    def __init__(self, *args, **kwargs):
+        try:
+            super().__init__(*args, **kwargs)
+        except TypeError:
+            super().__init__()
+        self._virtual = None
+        self.synced = list()  # These are put in the same virtual state as this one
+
+    def global_hardware_warmup(self):
+        pass
+
+    def hardware_warmup(self):
+        ''' Be warned that this only works when using the context manager
+        '''
+        pass
+
+    def hardware_cooldown(self):
+        ''' Be warned that this only works when using the context manager
+        '''
+        pass
+
+    def synchronize(self, *newVirtualizables):
+        ''' Adds another object that this one will put in the same virtual state as itself.
+
+            Args:
+                newVirtualizables (*args): Other virtualizable things
+        '''
+        for virtualObject in newVirtualizables:
+            try:
+                virtualObject._virtual
+            except AttributeError:
+                raise TypeError('virtualObject of type {} is not a Virtualizable subclass'.format(type(virtualObject)))
+            self.synced.append(virtualObject)
+
+    @property
+    def virtual(self):
+        if self._virtual is None:
+            raise VirtualizationError("Virtual context unknown. Please refer to method asVirtual().")
+        else:
+            return self._virtual
+
+    @virtual.setter
+    def virtual(self, toVirtual):
+        ''' An alternative to context managing. Note that hardware_warmup will not be called
+        '''
+        global virtualOnly
+        if virtualOnly and not toVirtual:
+            toVirtual = None
+        self._virtual = toVirtual
+        for iSub, sub in enumerate(self.synced):
+            sub._virtual = toVirtual
+
+    @contextmanager
+    def asVirtual(self):
+        old_value = self._virtual
+        self._virtual = True
+        old_subvalues = dict()
+        for iSub, sub in enumerate(self.synced):
+            old_subvalues[iSub] = sub._virtual
+            sub._virtual = True
+        try:
+            yield self
+        finally:
+            self._virtual = old_value
+            for iSub, sub in enumerate(self.synced):
+                sub._virtual = old_subvalues[iSub]
+
+    @contextmanager
+    def asReal(self):
+        global virtualOnly
+        if virtualOnly:
+            try:
+                yield self
+            except VirtualizationError:
+                pass
+            finally:
+                return
+
+        old_value = self._virtual
+        self._virtual = False
+        old_subvalues = dict()
+        for iSub, sub in enumerate(self.synced):
+            old_subvalues[iSub] = sub._virtual
+            sub._virtual = False
+        try:
+            self.global_hardware_warmup()
+            self.hardware_warmup()
+            for sub in self.synced:
+                sub.hardware_warmup()
+            yield self
+        finally:
+            self.hardware_cooldown()
+            self._virtual = old_value
+            for iSub, sub in enumerate(self.synced):
+                sub.hardware_cooldown()
+                sub._virtual = old_subvalues[iSub]
+
+
 class VirtualInstrument(object):
     ''' Just a placeholder for future functionality '''
     pass
@@ -242,7 +241,7 @@ class DualInstrument(Virtualizable):
         self.synced = []
 
     def __getattribute__(self, att):
-        if att in DualInstrument.__dict__.keys():
+        if att in list(DualInstrument.__dict__.keys()) + list(Virtualizable.__dict__.keys()):
             return object.__getattribute__(self, att)
         elif self._virtual is None:
             raise VirtualizationError('Virtual context unknown. Please refer to method asVirtual().\nAttribute was ' + att + ' in ' + str(self))
