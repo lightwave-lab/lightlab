@@ -122,7 +122,7 @@ def main():
 
     metadata = dict(
         name='lightlab',
-        version='0.1.0',
+        version='0.1.1',
         description='Lightwave Lab instrument automation tools',
         long_description=readme,
         license=license,
