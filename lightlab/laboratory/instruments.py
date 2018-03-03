@@ -207,17 +207,6 @@ class Bench(Node):
         return "Bench {}".format(self.name)
 
 
-def publicDir(obj):
-    directory = dir(obj)
-    iHidden = []
-    for i, attr in enumerate(directory):
-        if attr[0] == '_':
-            iHidden.append(i)
-    for i in iHidden[::-1]:
-        del directory[i]
-    return directory
-
-
 #TODO add instrument equality function
 class Instrument(Node):
     """ Class storing information about instruments, for the purpose of
@@ -240,12 +229,21 @@ class Instrument(Node):
         self.__host = kwargs.pop("host", None)
         self.ports = kwargs.pop("ports", dict())
 
+        driver_klass = kwargs.get('_driver_class', None)
         for attrName in self.essentialMethods + self.essentialProperties:
             if attrName in kwargs.keys():
                 raise AttributeError('Ambiguous attributes between Instrument and its driver: ' + attrName)
+            if driver_klass is not None:
+                if not hasattr(driver_klass, attrName):
+                    raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
+
         super().__init__(_name=name,
                          _id_string=id_string,
                          address=address, **kwargs)
+
+    def __dir__(self):
+        ''' For autocompletion in ipython '''
+        return super().__dir__() + self.essentialProperties + self.essentialMethods
 
     def __getattr__(self, attrName):
         if attrName in self.essentialProperties + self.essentialMethods: # or methods
