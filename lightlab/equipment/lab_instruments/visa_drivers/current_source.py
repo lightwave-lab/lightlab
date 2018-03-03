@@ -55,8 +55,8 @@ class CurrentSources(VISAInstrumentDriver):
 
         useChans, stateDict = self.useChans, self.stateDict
         if useChans is None and stateDict is None:
-            raise Exception(
-                'Must specify either useChans or stateDict when initializing current sources')
+            # raise Exception('Must specify either useChans or stateDict when initializing current sources')
+            useChans = list()
         if stateDict is None:
             self.channels = list(useChans)
             self.stateDict = dict([ch, 0] for ch in self.channels)
@@ -125,6 +125,13 @@ class CurrentSources(VISAInstrumentDriver):
             self.__tuneState = enforcedState
             self.stateDict = dict(zip(self.channels, self.__tuneState))
             self.sendToHardware()
+
+    def getChannelTuning(self, mode='mwperohm'):
+        self.mode = mode
+        chanValDict = dict()
+        for iCh, chan in enumerate(self.channels):
+            chanValDict[chan] = self.tuneState[iCh]
+        return chanValDict
 
     def setChannelTuning(self, chanValDict, mode='mwperohm'):
         """Sets a number of channel values and updates hardware

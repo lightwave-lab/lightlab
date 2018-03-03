@@ -150,7 +150,7 @@ class MeasuredFunction(object):
             Returns:
                 (MeasuredFunction): new object, which is a child class of MeasuredFunction
         '''
-        newObj = type(self)(newAbsc.copy(), newOrdi.copy(), unsafe=False)
+        newObj = type(self)(newAbsc.copy(), newOrdi.copy(), unsafe=True)
         for attr, val in self.__dict__.items():
             if attr not in ['absc', 'ordi']:
                 newObj.__dict__[attr] = val

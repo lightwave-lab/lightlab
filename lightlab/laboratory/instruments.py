@@ -5,7 +5,6 @@ from lightlab.laboratory import Node
 from lightlab.laboratory.devices import Device
 import lightlab.laboratory.state as labstate
 from lightlab.equipment.lab_instruments import VISAObject, DefaultDriver
-from .experiments import DualMethod, Virtualizable
 
 from lightlab import logger
 import os
@@ -207,21 +206,15 @@ class Bench(Node):
         return "Bench {}".format(self.name)
 
 
-def callablePublicMethodsDir(obj):
-    directory = dir(obj)
-    iHidden = []
-    for i, attr in enumerate(directory):
-        if attr[0] == '_':
-            iHidden.append(i)
-    for i in iHidden[::-1]:
-        del directory[i]
-    return directory
-
-
 #TODO add instrument equality function
 class Instrument(Node):
     """ Class storing information about instruments, for the purpose of
-    facilitating verifying whether it is connected to the correct devices. """
+        facilitating verifying whether it is connected to the correct devices.
+
+        Driver feedthrough: methods, properties, and even regular attributes
+        that are in ``essentialMethods`` and ``essentialProperties`` of the class
+        will get/set/call through to the driver object.
+    """
     _driver_class = None
     __driver_object = None
     address = None
@@ -233,36 +226,46 @@ class Instrument(Node):
     ports = None
 
     essentialMethods = []
+    essentialProperties = []
 
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
         self.__bench = kwargs.pop("bench", None)
         self.__host = kwargs.pop("host", None)
         self.ports = kwargs.pop("ports", dict())
-        self.address = address
 
-        self._driver_class = kwargs.pop("driver_class", None)
-        if self._driver_class is None:
-            self._driver_class = kwargs.pop("_driver_class", None)
-        self.__driver_object = kwargs.pop("driver_object", None)
-        if self._driver_class is not None and self.__driver_object is not None:
-            assert isinstance(self.__driver_object, self._driver_class)
-
-        # make methods for feedthrough
-        for funName in type(self).essentialMethods:
-            if type(self.driver) is not DefaultDriver:
-                try:
-                    driverMethod = getattr(self.driver, funName)
-                except AttributeError as err:
-                    newm = err.args[0] + '\nDriver does not implement ' + funName
-                    newm += '\nIt does do ' + str(callablePublicMethodsDir(self.driver))
-                    err.args = (newm,) + err.args[1:]
-                    raise err
-                setattr(self, funName, driverMethod)
-            else:
-                setattr(self, funName, raiseAnException('Driver not present. Cannot use asReal'))
+        driver_klass = kwargs.get('_driver_class', None)
+        for attrName in self.essentialMethods + self.essentialProperties:
+            if attrName in kwargs.keys():
+                raise AttributeError('Ambiguous attributes between Instrument and its driver: ' + attrName)
+            if driver_klass is not None:
+                if not hasattr(driver_klass, attrName):
+                    raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
 
         super().__init__(_name=name,
-                         _id_string=id_string, **kwargs)
+                         _id_string=id_string,
+                         address=address, **kwargs)
+
+    def __dir__(self):
+        ''' For autocompletion in ipython '''
+        return super().__dir__() + self.essentialProperties + self.essentialMethods
+
+    def __getattr__(self, attrName):
+        if attrName in self.essentialProperties + self.essentialMethods: # or methods
+            return getattr(self.driver, attrName)
+        else:
+            return super().__getattr__(attrName)
+
+    def __setattr__(self, attrName, newVal):
+        if attrName in self.essentialProperties + self.essentialMethods: # or methods
+            return setattr(self.driver, attrName, newVal)
+        else:
+            return super().__setattr__(attrName, newVal)
+
+    def __delattr__(self, attrName):
+        if attrName in self.essentialProperties + self.essentialMethods: # or methods
+            return self.driver.__delattr__(attrName)
+        else:
+            return super().__delattr__(attrName)
 
     @property
     def driver_object(self):
@@ -389,69 +392,9 @@ class NotFoundError(RuntimeError):
     pass
 
 
-def raiseAnException(text):
-    ''' Returns a function that just raises a NotImplementedError with the specified text
-
-        Sometimes it is good to have a method exist and be unspecified, even if it cannot be called.
-        That's when you would use this.
-    '''
-    def notImp(*args, **kwargs):
-        raise NotImplementedError(text)
-    return notImp
-
-
-class DualInstrument(Virtualizable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if not isinstance(self, Instrument):
-            raise TypeError('Something that is a DualInstrument must also inherit Instrument from elsewhere.\n'
-                + 'Class ' + self.__class__.__name__ + ', which inherits: \n'
-                + '\n'.join(bas.__name__ for bas in self.__class__.mro()[1:]))
-
-        # figure out all the callables in hardware version
-        # if not implemented by type(self), set virtual version ot notImp
-        for funName in self.essentialMethods:
-            hwMethod = getattr(self, funName)
-            try:
-                virtualMethod = getattr(self, 'v_' + funName)
-            except AttributeError:
-                virtualMethod = raiseAnException('Virtual version not specified: v_' + funName)
-            dualizedMethod = DualMethod(self, virtual_function=virtualMethod, hardware_function=hwMethod)
-            setattr(self, funName, dualizedMethod)
-
-    @classmethod
-    def fromInstrument(cls, hwOnlyInstr, **kwargs):
-        ''' Gives a new dual instrument that has all the same properties and references.
-            This is especially useful if you have an instrument stored in the JSON labstate,
-            and would then like to virtualize it in your notebook.
-
-            Does not reinitialize the driver. Keeps the same one.
-
-            The instrument base of hwOnlyInstr must be the same instrument base of this class
-        '''
-        instrumentBaseClass = None
-        for bas in cls.__bases__:
-            if issubclass(bas, Instrument):
-                instrumentBaseClass = bas
-                break
-        else:
-            raise TypeError('This DualInstrument subclass, {}, does not inherit from an Instrument class'.format(cls.__name__))
-        if not isinstance(hwOnlyInstr, instrumentBaseClass):
-            raise TypeError('The fromInstrument ({}) is not an instance of the expected Instrument class ({})'.format(hwOnlyInstr.__class__.__name__, instrumentBaseClass.__name__))
-
-        for attr in ['driver_class', 'driver_object', 'address', 'id_string', 'name', 'bench', 'host', 'ports']:
-            kwargs[attr] = getattr(hwOnlyInstr, attr)
-        return cls(**kwargs)
-
-    def asReal(self):
-        assert self.driver is not None
-        return super().asReal()
-
 
 # Aliases
 # TODO VERIFY CODE BELOW
-
 
 class PowerMeter(Instrument):
     essentialMethods = ['powerDbm', 'powerLin']
@@ -491,8 +434,10 @@ class VectorGenerator(Instrument):
         'sweepSetup',
         'sweepEnable']
 
+
 class Clock(Instrument):
-    essentialMethods = ['on', 'frequency']
+    essentialMethods = ['on']
+    essentialProperties = ['frequency']
 
 
 class CurrentSource(Instrument):
@@ -512,14 +457,19 @@ class FunctionGenerator(Instrument):
 
 class LaserSource(Instrument):
     essentialMethods = ['setChannelEnable',
+        'getChannelEnable',
         'setChannelWls',
+        'getChannelWls',
         'setChannelPowers',
+        'getChannelPowers',
         'getAsSpectrum',
         'off']
+    essentialProperties = ['enableState', 'wls', 'powers']
 
 
 class OpticalSpectrumAnalyzer(Instrument):
-    essentialMethods = ['wlRange', 'spectrum']
+    essentialMethods = ['spectrum']
+    essentialProperties = ['wlRange']
 
 
 class Oscilloscope(Instrument):
@@ -551,7 +501,8 @@ class RFSpectrumAnalyzer(Instrument):
 
 
 class VariableAttenuator(Instrument):
-    essentialMethods = ['on', 'off', 'attenDB', 'attenLin']
+    essentialMethods = ['on', 'off']
+    essentialProperties = ['attenDB', 'attenLin']
 
 
 class NetworkAnalyzer(Instrument):

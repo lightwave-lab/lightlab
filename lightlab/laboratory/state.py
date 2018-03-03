@@ -303,3 +303,4 @@ class _Sneaky(object):
 
 
 _Sneaky(__name__)
+lab = None

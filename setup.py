@@ -122,15 +122,16 @@ def main():
 
     metadata = dict(
         name='lightlab',
-        version='0.1.0',
+        version='0.1.1',
         description='Lightwave Lab instrument automation tools',
         long_description=readme,
         license=license,
-        packages=['lightlab'],
+        packages=find_packages(exclude=('tests', 'docs', 'data')),
         install_requires=[
             'dpath',
             'jsonpickle',
             'matplotlib',
+            'IPython',
             'PyVISA',
             'scipy',
             'sklearn',

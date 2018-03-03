@@ -22,7 +22,6 @@ class Agilent_83712B_clock(VISAInstrumentDriver, Configurable):
     @property
     def frequency(self):
         return float(self.getConfigParam('FREQ'))
-        #return self.getConfigParam('FREQ')
 
     @frequency.setter
     def frequency(self, newFreq):

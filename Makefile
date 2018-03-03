@@ -1,8 +1,10 @@
-# Sphinx documentation variables
-CODEDIR       = lightlab
+SHELL := /bin/bash
+
+# different tests
+TESTARGS = -s --cov=lightlab --cov-config .coveragerc
+TESTARGSNB = --nbval-lax --sanitize-with ipynb_pytest_santize.cfg
 # DOCDEFAULT can be html or latexpdf
 DOCDEFAULT       = html
-SPHINXOPTS    = -j4
 
 # Server ports (excluding Jupyter)
 DOCHOSTPORT = 8049
@@ -12,23 +14,29 @@ venv/bin/activate:
 	test -d venv || virtualenv -p python3 --prompt "(lightlab-venv) " --distribute venv
 	touch venv/bin/activate
 
-dev-requirements: venv dev-requirements.txt
+devbuild: venv setup.py dev-requirements.txt
 	( \
 		source venv/bin/activate; \
-		pip install -r dev-requirements.txt; \
+		pip install -r dev-requirements.txt | grep -v 'Requirement already satisfied'; \
+		pip install -e . | grep -v 'Requirement already satisfied'; \
 	)
-
-devbuild: venv setup.py dev-requirements
-	source venv/bin/activate; python setup.py develop
 	# ./cleannbline -v -r 5 lightlab
 
-test: devbuild
+testbuild: venv setup.py test-requirements.txt
 	( \
 		source venv/bin/activate; \
-		py.test -s tests; \
+		pip install -r test-requirements.txt | grep -v 'Requirement already satisfied'; \
+		pip install -e . | grep -v 'Requirement already satisfied'; \
+	)
+	# ./cleannbline -v -r 5 lightlab
+
+test: testbuild
+	( \
+		source venv/bin/activate; \
+		py.test $(TESTARGS) tests; \
 	)
 
-test-lint: devbuild
+test-lint: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test --pylint -m pylint --pylint-error-types=EF lightlab; \
@@ -37,7 +45,13 @@ test-lint: devbuild
 test-nb: devbuild
 	( \
 		source venv/bin/activate; \
-		py.test -s notebooks/Tests --nbval-lax --sanitize-with ipynb_pytest_santize.cfg; \
+		py.test $(TESTARGS) $(TESTARGSNB) notebooks/Tests; \
+	)
+
+test-all: testbuild devbuild
+	( \
+		source venv/bin/activate; \
+		py.test $(TESTARGS) $(TESTARGSNB) tests notebooks/Tests; \
 	)
 
 clean:
@@ -82,12 +96,12 @@ jupyter-password: venv
 	)
 
 monitorhost:
-	cd monitoring && python3 -m http.server $(shell cat .monitorhostport)
+	cd progress-monitor && python3 -m http.server $(shell cat .monitorhostport)
 
 dochost: docs
-	source venv/bin/activate && \
+	# source venv/bin/activate && \
 	$(MAKE) -C docs $(DOCDEFAULT) && \
 	cd docs/_build/$(DOCDEFAULT) && \
 	python3 -m http.server $(DOCHOSTPORT)
 
-.PHONY: test clean purge dochost monitorhost
+.PHONY: test test-nb test-all clean purge dochost monitorhost

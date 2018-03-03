@@ -111,7 +111,9 @@ class ElectricalSource(object):
     """
     maxChannel = None  # number of dimensions that the current sources are expecting
 
-    def __init__(self, useChans, *args, **kwargs):
+    def __init__(self, useChans=None, *args, **kwargs):
+        if useChans is None:
+            useChans = list()
         self.stateDict = dict([ch, 0] for ch in useChans)
 
         # Check that the requested channels are available to be blocked out
@@ -119,6 +121,9 @@ class ElectricalSource(object):
             if any(ch > type(self).maxChannel - 1 for ch in self.getChannels()):
                 raise Exception(
                     'Requested channel is more than there are available')
+
+    def getChannels(self):
+        return list(self.stateDict.keys())
 
     def setChannelTuning(self, chanValDict, *args, **kwargs):
         ''' Sets a number of channel values and updates hardware
