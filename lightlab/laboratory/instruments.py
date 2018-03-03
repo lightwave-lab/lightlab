@@ -411,7 +411,10 @@ class DualInstrument(Virtualizable):
         # figure out all the callables in hardware version
         # if not implemented by type(self), set virtual version to notImplemented
         for funName in self.essentialMethods:
-            hwMethod = getattr(self, funName)
+            try:
+                hwMethod = getattr(self, funName)
+            except AttributeError:
+                hwMethod = raiseAnException('Driver version not specified: ' + funName)
             try:
                 virtualMethod = getattr(self, 'v_' + funName)
             except AttributeError:
@@ -421,7 +424,11 @@ class DualInstrument(Virtualizable):
             setattr(self, funName, dualizedMethod)
 
         for propName in self.essentialProperties:
-            hwProp = getattr(type(self), propName)
+            try:
+                hwProp = getattr(type(self), propName)
+            except AttributeError:
+                notImpFunc = raiseAnException('Driver version not specified: ' + propName)
+                hwProp = property(notImpFunc, notImpFunc)
             try:
                 virtualProp = getattr(type(self), 'v_' + propName)
             except AttributeError:
