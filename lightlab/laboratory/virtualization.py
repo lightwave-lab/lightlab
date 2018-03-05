@@ -277,7 +277,7 @@ class DualInstrument(Virtualizable):
 
             The instrument base of hwOnlyInstr must be the same instrument base of this class
         '''
-        if not isinstance(hwOnlyInstr, cls.realKlass):
+        if hwOnlyInstr is not None and not isinstance(hwOnlyInstr, cls.realKlass):
             raise TypeError('The fromInstrument ({}) is not an instance of the expected Instrument class ({})'.format(hwOnlyInstr.__class__.__name__, cls.realKlass.__name__))
         newObj = cls(*args, **kwargs)
         newObj.real = hwOnlyInstr
