@@ -114,12 +114,13 @@ class NdSweeper(Sweeper):
         new.addActuation('trial', lambda a: None, np.arange(nTrials))
         return new
 
-    def gather(self, soakTime=None, autoSave=False):
+    def gather(self, soakTime=None, autoSave=False, returnToStart=False):
         ''' Perform the sweep
 
             Args:
                 soakTime (None, float): wait this many seconds at the first point to let things settle
                 autoSave (bool): save data on completion, if savefile is specified
+                returnToStart (bool): If True, actuates everything to the first point after the sweep completes
 
             Returns:
                 None
@@ -213,6 +214,12 @@ class NdSweeper(Sweeper):
             logger.error('Error while sweeping. Reloading old data')
             self.data = oldData
             raise err
+
+        if returnToStart:
+            for actu in self.actuate.values():
+                f = actu[0]
+                x = actu[1][0]
+                f(x)
 
         if autoSave:
             self.save()
