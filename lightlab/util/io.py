@@ -271,7 +271,6 @@ def loadPickle(filename):
     ''' Uses pickle '''
     p = fileDir / filename
     rp = p.resolve()
-    print(rp)
     with rp.open('rb') as fx:
         return pickle.load(fx)
 

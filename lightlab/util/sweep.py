@@ -582,10 +582,41 @@ class NdSweeper(Sweeper):
                 ax.set_ylabel(actKeyList[0])
         return axArr
 
+    def saveObj(self, savefile=None):
+        ''' Also saves what are the actuation keys.
+            This is important for plotting when you reload
+        '''
+        if savefile is None:
+            if self.savefile is not None:
+                savefile = self.savefile
+            else:
+                raise ValueError('No save file specified')
+        self.data['actuation-keys'] = list(self.actuate.keys())
+        super().save(savefile)
+
+    @classmethod
+    def loadObj(cls, savefile):
+        ''' savefile must have been saved with saveObj
+        '''
+        newObj = super().fromFile(savefile)
+        try:
+            actKeyList = newObj.data.pop('actuation-keys')
+        except KeyError:
+            pass
+        else:
+            for iAct, actName in enumerate(actKeyList):
+                actData = newObj.data[actName]
+                sliceOneDim = [0] * len(actKeyList)
+                sliceOneDim[iAct] = slice(None)
+                domain = actData[sliceOneDim]
+                newObj.addActuation(actName, None, domain)
+        newObj._recalcSwpShape()
+        return newObj
+
     def load(self, savefile=None):
         super().load(savefile)
         self._recalcSwpShape()
-        print(self.swpShape)
+        logger.debug(self.swpShape)
 
 def simpleSweep(actuate, domain, measure=None):
     ''' Basic sweep in one dimension, without function keys, parsing, or plotting.
