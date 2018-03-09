@@ -62,17 +62,6 @@ clean:
 purge: clean
 	rm -rf venv
 
-# Running Servers (incl. notebooks)
-server-config: venv setup.py
-	source venv/bin/activate; python setup.py server_permissions
-
-
-jupyter: devbuild
-	( \
-		source venv/bin/activate; \
-		jupyter notebook; \
-	)
-
 pip-freeze: venv
 	( \
 		source venv/bin/activate; \
@@ -84,6 +73,17 @@ pip-update: pip-freeze
 	( \
 		source venv/bin/activate; \
 		pip freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U; \
+	)
+
+# Running Servers (incl. notebooks)
+server-config: venv setup.py
+	source venv/bin/activate; python setup.py server_permissions
+
+
+jupyter: devbuild
+	( \
+		source venv/bin/activate; \
+		jupyter notebook; \
 	)
 
 getjpass: venv
@@ -104,4 +104,26 @@ dochost: docs
 	cd docs/_build/$(DOCDEFAULT) && \
 	python3 -m http.server $(DOCHOSTPORT)
 
-.PHONY: test test-nb test-all clean purge dochost monitorhost
+
+help:
+	@echo "Please use \`make <target>' where <target> is one of"
+	@echo "  venv              document it"
+	@echo "  devbuild          document it"
+	@echo "  testbuild         document it"
+	@echo "  test              document it"
+	@echo "  test-lint         document it"
+	@echo "  test-nb           document it"
+	@echo "  test-all          document it"
+	@echo "  clean             document it"
+	@echo "  purge             document it"
+	@echo "  pip-freeze        document it"
+	@echo "  pip-update        document it"
+	@echo "  server-config     document it"
+	@echo "  jupyter           document it"
+	@echo "  getjpass          document it"
+	@echo "  jupyter-password  document it"
+	@echo "  monitorhost       document it"
+	@echo "  dochost           document it"
+
+
+.PHONY: help test test-nb test-all clean purge dochost monitorhost
