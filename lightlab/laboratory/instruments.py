@@ -337,6 +337,7 @@ class Instrument(Node):
         lines.append("Bench: {}".format(self.bench))
         lines.append("Host: {}".format(self.host))
         lines.append("address: {}".format(self.address))
+        lines.append("driver_class: {}".format(self.driver_class))
         lines.append("=====")
         lines.append("Ports")
         lines.append("=====")

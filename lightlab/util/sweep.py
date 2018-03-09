@@ -25,6 +25,11 @@ class Sweeper(object):
         print('gather method must be overloaded in subclass')
 
     def save(self, savefile=None):
+        ''' Save data only
+
+            Args:
+                savefile (str/Path): file to save
+        '''
         if savefile is None:
             if self.savefile is not None:
                 savefile = self.savefile
@@ -36,6 +41,9 @@ class Sweeper(object):
         ''' This is basically make it so that gather() and load() have the same effect.
 
             It does not keep actuation or measurement members, only whatever was put in self.data
+
+            Args:
+                savefile (str/Path): file to load
         '''
         if savefile is None:
             if self.savefile is not None:
@@ -45,17 +53,43 @@ class Sweeper(object):
         self.data = io.loadPickle(savefile)
 
     def setPlotOptions(self, **kwargs):
+        ''' Valid options for NdSweeper
+                * plType
+                * xKey
+                * yKey
+                * axArr
+                * cmap-surf
+                * cmap-curves
+
+            Valid options for CommandControlSweeper
+                * plType
+        '''
         for k, v in kwargs.items():
             if k not in self.plotOptions.keys():
-                print('Warning:', k, 'is not a valid plot option.')
+                logger.warning(k, 'is not a valid plot option.')
+                logger.warning('Valid ones are', self.plotOptions.keys())
             else:
                 self.plotOptions[k] = v
         return self.plotOptions
 
     def setMonitorOptions(self, **kwargs):
+        ''' Valid options for NdSweeper
+                * livePlot
+                * plotEvery
+                * stdoutPrint
+                * runServer
+
+            Valid options for CommandControlSweeper
+                * livePlot
+                * plotEvery
+                * stdoutPrint
+                * runServer
+                * cmdCtrlPrint
+        '''
         for k, v in kwargs.items():
             if k not in self.monitorOptions.keys():
-                print('Warning:', k, 'is not a valid plot option.')
+                logger.warning(k, 'is not a valid monitor option.')
+                logger.warning('Valid ones are', self.monitorOptions.keys())
             else:
                 self.monitorOptions[k] = v
         return self.monitorOptions
