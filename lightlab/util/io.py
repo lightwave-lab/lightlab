@@ -15,6 +15,7 @@ import lightlab.util.gitpath as gitpath
 from lightlab import logger
 import jsonpickle
 from lightlab.laboratory import Hashable
+import socket
 
 # for serializing np.ndarrays
 import msgpack
@@ -30,6 +31,13 @@ except IOError as e:
     logger.warning("Default projectDir='{}'".format(projectDir))
 if not os.access(projectDir, 7):
     logger.warning("Cannot write to this projectDir({}).".format(projectDir))
+
+# Maybe you are using the lightlab package from elsewhere
+try:
+    with open(projectDir / '.pathtolightlab') as fx:
+        lightlabDir = fx.readline()
+except IOError:
+    lightlabDir = projectDir
 
 # Monitor files
 monitorDir = projectDir / 'progress-monitor'
@@ -69,6 +77,14 @@ def printProgress(*args):
     sys.stdout.flush()
     sys.stdout.write(msg)
     sys.stdout.write('\n')
+
+
+def getUrl():
+    prefix = 'http://'
+    host = socket.getfqdn().lower()
+    with open(projectDir / '.monitorhostport', 'r') as fx:
+        port = int(fx.readline())
+    return prefix + host + ':' + str(port)
 
 
 class ProgressWriter(object):
@@ -118,7 +134,7 @@ class ProgressWriter(object):
 
         if self.serving:
             print('See sweep progress online at')
-            # print(getUrl())
+            print(getUrl())
             monitorDir.mkdir(exist_ok=True)
             fp = Path(ProgressWriter.progFileDefault)
             fp.touch()

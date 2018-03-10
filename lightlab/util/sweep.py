@@ -265,7 +265,8 @@ class NdSweeper(Sweeper):
                 name (str): key for accessing this actuator's value data
                 function (func): actuation function, usually linked to hardware. One argument.
                 domain (ndarray, None): 1D array of arguments that will be passed to the function.
-                    If None, the function is called with a None argument every point (if doOnEveryPoint is True)
+                    If None, the function is called with a None argument every point (if doOnEveryPoint is True).
+                    This is useful if you want to livePlot a spectrum or something at every point
                 doOnEveryPoint (bool): call this function in the inner loop or before the corresponding rows
         '''
         # The actuate attribute is an ordered dict. Values are tuples with element-0 function, element-1 domain
@@ -627,6 +628,7 @@ class NdSweeper(Sweeper):
                 raise ValueError('No save file specified')
         self.data['actuation-keys'] = list(self.actuate.keys())
         super().save(savefile)
+        self.data.pop('actuation-keys')
 
     @classmethod
     def loadObj(cls, savefile):
