@@ -82,8 +82,11 @@ def printProgress(*args):
 def getUrl():
     prefix = 'http://'
     host = socket.getfqdn().lower()
-    with open(projectDir / '.monitorhostport', 'r') as fx:
-        port = int(fx.readline())
+    try:
+        with open(projectDir / '.monitorhostport', 'r') as fx:
+            port = int(fx.readline())
+    except FileNotFoundError:
+        port = 'null'
     return prefix + host + ':' + str(port)
 
 
