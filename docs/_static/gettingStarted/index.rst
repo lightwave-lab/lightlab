@@ -5,8 +5,8 @@ Getting Started
    :maxdepth: 2
    :caption: Users:
 
-   engineersGuide
    user
+   engineersGuide
 
 .. toctree::
    :maxdepth: 2
@@ -14,10 +14,11 @@ Getting Started
 
    developer
    docYourCode
+   labState
 
 .. toctree::
    :maxdepth: 2
-   :caption: Lab sysadmins:
+   :caption: Lab Sysadmins:
 
    sysadmin
 

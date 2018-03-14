@@ -1,5 +1,5 @@
-Installation
-============
+User: getting started
+=====================
 
 Not really sure what this means. As of now, everyobdy is a developer.
 

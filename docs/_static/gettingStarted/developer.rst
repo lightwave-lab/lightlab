@@ -1,4 +1,4 @@
-Developer workflow setup
+Developer: getting started
 ================================================
 
 .. contents:: In this section

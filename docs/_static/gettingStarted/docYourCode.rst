@@ -124,7 +124,7 @@ Documentation must be built any time from a consistent state. Hardware code must
 .. Note:: Hardware-like notebooks could be used in the future with the ability to mimic a known laboratory state virtually.
 
 Seeing changes you make
-===========================
+-----------------------
 To see your changes to the documentation, launch your own server like this::
 
     echo 8050 > .dochostport
