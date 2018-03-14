@@ -34,13 +34,28 @@ In the main menu bar: Tools > NI-VISA > VISA options. This will open a panel.
 
 In My System > VISA Server, check "Run the VISA server on startup. " Click "Run Server Now."
 
+.. figure:: images/nimax-server.png
+    :alt: Server step
+    :figwidth: 400px
+    :align: center
+
 In My System > VISA Server > Security, click the Add button, and put in a "*" under Remote Addresses.
+
+.. figure:: images/nimax-security.png
+    :alt: Security step
+    :figwidth: 400px
+    :align: center
 
 Click Save at the top left.
 
 Troubleshooting
 ***************
 If you have been using Tektronix drivers, there might be a conflict with which VISA implementation will get used. These can be managed in the Conflict Manager tab.
+
+.. figure:: images/nimax-conflict.png
+    :alt: Conflict step
+    :figwidth: 400px
+    :align: center
 
 General settings > Passports: Tulip sometimes gives trouble. The box should be checked, at least on 32-bit systems.
 
