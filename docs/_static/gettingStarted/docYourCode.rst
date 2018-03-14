@@ -4,7 +4,7 @@ How to document your code
 .. contents:: In this section
     :local:
 
-This documentation is created with Sphinx.
+This documentation is created with Sphinx. It has automatic API build, so *write good docstrings*!
 
 Manually
 --------
@@ -122,6 +122,21 @@ Documentation must be built any time from a consistent state. Hardware code must
     As far as I know, there is nothing explicitly preventing you from doing this right now. Just don't try it.
 
 .. Note:: Hardware-like notebooks could be used in the future with the ability to mimic a known laboratory state virtually.
+
+Seeing changes you make
+===========================
+To see your changes to the documentation, launch your own server like this::
+
+    echo 8050 > .dochostport
+    tmux new -s localDocs
+    make dochost
+    <Ctrl-b, d>
+
+This can be accessed at the URL localhost:8050. When you make a change, you can just rebuild like this::
+
+    source venv/bin/activate
+    cd docs
+    make html
 
 * :ref:`genindex`
 * :ref:`modindex`

@@ -6,15 +6,20 @@ Getting Started
    :caption: Users:
 
    engineersGuide
-   howToInstall
-   labSetup
+   user
 
 .. toctree::
    :maxdepth: 2
    :caption: Developers:
 
-   workflow
+   developer
    docYourCode
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Lab sysadmins:
+
+   sysadmin
 
 * :ref:`genindex`
 * :ref:`modindex`
