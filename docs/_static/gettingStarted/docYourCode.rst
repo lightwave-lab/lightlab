@@ -6,6 +6,21 @@ How to document your code
 
 This documentation is created with Sphinx. It has automatic API build, so *write good docstrings*!
 
+Seeing changes you make
+-----------------------
+To see your changes to the documentation, launch a server from your local machine like this::
+
+    echo 8050 > .dochostport
+    tmux new -s localDocs
+    make dochost
+    <Ctrl-b, d>
+
+This can be accessed at the URL localhost:8050. When you make a change, you can just rebuild like this::
+
+    source venv/bin/activate
+    cd docs
+    make html
+
 Manually
 --------
 You can write documentation pages manually in the ``docs/sphinx/_static/`` directory using ReSt
@@ -73,61 +88,20 @@ Real examples can be found by browsing the API section of this documentation. If
 
 Via IPython Notebooks
 ---------------------
-The idea here is that it is sometimes instructive for the reader to play with some knobs to see how something works. In some cases, real code examples are also useful. In the best case, those knobs can be fully controlled, in a sense, by letting the user test out all sorts of permutations or shortcuts operating within a real kernel.
+The `nbsphinx <nbsphinx.readthedocs.io>`_ package can convert .ipynb files with outputs into html. The idea here is that it is sometimes instructive for the reader to play with some knobs to see how something works. Real code examples are also useful. It also supports interactive running, but that is not recommended.
 
-Read the docs and standard HTML don't support interactive kernels, but there is two ways to use them
-    1. Directing the reader to an ipynb file that they can play with
-    2. Displaying the notebook as HTML as if it has just executed
-
-We want to keep those synchronized with some version that can be accessed by their kernel. We also would like to prevent them from changing the documentation source. It is inconvenient to execute .ipynb files every time the documentation is built.
-
-**Most of this is handled by the** `nbsphinx <nbsphinx.readthedocs.io>`_ **package.** Basically, you can convert .ipynb files to .html files and control background execution with IPython kernels.
-
-Conventions specific to this project
-***********************************************
-As of now, we have a symbolic link
-When you want to use a notebook in the documentation, put it in the ``notebooks/Tests`` directory. This keeps them centralized. Get at it with a Jupyter kernel, make **sure** it runs without errors. Before putting it in the sphinx toctree, you have to create a symbolic link between the documentation and the notebooks::
-
-    $ cd docs/sphinx/ipynbs
-    $ ln -s ../../../notebooks/Tutorials/myNewTutorial.ipynb
-
-You can then the put it in toctrees like so.
+As of now, documentation notebooks are in docs/sphinx/ipynbs/. There is a symlink to the notebooks/Tests/ directory. Other notebooks can be placed in Others/. These notebooks should be saved with outputs. You can reference them in the documentation like so
 
 .. toctree::
     :maxdepth: 1
     :glob:
-    :caption: All IPython notebooks used in this documentation
+    :caption: All IPython notebooks used for Tests
 
-    /ipynbs/*
+    /ipynbs/Tests/*
 
-The notebook is executed and output stored one time after the documentation _build is cleared. Then it is only re-executed if the .ipynb file changes.
+.. todo::
 
-Notebooks that use hardware
-***************************
-Do not put them in the documentation. Period.
-
-Documentation must be built any time from a consistent state. Hardware code must only be executed when a user knows what they are doing, not by some autobuild hook.
-
-.. Warning::
-
-    As far as I know, there is nothing explicitly preventing you from doing this right now. Just don't try it.
-
-.. Note:: Hardware-like notebooks could be used in the future with the ability to mimic a known laboratory state virtually.
-
-Seeing changes you make
------------------------
-To see your changes to the documentation, launch your own server like this::
-
-    echo 8050 > .dochostport
-    tmux new -s localDocs
-    make dochost
-    <Ctrl-b, d>
-
-This can be accessed at the URL localhost:8050. When you make a change, you can just rebuild like this::
-
-    source venv/bin/activate
-    cd docs
-    make html
+    Output images in symlinked notebooks are not displaying
 
 * :ref:`genindex`
 * :ref:`modindex`

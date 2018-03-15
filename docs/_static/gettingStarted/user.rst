@@ -48,6 +48,10 @@ You can now ``ssh <short name>``, but it is recommended that you use `MOSH <http
 
 MOSH is great for spotty connections, or if you want to close your computer and reopen the ssh session automatically.
 
+Using jupyter notebooks
+-----------------------
+Jupyter notebooks are interactive python sessions that run in a web browser. If you are just a user, your sysadmin will set up a notebook server and give you a URL and password. Some examples can be found in the lightlab/notebooks/Tests directory.
+
 .. Indices and tables
 .. ==================
 
