@@ -68,16 +68,6 @@ This is called Google docstring format. It will render as follows.
 
 Note, if you look at the source of this .rst file, the rendered documentation is in python format using lists of ``:param:``. You should use python docstring format if manually documenting in the doc source. In the *code*, use Google format.
 
-.. warning::
-
-    If you import an external package, sphinx will try to load it and fail. The solution is to mock it. Lets say your source file wants to import::
-
-        import scipy.optimize as opt
-
-    For this to pass and build the docs, you have to go into the ``docs/sphinx/conf.py`` file. Then add that package to the list of mocks like so::
-
-        MOCK_MODULES = [<other stuff>, 'scipy.optimize']
-
 Real examples can be found by browsing the API section of this documentation. If you see something you like, click on the link to view the source. Then you can see how the docstring did that.
 
 
@@ -95,7 +85,8 @@ We want to keep those synchronized with some version that can be accessed by the
 
 Conventions specific to this project
 ***********************************************
-When you want to use a notebook in the documentation, put it in the ``notebooks/Tutorials`` directory. This keeps them centralized. Get at it with a Jupyter kernel, make **sure** it runs without errors. Before putting it in the sphinx toctree, you have to create a symbolic link between the documentation and the notebooks::
+As of now, we have a symbolic link
+When you want to use a notebook in the documentation, put it in the ``notebooks/Tests`` directory. This keeps them centralized. Get at it with a Jupyter kernel, make **sure** it runs without errors. Before putting it in the sphinx toctree, you have to create a symbolic link between the documentation and the notebooks::
 
     $ cd docs/sphinx/ipynbs
     $ ln -s ../../../notebooks/Tutorials/myNewTutorial.ipynb

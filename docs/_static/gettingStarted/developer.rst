@@ -41,8 +41,8 @@ MacOS::
     $ mntlight
     $ unmtlight
 
-Example directory structure and usage
------------------------------------------------
+Example directory structure, environment, and usage
+---------------------------------------------------
 If you are developing lightlab, you will likely have some other notebooks to test. Those should go in a different directory with a different virtual environment. It can be git tracked in a different repo. Here is an example directory structure::
 
     > hermione/Documents
@@ -208,7 +208,7 @@ Making changes to ``lightlab``
 We follow this `Git branching workflow <http://nvie.com/posts/a-successful-git-branching-model/>`_. Feature branches should base off of development; when they are done, they must pass tests and test-nb's; finally they are merged to development.
 
 Testing
-*******
+^^^^^^^
 First off, your change should not break existing code. You can run automated tests like this::
 
     make test
@@ -224,32 +224,31 @@ The test-nb target runs the **notebooks** in notebooks/Tests. This is a cool fea
 in the cell.
 
 Documenting
-***********
-Documenting as you go is helpful for other developers and code reviewers.
+^^^^^^^^^^^^^^
+Documenting as you go is helpful for other developers and code reviewers.  So useful that we made a whole :doc:`tutorial <docYourCode>` on it. We use auto-API so that docstrings in code make it into the official documentation.
 
 PEP-8
-*****
-As of now, we don't require PEP-8 compliance, but we might in the future. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-pycodestyle>`_ is a good linter.
+^^^^^^^
+As of now, we don't require `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance, but we might in the future. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-pycodestyle>`_ is a good linter.
 
 Adding a new package
-********************
+^^^^^^^^^^^^^^^^^^^^^
+Two ways to do this. The preferred method is to add it to the package requirements in ``setup.py``. The other way is in the venv. In that case, make sure you freeze the new package to the requirements file::
 
-When you add a Python Package in the venv, install with pip. Make sure you add the new package to the requirements file::
+    $ source venv/bin/activate
+    $ pip install <package>
+    $ make pip-freeze
+    $ git commit -m "added package <package> to venv"
 
-    $ pip freeze --local | grep -v '^\-e' > requirements.txt
+.. warning::
 
-and then commit. Anyone else pulling from git will have their pip tell them that a new package was added, and automatically install it. **If you do not grep** above, it will tell everyone else to install your specific commit state, and that would be very bad.
-
-**Don't break the documentation**
-
-    If you import an external package, sphinx will try to load it and fail. The solution is to mock it. Lets say your source file wants to import::
+    If your code imports an external package, the sphinx documentation will try to load it and fail. The solution is to mock it. Lets say your source file wants to import::
 
         import scipy.optimize as opt
 
-    For this to pass and build the docs, you have to go into the ``lightlab/docs/sphinx/conf.py`` file. Then add that package to the list of mocks like so::
+    For this to pass and build the docs, you have to go into the ``docs/sphinx/conf.py`` file. Then add that package to the list of mocks like so::
 
         MOCK_MODULES = [<other stuff>, 'scipy.optimize']
-
 
 * :ref:`genindex`
 * :ref:`modindex`
