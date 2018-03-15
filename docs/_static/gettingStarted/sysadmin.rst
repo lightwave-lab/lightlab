@@ -77,7 +77,6 @@ In the below examples, we will use the following usernames
     * hermione: a grad student ``lightlab`` developer
     * ron:      a grad student user
     * hagrid:   an undergrad who is anayzing ron's data
-    * dumbledore: an industry collaborator
 
 Set up a user on this computer corresponding to every user who will be using the lab. Make sure port 22 is open for ssh access. Give them all a tutorial on ssh, python, and ipython. Give yourself and hermione a tutorial on git, SSHFS, pip, and jupyter.
 
@@ -171,7 +170,7 @@ They can then call ``workon development`` and ``workon master``.
 
 If you have developers, set up CI for your own fork (optional)
 ------------------------------------------------------------------
-@tlima I am shaky on this and the following sections
+@tlima I am shaky on this section
 
 
 

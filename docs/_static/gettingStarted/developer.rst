@@ -157,6 +157,10 @@ If for some reason you want to reconnect to this process, you can use ``tmux att
 
 Find the PID, and send a ``kill -9`` at it.
 
+Git and jupyter
+***************
+They do not play nice. Here are some :doc:`strategies </_static/misc/mergeWithNotebooks>` for not losing too much work.
+
 
 Running monitor server from your ``myWork`` environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
