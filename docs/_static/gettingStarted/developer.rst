@@ -218,6 +218,48 @@ You can test if it's working in the notebook below.
 
     I have tried making this launch a daemon automatically. You can see some fork functions in util.io. I have not yet verified that it is safe, so it is currently disabled.
 
+Directory structure
+-----------------------------------------------
+If you are developing lightlab, you will likely have some other notebooks to test. Those should go in a different directory with a different virtual environment. Here is an example directory structure::
+
+    > hermione/Documents
+    | > lightlab
+    | | > .git
+    | | Makefile
+    | | setup.py
+    | | etc...
+    | -
+    | > myStuff
+    | | Makefile
+    | | requirements.txt
+    | | .pathtolightlab
+    | | > notebooks
+    | | | gatherData.ipynb
+    | | -
+    | | > data
+    | | | someData.pkl
+    | | -
+    | -
+    -
+
+Where the Makefile has targets for making a virtual environment and launching jupyter
+
+.. code-block:: bash
+    :emphasize-lines: 9
+
+    # myStuff/Makefile
+    PATH2LIGHTLABFILE=.pathtolightlab
+
+    venv: venv/bin/activate
+    venv/bin/activate: requirements.txt
+        test -d venv || virtualenv -p python3 --prompt "(myStuff-venv) " --distribute venv
+        venv/bin/pip install -Ur requirements.txt
+        touch venv/bin/activate
+        source venv/bin/activate; venv/bin/pip install -e $(shell cat $(PATH2LIGHTLABFILE))
+
+This will dynamically link the environment to your version of lightlab under development. If you have autoreload on in ipython, then text changes in lightlab will take effect immediately (excluding adding new methods). The contents of ``.pathtolightlab`` are::
+
+    /home/hermione/Documents/lightlab
 
 Specific to Lightwave Lab
 -------------------------

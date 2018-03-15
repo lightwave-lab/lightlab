@@ -2,10 +2,8 @@ Sysadmin: getting started
 ================================================
 The basic setup is that there is one central lab computer that is the "instrumentation server." Other computers connect to the instruments through GPIB/USB/etc. These are "hosts." All of the hosts need National Instruments (NI) Measurement and Automation eXplorer (MAX).
 
-*The below assumes that this system is Linux.*
-
-There is a difference between cases where 1) all your lab members are ``lightlab`` users and 2) some of your lab members are ``lightlab`` developers and 3) all are developers and know what they are doing.
-
+Host machines
+^^^^^^^^^^^^^
 
 Installing NI-visa (32-bit) in Ubuntu (64-bit)
 ----------------------------------------------
@@ -28,18 +26,16 @@ Then start nipalk::
 
 Opening NI-visa servers on all hosts
 ------------------------------------
-Open NI-MAX.
+Open NI-MAX. In the main menu bar: Tools > NI-VISA > VISA options. This will open a panel.
 
-In the main menu bar: Tools > NI-VISA > VISA options. This will open a panel.
-
-In My System > VISA Server, check "Run the VISA server on startup. " Click "Run Server Now."
+In My System > VISA Server, check "Run the VISA server on startup." Click "Run Server Now."
 
 .. figure:: images/nimax-server.png
     :alt: Server step
     :figwidth: 400px
     :align: center
 
-In My System > VISA Server > Security, click the Add button, and put in a "*" under Remote Addresses.
+In My System > VISA Server > Security, click the Add button, and put in a "*" under Remote Addresses. This white flags all other computers.
 
 .. figure:: images/nimax-security.png
     :alt: Security step
@@ -57,10 +53,46 @@ If you have been using Tektronix drivers, there might be a conflict with which V
     :figwidth: 400px
     :align: center
 
-General settings > Passports: Tulip sometimes gives trouble. The box should be checked, at least on 32-bit systems.
+General settings > Passports: Tulip sometimes gives trouble. The box should be checked, at least on 32-bit systems. Bugs were un-reproducible for us.
 
 
-Initializing labstate on the instrumentation server
+Instrumentation server machine
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+*The below assumes that this system is Linux.*
+
+User configuration
+------------------------------------
+There are several types of users.
+
+    * sysadmin (you)
+    * super-users a.k.a. root (you, possibly other lab members who know UNIX)
+    * ``lightlab`` developers
+    * ``lightlab`` users
+    * those with lab access, meaning they are allowed to configure and access hardware (you, most grad students)
+    * those without lab access, meaning they can still see data and write data analysis code (most undergrads)
+
+In the below examples, we will use the following usernames
+
+    * harry:    you, sysadmin
+    * hermione: a grad student ``lightlab`` developer
+    * ron:      a grad student user
+    * hagrid:   an undergrad who is anayzing ron's data
+    * dumbledore: an industry collaborator
+
+Set up a user on this computer corresponding to every user who will be using the lab. Make sure port 22 is open for ssh access. Give them all a tutorial on ssh, python, and ipython. Give yourself and hermione a tutorial on git, SSHFS, pip, and jupyter.
+
+Manage port security (optional)
+**********************************************
+It is possible to restrict port usage by process type. This is a security measure. For example, ports 8820-8830 can be opened, but only for processes named "jupyter".
+
+@hpeng: how do you do these?
+
+We recommend setting up a certificate file and using https. Instructions are here (@hpeng, please link it)
+
+Jupyter notebooks can run arbitrary system commands. Since jupyter does not yet support key authentication, the only protection is strong passwords. There should *never* be a jupyter server launched by root.
+
+
+Initializing labstate, setting lab accessors
 ---------------------------------------------------
 Make a jupyter "user"::
 
@@ -71,9 +103,9 @@ Make a jupyter "user"::
 Make a jupyter group specifying who is allowed to run jupyter servers and change the labstate::
 
     sudo groupadd jupyter
-    sudo usermod -a -G jupyter alice
-    sudo usermod -a -G jupyter bob
-    ...
+    sudo usermod -a -G jupyter harry
+    sudo usermod -a -G jupyter hermione
+    sudo usermod -a -G jupyter ron
 
 The jupyter user home directory can be accessed by any user and written only by the jupyter users::
 
@@ -88,6 +120,7 @@ The labstate will be automatically put and backed up in the directory ``/home/ju
 
 
 @tlima please check
+@tlima, maybe instead of group jupyter, we should call it something like "labaccess"
 
 
 Running a jupyter server for users
@@ -127,16 +160,7 @@ Put this in all users' ``.bashrc``::
 They can then call ``workon development`` and ``workon master``.
 
 
-Developers will have a clone of ``lightlab``
------------------------------------------------
-They will also likely be using some directory with other notebooks
 
-_ Documents
-| lightlab
-| _myStuff
-| | _data
-| | | someData.pkl
-| | gatherData.ipynb
 
 
 * :ref:`genindex`
