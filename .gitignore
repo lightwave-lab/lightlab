@@ -13,6 +13,7 @@ progress-monitor/*
 
 # User-specific ports
 .monitorhostport
+.dochostport
 
 # Large binaries with documentation figures
 docs/*.ppt

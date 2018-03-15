@@ -4,10 +4,11 @@ SHELL := /bin/bash
 TESTARGS = -s --cov=lightlab --cov-config .coveragerc
 TESTARGSNB = --nbval-lax --sanitize-with ipynb_pytest_santize.cfg
 # DOCDEFAULT can be html or latexpdf
-DOCDEFAULT       = html
 
-# Server ports (excluding Jupyter)
-DOCHOSTPORT = 8049
+DOCTYPE_DEFAULT       = html
+DOCHOSTPORT_FILE = .dochostport
+# Server ports for CI hosting. You can override by making a file .dochostport
+DOCHOSTPORT_DEFAULT = 8049
 
 venv: venv/bin/activate
 venv/bin/activate:
@@ -42,7 +43,7 @@ test-lint: testbuild
 		py.test --pylint -m pylint --pylint-error-types=EF lightlab; \
 	)
 
-test-nb: devbuild
+test-nb: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test $(TESTARGS) $(TESTARGSNB) notebooks/Tests; \
@@ -98,12 +99,23 @@ jupyter-password: venv
 monitorhost:
 	cd progress-monitor && python3 -m http.server $(shell cat .monitorhostport)
 
-dochost: docs
-	# source venv/bin/activate && \
-	$(MAKE) -C docs $(DOCDEFAULT) && \
-	cd docs/_build/$(DOCDEFAULT) && \
-	python3 -m http.server $(DOCHOSTPORT)
+docbuild: venv setup.py doc-requirements.txt
+	( \
+		source venv/bin/activate; \
+		pip install -r doc-requirements.txt | grep -v 'Requirement already satisfied'; \
+		pip install -e . | grep -v 'Requirement already satisfied'; \
+		$(MAKE) -C docs $(DOCTYPE_DEFAULT); \
+	)
 
+dochostfileexist:
+	test -f $(DOCHOSTPORT_FILE) || echo $(DOCHOSTPORT_DEFAULT) > $(DOCHOSTPORT_FILE)
+
+dochost: docbuild dochostfileexist
+	( \
+		source venv/bin/activate; \
+		cd docs/_build/$(DOCTYPE_DEFAULT); \
+		python3 -m http.server $(shell cat $(DOCHOSTPORT_FILE)); \
+	)
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
