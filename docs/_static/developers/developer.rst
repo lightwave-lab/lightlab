@@ -202,7 +202,7 @@ It's not really necessary in this example where there is just a notebook. If you
 
 Unittests are designed to be run in an automated way in a repeatable setting. Firstly, the real world is not repeatable. Secondly, an automated run could do something unintended and damaging to the currently connected devices.
 
-Making changes to ``lightlab``
+Contributing to ``lightlab``
 ------------------------------
 We follow this `Git branching workflow <http://nvie.com/posts/a-successful-git-branching-model/>`_. Feature branches should base off of development; when they are done, they must pass tests and test-nb's; finally they are merged to development.
 

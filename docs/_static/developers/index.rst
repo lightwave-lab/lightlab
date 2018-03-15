@@ -1,12 +1,12 @@
-Getting Started
+Developer guide
 ================================================
 
 .. toctree::
    :maxdepth: 2
 
-   engineersGuide
-   user
-   sysadmin
+   developer
+   docYourCode
+   labState
 
 * :ref:`genindex`
 * :ref:`modindex`
