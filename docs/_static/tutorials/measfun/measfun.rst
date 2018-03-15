@@ -24,11 +24,8 @@ Inverting a measured function is desirable for evoking a particular response tha
     :maxdepth: 2
     :caption: Demo
 
-    /ipynbs/TestPeakAssistant.ipynb
-
-.. seealso::
-
-    Here, we were talking about performing calculations with objects in code that have presumably been measured from some real-life process. There are equivalents for peak finding and inversion while interacting with a real measurement-actuation system. These are found in util.characterize i think.
+    /ipynbs/Tests/TestPeakAssistant.ipynb
+    /ipynbs/Tests/TestPeakAndBinarySearch.ipynb
 
 FunctionBundle and FunctionalBasis
 ----------------------------------
@@ -41,7 +38,7 @@ Often there are two abscissas. The "third dimension" could be a continuous varia
     :maxdepth: 2
     :caption: Demo
 
-    /ipynbs/TestFunctionalBasis.ipynb
+    /ipynbs/Tests/TestFunctionalBasis.ipynb
 
 
 * :ref:`genindex`

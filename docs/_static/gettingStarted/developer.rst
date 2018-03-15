@@ -102,12 +102,7 @@ Password protect
 ****************
 Jupyter lets you run commands on your machine from a web browser. That is dangerous because anybody with an iphone can obliviate your computer with ``rm -rf /``, and they can obliviate your research with ``currentSource(applyAmps=1e6)``. Be safe on this one.
 
-On the lab computer, first get in the ``myWork`` virtual environment::
-
-    $ make venv
-    $ source venv/bin/activate
-
-Copy and modify the provided template::
+On the lab computer, copy and modify the provided template::
 
     $ mkdir ~/.jupyter
     $ cp /home/jupyter/.jupyter/jupyter_notebook_config.py ~/.jupyter
@@ -226,6 +221,11 @@ The test-nb target runs the **notebooks** in notebooks/Tests. This is a cool fea
     assert x == 2
 
 in the cell.
+
+To run just one test, use a command like::
+
+    $ source venv/bin/activate
+    $ py.test --nbval-lax notebooks/Tests/TestBook.ipynb
 
 Documenting
 ^^^^^^^^^^^^^^

@@ -29,7 +29,7 @@ Instruments can be configured many times, for example, if they move. An example 
 
 .. toctree::
 
-    labSetup.ipynb
+    /ipynbs/Others/labSetup.ipynb
 
 Now you get that instrument from any other notebook with the command::
 
