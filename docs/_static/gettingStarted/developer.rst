@@ -1,74 +1,39 @@
 Developer: getting started
 ================================================
+This section covers topics that have great documentation online. The main differences in this workflow stem from the hardware aspect of lightlab. That means almost all development should occur on the machine in lab that is going to be accessing the instruments. First, follow the instructions for connecting to the instrumentation server for users.
 
 .. contents:: In this section
     :local:
 
 
-TODO: transfer some sections to ReST. Fill in Git. Write intro
 
-<< Introduction >> Computer things particular to remote experiments
-
-* Develop the code on the machine that it will run. This is presumably remote since it has to be in a lab close to your equipment.
-* You cannot access our hardware. You can access our own. Or you can work with virtual aspects.
-
-
-Make an rsa key
------------------------
-**ToDO: make this RST**
-`Generate an SSH key pair <https://docs.gitlab.com/ce/ssh/README.html#generating-a-new-ssh-key-pair>`_ on the server via:
-```
-ssh-keygen -t rsa -C "your.email@example.com" -b 4096
-```
-Whether or not you generate a password is up to you. You can now print it using
-```
-cat ~/.ssh/id_rsa.pub
-```
-and copy-paste it into your git lab profile by going to the top right and navigating to `Settings` --> `SSH keys`.
-Once SSH key pairs are generated, you can download the latest calibration tools via `git clone <ssh-address>` with the address specified above.
-
-Remote machine
+Setting up Git
 --------------
-Logging on
-**********
-First, make sure that your have a user account set up on the your server.
-This should include your SSH public key ``localhost:~/.ssh/id_rsa.pub`` copied into the file ``<server>:~/.ssh/authorized_keys``.
+Your sysadmin should go on github and fork the repo into their or the lab's github account. Alternatively (not recommended), you can download the project and make a new repo on an internal Git server, like GitLab.
 
-Add the following lines to the file ``localhost:~/.ssh/config``::
-
-    Host <server>
-         HostName lightwave-lab-<server>.princeton.edu
-         User <username>
-         Port 22
-         IdentityFile ~/.ssh/id_rsa
-
-You can now ``ssh <server>``, but it is recommended that you use `MOSH <https://mosh.org/>`_ to connect to the server::
-
-    $ mosh <server>
+On the instrumentation server, go in and clone that repo. When you develop, it should be on a branch based off of the development branch. There is no need to clone the repo to your local computer.
 
 File system sync
-****************
-It is recommended that you use SSHFS to mirror your work to your local computer. There is no need to clone to your local computer.
+----------------
+It is recommended that you use SSHFS to mirror your work to your local computer, so you can use your favorite text editor. While you are editing on your local machine, you should have a ssh session on the remote machine in order to run the commands.
 
-1. Clone the project into your server home directory, and install the virtual environment there.
-
-2. Install SSHFS on your local system.
+1. Install SSHFS on your local system.
 
     - Linux: ``sudo apt-get install sshfs``
     - OSX: `Download binaries <https://osxfuse.github.io>`_ and then
         - Install FUSE for macOS
         - Install SSHFS for macOS
 
-3. Make shortcuts in your ``.bashrc``.
+2. Make shortcuts in your ``.bashrc`` or ``.bash_profile``
 
 Linux::
 
-    alias mntlight='sshfs <server>:/path/to/calibration-instrumentation /path/to/local/dir -C -o allow_other'
+    alias mntlight='sshfs <server>:/home/hermione/Documents /path/to/local/dir -C -o allow_other'
     alias umntlight='fusermount -u /path/to/local/dir'
 
 MacOS::
 
-    alias mntlight='sshfs <server>:/path/to/calibration-instrumentation /path/to/local/dir -C -o allow_other,auto_cache,reconnect,defer_permissions,noappledouble'
+    alias mntlight='sshfs <server>:/home/hermione/Documents /path/to/local/dir -C -o allow_other,auto_cache,reconnect,defer_permissions,noappledouble'
     alias umntlight='umount /path/to/local/dir'
 
 4. Now you can mount and unmount your remote calibration-instrumentation folder with::
@@ -76,65 +41,68 @@ MacOS::
     $ mntlight
     $ unmtlight
 
-Git
----
-At the time of writing, we have this hosted on a GitLab server, so you need to be a member of Lightwave Lab to get the clone link. Presumably you have cloned if you are here. To get further updates, use ``git pull``. When you make changes that you wish to be permanent::
+Example directory structure and usage
+-----------------------------------------------
+If you are developing lightlab, you will likely have some other notebooks to test. Those should go in a different directory with a different virtual environment. It can be git tracked in a different repo. Here is an example directory structure::
 
-    $ git add .
-    $ git commit -m "some descriptive message"
+    > hermione/Documents
+    | > lightlab
+    | | > .git
+    | | Makefile
+    | | setup.py
+    | | etc...
+    | -
+    | > myWork
+    | | Makefile
+    | | requirements.txt
+    | | .pathtolightlab
+    | | > notebooks
+    | | | gatherData.ipynb
+    | | -
+    | | > data
+    | | | someData.pkl
+    | | -
+    | -
+    -
 
-You can commit many times before re-syncing with the centralized repository. When you wish to do so, always pull first, resolve conflicts, and then you can push.
+Where the Makefile has targets for making a virtual environment and launching jupyter
 
+.. code-block:: bash
+    :emphasize-lines: 9
 
-Developer tools
----------------
-Use a virtual environment. This environment can be git-tracked. You will need to enter this environment to execute compiled code, install and freeze dependencies, and launch IPython servers. The first time, install virtualenv on your system environment::
+    # myStuff/Makefile
+    PATH2LIGHTLABFILE=.pathtolightlab
 
-    $ pip install virtualenv
+    venv: venv/bin/activate
+    venv/bin/activate: requirements.txt
+        test -d venv || virtualenv -p python3 --prompt "(myWork-venv) " --distribute venv
+        venv/bin/pip install -Ur requirements.txt
+        touch venv/bin/activate
+        source venv/bin/activate; venv/bin/pip install -e $(shell cat $(PATH2LIGHTLABFILE))
 
-To create and enter virtual environment any time::
+    jupyter: devbuild
+        source venv/bin/activate; jupyter notebook; \
 
-    $ make venv
-    $ source venv/bin/activate
+    getjpass: venv
+        venv/bin/python -c 'from notebook.auth import passwd; print(passwd())'
 
-To exit virtual environment::
+The highlighted line will dynamically link the environment to your version of lightlab under development. If you have autoreload on in ipython, then text changes in lightlab will take effect immediately (excluding adding new methods).
 
-    $ deactivate
+The contents of ``.pathtolightlab`` are::
 
-For developers, the following command builds and install into the virtual environment::
+    /home/hermione/Documents/lightlab
 
-    $ make devbuild
+If this is a repo, your ``.gitignore`` should include::
 
-To build in venv and run tests::
+    .pathtolightlab
 
-    $ make test
-
-Adding a new package
-********************
-
-When you add a Python Package in the venv, install with pip. Make sure you add the new package to the requirements file::
-
-    $ pip freeze --local | grep -v '^\-e' > requirements.txt
-
-and then commit. Anyone else pulling from git will have their pip tell them that a new package was added, and automatically install it. **If you do not grep** above, it will tell everyone else to install your specific commit state, and that would be very bad.
-
-**Don't break the documentation**
-
-    If you import an external package, sphinx will try to load it and fail. The solution is to mock it. Lets say your source file wants to import::
-
-        import scipy.optimize as opt
-
-    For this to pass and build the docs, you have to go into the ``docs/sphinx/conf.py`` file. Then add that package to the list of mocks like so::
-
-        MOCK_MODULES = [<other stuff>, 'scipy.optimize']
-
-Jupyter
--------
+Running jupyter from your ``myWork`` environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Password protect
 ****************
-Jupyter lets you run commands on your machine from a web browser. That is dangerous because anybody with an iphone can obliviate your computer with ``rm -rf /``, and they can obliviate your research with ``currentSource(applyAmps=1e6)``. Let's be safe on this one.
+Jupyter lets you run commands on your machine from a web browser. That is dangerous because anybody with an iphone can obliviate your computer with ``rm -rf /``, and they can obliviate your research with ``currentSource(applyAmps=1e6)``. Be safe on this one.
 
-On the lab computer, first get in the project virtual environment::
+On the lab computer, first get in the ``myWork`` virtual environment::
 
     $ make venv
     $ source venv/bin/activate
@@ -171,17 +139,17 @@ When you have a port and a password hash, update the config file::
 
 Launch the server
 *****************
-To launch the server in the right place, just run::
+To launch the server from ``myWork``, just run::
 
     $ make jupyter
 
-Except that will lock up your shell session. Instead, you can spin off a process to serve jupyter in a tmux::
+(see Makefile target above). Except that will lock up your shell session. Instead, you can spin off a process to serve jupyter in a tmux::
 
     $ tmux new -s myNotebookServer
     $ make jupyter
     <Ctrl-b, d>  # to detach
 
-You can now acces your notebooks anywhere with your password at: `https://lightwave-lab-<server>.princeton.edu:<port>`.
+You can now acces your notebooks anywhere with your password at: ``https://<server name>.school.edu:<port>``.
 
 If for some reason you want to reconnect to this process, you can use ``tmux attach-process -t myNotebookServer`` or ``tmux ls`` followed by picking the right name. If you really want to kill it, you can::
 
@@ -189,126 +157,98 @@ If for some reason you want to reconnect to this process, you can use ``tmux att
 
 Find the PID, and send a ``kill -9`` at it.
 
-.. note:: file system structure in the lightwave lab: all Jupyter files are kept in the ``notebooks`` directory, which is a sister directory of the ``lightlab`` directory containing all the code. Within ``notebooks``, the directory ``sketchpad`` is ignored by git, so you can play around here.
 
+Running monitor server from your ``myWork`` environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``lightlab`` offers tools for monitoring progress of long sweeps. See :py:class:`~lightlab.util.io.ProgressWriter`. These servers are launched from your own environment, not lightlab's. So far, this is just for long sweeps that simply tell you how far along they are, and when they will complete.
 
-Monitor server
---------------
-To monitor your processes from a standard unsecure webpage, you can set up another server. So far, this is just for long sweeps that simply tell you how far along they are, and when they will complete.
+First, you must get another port allocated to you, different from the one you used for Jupyter. Put that in a file called ``.monitorhostport`` in ``myWork`` (where the Makefile is). Let's say that port is 8000::
 
-First, you must get another port allocated to you, different from the one you used for Jupyter. Put that in a file called ``.monitorserverport`` in your git project root directory (where the Makefile is). Let's say that port is 8000::
+    $ echo 8000 > .monitorhostport
+    $ mkdir progress-monitor
 
-    $ echo 8000 > .monitorserverport
+Add the following target to your ``Makefile``::
+
+    monitorhost:
+        ( \
+            source venv/bin/activate; \
+            cd progress-monitor; \
+            python3 -m http.server $(shell cat .monitorhostport); \
+        )
+
+If this is a repo, add the following to ``.gitignore``::
+
+    .monitorhostport
+    progress-monitor/*
 
 To then launch the server from a tmux::
 
-    $ tmux new -s monitorServer
-    $ source venv/bin/activate
+    $ tmux new -s myMonitorServer
     $ make monitorhost
     <Ctrl-b, d>  # to detach
 
-You can test if it's working in the notebook below.
-
-.. toctree::
-    :maxdepth: 1
-
-    /ipynbs/TestPrintProgressServer.ipynb
-
 .. note::
 
-    I have tried making this launch a daemon automatically. You can see some fork functions in util.io. I have not yet verified that it is safe, so it is currently disabled.
+    I have tried making a daemon launch automatically from the lightlab.util.io library. I have not yet verified that it is safe, so it is currently disabled.
 
-Directory structure
------------------------------------------------
-If you are developing lightlab, you will likely have some other notebooks to test. Those should go in a different directory with a different virtual environment. Here is an example directory structure::
+.. todo::
 
-    > hermione/Documents
-    | > lightlab
-    | | > .git
-    | | Makefile
-    | | setup.py
-    | | etc...
-    | -
-    | > myStuff
-    | | Makefile
-    | | requirements.txt
-    | | .pathtolightlab
-    | | > notebooks
-    | | | gatherData.ipynb
-    | | -
-    | | > data
-    | | | someData.pkl
-    | | -
-    | -
-    -
+    How will this work for non-developers?
 
-Where the Makefile has targets for making a virtual environment and launching jupyter
+Testing
+^^^^^^^
+It's not really necessary in this example where there is just a notebook. If you are developing your own library-like functions, it is generally good practice, but
 
-.. code-block:: bash
-    :emphasize-lines: 9
+**Never put hardware accessing methods in a unittest**
 
-    # myStuff/Makefile
-    PATH2LIGHTLABFILE=.pathtolightlab
+Unittests are designed to be run in an automated way in a repeatable setting. Firstly, the real world is not repeatable. Secondly, an automated run could do something unintended and damaging to the currently connected devices.
 
-    venv: venv/bin/activate
-    venv/bin/activate: requirements.txt
-        test -d venv || virtualenv -p python3 --prompt "(myStuff-venv) " --distribute venv
-        venv/bin/pip install -Ur requirements.txt
-        touch venv/bin/activate
-        source venv/bin/activate; venv/bin/pip install -e $(shell cat $(PATH2LIGHTLABFILE))
+Making changes to ``lightlab``
+------------------------------
+We follow this `Git branching workflow <http://nvie.com/posts/a-successful-git-branching-model/>`_. Feature branches should base off of development; when they are done, they must pass tests and test-nb's; finally they are merged to development.
 
-This will dynamically link the environment to your version of lightlab under development. If you have autoreload on in ipython, then text changes in lightlab will take effect immediately (excluding adding new methods). The contents of ``.pathtolightlab`` are::
+Testing
+*******
+First off, your change should not break existing code. You can run automated tests like this::
 
-    /home/hermione/Documents/lightlab
+    make test
+    make test-nb
 
-Specific to Lightwave Lab
--------------------------
+The test-nb target runs the **notebooks** in notebooks/Tests. This is a cool feature because it allows you to go in with jupyter and see what's happening if it fails.
 
-GitLab repository
-******************
-The GitLab project page is https://lightwave.princeton.edu:444/atait/calibration-instrumentation, and the project can be cloned like this::
+**Make tests for your features!** It helps a lot. Again, **Never put hardware accessing methods in a unittest**. We recommend using the `nbval <https://github.com/computationalmodelling/nbval>`_ approach. It checks for no-exceptions, not accuracy of results. If you want to check for accuracy of results, do something like::
 
-    $ git clone git@lightwave.princeton.edu:atait/calibration-instrumentation.git
+    x = 1 + 1
+    assert x == 2
 
+in the cell.
 
-Current port allocations
-************************
+Documenting
+***********
+Documenting as you go is helpful for other developers and code reviewers.
 
-**Olympias**:
+PEP-8
+*****
+As of now, we don't require PEP-8 compliance, but we might in the future. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-pycodestyle>`_ is a good linter.
 
-==== ======== ===========
-Port User     Activity
-==== ======== ===========
-8888 (master) Jupyter
-8889 egordon  Jupyter
-8890 atait    Jupyter
-8050 atait    monitoring
-==== ======== ===========
+Adding a new package
+********************
 
-Allowed Jupyter ports are 8888-8893. Allowed monitor ports are anything. Olympias is in the ``.princeton.edu`` domain (no ``.ee``).
+When you add a Python Package in the venv, install with pip. Make sure you add the new package to the requirements file::
 
-**Cassander**:
+    $ pip freeze --local | grep -v '^\-e' > requirements.txt
 
-==== ======== =============
-Port User     Activity
-==== ======== =============
-8890 atait    Jupyter
-8891 yechim   Jupyter
-8050 atait    monitoring
-8049 atait    documentation
-==== ======== =============
+and then commit. Anyone else pulling from git will have their pip tell them that a new package was added, and automatically install it. **If you do not grep** above, it will tell everyone else to install your specific commit state, and that would be very bad.
 
-Allowed Jupyter ports are 8888-8893. Allowed monitor ports are 8050-8060.
+**Don't break the documentation**
 
-Jupyter uses HTTPS, while the others use HTTP. Cassander is in the ``.ee.princeton.edu`` domain.
+    If you import an external package, sphinx will try to load it and fail. The solution is to mock it. Lets say your source file wants to import::
 
-**Hermes**:
+        import scipy.optimize as opt
 
-==== ======== =============
-Port User     Activity
-==== ======== =============
-8889 mnahmias Jupyter
-==== ======== =============
+    For this to pass and build the docs, you have to go into the ``lightlab/docs/sphinx/conf.py`` file. Then add that package to the list of mocks like so::
+
+        MOCK_MODULES = [<other stuff>, 'scipy.optimize']
 
 
 * :ref:`genindex`

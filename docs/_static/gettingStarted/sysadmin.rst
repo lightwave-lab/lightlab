@@ -81,8 +81,21 @@ In the below examples, we will use the following usernames
 
 Set up a user on this computer corresponding to every user who will be using the lab. Make sure port 22 is open for ssh access. Give them all a tutorial on ssh, python, and ipython. Give yourself and hermione a tutorial on git, SSHFS, pip, and jupyter.
 
+Install basic tools globally
+----------------------------
+``lightlab`` requires python 3.6. You also will need to use virtual environments to execute compiled code, install and freeze dependencies, and launch IPython servers. The first time, install these on your system environment::
+
+    $ sudo apt-get update
+    $ sudo apt-get install python3.6
+
+    $ sudo apt-get install python-pip python-dev build-essential
+    $ sudo pip install --upgrade pip
+    $ sudo pip install --upgrade virtualenv
+
+For different versions of Ubuntu/Linux, you are on your own. See `here <https://www.saltycrane.com/blog/2010/02/how-install-pip-ubuntu/>`_ and `here <https://askubuntu.com/questions/865554/how-do-i-install-python-3-6-using-apt-get>`_.
+
 Manage port security (optional)
-**********************************************
+-------------------------------
 It is possible to restrict port usage by process type. This is a security measure. For example, ports 8820-8830 can be opened, but only for processes named "jupyter".
 
 @hpeng: how do you do these?
@@ -106,6 +119,7 @@ Make a jupyter group specifying who is allowed to run jupyter servers and change
     sudo usermod -a -G jupyter harry
     sudo usermod -a -G jupyter hermione
     sudo usermod -a -G jupyter ron
+    <do not add hagrid>
 
 The jupyter user home directory can be accessed by any user and written only by the jupyter users::
 
@@ -123,8 +137,10 @@ The labstate will be automatically put and backed up in the directory ``/home/ju
 @tlima, maybe instead of group jupyter, we should call it something like "labaccess"
 
 
-Running a jupyter server for users
-----------------------------------
+Running a jupyter server for the regular users
+----------------------------------------------
+Developers can run their own servers, but there are two reasons to have a centralized one like this. 1) keeps data and notebooks centralized so they can be shared and git-tracked easily, 2) serves users who are not developers and who therefore do not need an environment that links dynamically to lightlab.
+
 Create a directory for your lab's data gathering notebooks and data. Ours is called lightdata::
 
     cd /home/jupyter
@@ -138,12 +154,6 @@ Create a directory for your lab's data gathering notebooks and data. Ours is cal
 The last line sets the sticky bit. That means when a file is created within that directory, it can only be modified or deleted by its owner (i.e. the person that created it).
 
 @tlima: how do you set the port and password? Where do you launch the notebook?
-
-
-Set up CI for your own branches
-------------------------------
-@tlima I am shaky on this and the following sections
-
 
 Handling virtual environments that install lightlab
 ---------------------------------------------------
@@ -159,6 +169,9 @@ Put this in all users' ``.bashrc``::
 
 They can then call ``workon development`` and ``workon master``.
 
+If you have developers, set up CI for your own fork (optional)
+------------------------------------------------------------------
+@tlima I am shaky on this and the following sections
 
 
 
