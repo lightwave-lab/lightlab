@@ -201,6 +201,12 @@ class DualInstrument(Virtualizable):
         It basically appears as one or the other instrument, as determined
         by whether it is in virtual or real mode.
 
+        This is especially useful if you have an instrument
+        stored in the JSON labstate,
+        and would then like to virtualize it in your notebook.
+        In that case, it does not reinitialize the driver.
+
+
         isinstance() and __class__ will tell you the underlying instrument type
         type() will give you the DualInstrument subclass::
 
@@ -208,23 +214,6 @@ class DualInstrument(Virtualizable):
             with dual.asReal():
                 isinstance(dual, type(realOne))  # True
             isinstance(dual, type(realOne))  # False
-
-        Subclassing
-
-            A typical subclass might look like this::
-
-                class DualSourceMeter(DualInstrument):
-                    real_klass = SourceMeter
-                    virt_klass = VirtualSourceMeter
-
-                    def __init__(self, *args, viResistiveRef=None, **kwargs):
-                        super().__init__(real_obj=self.real_klass(*args, **kwargs),
-                                         virt_obj=self.virt_klass(viResistiveRef))
-
-            Notice that real_klass and virt_klass are the major points.
-            The __init__ \*args and \*\*kwargs are passed
-            to the *hardware* initializer, while the explicit ones
-            go the the virtual instrument initializer.
     '''
     real_obj = None
     virt_obj = None
@@ -238,6 +227,20 @@ class DualInstrument(Virtualizable):
         '''
         self.real_obj = real_obj
         self.virt_obj = virt_obj
+        if real_obj is not None and virt_obj is not None:
+            violated = []
+            allowed = real_obj.essential_methods + real_obj.essential_properties
+            for attr in dir(type(virt_obj)):
+                if attr in allowed:
+                    violated.append(attr)
+            if len(violated) > 0:
+                logger.warning('Virtual instrument ({}) violates the \
+                                interface of the real one ({})'.format(
+                                    type(virt_obj).__name__,
+                                    type(real_obj).__name__))
+                logger.warning('Got:', ', '.join(violated))
+                logger.warning('Allowed:', ', '.join(allowed))
+        self.synced = []
 
     @Virtualizable.virtual.setter
     def virtual(self, toVirtual):
@@ -248,10 +251,10 @@ class DualInstrument(Virtualizable):
         global virtualOnly
         if virtualOnly and not toVirtual:
             toVirtual = None
-        if toVirtual is True and virt_obj is None:
+        if toVirtual == True and self.virt_obj is None:
             raise VirtualizationError('No virtual object specified in',
                                       type(self.real_obj))
-        elif toVirtual is False and real_obj is None:
+        elif toVirtual == False and self.real_obj is None:
             raise VirtualizationError('No real object specified in',
                                       type(self.virt_obj))
         self._virtual = toVirtual
@@ -313,11 +316,6 @@ class DualInstrument(Virtualizable):
         ''' Gives a new dual instrument that has all the same
             properties and references.
 
-            This is especially useful if you have an instrument
-            stored in the JSON labstate,
-            and would then like to virtualize it in your notebook.
-
-            Does not reinitialize the driver. Keeps the same one.
 
             The instrument base of hwOnlyInstr must be the same instrument
             base of this class
