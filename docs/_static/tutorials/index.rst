@@ -8,7 +8,7 @@ Tutorials
    drivers/drivers
    sweeps/sweeps
    chize/chize
-   siggen/siggen
+   virtualization/virtualization
 
 * :ref:`genindex`
 * :ref:`modindex`

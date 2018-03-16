@@ -84,6 +84,7 @@ server-config: venv setup.py
 jupyter: devbuild
 	( \
 		source venv/bin/activate; \
+		cd notebooks; \
 		jupyter notebook; \
 	)
 
