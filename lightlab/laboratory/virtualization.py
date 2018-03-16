@@ -192,7 +192,10 @@ class Virtualizable(object):
 
 class VirtualInstrument(object):
     ''' Just a placeholder for future functionality '''
-    pass
+    @contextmanager
+    def asVirtual(self):
+        ''' do nothing '''
+        yield self
 
 
 class DualInstrument(Virtualizable):
