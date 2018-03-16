@@ -112,19 +112,6 @@ class Virtualizable(object):
             super().__init__()
         self.synced = list()
 
-    def global_hardware_warmup(self):
-        pass
-
-    def hardware_warmup(self):
-        ''' Be warned that this only works when using the context manager
-        '''
-        pass
-
-    def hardware_cooldown(self):
-        ''' Be warned that this only works when using the context manager
-        '''
-        pass
-
     def synchronize(self, *newVirtualizables):
         ''' Adds another object that this one will put in the same virtual
             state as itself.
@@ -153,32 +140,33 @@ class Virtualizable(object):
     @virtual.setter
     def virtual(self, toVirtual):
         ''' An alternative to context managing.
-            Note that hardware_warmup will not be called
         '''
         global virtualOnly
         if virtualOnly and not toVirtual:
             toVirtual = None
         self._virtual = toVirtual
-        for iSub, sub in enumerate(self.synced):
-            sub._virtual = toVirtual
+        for sub in self.synced:
+            sub.virtual = toVirtual
 
     @contextmanager
     def asVirtual(self):
         old_value = self._virtual
         self.virtual = True
-        old_subvalues = dict()
+        old_subvalues = list()
         for iSub, sub in enumerate(self.synced):
-            old_subvalues[iSub] = sub.virtual
+            old_subvalues.append(sub._virtual)
             sub.virtual = True
         try:
             yield self
         finally:
-            self._virtual = old_value
+            self.virtual = old_value
             for iSub, sub in enumerate(self.synced):
-                sub._virtual = old_subvalues[iSub]
+                sub.virtual = old_subvalues[iSub]
 
     @contextmanager
     def asReal(self):
+        ''' If virtualOnly is True, it will skip the block without error
+        '''
         global virtualOnly
         if virtualOnly:
             try:
@@ -190,21 +178,15 @@ class Virtualizable(object):
 
         old_value = self._virtual
         self.virtual = False
-        old_subvalues = dict()
+        old_subvalues = list()
         for iSub, sub in enumerate(self.synced):
-            old_subvalues[iSub] = sub.virtual
+            old_subvalues.append(sub._virtual)
             sub.virtual = False
         try:
-            self.global_hardware_warmup()
-            self.hardware_warmup()
-            for sub in self.synced:
-                sub.hardware_warmup()
             yield self
         finally:
-            self.hardware_cooldown()
             self.virtual = old_value
             for iSub, sub in enumerate(self.synced):
-                sub.hardware_cooldown()
                 sub.virtual = old_subvalues[iSub]
 
 
@@ -244,16 +226,53 @@ class DualInstrument(Virtualizable):
             to the *hardware* initializer, while the explicit ones
             go the the virtual instrument initializer.
     '''
-    real_klass = None
-    virt_klass = None
     real_obj = None
     virt_obj = None
-    synced = None
 
     def __init__(self, real_obj=None, virt_obj=None):
+        '''
+            Args:
+
+                real_obj (Instrument): the real reference
+                virt_obj (VirtualInstrument): the virtual reference
+        '''
         self.real_obj = real_obj
         self.virt_obj = virt_obj
-        self.synced = []
+
+    @Virtualizable.virtual.setter
+    def virtual(self, toVirtual):
+        ''' An alternative to context managing.
+            Note that hardware_warmup will not be called,
+            so it is not recommended to be called directly.
+        '''
+        global virtualOnly
+        if virtualOnly and not toVirtual:
+            toVirtual = None
+        if toVirtual is True and virt_obj is None:
+            raise VirtualizationError('No virtual object specified in',
+                                      type(self.real_obj))
+        elif toVirtual is False and real_obj is None:
+            raise VirtualizationError('No real object specified in',
+                                      type(self.virt_obj))
+        self._virtual = toVirtual
+        for sub in self.synced:
+            sub.virtual = toVirtual
+
+    @contextmanager
+    def asReal(self):
+        ''' Wraps making self.virtual to False.
+            Also does hardware warmup and cooldown
+        '''
+        with super().asReal():
+            try:
+                self.hardware_warmup()
+                for sub in self.synced:
+                    sub.hardware_warmup()
+                yield self
+            finally:
+                self.hardware_cooldown()
+                for sub in self.synced:
+                    sub.hardware_cooldown()
 
     def __getattribute__(self, att):
         if att in (list(DualInstrument.__dict__.keys()) +

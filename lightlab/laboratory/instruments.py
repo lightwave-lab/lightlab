@@ -502,8 +502,14 @@ class OpticalSpectrumAnalyzer(Instrument):
 class Oscilloscope(Instrument):
     essentialMethods = ['acquire', 'wfmDb', 'run']
 
+    def hardware_cooldown(self):
+        ''' Keep it running continuously in case you are in lab and want to watch
+        '''
+        self.run()
+
 class CommunicationAnalyzerScope(Oscilloscope):
     pass
+
 
 class DigitalPhosphorScope(Oscilloscope):
     pass
@@ -544,6 +550,7 @@ class NetworkAnalyzer(Instrument):
         'measurementSetup',
         'spectrum',
         'multiSpectra']
+
 
 class ArduinoInstrument(Instrument):
     essentialMethods = ['write', 'query']
