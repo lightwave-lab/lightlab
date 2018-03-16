@@ -65,7 +65,7 @@ Plug your new instrument (let's say GPIB, address 23) into host "alice", then, i
     visa://alice.school.edu/GPIB0::18::INSTR
     visa://alice.school.edu/GPIB0::23::INSTR
 
-That means the instrument is visible, and we know the full address.
+That means the instrument is visible, and we know the full address::
 
     > from lightlab.equipment.lab_instruments.visa_connection import VISAObject
     > newInst = VISAObject('visa://alice.school.edu/GPIB0::23::INSTR')
@@ -74,34 +74,84 @@ That means the instrument is visible, and we know the full address.
 
 That means the instrument is responsive, and basic communication settings are correct already. Time to start writing.
 
-Command syntax
---------------
+Troubleshooting 1: Write termination
+*********************************************
+Try this::
 
-Configuration
+    > newInst.open()
+    > newInst.mbSession.write_termination = ''
+    > newInst.mbSession.clear()
+    > print(newInst.instrID())
+
+and play around with different line terminations. There are also different options for handshaking to be aware of, as well as baud rate attributes. For debugging at this level, we recommend the NI visaic.
+
+.. figure:: nivisaic.png
+    :alt: nivisaic
+    :align: center
+    :width: 50%
+
+    NI Visa Interactive Control window. Change around line settings, then write "\*IDN?" in the Input/Output. See attributes for more advanced settings.
+
+When you find something that works, overload the ``open`` method. Do not try to set these things in the ``__init__`` method.
+
+Troubleshooting 2: No "\*IDN?" behavior
+*********************************************
+Some instruments don't even though it is a nearly universal requirement. In that case, find some simple command in the manual to serve as your "is this instrument alive?" command. Later, overload the ``instrID`` method.
+
+Configurable
 -------------
-To help, we've created some generally useful tools to deal with synchronizing states between code and instrument and reality. Some examples are the :py:class:`~lightlab.equipment.lab_instruments.configure.tek_config.TekConfig` and :py:class:`~lightlab.equipment.lab_instruments.configure.configurable.Configurable` classes. Often, you'd want to create a consistency between code and instrument, but it doesn't make sense to call configuration commands all the time. :py:class:`~lightlab.equipment.lab_instruments.configure.configurable.Configurable` builds up a minimal notion of consistent state and updates hardware only when it might have become inconsistent.
+Many instruments have complex settings and configurations. These are usually accessed in a message-based way with ``write(':A:PARAM 10')`` and ``query(':A:PARAM?')``. We want to create a consistency between driver and hardware, but
 
-Setup, configure, measure/actuate
+1. we don't care about the entire configuration all the time, and
 
-Syntax
+2. it doesn't make sense to send configuration commands all the time.
 
-"\*IDN?"
+:py:class:`~lightlab.equipment.lab_instruments.configure.configurable.Configurable` builds up a minimal notion of consistent state and updates hardware only when it might have become inconsistent. The above is done with ``setConfigParam('A:PARAM', 10)`` and ``getConfigParam('A:PARAM')``. If you set the parameter and then get it, the driver will not communicate with the instrument -- it will look up the value you just set. Similarly, it will avoid setting the same value twice. For example,::
 
-Difference between setup and open
----------------------------------
+    # Very slow
+    def acquire(self, chan):
+        self.write(':CH ' + str(chan))
+        return self.query(':GIVE:DATA?')
+
+    # Error-prone
+    def changeChannel(self, chan):
+        self.write(':CH ' + str(chan))
+
+    def acquire(self):
+        return self.query(':GIVE:DATA?')
+
+    # Good (using Configurable)
+    def acquire(self, chan):
+        self.setConfigParam('CH', chan)
+        return self.query(':GIVE:DATA?')
+
+Both support a ``forceHardware`` kwarg and have various options for message formatting.
+
+:py:class:`~lightlab.equipment.lab_instruments.configure.configurable.Configurable` also has support for saving, loading, and replaying configurations, so you can put the instrument in the exact same state as it was for a given experiment. Save files are human-readable in JSON.
+
+Difference between ``__init__``, ``startup``, and ``open``
+----------------------------------------------------------
+``__init__``
+    should set object attributes based on the arguments. The ``super().__init__`` will take care of lab book keeping. It should not call ``open``.
+
+``open``
+    initiates a message based session. It gets called automatically when ``write`` or ``query`` are called.
+
+``startup`` (optional)
+    is called immediately after the first time the instrument is opened.
 
 How to read a programmer manual
 -------------------------------------
-You need the manual to find the right commands. They are often very long and describe everything from scratch. They sometimes refer to programming with vendor-supplied GUI software -- don't want that. You are looking for a command reference, or sometimes coding examples.
+You need the manual to find the right commands. You are looking for a command reference, or sometimes coding examples. They are often very long and describe everything from scratch. They sometimes refer to programming with vendor-supplied GUI software -- don't want that. Here is a very old school manual for a power meter. It is 113 pages, and you need to find three commands. Go to the contents and look for something like "command summary."
 
 .. figure:: pmManual.pdf
     :alt: An old school manual
     :align: center
     :width: 90%
 
-    Manual of the HP 8152A Power Meter (1982). Go to the contents and look for something like "command summary."
+    Manual of the HP 8152A Power Meter (1982).
 
-which turns into the following driver (simplified)
+which turns into the following driver (complete, simplified). If possible, link the manual in the docstring.
 
 .. code-block:: python
 
@@ -122,6 +172,7 @@ which turns into the following driver (simplified)
             returnString = self.query('TRG')
             return float(returnString)
 
+Newer equipment usually has thousand-page manuals, but they're hyperlinked.
 
 * :ref:`genindex`
 * :ref:`modindex`
