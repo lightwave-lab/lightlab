@@ -236,12 +236,12 @@ class DualInstrument(Virtualizable):
                     virt_klass = VirtualSourceMeter
 
                     def __init__(self, *args, viResistiveRef=None, **kwargs):
-                        super().__init__(real=self.real_klass(*args, **kwargs),
-                            virt=self.virt_klass(viResistiveRef))
+                        super().__init__(real_obj=self.real_klass(*args, **kwargs),
+                                         virt_obj=self.virt_klass(viResistiveRef))
 
             Notice that real_klass and virt_klass are the major points.
-            The __init__ *args and **kwargs are passed
-            to *hardware* initializer, while the explicit ones
+            The __init__ \*args and \*\*kwargs are passed
+            to the *hardware* initializer, while the explicit ones
             go the the virtual instrument initializer.
     '''
     real_klass = None
