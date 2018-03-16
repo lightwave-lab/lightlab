@@ -6,7 +6,7 @@ import numpy as np
 from lightlab import logger
 import lightlab.laboratory.state as labstate
 from lightlab.laboratory.virtualization import DualFunction, Virtualizable
-
+from contextlib import contextmanager
 
 class Experiment(Virtualizable):
     """ Experiment class
@@ -100,6 +100,28 @@ class Experiment(Virtualizable):
             for instrument in self.instruments:
                 instrument.startup()
 
+    def hardware_warmup(self):
+        pass
+
+    def hardware_cooldown(self):
+        pass
+
+    @contextmanager
+    def asReal(self):
+        ''' Wraps making self.virtual to False.
+            Also does hardware warmup and cooldown
+        '''
+        with super().asReal():
+            try:
+                self.global_hardware_warmup()
+                self.hardware_warmup()
+                for sub in self.synced:
+                    sub.hardware_warmup()
+                yield self
+            finally:
+                self.hardware_cooldown()
+                for sub in self.synced:
+                    sub.hardware_cooldown()
 
     def registerInstrument(self, instrument, host=None, bench=None):
         if host is None and bench is None:

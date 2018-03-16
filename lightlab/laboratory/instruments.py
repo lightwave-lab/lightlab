@@ -395,12 +395,14 @@ class NotFoundError(RuntimeError):
 # TODO VERIFY CODE BELOW
 
 class PowerMeter(Instrument):
-    essentialMethods = ['powerDbm', 'powerLin']
+    essentialMethods = Instrument.essentialMethods + \
+        ['powerDbm',
+        'powerLin']
 
 
 class SourceMeter(Instrument):
-    essentialMethods = [
-        'setCurrent',
+    essentialMethods = Instrument.essentialMethods + \
+        ['setCurrent',
         'getCurrent',
         'measVoltage',
         'setProtectionVoltage',
@@ -420,7 +422,8 @@ class Keithley(SourceMeter):
 
 
 class VectorGenerator(Instrument):
-    essentialMethods = ['amplitude',
+    essentialMethods = Instrument.essentialMethods + \
+        ['amplitude',
         'frequency',
         'enable',
         'modulationEnable',
@@ -434,12 +437,17 @@ class VectorGenerator(Instrument):
 
 
 class Clock(Instrument):
-    essentialMethods = ['on']
-    essentialProperties = ['frequency']
+    essentialMethods = Instrument.essentialMethods + \
+        ['on']
+    essentialProperties = Instrument.essentialProperties + \
+        ['frequency']
 
 
 class CurrentSource(Instrument):
-    essentialMethods = ['setChannelTuning', 'getChannelTuning', 'off']
+    essentialMethods = Instrument.essentialMethods + \
+        ['setChannelTuning',
+        'getChannelTuning',
+        'off']
     # Must init with `useChans` somehow
 
 
@@ -450,11 +458,16 @@ class NICurrentSource(CurrentSource, ElectricalSource, MultiModalSource):
 
 
 class FunctionGenerator(Instrument):
-    essentialMethods = ['frequency', 'waveform', 'amplAndOffs', 'duty']
+    essentialMethods = Instrument.essentialMethods + \
+        ['frequency',
+        'waveform',
+        'amplAndOffs',
+        'duty']
 
 
 class LaserSource(Instrument):
-    essentialMethods = ['setChannelEnable',
+    essentialMethods = Instrument.essentialMethods + \
+        ['setChannelEnable',
         'getChannelEnable',
         'setChannelWls',
         'getChannelWls',
@@ -462,16 +475,24 @@ class LaserSource(Instrument):
         'getChannelPowers',
         'getAsSpectrum',
         'off']
-    essentialProperties = ['enableState', 'wls', 'powers']
+    essentialProperties = Instrument.essentialProperties + \
+        ['enableState',
+        'wls',
+        'powers']
 
 
 class OpticalSpectrumAnalyzer(Instrument):
-    essentialMethods = ['spectrum']
-    essentialProperties = ['wlRange']
+    essentialMethods = Instrument.essentialMethods + \
+        ['spectrum']
+    essentialProperties = Instrument.essentialProperties + \
+        ['wlRange']
 
 
 class Oscilloscope(Instrument):
-    essentialMethods = ['acquire', 'wfmDb', 'run']
+    essentialMethods = Instrument.essentialMethods + \
+        ['acquire',
+        'wfmDb',
+        'run']
 
 class CommunicationAnalyzerScope(Oscilloscope):
     pass
@@ -481,7 +502,8 @@ class DigitalPhosphorScope(Oscilloscope):
 
 
 class PulsePatternGenerator(Instrument):
-    essentialMethods = ['setPrbs',
+    essentialMethods = Instrument.essentialMethods + \
+        ['setPrbs',
         'setPattern',
         'getPattern',
         'on',
@@ -490,7 +512,8 @@ class PulsePatternGenerator(Instrument):
 
 
 class RFSpectrumAnalyzer(Instrument):
-    essentialMethods = ['getMeasurements',
+    essentialMethods = Instrument.essentialMethods + \
+        ['getMeasurements',
         'setMeasurement',
         'run',
         'sgramInit',
@@ -499,12 +522,17 @@ class RFSpectrumAnalyzer(Instrument):
 
 
 class VariableAttenuator(Instrument):
-    essentialMethods = ['on', 'off']
-    essentialProperties = ['attenDB', 'attenLin']
+    essentialMethods = Instrument.essentialMethods + \
+        ['on',
+        'off']
+    essentialProperties = Instrument.essentialProperties + \
+        ['attenDB',
+        'attenLin']
 
 
 class NetworkAnalyzer(Instrument):
-    essentialMethods = ['amplitude',
+    essentialMethods = Instrument.essentialMethods + \
+        ['amplitude',
         'frequency',
         'enable',
         'run',
@@ -517,6 +545,8 @@ class NetworkAnalyzer(Instrument):
         'multiSpectra']
 
 class ArduinoInstrument(Instrument):
-    essentialMethods = ['write', 'query']
+    essentialMethods = Instrument.essentialMethods + \
+        ['write',
+        'query']
 
 
