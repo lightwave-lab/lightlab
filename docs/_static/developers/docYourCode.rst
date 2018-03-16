@@ -88,20 +88,29 @@ Real examples can be found by browsing the API section of this documentation. If
 
 Via IPython Notebooks
 ---------------------
-The `nbsphinx <nbsphinx.readthedocs.io>`_ package can convert .ipynb files with outputs into html. The idea here is that it is sometimes instructive for the reader to play with some knobs to see how something works. Real code examples are also useful. It also supports interactive running, but that is not recommended.
+The `nbsphinx <nbsphinx.readthedocs.io>`_ package by Matthias Geier can convert .ipynb files with outputs into html. The idea here is that it is sometimes instructive for the reader to play with some knobs to see how something works. Real code examples are also useful. It also supports running on build, but that is not recommended. These notebooks should be saved with outputs.
 
-As of now, documentation notebooks are in docs/sphinx/ipynbs/. There is a symlink to the notebooks/Tests/ directory. Other notebooks can be placed in Others/. These notebooks should be saved with outputs. You can reference them in the documentation like so
+As of now, documentation notebooks are in docs/sphinx/ipynbs/. Test notebooks should correspond exactly to what is in lightlab/notebooks/Tests. After running and saving, *copy* that notebook over (do not try to symlink). Other notebooks can be placed in Others/. You can reference them in the documentation like so
+
+.. toctree::
+    :caption: An example
+
+    ExampleNotebook.ipynb
 
 .. toctree::
     :maxdepth: 1
     :glob:
-    :caption: All IPython notebooks used for Tests
+    :caption: All "Tests" notebooks
 
     /ipynbs/Tests/*
 
-.. todo::
+.. toctree::
+    :maxdepth: 1
+    :glob:
+    :caption: All "Others" IPython notebooks
 
-    Output images in symlinked notebooks are not displaying
+    /ipynbs/Others/*
+
 
 * :ref:`genindex`
 * :ref:`modindex`

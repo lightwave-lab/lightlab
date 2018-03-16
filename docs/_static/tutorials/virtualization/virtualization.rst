@@ -35,14 +35,18 @@ Instead, we could make a class called ``VirtualKeithleyWithDiodeAttached`` that 
 1. Keeping state in one place
     In the real experiment, the entire "state" of the lab can be described by what is in the drivers (which should match the configuration of the actual equipment). Similarly, for virtual, you should not have to go digging around the simulator to figure out the entire "state".
 
-2. Functional simulators
-    Easy to test and debug. Easy to compose into larger simulators.
+2. Avoid creating a special purpose instrument for every experiment
+    You can re-use VirtualKeithley with a different model in its ``viResistiveRef``.
 
 3. Enforces the proper namespace
     Your procedure should not be able to directly see your model. It should only be interacting with Instrument-like things
 
-4. Avoid creating a special purpose instrument for every experiment
-    You can re-use VirtualKeithley with a different model in its ``viResistiveRef``.
+4. Functional simulators
+    This means, if the input is the same, the output is always the same. Also, the simulators cause no side-effects. Easy to test and debug. Easy to compose into larger simulators.
+
+.. note::
+
+    This is not a hard and fast rule. Reasons to store state in the simulator is if there is hysteresis, or, for performance reasons, it might make sense to cache results within the simulator.
 
 Clearly, ``VirtualKeithleyWithDiodeAttached`` is a bad instrument because it is not re-usable. It is a bad simulator because it cannot be composed with other simulators, and it is difficult to unit test because the return of ``getVoltage`` depends on history. These points come into play when simulation models get more complicated.
 
