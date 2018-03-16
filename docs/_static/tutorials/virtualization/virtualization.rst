@@ -1,5 +1,11 @@
 Virtualization
 ==============================================
+
+.. currentmodule:: lightlab.laboratory.virtualization
+
+.. contents:: In this section
+    :local:
+
 Virtual experiments are meant to behave exactly like a real lab would, except by using code calls to simulators rather than real instruments. This is useful for several reasons
 
 1. Developing/debugging procedures quickly and safely
@@ -7,11 +13,6 @@ Virtual experiments are meant to behave exactly like a real lab would, except by
 2. Validating that procedures will work and not go out of range before running on a real device
 
 3. Unit testing code that refers to instruments in a repeatable virtual environment
-
-.. contents:: In this section
-    :local:
-
-.. currentmodule:: lightlab.laboratory.virtualization
 
 Procedural abstraction
 ----------------------
