@@ -55,4 +55,3 @@ from .Tektronix_DPO4034_Oscope import Tektronix_DPO4034_Oscope
 from .Tektronix_DSA8300_Oscope import Tektronix_DSA8300_Oscope
 from .Tektronix_RSA6120B_RFSA import Tektronix_RSA6120B_RFSA
 from .Tektronix_TDS6154C_Oscope import Tektronix_TDS6154C_Oscope
-from .Temp_SM import Temp_SM

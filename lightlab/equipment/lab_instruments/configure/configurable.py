@@ -14,7 +14,7 @@ class Configurable(object):
     '''
     defaultFileDir = '../../lightlab/equipment/savedScopeConfigs/defaults/'
 
-    def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True):
+    def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True, **kwargs):
 
         self._hardwareinit = False
 
@@ -28,6 +28,8 @@ class Configurable(object):
         self.config = {}
         self.config['default'] = None
         self.config['live'] = TekConfig()
+
+        super().__init__(**kwargs)
 
     def initHardware(self):
         if not self._hardwareinit:

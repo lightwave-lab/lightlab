@@ -4,6 +4,8 @@ from lightlab.util import io
 
 class HP_8152A_PM(VISAInstrumentDriver):
     """ HP8152A power meter
+
+        `Manual <http://www.lightwavestore.com/product_datasheet/OTI-OPM-L-030C_pdf4.pdf>`_
     """
     overrideReadDoublingCheck = False  # This weird thing that happens sometimes is dealt with automatically unless this is True
     # def __init__(self, address=18, hostID='andromeda'):
