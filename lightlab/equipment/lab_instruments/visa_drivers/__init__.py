@@ -46,7 +46,7 @@ from .Anritsu_MP1763B_PPG import Anritsu_MP1763B_PPG
 from .Apex_AP2440A_OSA import Apex_AP2440A_OSA
 from .Arduino_Instrument import Arduino_Instrument
 from .current_source import CurrentSources
-from .current_source import NI_PCI_SourceCard
+from .current_source import NI_PCI_6723
 from .digital_phosphor_scope import DigitalPhosphorScope
 from .HP_8116A_FG import HP_8116A_FG
 from .HP_8152A_PM import HP_8152A_PM
