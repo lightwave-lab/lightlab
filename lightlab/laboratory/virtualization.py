@@ -101,6 +101,9 @@ class Virtualizable(object):
     ''' Virtualizable means that it can switch between two states,
         usually corresponding
         to a real-life situation and a virtual/simulated situation.
+
+        The attribute synced refers to other Virtualizables whose states
+        will be synchronized with this one
     '''
     _virtual = None
     synced = None

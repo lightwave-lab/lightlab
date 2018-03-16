@@ -22,6 +22,12 @@ class VISAInstrumentDriver(VISAObject):
     def startup(self):
         logger.debug("{}startup method empty".format(self.__class__.__name__))
 
+    def open(self):
+        super().open()
+        if not self.__started:
+            self.startup()
+            self.__started = True
+
 
 DefaultDriver = VISAInstrumentDriver
 
