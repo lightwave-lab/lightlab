@@ -9,6 +9,7 @@ from lightlab.equipment.lab_instruments import VISAObject, DefaultDriver
 from lightlab import logger
 import os
 import pyvisa
+from contextlib import contextmanager
 
 
 class Host(Node):
@@ -249,6 +250,7 @@ class Instrument(Node):
         ''' For autocompletion in ipython '''
         return super().__dir__() + self.essentialProperties + self.essentialMethods
 
+    # These control feedthroughs to the driver
     def __getattr__(self, attrName):
         if attrName in self.essentialProperties + self.essentialMethods: # or methods
             return getattr(self.driver, attrName)
@@ -266,6 +268,32 @@ class Instrument(Node):
             return self.driver.__delattr__(attrName)
         else:
             return super().__delattr__(attrName)
+
+    # These control contextual behavior. They are used by DualInstrument
+    def hardware_warmup(self):
+        pass
+
+    def hardware_cooldown(self):
+        pass
+
+    @contextmanager
+    def warmedUp(self):
+        ''' A context manager that warms up and cools down in a "with" block
+        '''
+        try:
+            self.hardware_warmup()
+            yield self
+        finally:
+            self.hardware_cooldown()
+
+    # These control properties
+    @property
+    def driver_class(self):
+        if self._driver_class is None:
+            logger.warning("Using default driver for %s.", self)
+            return DefaultDriver
+        else:
+            return self._driver_class
 
     @property
     def driver_object(self):
@@ -285,12 +313,8 @@ class Instrument(Node):
         return self.driver_object.startup()
 
     @property
-    def driver_class(self):
-        if self._driver_class is None:
-            logger.warning("Using default driver for %s.", self)
-            return DefaultDriver
-        else:
-            return self._driver_class
+    def driver(self):
+        return self.driver_object
 
     @property
     def bench(self):
@@ -377,10 +401,6 @@ class Instrument(Node):
         #     self.gpib_address = gpib_address
         self.host = host
 
-    @property
-    def driver(self):
-        return self.driver_object
-
     # @classmethod
     # def fromGpibAddress(cls, gpib_address):
     #     visa_object = VISAObject(gpib_address, tempSess=True)
@@ -409,6 +429,12 @@ class SourceMeter(Instrument):
         'setProtectionVoltage',
         'setProtectionCurrent',
         'enable']
+
+    def hardware_warmup(self):
+        self.enable(True)
+
+    def hardware_cooldown(self):
+        self.enable(False)
 
 
 class Keithley(SourceMeter):
