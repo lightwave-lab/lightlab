@@ -266,6 +266,15 @@ class DualInstrument(Virtualizable):
         ''' Wraps making self.virtual to False.
             Also does hardware warmup and cooldown
         '''
+        global virtualOnly
+        if virtualOnly:
+            try:
+                yield self
+            except VirtualizationError:
+                pass
+            finally:
+                return
+
         with super().asReal():
             try:
                 self.hardware_warmup()
