@@ -131,7 +131,7 @@ class Virtualizable(object):
 
             Args:
 
-                newVirtualizables (*args): Other virtualizable things
+                newVirtualizables (\*args): Other virtualizable things
         '''
         for virtualObject in newVirtualizables:
             if virtualObject is None or virtualObject in self.synced:

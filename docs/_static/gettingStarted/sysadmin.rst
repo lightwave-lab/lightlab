@@ -7,7 +7,7 @@ Host machines
 
 Installing NI-visa (32-bit) in Ubuntu (64-bit)
 ----------------------------------------------
-Followed instructions in `here <http://forums.ni.com/t5/Linux-Users/Using-NI-VISA-with-Arch-Linux-or-Ubuntu-14-04/gpm-p/3462361#M2287>`_, but in computers with EFI secure boot, like all modern ones, we need to sign the kernel modules for and add the certificate to the EFI. For this, follow these `instructions <http://askubuntu.com/questions/762254/why-do-i-get-required-key-not-available-when-install-3rd-party-kernel-modules>`_.
+Followed instructions `found here <http://forums.ni.com/t5/Linux-Users/Using-NI-VISA-with-Arch-Linux-or-Ubuntu-14-04/gpm-p/3462361#M2287>`_, but in computers with EFI secure boot, like all modern ones, we need to sign the kernel modules for and add the certificate to the EFI. For this, follow these `instructions <http://askubuntu.com/questions/762254/why-do-i-get-required-key-not-available-when-install-3rd-party-kernel-modules>`_.
 
 Sign all modules in ``/lib/modules/newest_kernel/kernel/natinst/*/*/.ko``
 
@@ -91,7 +91,7 @@ Install basic tools globally
     $ sudo pip install --upgrade pip
     $ sudo pip install --upgrade virtualenv
 
-For different versions of Ubuntu/Linux, you are on your own. See `here <https://www.saltycrane.com/blog/2010/02/how-install-pip-ubuntu/>`_ and `here <https://askubuntu.com/questions/865554/how-do-i-install-python-3-6-using-apt-get>`_.
+For different versions of Ubuntu/Linux, you are on your own. See `here <https://www.saltycrane.com/blog/2010/02/how-install-pip-ubuntu/>`_ and `there <https://askubuntu.com/questions/865554/how-do-i-install-python-3-6-using-apt-get>`_.
 
 Manage port security (optional)
 -------------------------------

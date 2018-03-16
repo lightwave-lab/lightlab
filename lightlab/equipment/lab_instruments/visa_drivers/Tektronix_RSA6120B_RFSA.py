@@ -72,10 +72,10 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     def sgramTransfer(self, duration=1., nLines=100):
         ''' Transfers data that has already been taken. Typical usage::
 
-            self.sgramInit()
-            ... << some activity >>
-            self.run(False)
-            self.spectrogram()
+                self.sgramInit()
+                ... << some activity >>
+                self.run(False)
+                self.spectrogram()
 
             Currently only supports free running mode, so time is approximate.
             The accuracy of timing and consistency of timing between lines is not guaranteed.

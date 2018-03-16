@@ -15,7 +15,7 @@ Use :py:meth:`~lightlab.util.sweep.Sweeper.setMonitorOptions` to set and get. To
 
 .. warning:: Live plotting is not yet supported for surf plots, and there are a few bugs with 1D command-control plots.
 
-If ``runServer==True``, to serve the page, you must first start the server (see :doc:`here </_static/gettingStarted/workflow>`), making sure to set up the right domain, domainHostName, monitorServerDir, and monitorServerPort. If you are using ``Sweeper``, it configures your sweep to write to the server.
+If ``runServer==True``, to serve the page, you must first start the server (see :doc:`here </_static/developers/developer>`), making sure to set up the right domain, domainHostName, monitorServerDir, and monitorServerPort. If you are using ``Sweeper``, it configures your sweep to write to the server.
 
 .. note::
 

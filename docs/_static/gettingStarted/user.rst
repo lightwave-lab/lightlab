@@ -1,17 +1,6 @@
 User: getting started
 =====================
 
-Not really sure what this means. As of now, everyobdy is a developer.
-
-:doc:`docYourCode`
-
-Make sure you have python I guess.
-
-#. one
-
-#. two
-
-
 Connecting to the instrumentation server
 ----------------------------------------
 First, make sure that your have a user account set up on the your server. Let's say your domain is "school.edu" First, do a manual log on to change your password to a good password. From your local machine::
