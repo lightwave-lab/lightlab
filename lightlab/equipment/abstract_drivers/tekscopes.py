@@ -111,7 +111,7 @@ class Generic(Configurable):
         # Channel select
         for ich in range(1, 1 + self.totalChans):
             thisState = 1 if ich in chans else 0
-            self.setConfigParam(':SELECT:CH' + str(ich), thisState)
+            self.setConfigParam('SELECT:CH' + str(ich), thisState)
 
         isSampling = kwargs.get(avgCnt, 0) == 1
         self.__setupSingleShot(isSampling)
@@ -166,8 +166,8 @@ class Generic(Configurable):
                 Make this binary transfer to go even faster
         '''
         chStr = 'CH' + str(chan)
-        self.setConfigParam(':DATA:ENCDG', 'ASCII')
-        self.setConfigParam(':DATA:SOURCE', chStr)
+        self.setConfigParam('DATA:ENCDG', 'ASCII')
+        self.setConfigParam('DATA:SOURCE', chStr)
         VISAObject.open(self)
         try:
             voltRaw = self.mbSession.query_ascii_values('CURV?')
@@ -200,7 +200,7 @@ class Generic(Configurable):
                   * get(self.yScaleParam) \
                   + get('YOFF')
 
-        timeDivision = float(self.getConfigParam(':HORIZONTAL:MAIN:SCALE'))
+        timeDivision = float(self.getConfigParam('HORIZONTAL:MAIN:SCALE'))
         time = np.linspace(-1, 1, len(voltage))/2 *  timeDivision * 10
 
         return time, voltage
@@ -218,13 +218,13 @@ class Generic(Configurable):
             Returns:
                 (FunctionBundle(Waveform)): all waveforms acquired
         '''
-        origTrigSrc = self.getConfigParam(':TRIGGER:SOURCE')
-        self.setConfigParam(':TRIGGER:SOURCE', 'FREERUN' if untriggered else 'EXTDIRECT')
-        # origAvgCnt = self.getConfigParam(':ACQUIRE:NUMAVG', forceHardware=True)
+        origTrigSrc = self.getConfigParam('TRIGGER:SOURCE')
+        self.setConfigParam('TRIGGER:SOURCE', 'FREERUN' if untriggered else 'EXTDIRECT')
+        # origAvgCnt = self.getConfigParam('ACQUIRE:NUMAVG', forceHardware=True)
         bundle = FunctionBundle()
         for _ in range(nWfms):
             bundle.addDim(self.acquire([chan], avgCnt=1)[0]) # avgCnt=1 sets it to sample mode
-        self.setConfigParam(':TRIGGER:SOURCE', origTrigSrc)
+        self.setConfigParam('TRIGGER:SOURCE', origTrigSrc)
         return bundle
 
     def run(self, continuousRun=True):
@@ -238,7 +238,7 @@ class Generic(Configurable):
                             'RUNSTOP' if continuousRun else self.runModeSingleShot,
                             forceHardware=True)
         if continuousRun:
-            self.setConfigParam(':ACQUIRE:STATE', 1, forceHardware=True)
+            self.setConfigParam('ACQUIRE:STATE', 1, forceHardware=True)
 
     def autoAdjust(self, chans):
         ''' Adjusts offsets and scaling so that waveforms are not clipped '''
@@ -322,7 +322,7 @@ class DSA(Generic):
         if not isSampling:
             self.setConfigParam('TRIGGER:SOURCE', 'EXTDIRECT', forceHardware=forcing)
 
-    def histogramStats(self):
+    def histogramStats(self, chan, nWfms=3, untriggered=False):
         # Configuration
         self.setConfigParam('HIS:BOXP', '0, 0, 99.9, 99.9')
         self.setConfigParam('HIS:ENAB', '')
@@ -330,15 +330,15 @@ class DSA(Generic):
         self.setConfigParam('HIS:SOU', chan)
 
         forcing = True
-        self.setConfigParam(':ACQUIRE:STOPAFTER:MODE', 'CONDITION', forceHardware=True) # True in case someone changed it in lab
-        self.setConfigParam(':ACQUIRE:STOPAFTER:CONDITION', 'ACQWFMS', forceHardware=forcing)
-        self.setConfigParam(':ACQUIRE:STOPAFTER:COUNT', nWfms, forceHardware=forcing)
-        self.setConfigParam(':ACQUIRE:MODE', 'SAMPLE', forceHardware=forcing)
+        self.__setupSingleShot(isSampling=True, forcing=forcing)
+        self.setConfigParam('ACQUIRE:STOPAFTER:COUNT', nWfms, forceHardware=forcing)
 
         # Gathering
-        origTrigSrc = self.getConfigParam(':TRIGGER:SOURCE')
-        self.setConfigParam(':TRIGGER:SOURCE', 'FREERUN' if untriggered else 'EXTDIRECT')
+        origTrigSrc = self.getConfigParam('TRIGGER:SOURCE')
+        self.setConfigParam('TRIGGER:SOURCE',
+                            'FREERUN' if untriggered else 'EXTDIRECT')
         self.__triggerAcquire()
+        self.setConfigParam('TRIGGER:SOURCE', origTrigSrc)
 
         # Transfer data
         stdDev = self.query('HIS:STAT:STD?')
@@ -346,19 +346,16 @@ class DSA(Generic):
         for iSigma in range(3):
             sigmaStats[iSigma] = self.query('HIS:STAT:SIGMA{}?'.format(iSigma+1))
 
-        self.setConfigParam(':TRIGGER:SOURCE', origTrigSrc)
-
         return stdDev, sigmaStats
-
-        probDensityFun = np.zeros(3)
-        probDensityFun = stats[0] , np.diff(stats) / stdDev
-        mom4 = np.mean(probDensityFun ** 4)
 
 
 class TDS(DSA):
     ''' Very similar to the DSA '''
     recLenParam = 'HORIZONTAL:RECORDLENGTH'
     yScaleParam = 'YMULT'
+
+    def histogramStats(self, *args, **kwargs):
+        raise NotImplementedError('histogramStats has not been verified with TDS scopes')
 
 
 class DPO(Generic):
