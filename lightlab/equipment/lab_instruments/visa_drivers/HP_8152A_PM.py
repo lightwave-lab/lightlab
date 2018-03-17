@@ -1,4 +1,4 @@
-from ..visa_drivers import VISAInstrumentDriver
+from . import VISAInstrumentDriver
 from lightlab.util import io
 
 
