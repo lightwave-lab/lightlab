@@ -2,6 +2,8 @@ from .tek_config import TekConfig
 from lightlab import logger
 import pyvisa
 
+from lightlab.util.io import filehome
+
 
 class AccessException(Exception):
     pass
@@ -157,12 +159,13 @@ class Configurable(object):
                 TekConfig: structured configuration object
         '''
         self.initHardware()
+        logger.info('Querying SET? response of ' + self.instrID())
         try:
             resp = self.query('SET?')
             return TekConfig.fromSETresponse(resp, subgroup=subgroup)
         except pyvisa.VisaIOError as e:  # SET timed out. You are done.
-            print(self.instrID() +
-                  ': timed out on \'SET?\'. Try resetting with \'*RST\'.')
+            logger.error(self.instrID() + ': timed out on \'SET?\'. \
+                         Try resetting with \'*RST\'.')
             raise e
 
     def _getHardwareConfig(self, cStrList):
@@ -203,3 +206,46 @@ class Configurable(object):
                 ''.join(cmd.split(' '))
             logger.debug('Sending ' + str(cmd) + ' to configurable hardware')
             self.write(cmd)
+
+
+    def generateDefaults(cls, filename=None, overwrite=False):
+        ''' Attempts to read every configuration parameter.
+            Handles several cases where certain parameters do not make sense and must be skipped
+
+            Generates a new default file which is saved
+            in Configurable.defaultFileDir
+
+            *This takes a while.*
+
+            Args:
+                filename (str): simple name. You can't control the directory.
+                overwrite (bool): If False, stops if the file already exists.
+        '''
+        if filename is None:
+            filename = self.instrID()
+        if Path(filename).exists() and not overwrite:
+            logger.warning(self.instrID() + ': Default already exists. \
+                           Use `overwrite` if you really want.')
+            return
+
+        allConfig = self.__getFullHardwareConfig()
+        allSetCmds = allConfig.getList('', asCmd=True)
+
+        cfgBuild = TekConfig()
+        oldTimeout = self.timeout
+        self.timeout = 1000
+        for cmd in allSetCmds:
+            if cmd[0][-1]  != '&': # handle the sibling subdir token
+                cStr = cmd[0]
+            else:
+                cStr = cmd[0][:-2]
+            try:
+                val = self.query(cStr + '?', withTimeout=1000)
+                cfgBuild.set(cStr, val)
+                logger.info(cStr, '<--', val)
+            except pyvisa.VisaIOError as e:
+                logger.info(cStr, 'X -- skipping')
+        self.timeout = oldTimeout
+
+        cfgBuild.save(filename)
+        logger.info('New default saved to', filename)

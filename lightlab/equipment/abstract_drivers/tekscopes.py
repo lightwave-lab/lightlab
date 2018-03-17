@@ -3,9 +3,9 @@ from pathlib import Path
 
 from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
-from lightlab.equipment.configure import Configurable, TekConfig
+from lightlab.equipment.configure import Configurable
 
-class DPO403X(Configurable):
+class Generic(Configurable):
     ''' Redo this doctring
 
     General class for either scope
@@ -25,18 +25,29 @@ class DPO403X(Configurable):
         Scope with optical and RF channels [http://www.tek.com/sites/tek.com/files/media/media/resources/55W_14873_9.pdf]
 
         Todo:
-            Reading SET? is very time consuming. Need to examine default file, if it exists, to only get the parameters of interest. Then query
+            These behave differently. Be more explicit about sample mode::
+
+                timebaseConfig(avgCnt=1)
+                acquire([1])
+
+                acquire([1], avgCnt=1)
+
+            Does DPO support sample mode at all?
 
     '''
-    totalChans = None # This should be overloaded by the particular driver
+    # This should be overloaded by the particular driver
+    totalChans = None
 
-    recLenParam = 'HORIZONTAL:RECORDLENGTH' # For DSA ':MAIN:RECORDLENGTH'
-    clearBeforeAcquire = False # DSA true
-    measurementSourceParam = 'SOURCE1' # DSA + ':WFM'
+    # These should be overloaded by an abstract subclass
+    recLenParam = None
+    clearBeforeAcquire = None
+    measurementSourceParam = None
+    runModeParam = None
+    runModeSingleShot = None
 
     def __init__(self, *args, **kwargs):
         if not isinstance(self, VISAInstrumentDriver):
-            raise TypeError('DPO403X is abstract and cannot be initialized')
+            raise TypeError(str(type(self)) + ' is abstract and cannot be initialized')
         super().__init__(*args, **kwargs)
 
     def startup(self):
@@ -102,7 +113,8 @@ class DPO403X(Configurable):
             thisState = 1 if ich in chans else 0
             self.setConfigParam(':SELECT:CH' + str(ich), thisState)
 
-        self.__setupSingleShot()
+        isSampling = kwargs.get(avgCnt, 0) == 1
+        self.__setupSingleShot(isSampling)
         self.__triggerAcquire()
         wfms = [None] * len(chans)
         for i, c in enumerate(chans):
@@ -112,33 +124,34 @@ class DPO403X(Configurable):
 
         return wfms
 
-    def __setupSingleShot(self):
-        ''' Set up a single shot acquisition
+    def __setupSingleShot(self, isSampling, forcing=False):
+        ''' Set up a single shot acquisition.
+
+                Not running continuous, and
+                acquire mode set SAMPLE/AVERAGE
+
+            Subclasses usually have additional settings to set here.
+
+            Args:
+                isSampling (bool): is it in sampling (True) or averaging (False) mode
+                forcing (bool): if False, trusts that no manual changes were made, except to run continuous/RUNSTOP
+
+            Todo:
+                Missing DPO trigger source setting.
+                Should we force it when averaging?
+                Probably not because it could be CH1, CH2, AUX.
         '''
-        self.setConfigParam(':ACQUIRE:STOPAFTER:MODE', 'CONDITION', forceHardware=True) # True in case someone changed it in lab
-        forcing = False # False means we trust that no one made manual changes
-        if avgCnt is None or avgCnt > 1: # For average mode
-            # Configure trigger if averaging
-            self.setConfigParam(':TRIGGER:SOURCE', 'EXTDIRECT', forceHardware=forcing)
-            self.setConfigParam(':ACQUIRE:MODE', 'AVERAGE', forceHardware=forcing)
-            if self.dpo:
-                self.setConfigParam(':ACQUIRE:STOPAFTER', 'SEQUENCE', forceHardware=forcing)
-            else:
-                self.setConfigParam(':ACQUIRE:STOPAFTER:CONDITION', 'AVGCOMP', forceHardware=forcing)
-        else: # For sample mode
-            if self.dpo:
-                self.setConfigParam(':ACQUIRE:STOPAFTER', 'SEQUENCE', forceHardware=forcing)
-            else:
-                self.setConfigParam(':ACQUIRE:STOPAFTER:CONDITION', 'ACQWFMS', forceHardware=forcing)
-                self.setConfigParam(':ACQUIRE:STOPAFTER:COUNT', '1', forceHardware=forcing)
-            self.setConfigParam(':ACQUIRE:MODE', 'SAMPLE', forceHardware=forcing)
+        self.run(False)
+        self.setConfigParam('ACQUIRE:MODE',
+                            'SAMPLE' if isSampling else 'AVERAGE',
+                            forceHardware=forcing)
 
     def __triggerAcquire(self):
-        ''' Sends a signal to the scope to wait for a trigger event. Waits until acquisition complete
+        ''' Sends a signal to the scope to wait for a trigger event. Waits until acquisition completes
         '''
         if self.clearBeforeAcquire:
-            self.write(':ACQUIRE:DATA:CLEAR') # clear out average history
-        self.write(':ACQUIRE:STATE 1') # activate the trigger listener
+            self.write('ACQUIRE:DATA:CLEAR') # clear out average history
+        self.write('ACQUIRE:STATE 1') # activate the trigger listener
         self.wait(30000) # Bus and entire program stall until acquisition completes. Maximum of 30 seconds
 
     def __transferData(self, chan):
@@ -159,44 +172,36 @@ class DPO403X(Configurable):
         try:
             voltRaw = self.mbSession.query_ascii_values('CURV?')
         except pyvisa.VisaIOError as err:
-            print('Problem during query_ascii_values(\'CURV?\')')
+            logger.error('Problem during query_ascii_values(\'CURV?\')')
             try:
                 VISAObject.close(self)
             except:
-                print('Failed to close!', self.address)
+                logger.error('Failed to close!', self.address)
                 pass
             raise err
         VISAObject.close(self)
+        return voltRaw
 
     def __scaleData(self, voltRaw):
-        '''
+        ''' Scale to second and voltage units.
+
+            DSA and DPO are very annoying about treating ymult and yscale differently.
+            TDS uses ymult not yscale
+
             Args:
                 voltRaw (ndarray): what is returned from ``__transferData``
 
             Returns:
-                (ndarray): time in seconds
+                (ndarray): time in seconds, centered at t=0 regardless of timebase position
                 (ndarray): voltage in volts
         '''
-        # Scale to voltage units
-        # DSA and DPO are very annoying about treating ymult and yscale differently
-        # TDS uses ymult not yscale
-        wfmInfoParams = {'YMULT', 'YZERO', 'YOFF'}
-        if self.dpo:
-            wfmInfoParams.add('YMULT')
-        else:
-            wfmInfoParams.add('YSCALE')
-        wfmInfo = dict()
-        for p in wfmInfoParams:
-            wfmInfo[p] = float(self.getConfigParam('WFMOUTPRE:' + p))
-        if self.dpo:
-            yScActual = wfmInfo['YMULT']
-        else:
-            yScActual = wfmInfo['YSCALE']
+        get = lambda param: float(self.getConfigParam('WFMOUTPRE:' + param, forceHardware=True))
+        voltage = (np.array(voltRaw) - get('YZERO')) \
+                  * get(self.yScaleParam) \
+                  + get('YOFF')
 
-        voltage = (np.array(voltRaw) - wfmInfo['YOFF']) * yScActual + wfmInfo['YZERO']
-
-        timeScale = float(self.getConfigParam(':HORIZONTAL:MAIN:SCALE'))
-        time = np.linspace(-1, 1, len(voltage))/2 *  timeScale * 10
+        timeDivision = float(self.getConfigParam(':HORIZONTAL:MAIN:SCALE'))
+        time = np.linspace(-1, 1, len(voltage))/2 *  timeDivision * 10
 
         return time, voltage
 
@@ -222,13 +227,18 @@ class DPO403X(Configurable):
         self.setConfigParam(':TRIGGER:SOURCE', origTrigSrc)
         return bundle
 
-    def run(self):
-        ''' Sets the scope to continuous run mode, so you can look at it in lab '''
-        if self.dpo:
-            self.setConfigParam(':ACQUIRE:STOPAFTER', 'RUNSTOP', forceHardware=True)
-        else:
-            self.setConfigParam(':ACQUIRE:STOPAFTER:MODE', 'RUNSTOP', forceHardware=True)
-        self.setConfigParam(':ACQUIRE:STATE', 1, forceHardware=True)
+    def run(self, continuousRun=True):
+        ''' Sets the scope to continuous run mode, so you can look at it in lab,
+            or to single-shot mode, so that data can be acquired
+
+            Args:
+                continuousRun (bool)
+        '''
+        self.setConfigParam(self.runModeParam,
+                            'RUNSTOP' if continuousRun else self.runModeSingleShot,
+                            forceHardware=True)
+        if continuousRun:
+            self.setConfigParam(':ACQUIRE:STATE', 1, forceHardware=True)
 
     def autoAdjust(self, chans):
         ''' Adjusts offsets and scaling so that waveforms are not clipped '''
@@ -289,42 +299,35 @@ class DPO403X(Configurable):
         self.loadConfig(source='+autoAdjTemp', subgroup=':MEASUREMENT')
         self.config.pop('autoAdjTemp')
 
-    def generateDefaults(cls, filename=None, overwrite=False):
-        ''' Generates a new default file. This takes a while
 
-            Todo:
-                Move this to the Configurable interface
+class DSA(Generic):
+    recLenParam = ':MAIN:RECORDLENGTH'
+    clearBeforeAcquire = True
+    measurementSourceParam = 'SOURCE1:WFM'
+    runModeParam = 'ACQUIRE:STOPAFTER:MODE'
+    runModeSingleShot = 'CONDITION'
+    yScaleParam = 'YSCALE'
+
+    def __setupSingleShot(self, isSampling, forcing=False):
+        ''' Additional DSA things needed to put it in the right mode.
+            If it is not sampling, the trigger source should always be external
         '''
-        if filename is None:
-            filename = self.instrID()
-        if Path(filename).exists() and not overwrite:
-            logger.warning(self.instrID() + ': Default already exists. \
-                           Do overwrite if you really want.')
-            return
+        super().__setupSingleShot(isSampling, forcing)
+        self.setConfigParam('ACQUIRE:STOPAFTER:CONDITION',
+                            'ACQWFMS' if isSampling else'AVGCOMP',
+                            forceHardware=forcing)
+        if isSampling:
+            self.setConfigParam('ACQUIRE:STOPAFTER:COUNT', '1', forceHardware=forcing)
 
-        try:
-            allConfig = TekConfig.fromSETresponse(self.query('SET?'))
-            allSetCmds = allConfig.getList('', asCmd=True)
-        except pyvisa.VisaIOError as e: # SET timed out. You are done.
-            logger.error(self.instrID() + ': timed out on \'SET?\'. \
-                         Try resetting with \'*RST\'.')
-            raise e
+        if not isSampling:
+            self.setConfigParam('TRIGGER:SOURCE', 'EXTDIRECT', forceHardware=forcing)
 
-        cfgBuild = TekConfig()
-        oldTimeout = self.timeout
-        self.timeout = 1000
-        for cmd in allSetCmds:
-            if cmd[0][-1]  != '&': # handle the sibling subdir token
-                cStr = cmd[0]
-            else:
-                cStr = cmd[0][:-2]
-            try:
-                val = self.query(cStr + '?', withTimeout=1000)
-                cfgBuild.set(cStr, val)
-                logger.debug(cStr, '<--', val)
-            except pyvisa.VisaIOError as e:
-                logger.debug(cStr, 'X -- skipping')
-        self.timeout = oldTimeout
+class DPO(Generic):
+    recLenParam = 'HORIZONTAL:RECORDLENGTH'
+    clearBeforeAcquire = False
+    measurementSourceParam = 'SOURCE1'
+    runModeParam = 'ACQUIRE:STOPAFTER'
+    runModeSingleShot = 'SEQUENCE'
+    yScaleParam = 'YMULT'
 
-        cfgBuild.save(filename)
-        logger.debug('New default saved to', filename)
+
