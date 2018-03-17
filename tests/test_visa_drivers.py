@@ -22,4 +22,6 @@ def test_instantinstrum(instrum):
     def open_error(self):
         raise OpenError("self.open() function being called upon initialization.")
     with patch.object(instrum, 'open', open_error):
-        instrum()
+        obj = instrum()
+    with pytest.raises(RuntimeError):
+        obj.open()

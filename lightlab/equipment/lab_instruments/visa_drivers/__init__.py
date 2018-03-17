@@ -38,9 +38,6 @@ DefaultDriver = VISAInstrumentDriver
 # TCPIPinstrument = TCPIPinstrumentDriver
 # USBinstrument = USBinstrumentDriver
 
-import lightlab.equipment.lab_instruments.visa_drivers.Tektronix_Oscopes
-from .Tektronix_Oscopes import *
-
 from .Advantest_Q8221_PM import Advantest_Q8221_PM
 from .Agilent_83712B_clock import Agilent_83712B_clock
 from .Agilent_N5183A_VG import Agilent_N5183A_VG
@@ -56,4 +53,5 @@ from .HP_8156A_VA import HP_8156A_VA
 from .ILX_7900B_LS import ILX_7900B_LS
 from .Keithley_2400_SM import Keithley_2400_SM, Keithley_2400_SM_noRamp
 from .RandS_SMBV100A_VG import RandS_SMBV100A_VG
+from .Tektronix_Oscopes import *
 from .Tektronix_RSA6120B_RFSA import Tektronix_RSA6120B_RFSA

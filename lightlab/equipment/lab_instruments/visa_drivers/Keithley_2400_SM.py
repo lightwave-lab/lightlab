@@ -1,5 +1,5 @@
 from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
-from lightlab.equipment.lab_instruments.configure.configurable import Configurable
+from lightlab.equipment.abstract_drivers import Configurable
 import numpy as np
 import time
 

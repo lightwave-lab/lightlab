@@ -11,6 +11,5 @@ def debug(*args):
 
 debugWait = debug
 
-from .configure import *
 from .visa_connection import *
 from .visa_drivers import *

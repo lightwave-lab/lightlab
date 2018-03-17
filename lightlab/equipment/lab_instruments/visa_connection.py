@@ -9,7 +9,7 @@ class VISAObject(object):
     ''' Abstract class for something that communicates via GPIB
     '''
 
-    def __init__(self, visaAddress=None, tempSess=False):
+    def __init__(self, visaAddress=None, tempSess=False, **kwargs):
         """
         :param tempSess: If True, the session is opened and closed every time there is a command
         :param visaAddress: self evident
@@ -22,6 +22,7 @@ class VISAObject(object):
         self.mbSession = None
         self._open_retries = 0
         self.__timeout = None
+        super().__init__(**kwargs)
 
     def open(self):
         """

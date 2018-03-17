@@ -1,28 +1,21 @@
 import numpy as np
-from pathlib import Path
 
 from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
-from lightlab.equipment.lab_instruments.configure import Configurable
+
+from .configurable import Configurable
+
 
 class TekScopeAbstract(Configurable):
-    ''' Redo this doctring
+    '''
+        General class for several Tektronix scopes, including
 
-    General class for either scope
-    Communication is slightly different for the type of scope, but user doesn't care
-    Note: this will not setup or adjust unless explicitly told to
+            * `DPO 4034 <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`_
+            * `DPO 4032 <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`_
+            * `DSA 8300 <http://www.tek.com/download?n=975655&f=190886&u=http%3A%2F%2Fdownload.tek.com%2Fsecure%2FDifferential-Channel-Alignment-Application-Online-Help.pdf%3Fnvb%3D20170404035703%26amp%3Bnva%3D20170404041203%26amp%3Btoken%3D0ccdfecc3859114d89c36>`_
+            * `TDS 6154C <http://www.tek.com/sites/tek.com/files/media/media/resources/55W_14873_9.pdf>`_
 
-    TEKTRONIX,DPO4034:
-        Slow scope with 4 channels [http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf]
-
-    TEKTRONIX,DPO4032:
-        Slow scope with 2 channels [http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf]
-
-    TEKTRONIX,DSA8300:
-        Fast scope with optical and RF channels [http://www.tek.com/download?n=975655&f=190886&u=http%3A%2F%2Fdownload.tek.com%2Fsecure%2FDifferential-Channel-Alignment-Application-Online-Help.pdf%3Fnvb%3D20170404035703%26amp%3Bnva%3D20170404041203%26amp%3Btoken%3D0ccdfecc3859114d89c36]
-
-    TEKTRONIX,TDS6154C:
-        Scope with optical and RF channels [http://www.tek.com/sites/tek.com/files/media/media/resources/55W_14873_9.pdf]
+        The main method is :py:meth:`acquire`, which takes and returns a :py:class:`~Waveform`.
 
         Todo:
             These behave differently. Be more explicit about sample mode::
@@ -33,25 +26,25 @@ class TekScopeAbstract(Configurable):
                 acquire([1], avgCnt=1)
 
             Does DPO support sample mode at all?
-
     '''
     # This should be overloaded by the particular driver
     totalChans = None
 
-    recLenParam = None
-    clearBeforeAcquire = None
-    measurementSourceParam = None
-    runModeParam = None
-    runModeSingleShot = None
+    __recLenParam = None
+    __clearBeforeAcquire = None
+    __measurementSourceParam = None
+    __runModeParam = None
+    __runModeSingleShot = None
 
     def __init__(self, *args, **kwargs):
-        if not isinstance(self, VISAInstrumentDriver):
-            raise TypeError(str(type(self)) + ' is abstract and cannot be initialized')
+        # These lines require a circular import dependency
+        # if not isinstance(self, VISAInstrumentDriver):
+        #     raise TypeError(str(type(self)) + ' is abstract and cannot be initialized')
         super().__init__(*args, **kwargs)
 
     def startup(self):
         # Make sure sampling and data transferring are in a consistent state
-        initNpts = self.getConfigParam(self.recLenParam)
+        initNpts = self.getConfigParam(self.__recLenParam)
         self.acquire(nPts=initNpts)
 
     def timebaseConfig(self, avgCnt=None, duration=None, position=None, nPts=None):
@@ -73,7 +66,7 @@ class TekScopeAbstract(Configurable):
         if position is not None:
             self.setConfigParam('HORIZONTAL:MAIN:POSITION', position)
         if nPts is not None:
-            self.setConfigParam(self.recLenParam, nPts)
+            self.setConfigParam(self.__recLenParam, nPts)
             self.setConfigParam('DATA:START', 1)
             self.setConfigParam('DATA:STOP', nPts)
 
@@ -81,7 +74,7 @@ class TekScopeAbstract(Configurable):
         presentSettings['avgCnt'] = self.getConfigParam('ACQUIRE:NUMAVG')
         presentSettings['duration'] = self.getConfigParam('HORIZONTAL:MAIN:SCALE')
         presentSettings['position'] = self.getConfigParam('HORIZONTAL:MAIN:POSITION')
-        presentSettings['nPts'] = self.getConfigParam(self.recLenParam)
+        presentSettings['nPts'] = self.getConfigParam(self.__recLenParam)
         return presentSettings
 
     def acquire(self, chans=None, **kwargs):
@@ -148,7 +141,7 @@ class TekScopeAbstract(Configurable):
     def __triggerAcquire(self):
         ''' Sends a signal to the scope to wait for a trigger event. Waits until acquisition completes
         '''
-        if self.clearBeforeAcquire:
+        if self.__clearBeforeAcquire:
             self.write('ACQUIRE:DATA:CLEAR') # clear out average history
         self.write('ACQUIRE:STATE 1') # activate the trigger listener
         self.wait(30000) # Bus and entire program stall until acquisition completes. Maximum of 30 seconds
@@ -231,8 +224,8 @@ class TekScopeAbstract(Configurable):
             Args:
                 continuousRun (bool)
         '''
-        self.setConfigParam(self.runModeParam,
-                            'RUNSTOP' if continuousRun else self.runModeSingleShot,
+        self.setConfigParam(self.__runModeParam,
+                            'RUNSTOP' if continuousRun else self.__runModeSingleShot,
                             forceHardware=True)
         if continuousRun:
             self.setConfigParam('ACQUIRE:STATE', 1, forceHardware=True)
@@ -247,7 +240,7 @@ class TekScopeAbstract(Configurable):
         if measIndex == 0:
             raise ValueError('measIndex is 1-indexed')
         measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
-        self.setConfigParam(measSubmenu + self.measurementSourceParam, chStr)
+        self.setConfigParam(measSubmenu + self.__measurementSourceParam, chStr)
         self.setConfigParam(measSubmenu + 'TYPE', measType.upper())
         self.setConfigParam(measSubmenu + 'STATE', 1)
 

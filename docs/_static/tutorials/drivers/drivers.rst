@@ -113,13 +113,15 @@ Some instruments don't even though it is a nearly universal requirement. In that
 
 Configurable
 -------------
+.. currentmodule:: lightlab.equipment.abstract_drivers.configurable
+
 Many instruments have complex settings and configurations. These are usually accessed in a message-based way with ``write(':A:PARAM 10')`` and ``query(':A:PARAM?')``. We want to create a consistency between driver and hardware, but
 
 1. we don't necessarily care about the entire configuration all the time, and
 
 2. it doesn't make sense to send configuration commands all the time.
 
-:py:class:`~lightlab.equipment.lab_instruments.configure.configurable.Configurable` builds up a minimal notion of consistent state by serializing and deserializing configuration messages. The above is done with ``setConfigParam('A:PARAM', 10)`` and ``getConfigParam('A:PARAM')``. It updates hardware only when it might have become inconsistent.  If you set the parameter and then get it, the driver will not communicate with the instrument -- it will look up the value you just set. Similarly, it will avoid setting the same value twice. For example,::
+:py:class:`~Configurable` builds up a minimal notion of consistent state by serializing and deserializing configuration messages. The above is done with ``setConfigParam('A:PARAM', 10)`` and ``getConfigParam('A:PARAM')``. It updates hardware only when it might have become inconsistent.  If you set the parameter and then get it, the driver will not communicate with the instrument -- it will look up the value you just set. Similarly, it will avoid setting the same value twice. For example,::
 
     # Very slow
     def acquire(self, chan):
@@ -138,7 +140,7 @@ Many instruments have complex settings and configurations. These are usually acc
         self.setConfigParam('CH', chan)
         return self.query(':GIVE:DATA?')
 
-:py:class:`~lightlab.equipment.lab_instruments.configure.configurable.Configurable` also has support for saving, loading, and replaying configurations. You can put the instrument in the exact same state as it was for a given experiment as described by a file. It is also possible to serialize/deserialize subsets of the configuration hierarchy. For example, you could copy a measurement from 1 to 2 by reading everything in ":MEASUREMENT:MEAS1", and then replaying it into the ":MEASUREMENT:MEAS2" submenu.
+:py:class:`~Configurable` also has support for saving, loading, and replaying configurations. You can put the instrument in the exact same state as it was for a given experiment as described by a file. It is also possible to serialize/deserialize subsets of the configuration hierarchy. For example, you could copy a measurement from 1 to 2 by reading everything in ":MEASUREMENT:MEAS1", and then replaying it into the ":MEASUREMENT:MEAS2" submenu.
 
 
 Difference between ``__init__``, ``startup``, and ``open``

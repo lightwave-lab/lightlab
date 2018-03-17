@@ -9,12 +9,12 @@ class Tektronix_DSA8300_Oscope(VISAInstrumentDriver, TekScopeAbstract):
         `Manual <http://www.tek.com/download?n=975655&f=190886&u=http%3A%2F%2Fdownload.tek.com%2Fsecure%2FDifferential-Channel-Alignment-Application-Online-Help.pdf%3Fnvb%3D20170404035703%26amp%3Bnva%3D20170404041203%26amp%3Btoken%3D0ccdfecc3859114d89c36>`_
     '''
     totalChans = 8
-    recLenParam = 'MAIN:RECORDLENGTH'
-    clearBeforeAcquire = True
-    measurementSourceParam = 'SOURCE1:WFM'
-    runModeParam = 'ACQUIRE:STOPAFTER:MODE'
-    runModeSingleShot = 'CONDITION'
-    yScaleParam = 'YSCALE'
+    __recLenParam = 'MAIN:RECORDLENGTH'
+    __clearBeforeAcquire = True
+    __measurementSourceParam = 'SOURCE1:WFM'
+    __runModeParam = 'ACQUIRE:STOPAFTER:MODE'
+    __runModeSingleShot = 'CONDITION'
+    __yScaleParam = 'YSCALE'
 
     def __setupSingleShot(self, isSampling, forcing=False):
         ''' Additional DSA things needed to put it in the right mode.
@@ -77,12 +77,12 @@ class Tektronix_TDS6154C_Oscope(VISAInstrumentDriver, TekScopeAbstract):
     '''
     totalChans = 4
     # Similar to the DSA, except
-    recLenParam = 'HORIZONTAL:RECORDLENGTH'  # this is different from DSA
-    clearBeforeAcquire = True
-    measurementSourceParam = 'SOURCE1:WFM'
-    runModeParam = 'ACQUIRE:STOPAFTER:MODE'
-    runModeSingleShot = 'CONDITION'
-    yScaleParam = 'YMULT'                    # this is different from DSA
+    __recLenParam = 'HORIZONTAL:RECORDLENGTH'  # this is different from DSA
+    __clearBeforeAcquire = True
+    __measurementSourceParam = 'SOURCE1:WFM'
+    __runModeParam = 'ACQUIRE:STOPAFTER:MODE'
+    __runModeSingleShot = 'CONDITION'
+    __yScaleParam = 'YMULT'                    # this is different from DSA
 
     def __setupSingleShot(self, isSampling, forcing=False):
         ''' Additional DSA things needed to put it in the right mode.
@@ -105,12 +105,12 @@ class Tektronix_DPO4034_Oscope(VISAInstrumentDriver, TekScopeAbstract):
         `Manual <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`_
     '''
     totalChans = 4
-    recLenParam = 'HORIZONTAL:RECORDLENGTH'
-    clearBeforeAcquire = False
-    measurementSourceParam = 'SOURCE1'
-    runModeParam = 'ACQUIRE:STOPAFTER'
-    runModeSingleShot = 'SEQUENCE'
-    yScaleParam = 'YMULT'
+    __recLenParam = 'HORIZONTAL:RECORDLENGTH'
+    __clearBeforeAcquire = False
+    __measurementSourceParam = 'SOURCE1'
+    __runModeParam = 'ACQUIRE:STOPAFTER'
+    __runModeSingleShot = 'SEQUENCE'
+    __yScaleParam = 'YMULT'
 
 
 class Tektronix_DPO4032_Oscope(Tektronix_DPO4034_Oscope):

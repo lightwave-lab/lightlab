@@ -329,11 +329,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
             self.wake()
 
     def getChannelTuning(self, mode):
-<<<<<<< HEAD
         baseDict = super().getChannelTuning()
-=======
-        baseDict = super().getChannelTuning(self)
->>>>>>> caaf376... renamed abstract_drivers. Put deprecation warning in CurrentSources
         return self.baseUnit2val(baseDict, mode)
 
     def off(self):
