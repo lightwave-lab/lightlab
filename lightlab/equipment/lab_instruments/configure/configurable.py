@@ -2,7 +2,8 @@ from .tek_config import TekConfig
 from lightlab import logger
 import pyvisa
 
-from lightlab.util.io import filehome
+from lightlab.util.io import lightlabDevelopmentDir
+defaultFileDir = lightlabDevelopmentDir + '/savedConfigDefaults/'
 
 
 class AccessException(Exception):
@@ -14,8 +15,6 @@ class Configurable(object):
 
         This clas uses query/write methods that are not directly inherited, so the subclass or its parents must implement those functions
     '''
-    defaultFileDir = '../../lightlab/equipment/savedScopeConfigs/defaults/'
-
     def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True, **kwargs):
 
         self._hardwareinit = False
@@ -47,7 +46,8 @@ class Configurable(object):
         # Typically: manufacturer, model#, serial#, <other stuff with strange
         # chars>
         info = self.instrID().split(',')
-        deffile = Configurable.defaultFileDir + '-'.join(info[:3]) + '.json'
+        global defaultFileDir
+        deffile = defaultFileDir + '-'.join(info[:3]) + '.json'
         return deffile
 
     # Simple, individual getter and setter
@@ -164,7 +164,7 @@ class Configurable(object):
             resp = self.query('SET?')
             return TekConfig.fromSETresponse(resp, subgroup=subgroup)
         except pyvisa.VisaIOError as e:  # SET timed out. You are done.
-            logger.error(self.instrID() + ': timed out on \'SET?\'. \
+            logger.error(self.instrID() + ' timed out on \'SET?\'. \
                          Try resetting with \'*RST\'.')
             raise e
 
@@ -207,13 +207,12 @@ class Configurable(object):
             logger.debug('Sending ' + str(cmd) + ' to configurable hardware')
             self.write(cmd)
 
-
     def generateDefaults(cls, filename=None, overwrite=False):
         ''' Attempts to read every configuration parameter.
             Handles several cases where certain parameters do not make sense and must be skipped
 
             Generates a new default file which is saved
-            in Configurable.defaultFileDir
+            in configurable.defaultFileDir
 
             *This takes a while.*
 
@@ -222,9 +221,9 @@ class Configurable(object):
                 overwrite (bool): If False, stops if the file already exists.
         '''
         if filename is None:
-            filename = self.instrID()
+            filename = self.getDefaultFilename()
         if Path(filename).exists() and not overwrite:
-            logger.warning(self.instrID() + ': Default already exists. \
+            logger.warning(filename + ' already exists. \
                            Use `overwrite` if you really want.')
             return
 
