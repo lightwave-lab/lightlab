@@ -5,7 +5,7 @@ from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
 from lightlab.equipment.lab_instruments.configure import Configurable
 
-class TekScope(Configurable):
+class TekScopeAbstract(Configurable):
     ''' Redo this doctring
 
     General class for either scope
@@ -298,7 +298,7 @@ class TekScope(Configurable):
         self.config.pop('autoAdjTemp')
 
 
-class DSA(Generic):
+class Tek_DSA(TekScopeAbstract):
     recLenParam = 'MAIN:RECORDLENGTH'
     clearBeforeAcquire = True
     measurementSourceParam = 'SOURCE1:WFM'
@@ -345,7 +345,7 @@ class DSA(Generic):
         return stdDev, sigmaStats
 
 
-class TDS(DSA):
+class Tek_TDS(Tek_DSA):
     ''' Very similar to the DSA '''
     recLenParam = 'HORIZONTAL:RECORDLENGTH'
     yScaleParam = 'YMULT'
@@ -354,7 +354,7 @@ class TDS(DSA):
         raise NotImplementedError('histogramStats has not been verified with TDS scopes')
 
 
-class DPO(Generic):
+class Tek_DPO(TekScopeAbstract):
     recLenParam = 'HORIZONTAL:RECORDLENGTH'
     clearBeforeAcquire = False
     measurementSourceParam = 'SOURCE1'
