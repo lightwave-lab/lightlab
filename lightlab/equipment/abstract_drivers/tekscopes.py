@@ -301,7 +301,7 @@ class Generic(Configurable):
 
 
 class DSA(Generic):
-    recLenParam = ':MAIN:RECORDLENGTH'
+    recLenParam = 'MAIN:RECORDLENGTH'
     clearBeforeAcquire = True
     measurementSourceParam = 'SOURCE1:WFM'
     runModeParam = 'ACQUIRE:STOPAFTER:MODE'
@@ -321,6 +321,45 @@ class DSA(Generic):
 
         if not isSampling:
             self.setConfigParam('TRIGGER:SOURCE', 'EXTDIRECT', forceHardware=forcing)
+
+    def histogramStats(self):
+        # Configuration
+        self.setConfigParam('HIS:BOXP', '0, 0, 99.9, 99.9')
+        self.setConfigParam('HIS:ENAB', '')
+        self.setConfigParam('HIS:MOD', 'VERTICAL')
+        self.setConfigParam('HIS:SOU', chan)
+
+        forcing = True
+        self.setConfigParam(':ACQUIRE:STOPAFTER:MODE', 'CONDITION', forceHardware=True) # True in case someone changed it in lab
+        self.setConfigParam(':ACQUIRE:STOPAFTER:CONDITION', 'ACQWFMS', forceHardware=forcing)
+        self.setConfigParam(':ACQUIRE:STOPAFTER:COUNT', nWfms, forceHardware=forcing)
+        self.setConfigParam(':ACQUIRE:MODE', 'SAMPLE', forceHardware=forcing)
+
+        # Gathering
+        origTrigSrc = self.getConfigParam(':TRIGGER:SOURCE')
+        self.setConfigParam(':TRIGGER:SOURCE', 'FREERUN' if untriggered else 'EXTDIRECT')
+        self.__triggerAcquire()
+
+        # Transfer data
+        stdDev = self.query('HIS:STAT:STD?')
+        sigmaStats = np.zeros(3)
+        for iSigma in range(3):
+            sigmaStats[iSigma] = self.query('HIS:STAT:SIGMA{}?'.format(iSigma+1))
+
+        self.setConfigParam(':TRIGGER:SOURCE', origTrigSrc)
+
+        return stdDev, sigmaStats
+
+        probDensityFun = np.zeros(3)
+        probDensityFun = stats[0] , np.diff(stats) / stdDev
+        mom4 = np.mean(probDensityFun ** 4)
+
+
+class TDS(DSA):
+    ''' Very similar to the DSA '''
+    recLenParam = 'HORIZONTAL:RECORDLENGTH'
+    yScaleParam = 'YMULT'
+
 
 class DPO(Generic):
     recLenParam = 'HORIZONTAL:RECORDLENGTH'
