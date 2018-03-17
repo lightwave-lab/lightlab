@@ -97,7 +97,7 @@ class Configurable(object):
     # More specialized access methods that handle command subgroups, files,
     # and tokens
     def saveConfig(self, dest='+user', subgroup='', overwrite=False):
-        ''' This only works with files. Reason being that I prefer not to have the user playing with TekConfig objects directly.
+        '''
 
             If you would like to setup a temporary state (i.e. taking some measurements and going back), use a file and `subgroup=`
 

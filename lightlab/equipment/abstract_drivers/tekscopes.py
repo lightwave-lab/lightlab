@@ -38,7 +38,6 @@ class TekScopeAbstract(Configurable):
     # This should be overloaded by the particular driver
     totalChans = None
 
-    # These should be overloaded by an abstract subclass
     recLenParam = None
     clearBeforeAcquire = None
     measurementSourceParam = None
@@ -238,53 +237,67 @@ class TekScopeAbstract(Configurable):
         if continuousRun:
             self.setConfigParam('ACQUIRE:STATE', 1, forceHardware=True)
 
+    def setMeasurement(measIndex, chan, measType):
+        '''
+            Args:
+                measIndex (int): used to refer to this measurement itself. 1-indexed
+                chan (int): the channel source of the measurement.
+                measType (str): can be 'PK2PK', 'MEAN', etc.
+        '''
+        if measIndex == 0:
+            raise ValueError('measIndex is 1-indexed')
+        measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
+        self.setConfigParam(measSubmenu + self.measurementSourceParam, chStr)
+        self.setConfigParam(measSubmenu + 'TYPE', measType.upper())
+        self.setConfigParam(measSubmenu + 'STATE', 1)
+
+    def measure(measIndex):
+        '''
+            Args:
+                measIndex (int): used to refer to this measurement itself. 1-indexed
+
+            Returns:
+                (float)
+        '''
+        measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
+        return float(self.query(measSubmenu + 'VALUE?'))
+
     def autoAdjust(self, chans):
         ''' Adjusts offsets and scaling so that waveforms are not clipped '''
-        self.saveConfig(dest='+autoAdjTemp', subgroup=':MEASUREMENT')
+        # Save the current measurement status. They will be restored at the end.
+        self.saveConfig(dest='+autoAdjTemp', subgroup='MEASUREMENT')
 
-        for c in chans:
-            chStr = 'CH' + str(c)
+        for ch in chans:
+            chStr = 'CH' + str(ch)
 
             # Set up measurements
-            measMenu = ':MEASUREMENT:MEAS'
-            measTypes = ['PK2PK', 'MEAN']
-            for iMeas, typeMeas in enumerate(measTypes):
-                self.setConfigParam(measMenu + str(iMeas+1)
-                    + self.measurementSourceParam, chStr)
-                self.setConfigParam(measMenu + str(iMeas+1)
-                    + ':TYPE', typeMeas)
-                self.setConfigParam(measMenu + str(iMeas+1)
-                    + ':STATE', 1)
+            self.setMeasurement(1, ch, 'pk2pk')
+            self.setMeasurement(2, ch, 'mean')
 
-            self.timebaseConfig(avgCnt=1)
             for iTrial in range(100):
                 # Acquire new data
-                self.acquire(chans=[c])
+                self.acquire(chans=[ch], avgCnt=1)
 
-                # Put measurements into meas
-                meas = dict()
-                for iMeas, typeMeas in enumerate(measTypes):
-                    meas[typeMeas] = float(self.query(measMenu + str(iMeas+1) + ':VALUE?'))
+                # Put measurements into measResult
+                pk2pk = self.measure(1)
+                mean = self.measure(2)
 
-                span = 1 * self.getConfigParam(chStr + ':SCALE')
-                span = float(span)
-                offs = self.getConfigParam(chStr + ':OFFSET')
-                offs = float(offs)
-                newSpan = None
-                newOffs = None
-
+                span = float(self.getConfigParam(chStr + ':SCALE'))
+                offs = float(self.getConfigParam(chStr + ':OFFSET'))
 
                 # Check if scale is correct within the tolerance
-                if meas['PK2PK'] < 0.7 * span:
-                    newSpan = meas['PK2PK'] / 0.75
-                elif meas['PK2PK'] > 0.8 * span:
+                newSpan = None
+                newOffs = None
+                if pk2pk < 0.7 * span:
+                    newSpan = pk2pk / 0.75
+                elif pk2pk > 0.8 * span:
                     newSpan = 2 * span
                 if newSpan < 0.1 or newSpan > 100:
                     raise Exception('Scope channel ' + chStr + ' could not be adjusted.')
 
                 # Check if offset is correct within the tolerance
-                if abs(meas['mean']) > 0.05 * span:
-                    newOffs = offs - meas['mean']
+                if abs(mean) > 0.05 * span:
+                    newOffs = offs - mean
 
                 # If we didn't set the new variables, then we're good to go
                 if newSpan is not None and newOffs is not None:
@@ -294,7 +307,8 @@ class TekScopeAbstract(Configurable):
                 self.setConfigParam(chStr + ':SCALE', newSpan / 10)
                 self.setConfigParam(chStr + ':OFFSET', newOffs)
 
-        self.loadConfig(source='+autoAdjTemp', subgroup=':MEASUREMENT')
+        # Recover the measurement setup from before adjustment
+        self.loadConfig(source='+autoAdjTemp', subgroup='MEASUREMENT')
         self.config.pop('autoAdjTemp')
 
 
