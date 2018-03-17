@@ -5,7 +5,7 @@ from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
 from lightlab.equipment.lab_instruments.configure import Configurable
 
-class Generic(Configurable):
+class TekScope(Configurable):
     ''' Redo this doctring
 
     General class for either scope
