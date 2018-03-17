@@ -1,9 +1,10 @@
 from .tek_config import TekConfig
 from lightlab import logger
 import pyvisa
+from contextlib import contextmanager
 
 from lightlab.util.io import lightlabDevelopmentDir
-defaultFileDir = lightlabDevelopmentDir + '/savedConfigDefaults/'
+defaultFileDir = lightlabDevelopmentDir / 'savedConfigDefaults/'
 
 
 class AccessException(Exception):
@@ -47,7 +48,7 @@ class Configurable(object):
         # chars>
         info = self.instrID().split(',')
         global defaultFileDir
-        deffile = defaultFileDir + '-'.join(info[:3]) + '.json'
+        deffile = defaultFileDir / '-'.join(info[:3]) + '.json'
         return deffile
 
     # Simple, individual getter and setter
@@ -81,6 +82,17 @@ class Configurable(object):
         # get it from hardware
         self._getHardwareConfig(cStr)
         return self.config['live'].get(cStr, asCmd=False)
+
+    @contextmanager
+    def tempConfig(self, cStr, tempVal, forceHardware=False):
+        ''' Changes a parameter within the context of a "with" block
+        '''
+        oldVal = self.getConfigParam(cStr, forceHardware)
+        try:
+            self.setConfigParam(cStr, tempVal)
+            yield self
+        finally:
+            self.setConfigParam(cStr, oldVal)
 
     # More specialized access methods that handle command subgroups, files,
     # and tokens

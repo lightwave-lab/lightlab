@@ -3,7 +3,7 @@ from pathlib import Path
 
 from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
-from lightlab.equipment.configure import Configurable
+from lightlab.equipment.lab_instruments.configure import Configurable
 
 class Generic(Configurable):
     ''' Redo this doctring
@@ -218,13 +218,11 @@ class Generic(Configurable):
             Returns:
                 (FunctionBundle(Waveform)): all waveforms acquired
         '''
-        origTrigSrc = self.getConfigParam('TRIGGER:SOURCE')
-        self.setConfigParam('TRIGGER:SOURCE', 'FREERUN' if untriggered else 'EXTDIRECT')
-        # origAvgCnt = self.getConfigParam('ACQUIRE:NUMAVG', forceHardware=True)
         bundle = FunctionBundle()
-        for _ in range(nWfms):
-            bundle.addDim(self.acquire([chan], avgCnt=1)[0]) # avgCnt=1 sets it to sample mode
-        self.setConfigParam('TRIGGER:SOURCE', origTrigSrc)
+        with self.tempConfig('TRIGGER:SOURCE',
+                'FREERUN' if untriggered else 'EXTDIRECT'):
+            for _ in range(nWfms):
+                bundle.addDim(self.acquire([chan], avgCnt=1)[0]) # avgCnt=1 sets it to sample mode
         return bundle
 
     def run(self, continuousRun=True):
@@ -334,11 +332,9 @@ class DSA(Generic):
         self.setConfigParam('ACQUIRE:STOPAFTER:COUNT', nWfms, forceHardware=forcing)
 
         # Gathering
-        origTrigSrc = self.getConfigParam('TRIGGER:SOURCE')
-        self.setConfigParam('TRIGGER:SOURCE',
-                            'FREERUN' if untriggered else 'EXTDIRECT')
-        self.__triggerAcquire()
-        self.setConfigParam('TRIGGER:SOURCE', origTrigSrc)
+        with self.tempConfig('TRIGGER:SOURCE',
+                'FREERUN' if untriggered else 'EXTDIRECT'):
+            self.__triggerAcquire()
 
         # Transfer data
         stdDev = self.query('HIS:STAT:STD?')
