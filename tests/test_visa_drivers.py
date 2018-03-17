@@ -8,9 +8,8 @@ import inspect
 
 classes = []
 for name, obj in inspect.getmembers(visa_drivers):
-    if inspect.isclass(obj):
+    if inspect.isclass(obj) and issubclass(obj, visa_drivers.VISAInstrumentDriver):
         classes.append(obj)
-
 
 class OpenError(RuntimeError):
     pass
