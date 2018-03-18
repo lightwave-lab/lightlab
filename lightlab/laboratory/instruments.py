@@ -451,12 +451,6 @@ class CurrentSource(Instrument):
     # Must init with `useChans` somehow
 
 
-from lightlab.equipment.abstract_instruments import ElectricalSource, MultiModalSource
-class NICurrentSource(CurrentSource, ElectricalSource, MultiModalSource):
-    def __init__(self, *args, useChans, **kwargs):
-        super().__init__(*args, useChans=useChans, **kwargs)
-
-
 class FunctionGenerator(Instrument):
     essentialMethods = Instrument.essentialMethods + \
         ['frequency',
