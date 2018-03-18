@@ -71,6 +71,7 @@ __pycache__/
 *.dat
 
 # Sublime Workspaces
+*.sublime-project
 *.sublime-workspace
 
 # Distribution / packaging
