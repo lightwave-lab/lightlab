@@ -8,7 +8,6 @@ OPEN_RETRIES = 5
 class VISAObject(object):
     ''' Abstract class for something that communicates via GPIB
     '''
-
     def __init__(self, visaAddress=None, tempSess=False, **kwargs):
         """
         :param tempSess: If True, the session is opened and closed every time there is a command

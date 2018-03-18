@@ -3,7 +3,12 @@ import numpy as np
 from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
 
+# Circular dependency. Instead it is imported within __init__.
+# Python resolves this but Sphinx does not!
+# from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
+
 from .configurable import Configurable
+
 
 
 class TekScopeAbstract(Configurable):
@@ -37,9 +42,10 @@ class TekScopeAbstract(Configurable):
     __runModeSingleShot = None
 
     def __init__(self, *args, **kwargs):
-        # These lines require a circular import dependency
-        # if not isinstance(self, VISAInstrumentDriver):
-        #     raise TypeError(str(type(self)) + ' is abstract and cannot be initialized')
+        # These lines require a circular import dependency, so it is done within the method
+        from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
+        if not isinstance(self, VISAInstrumentDriver):
+            raise TypeError(str(type(self)) + ' is abstract and cannot be initialized')
         super().__init__(*args, **kwargs)
 
     def startup(self):
@@ -160,18 +166,18 @@ class TekScopeAbstract(Configurable):
         chStr = 'CH' + str(chan)
         self.setConfigParam('DATA:ENCDG', 'ASCII')
         self.setConfigParam('DATA:SOURCE', chStr)
-        VISAObject.open(self)
+        self.open(self)
         try:
             voltRaw = self.mbSession.query_ascii_values('CURV?')
         except pyvisa.VisaIOError as err:
             logger.error('Problem during query_ascii_values(\'CURV?\')')
             try:
-                VISAObject.close(self)
+                self.close(self)
             except:
                 logger.error('Failed to close!', self.address)
                 pass
             raise err
-        VISAObject.close(self)
+        self.close(self)
         return voltRaw
 
     def __scaleData(self, voltRaw):
