@@ -16,3 +16,13 @@ for _, modname, _ in pkgutil.walk_packages(path=package.__path__,
 def test_import(modname):
     """Simply imports the module"""
     importlib.import_module(modname)
+
+
+def test_visa_driver_package():
+    oldVersion = True
+    if oldVersion:
+        from lightlab.equipment.lab_instruments.visa_drivers.Tektronix_DSA8300_Oscope import Tektronix_DSA8300_Oscope
+        from lightlab.equipment.lab_instruments.visa_drivers import Tektronix_DSA8300_Oscope
+        from lightlab.equipment.lab_instruments import Tektronix_DSA8300_Oscope
+    else:
+        from lightlab.equipment.visa_drivers import Tektronix_DSA8300_Oscope
