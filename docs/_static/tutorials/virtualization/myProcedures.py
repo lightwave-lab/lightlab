@@ -1,9 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from lightlab.util.sweep import NdSweeper, peakSearch
+from lightlab.util.sweep import NdSweeper
 
 
-def extractThreshold_1(source_meter_instr, vMax=3):
+def extractThreshold(source_meter_instr, vMax=3):
+    ''' Get the data, analyze the data to find the threshold, plot
+    '''
     # get the data
     swp = NdSweeper()
     swp.addActuation('Voltage', source_meter_instr.setVoltage, np.linspace(0, vMax, 20))
@@ -23,17 +25,3 @@ def extractThreshold_1(source_meter_instr, vMax=3):
                        xytext=(threshVolt - .2, maxI/2), ha='right',
                        arrowprops=dict(shrink=0.05))
     return threshVolt
-
-
-def extractThreshold_2(source_meter_instr):
-    def dither(centerVolt):
-        dvArr = np.linspace(-1, 1, 3) * .2
-        diArr = np.zeros(len(dvArr))
-        for iDv, dv in enumerate(dvArr):
-            source_meter_instr.setVoltage(centerVolt + dv)
-            diArr[iDv] = source_meter_instr.measCurrent()
-        d2idv2 = diArr[0] - 2 * diArr[1] + diArr[2]
-        return d2idv2
-
-    foundThresh, _ = peakSearch(dither, [-1, 3], livePlot=True, nSwarm=5)
-    return foundThresh

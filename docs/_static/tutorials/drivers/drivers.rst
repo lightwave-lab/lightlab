@@ -8,7 +8,7 @@ Drivers are the original impetus for sharing this project. Writing drivers can b
 
 The instrument abstraction
 --------------------------
-In ``lightlab``, there are two levels of abstraction for instrumentation
+In ``lightlab``, there are two layers of abstraction for instrumentation
 
 .. currentmodule:: lightlab.laboratory.instruments
 
@@ -23,15 +23,28 @@ In ``lightlab``, there are two levels of abstraction for instrumentation
     * :py:class:`~Tektronix_DPO4034_Oscope`
     * :py:class:`~Keithley_2400_SM`
 
+An :py:class:`~lightlab.laboratory.instruments.Instrument` refers to a category of instruments that do certain things. A :py:class:`~lightlab.equipment.lab_instruments.VISAInstrumentDriver` describes how a particular piece of equipment does it. As a rule of thumb, there is a different driver for each model of instrument.
+
 All oscilloscopes have some form of acquiring a waveform, and user code makes use of that abstraction. If you have a scope other than a TEKTRONIX DPO4032, you are on your own with the driver. BUT, if you can make your low-level driver for that scope to meet the abstraction of :py:class:`~Oscilloscope`, then your scope will be equivalent to my scope, in some sense. That means all of the rest of the package becomes usable with that scope.
 
-The critical part of an Instrument child class are its ``essentialMethods`` and ``essentialProperties``. Two lists; that's it. Initialization and book keeping are all done by the super class, and implementation is done by the driver. The driver must implement all of the essential methods and properties, and then the :py:class:`~Instrument` will take on these data members as its own.
+The critical part of an Instrument child class are its ``essentialMethods`` and ``essentialProperties``. Initialization and book keeping are all done by the super class, and implementation is done by the driver. The driver must implement all of the essential methods and properties, and then the :py:class:`~Instrument` will take on these data members as its own.
 
-.. note::
+As in the case of Tektronix_DPO4032_Oscope and Tektronix_DPO4034_Oscope, there is substantial overlap in implementation. We can save a lot of work by abstracting some of the common behavior, which leads to the third major concept of abstract drivers, found in the module:
 
-    This above abstraction does not exactly refer to :py:mod:`lightlab.equipment.abstract_instruments`, which is somewhat under construction slash marked for deletion.
+.. currentmodule:: lightlab.equipment.abstract_drivers
 
-An :py:class:`~lightlab.laboratory.instruments.Instrument` refers to a category of instruments that do certain things. A :py:class:`~lightlab.equipment.lab_instruments.VISAInstrumentDriver` describes how a particular piece of equipment does it. As a rule of thumb, there is a different driver for each model of instrument; however, as in the case of Tektronix_DPO4032_Oscope and Tektronix_DPO4034_Oscope, there is substantial overlap in implementation. They inherit a common base class, Tektronix_DPO403X_Oscope, that does most of the work.
+3. :py:mod:`~lightlab.equipment.abstract_drivers`, which includes
+    * :py:class:`~DPO_Oscope`
+    * :py:class:`~MultiModalSource`
+
+Before writing a fresh driver, check out the abstract ones to see if you can partially use existing functionality (e.g. if you are making one for a DPO4038).
+
+.. figure:: layersOfAbstraction.png
+    :alt: layersOfAbstraction
+    :align: center
+    :width: 90%
+
+    Three concepts for ``lightlab`` instrumentation. 1) Instruments, 2) VISAInstrumentDrivers, 3) Abstract drivers.
 
 Writing a :py:class:`~lightlab.equipment.lab_instruments.VISAInstrumentDriver`
 -------------------------------------------------------------------------------
@@ -100,13 +113,15 @@ Some instruments don't even though it is a nearly universal requirement. In that
 
 Configurable
 -------------
+.. currentmodule:: lightlab.equipment.abstract_drivers.configurable
+
 Many instruments have complex settings and configurations. These are usually accessed in a message-based way with ``write(':A:PARAM 10')`` and ``query(':A:PARAM?')``. We want to create a consistency between driver and hardware, but
 
-1. we don't care about the entire configuration all the time, and
+1. we don't necessarily care about the entire configuration all the time, and
 
 2. it doesn't make sense to send configuration commands all the time.
 
-:py:class:`~lightlab.equipment.lab_instruments.configure.configurable.Configurable` builds up a minimal notion of consistent state and updates hardware only when it might have become inconsistent. The above is done with ``setConfigParam('A:PARAM', 10)`` and ``getConfigParam('A:PARAM')``. If you set the parameter and then get it, the driver will not communicate with the instrument -- it will look up the value you just set. Similarly, it will avoid setting the same value twice. For example,::
+:py:class:`~Configurable` builds up a minimal notion of consistent state by serializing and deserializing configuration messages. The above is done with ``setConfigParam('A:PARAM', 10)`` and ``getConfigParam('A:PARAM')``. It updates hardware only when it might have become inconsistent.  If you set the parameter and then get it, the driver will not communicate with the instrument -- it will look up the value you just set. Similarly, it will avoid setting the same value twice. For example,::
 
     # Very slow
     def acquire(self, chan):
@@ -125,9 +140,8 @@ Many instruments have complex settings and configurations. These are usually acc
         self.setConfigParam('CH', chan)
         return self.query(':GIVE:DATA?')
 
-Both support a ``forceHardware`` kwarg and have various options for message formatting.
+:py:class:`~Configurable` also has support for saving, loading, and replaying configurations. You can put the instrument in the exact same state as it was for a given experiment as described by a file. It is also possible to serialize/deserialize subsets of the configuration hierarchy. For example, you could copy a measurement from 1 to 2 by reading everything in ":MEASUREMENT:MEAS1", and then replaying it into the ":MEASUREMENT:MEAS2" submenu.
 
-:py:class:`~lightlab.equipment.lab_instruments.configure.configurable.Configurable` also has support for saving, loading, and replaying configurations, so you can put the instrument in the exact same state as it was for a given experiment. Save files are human-readable in JSON.
 
 Difference between ``__init__``, ``startup``, and ``open``
 ----------------------------------------------------------

@@ -1,4 +1,26 @@
 ''' Some utility functions for printing to stdout used in the project
+
+    Resolves several directories as follows.
+    These can be overridden after import if desired.
+
+        1. projectDir
+            The git repo of the current project
+
+        2. dataHome = projectDir/data
+            Where all your data is saved.
+
+        3. fileDir = dataHome
+            Where all the save/load functions will look.
+            Usually this is set differently from notebook to notebook.
+
+        4. monitorDir = projectDir/progress-monitor
+            Where html for sweep progress monitoring will be written
+            by ``ProgressWriter``.
+
+        5. lightlabDevelopmentDir
+            The path to a source directory of ``lightlab`` for development.
+            It is found through the ".pathtolightlab" file.
+            This is currently unused.
 '''
 
 import sys
@@ -32,18 +54,19 @@ except IOError as e:
 if not os.access(projectDir, 7):
     logger.warning("Cannot write to this projectDir({}).".format(projectDir))
 
-# Maybe you are using the lightlab package from elsewhere
-try:
-    with open(projectDir / '.pathtolightlab') as fx:
-        lightlabDir = fx.readline()
-except IOError:
-    lightlabDir = projectDir
-
-# Monitor files
-monitorDir = projectDir / 'progress-monitor'
 # Data files
 dataHome = projectDir / 'data'
 fileDir = dataHome  # Set this in your experiment
+# Monitor files
+monitorDir = projectDir / 'progress-monitor'
+
+# Maybe you are using the lightlab package from elsewhere
+try:
+    with open(projectDir / '.pathtolightlab') as fx:
+        lightlabDevelopmentDir = fx.readline()
+except IOError:
+    lightlabDevelopmentDir = projectDir
+
 
 
 def printWait(*args):
@@ -77,17 +100,6 @@ def printProgress(*args):
     sys.stdout.flush()
     sys.stdout.write(msg)
     sys.stdout.write('\n')
-
-
-def getUrl():
-    prefix = 'http://'
-    host = socket.getfqdn().lower()
-    try:
-        with open(projectDir / '.monitorhostport', 'r') as fx:
-            port = int(fx.readline())
-    except FileNotFoundError:
-        port = 'null'
-    return prefix + host + ':' + str(port)
 
 
 class ProgressWriter(object):
@@ -137,7 +149,7 @@ class ProgressWriter(object):
 
         if self.serving:
             print('See sweep progress online at')
-            print(getUrl())
+            print(self.getUrl())
             monitorDir.mkdir(exist_ok=True)
             fp = Path(ProgressWriter.progFileDefault)
             fp.touch()
@@ -151,6 +163,19 @@ class ProgressWriter(object):
                 prntStr += 'Dim-' + str(iterDim) + '...'
             print(prntStr)
             self.__writeStdio()
+
+    @staticmethod
+    def getUrl():
+        ''' URL where the progress monitor will be hosted
+        '''
+        prefix = 'http://'
+        host = socket.getfqdn().lower()
+        try:
+            with open(projectDir / '.monitorhostport', 'r') as fx:
+                port = int(fx.readline())
+        except FileNotFoundError:
+            port = 'null'
+        return prefix + host + ':' + str(port)
 
     def __tag(self, bodytext, autorefresh=False):
         ''' Do the HTML tags '''

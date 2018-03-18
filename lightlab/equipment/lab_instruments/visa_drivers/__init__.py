@@ -32,7 +32,6 @@ DefaultDriver = VISAInstrumentDriver
 # TCPIPinstrument = TCPIPinstrumentDriver
 # USBinstrument = USBinstrumentDriver
 
-
 from .Advantest_Q8221_PM import Advantest_Q8221_PM
 from .Agilent_83712B_clock import Agilent_83712B_clock
 from .Agilent_N5183A_VG import Agilent_N5183A_VG

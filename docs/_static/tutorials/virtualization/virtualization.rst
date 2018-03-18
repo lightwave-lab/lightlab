@@ -14,6 +14,12 @@ Virtual experiments are meant to behave exactly like a real lab would, except by
 
 3. Unit testing code that refers to instruments in a repeatable virtual environment
 
+This section refers to the example in
+
+.. toctree::
+
+    ParameterExtractDemo
+
 Procedural abstraction
 ----------------------
 A procedure is automated code that uses instruments. It could just be a simple sweep, or it could be a complex interactive search. The goal of a procedure could be extracting parameters from a device (see the demo in lightlab/notebooks/Examples), controlling something (such as a peak tracker), or calibrating something.
@@ -62,9 +68,6 @@ Dual Instruments
 
 Dual instrument is :py:class:`~Virtualizable` which means it has an attribute ``virtual`` that controls the switch. More useful: it provides context managers called ``asReal`` and ``asVirtual``. The benefit of context managers is they allow entry and exit operations, in this case, usually hardware warmup and cooldown methods. They can also be used to synchonize multiple Virtualizable things in more complex cases. See :py:meth:`~Virtualizable.synchronize`.
 
-.. todo::
-
-    Fix the notebook referred to here and reference it.
 
 * :ref:`genindex`
 * :ref:`modindex`

@@ -1,8 +1,9 @@
-from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
-from lightlab.equipment.lab_instruments.configure.configurable import Configurable
-from lightlab.util import data
 import numpy as np
 import time
+
+from . import VISAInstrumentDriver
+from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.util.data import Spectrum, FunctionBundle
 
 class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 
@@ -190,10 +191,10 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
         fStop = float(self.getConfigParam('SENS:FREQ:STOP'))
         freqs = np.linspace(fStart, fStop, len(dbm))
 #       return freqs, dbm
-        return data.Spectrum(freqs, dbm)
+        return Spectrum(freqs, dbm)
 
     def multiSpectra(self, nSpect=1, livePlot=False):
-        bund = data.FunctionBundle()
+        bund = FunctionBundle()
         for iSpect in range(nSpect):
             s = self.spectrum()
             bund.addDim(s)

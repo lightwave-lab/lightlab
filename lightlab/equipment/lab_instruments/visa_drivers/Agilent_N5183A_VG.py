@@ -1,5 +1,5 @@
-from ..visa_drivers import VISAInstrumentDriver
-from ..configure.configurable import Configurable
+from . import VISAInstrumentDriver
+from lightlab.equipment.abstract_drivers import Configurable
 
 class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
     ''' Agilent N5183A Vector Generator

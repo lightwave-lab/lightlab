@@ -1,11 +1,12 @@
-from ..visa_drivers import VISAInstrumentDriver
 import numpy as np
 import time
-from lightlab.util import io
-from lightlab import logger
 import visa as pyvisa
 
+from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_instruments import MultiModalSource, ElectricalSource
+from lightlab.util import io
+from lightlab import logger
+
 
 
 class CurrentSources(VISAInstrumentDriver):
@@ -286,7 +287,8 @@ class NI_PCI_SourceCard(VISAInstrumentDriver, MultiModalSource, ElectricalSource
             pyvisa.constants.VI_ATTR_IO_PROT, pyvisa.constants.VI_PROT_4882_STRS)
 
     def instrID(self):
-        '''
+        ''' There is no "\*IDN?" command. Instead, test if it is alive,
+            and then return a reasonable string
         '''
         self.tcpTest()
         return 'Current Source'
@@ -322,12 +324,12 @@ class NI_PCI_SourceCard(VISAInstrumentDriver, MultiModalSource, ElectricalSource
         else:
             self.wake()
 
-    def getChannelTuning(self, mode, **kwargs):
-        baseDict = ElectricalSource.getChannelTuning(self)
+    def getChannelTuning(self, mode):
+        baseDict = super().getChannelTuning()
         return self.baseUnit2val(baseDict, mode)
 
     def off(self):
-        ElectricalSource.off(self, 'volt')
+        self.setChannelTuning(dict([ch, 0] for ch in self.stateDict.keys()), 'volt')
 
     def wake(self):
         ''' Don't change the value but make sure it doesn't go to sleep after inactivity.
