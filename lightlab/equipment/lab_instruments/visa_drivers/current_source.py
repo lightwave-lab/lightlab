@@ -320,7 +320,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
             chanBaseDict[ch] = self.val2baseUnit(enforced, mode)
 
         # Change the state
-        super().setChannelTuning(self, chanBaseDict)
+        super().setChannelTuning(chanBaseDict)
 
         # Was there a change
         if not oldState == self.getChannelTuning(mode):

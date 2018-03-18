@@ -156,9 +156,9 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
                     print('np.shape(container) =', np.shape(container))
                 else:
                     print('len(container) =', len(container))
-                self.close(self)
+                VISAInstrumentDriver.close(self)
                 raise err
-        self.close(self)
+        VISAInstrumentDriver.close(self)
         return container
 
 
@@ -192,7 +192,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         # Single trigger and data transfer
         VISAInstrumentDriver.open(self)
         dbmRaw = self.mbSession.query_binary_values('READ:SPEC:TRACE1?')
-        self.close(self)
+        VISAInstrumentDriver.close(self)
 
         # Scaling
         freqRangeActual = np.zeros(2, dtype=float)
