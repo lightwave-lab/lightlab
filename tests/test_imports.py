@@ -19,10 +19,11 @@ def test_import(modname):
 
 
 def test_visa_driver_package():
-    oldVersion = True
-    if oldVersion:
+    from lightlab.equipment.lab_instruments import Tektronix_DSA8300_Oscope
+    try:
         from lightlab.equipment.lab_instruments.visa_drivers.Tektronix_DSA8300_Oscope import Tektronix_DSA8300_Oscope
         from lightlab.equipment.lab_instruments.visa_drivers import Tektronix_DSA8300_Oscope
-        from lightlab.equipment.lab_instruments import Tektronix_DSA8300_Oscope
-    else:
-        from lightlab.equipment.visa_drivers import Tektronix_DSA8300_Oscope
+    except ModuleNotFoundError:
+        print('\n\nIt looks like the reorganization of visa_drivers is happening.')
+        print('Please modify test_imports.py')
+
