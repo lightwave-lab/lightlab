@@ -105,6 +105,7 @@ jupyter-password: venv
 	)
 
 monitorhost:
+	@mkdir -p progress-monitor
 	cd progress-monitor && python3 -m http.server $(shell cat .monitorhostport)
 
 docbuild: venvinfo/docreqs~
