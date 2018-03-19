@@ -36,19 +36,17 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         we need to set the host address, and the port.
         """
         tempSess = kwargs.pop("tempSess", True)
-        # visaAddress = address
-        VISAInstrumentDriver.__init__(self, name=name,
-                                      address=address,
-                                      tempSess=tempSess,
-                                      **kwargs)
-
+        super().__init__(name=name,
+                         address=address,
+                         tempSess=tempSess,
+                         **kwargs)
         self.__wlRange = None
 
     def startup(self):
         ''' Checks if it is alive, sets up standard OSA parameters
         '''
         self.instrID()
-        self.write('SPTRACESWP0')  # activate trace 0
+        self.write('SPTRACESWP0')
         # x-axis mode to wavelength
         # resolution to 0.80
         # others?

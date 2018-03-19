@@ -1,8 +1,8 @@
-from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
-from lightlab.equipment.lab_instruments.configure.configurable import Configurable
 import numpy as np
 import time
 
+from . import VISAInstrumentDriver
+from lightlab.equipment.abstract_drivers import Configurable
 
 class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     ''' A Keithley 2400 driver.

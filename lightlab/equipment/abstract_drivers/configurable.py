@@ -3,6 +3,7 @@ from pyvisa import VisaIOError
 from contextlib import contextmanager
 import dpath
 import json
+from numpy import floor
 
 from lightlab.util.io import lightlabDevelopmentDir
 defaultFileDir = lightlabDevelopmentDir / 'savedConfigDefaults/'
@@ -24,6 +25,8 @@ class TekConfig(object):
             :returning a dictionary representing a subgroup (actually this might currently be happening in error)
             :transferring subgroup values to a different subgroup in the same instance (for example, CH1 to CH2)
     '''
+    separator = ':'
+
     def __init__(self, initDict={}):
         self.dico = initDict.copy()
 
@@ -47,7 +50,7 @@ class TekConfig(object):
                 asCmd (bool): if true, returns a tuple representing a command. Otherwise returns just the value
         '''
         try:
-            val = dpath.util.get(self.dico, cStr, separator=':')
+            val = dpath.util.get(self.dico, cStr, separator=self.separator)
         except KeyError:
             raise KeyError(cStr + ' is not present in this TekConfig instance')
         if not asCmd:
@@ -62,26 +65,26 @@ class TekConfig(object):
             ex = self.get(cStr, asCmd=False)
             if type(ex) is dict:
                 # we don't want to overwrite this subdirectory, so put a tag on cmd
-                cStr = cStr + ':&'
+                cStr = cStr + self.separator + '&'
         except KeyError:
             # doesn't exist, we are good to go
             pass
 
         cmd = (cStr, val)
-        success = dpath.util.set(self.dico, *cmd, separator=':')
+        success = dpath.util.set(self.dico, *cmd, separator=self.separator)
         if success != 1: # it doesn't exist yet
             try:
-                dpath.util.new(self.dico, *cmd, separator=':')
+                dpath.util.new(self.dico, *cmd, separator=self.separator)
             except ValueError as e:
                 # We probably have an integer leaf where we would also like to have a directory
-                parent = ':'.join(cmd[0].split(':')[:-1])
+                parent = self.separator.join(cmd[0].split(self.separator)[:-1])
                 try:
                     oldV = self.get(parent, asCmd=False)
                 except KeyError as e:
                     print('dpath did not take ' + str(cmd))
                     raise e
-                dpath.util.set(self.dico, parent, {'&': oldV}, separator=':')
-                dpath.util.new(self.dico, *cmd, separator=':')
+                dpath.util.set(self.dico, parent, {'&': oldV}, separator=self.separator)
+                dpath.util.new(self.dico, *cmd, separator=self.separator)
 
     def getList(self, subgroup='', asCmd=True):
         ''' Deep crawler that goes in and generates a command for every leaf.
@@ -94,15 +97,15 @@ class TekConfig(object):
                 list: list of valid commands (cstr, val) on the subgroup subdirectory
         '''
         cList = []
-        children = dpath.util.search(self.dico, subgroup + '*', yielded=True, separator=':')
+        children = dpath.util.search(self.dico, subgroup + '*', yielded=True, separator=self.separator)
         for cmd in children:
             s, v = cmd
             if type(v) is not dict:
-                if s[0] != ':':
-                    s = ':' + s
+                if s[0] != self.separator:
+                    s = self.separator + s
                 cList += [(s, v)]
             else:
-                cList += self.getList(subgroup=cmd[0] + ':')
+                cList += self.getList(subgroup=cmd[0] + self.separator)
         if asCmd:
             return cList
         else:
@@ -162,11 +165,11 @@ class TekConfig(object):
             if len(words) > 2:
                 print('Warning 2-value returns not handled by TekConfig class. Ignoring...')
                 print(*words)
-            if cmdLeaf[0] == ':':
+            if cmdLeaf[0] == self.separator:
                 pat = cmdLeaf[1:]
-                cmdGrp = ':'.join(pat.split(':')[:-1])
+                cmdGrp = self.separator.join(pat.split(self.separator)[:-1])
             else:
-                pat = cmdGrp + ':' + cmdLeaf
+                pat = cmdGrp + self.separator + cmdLeaf
             commands[i] = (pat, val)
         return commands
 
@@ -403,6 +406,13 @@ class Configurable(object):
                 val = ret.split(' ')[-1]
             else:
                 val = ret
+            try:
+                val = float(val)
+            except ValueError:
+                pass
+            else:
+                if val == floor(val):
+                    val = int(val)
             self.config['live'].set(cStr, val)
 
     def _setHardwareConfig(self, subgroup=''):
@@ -414,7 +424,7 @@ class Configurable(object):
         self.initHardware()
         live = self.config['live'].getList(subgroup, asCmd=False)
         for cmd in live:
-            if not self.colon and cmd[0] == ':':
+            if not self.colon and cmd[0] == self.separator:
                 cmd = cmd[1:]
             if not self.space:
                 ''.join(cmd.split(' '))
