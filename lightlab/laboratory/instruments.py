@@ -488,6 +488,9 @@ class Oscilloscope(Instrument):
         'wfmDb',
         'run']
 
+    def hardware_cooldown(self):
+        self.run()
+
 class CommunicationAnalyzerScope(Oscilloscope):
     pass
 
