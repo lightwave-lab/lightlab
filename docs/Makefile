@@ -41,6 +41,7 @@ help:
 clean:
 	@-rm -rf $(BUILDDIR)/*
 	@-rm -rf API/*.rst
+	@-rm -rf sphinx/_build sphinx/_autoapi
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
