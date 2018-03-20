@@ -96,23 +96,21 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     def setCurrent(self, currAmps):
         ''' This leaves the output on indefinitely '''
         currTemp = self._latestCurrentVal
-        if (self.enable() \
-                and self.currStep is not None \
-                and abs(currTemp - currAmps) > self.currStep):
-            for curr in np.linspace(currTemp, currAmps, 1 + abs(currTemp - currAmps) / self.currStep)[1:]:
-                self._configCurrent(curr)
-        else:
+        if not self.enable() or self.currStep is None:
             self._configCurrent(currAmps)
-
-    def setVoltage(self, volt):
-        voltTemp = self._latestVoltageVal
-        if (self.enable() \
-                and self.voltStep is not None \
-                and abs(voltTemp - volt) > self.voltStep):
-            for volt in np.linspace(voltTemp, volt, 1 + abs(voltTemp - volt) / self.voltStep)[1:]:
-                self._configVoltage(volt)
         else:
-            self._configVoltage(volt)
+            nSteps = int(np.floor(abs(currTemp - currAmps) / self.currStep))
+            for curr in np.linspace(currTemp, currAmps, 1 + nSteps)[1:]:
+                self._configCurrent(curr)
+
+    def setVoltage(self, voltVolts):
+        voltTemp = self._latestVoltageVal
+        if not self.enable() or self.voltStep is None:
+            self._configCurrent(voltVolts)
+        else:
+            nSteps = int(np.floor(abs(voltTemp - voltVolts) / self.voltStep))
+            for volt in np.linspace(voltTemp, voltVolts, 1 + nSteps)[1:]:
+                self._configCurrent(volt)
 
     def getCurrent(self):
         currGlob = self.getConfigParam('SOURCE:CURR')
