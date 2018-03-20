@@ -226,7 +226,7 @@ class Instrument(Node):
     __host = None
     ports = None
 
-    essentialMethods = []
+    essentialMethods = ['startup']
     essentialProperties = []
 
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
@@ -308,9 +308,6 @@ class Instrument(Node):
             self.__driver_object = driver_class(
                 name=self.name, address=self.address, **kwargs)
         return self.__driver_object
-
-    def startup(self):
-        return self.driver_object.startup()
 
     @property
     def driver(self):

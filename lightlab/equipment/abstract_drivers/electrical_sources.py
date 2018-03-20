@@ -3,6 +3,7 @@ import lightlab.util.io as io
 import numpy as np
 from lightlab import logger
 
+
 class MultiModalSource(object):
     ''' Checks modes for sources with multiple ways to specify.
 

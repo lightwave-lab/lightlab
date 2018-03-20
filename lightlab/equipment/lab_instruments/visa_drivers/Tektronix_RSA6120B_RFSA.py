@@ -134,7 +134,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     def __sgramLines(self, lineNos, container=None, debugEvery=None):
         if container is None:
             container = [None] * len(lineNos)
-        VISAObject.open(self)
+        VISAInstrumentDriver.open(self)
         for i, lno in enumerate(lineNos):
             if debugEvery is not None and i % debugEvery == 0:
                 logger.debug('Transferring {} / {}'.format(lno, lineNos[-1]))
@@ -156,9 +156,9 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
                     print('np.shape(container) =', np.shape(container))
                 else:
                     print('len(container) =', len(container))
-                VISAObject.close(self)
+                VISAInstrumentDriver.close(self)
                 raise err
-        VISAObject.close(self)
+        VISAInstrumentDriver.close(self)
         return container
 
 
@@ -190,9 +190,9 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         self.__setupMultiSpectrum(typAvg, nAvg)
 
         # Single trigger and data transfer
-        VISAObject.open(self)
+        VISAInstrumentDriver.open(self)
         dbmRaw = self.mbSession.query_binary_values('READ:SPEC:TRACE1?')
-        VISAObject.close(self)
+        VISAInstrumentDriver.close(self)
 
         # Scaling
         freqRangeActual = np.zeros(2, dtype=float)

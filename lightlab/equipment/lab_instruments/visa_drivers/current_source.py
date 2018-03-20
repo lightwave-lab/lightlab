@@ -3,10 +3,9 @@ import time
 import visa as pyvisa
 
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_instruments import MultiModalSource, ElectricalSource
+from lightlab.equipment.abstract_drivers import MultiModalSource, ElectricalSource
 from lightlab.util import io
 from lightlab import logger
-
 
 
 class CurrentSources(VISAInstrumentDriver):
@@ -49,6 +48,11 @@ class CurrentSources(VISAInstrumentDriver):
 
     # The above is the old versioin of initialization, and the below is the new version!
     def __init__(self, name='The current source', address=None, **kwargs):
+        logger.warning('This class to be deprecated. Use NI_PCI_6723.')
+        logger.warning('Backwards incompatibilities:\n',
+            'No stateDict argument in __init__\n',
+            'No tuneState property. Use setChannelTuning and getChannelTuning')
+
         self.useChans = kwargs.pop("useChans", None)
         self.stateDict = kwargs.pop("stateDict", None)
         # sourceMode = kwargs.pop("sourceMode", None)
@@ -236,16 +240,16 @@ class CurrentSources(VISAInstrumentDriver):
         raise NotImplementedError()
 
 
-class NI_PCI_SourceCard(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
+class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
     ''' Uses abstract classes. Roughly speaking
 
             :py:class:`~lightlab.equipment.lab_instruments.visa_drivers.VISAInstrumentDriver`
             provides communication to the board
 
-            :py:class:`~lightlab.equipment.abstract_instruments.electrical_sources.MultiModalSource`
+            :py:class:`~lightlab.equipment.abstract_drivers.electrical_sources.MultiModalSource`
             provides unit support and range checking
 
-            :py:class:`~lightlab.equipment.abstract_instruments.electrical_sources.ElectricalSource`
+            :py:class:`~lightlab.equipment.abstract_drivers.electrical_sources.ElectricalSource`
             provides *notion of state* (stateDict) and channel support
     '''
 
@@ -316,7 +320,7 @@ class NI_PCI_SourceCard(VISAInstrumentDriver, MultiModalSource, ElectricalSource
             chanBaseDict[ch] = self.val2baseUnit(enforced, mode)
 
         # Change the state
-        ElectricalSource.setChannelTuning(self, chanBaseDict)
+        super().setChannelTuning(chanBaseDict)
 
         # Was there a change
         if not oldState == self.getChannelTuning(mode):

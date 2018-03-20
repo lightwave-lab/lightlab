@@ -63,7 +63,7 @@ monitorDir = projectDir / 'progress-monitor'
 # Maybe you are using the lightlab package from elsewhere
 try:
     with open(projectDir / '.pathtolightlab') as fx:
-        lightlabDevelopmentDir = fx.readline()
+        lightlabDevelopmentDir = Path(fx.readline())
 except IOError:
     lightlabDevelopmentDir = projectDir
 
