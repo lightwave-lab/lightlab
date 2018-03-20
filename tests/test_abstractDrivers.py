@@ -13,25 +13,19 @@ import pytest
 from lightlab.equipment.abstract_drivers import Configurable, AbstractDriver, DriverRequiresQuery
 import lightlab
 
-from lightlab import logger, log_to_screen, DEBUG
-
-if __name__ == '__main__':
-    log_to_screen(DEBUG)
-    test_configurable()
-
-def test_metaclass_init():
-    ''' Catches incomplete API at class time, not instantiation time, not runtime
-    '''
-    class ARealDriver(Configurable):
-        def query():
-            pass
-        def write():
-            pass
-    class AnAbstractDriver(Configurable, AbstractDriver):
-        pass
-    with pytest.raises(TypeError):
-        class NotARealDriver(Configurable):
-            pass
+# def test_metaclass_init():
+#     ''' Catches incomplete API at class time, not instantiation time, not runtime
+#     '''
+#     class ARealDriver(Configurable):
+#         def query():
+#             pass
+#         def write():
+#             pass
+#     class AnAbstractDriver(Configurable, AbstractDriver):
+#         pass
+#     with pytest.raises(TypeError):
+#         class NotARealDriver(Configurable):
+#             pass
 
 def test_configurable():
     class MessagePasser(Configurable):
@@ -97,7 +91,7 @@ def test_driver_init():
             # def powerDbm(self): pass
 
     initArgs = ()
-    initKwargs = dict(name='a PM', address='NULL', extra='foolio', tempSess=True)
+    initKwargs = dict(name='a PM', address='NULL', extra='foolio', tempSess=False)
     # Old style still works
     pm = PowerMeter(*initArgs, _driver_class=HP_8152A_PM, **initKwargs)
     assert pm.__class__ == PowerMeter  # not SourceMeter or HP_8152A_PM
@@ -105,7 +99,7 @@ def test_driver_init():
     assert pm.extra == 'foolio'
     # Still fails to initialize the driver with correct options
     with pytest.raises(AssertionError):
-        assert pm.driver_object.tempSess == True
+        assert pm.driver_object.tempSess == False
 
     # New style
     pm = HP_8152A_PM(*initArgs, **initKwargs)
@@ -113,8 +107,18 @@ def test_driver_init():
     assert pm.driver_class == HP_8152A_PM
     assert pm.extra == 'foolio'
     # These arguments went to the driver
-    assert pm.driver_object.tempSess == True
+    assert pm.driver_object.tempSess == False
     with pytest.raises(AttributeError):
         pm.tempSess
     with pytest.raises(AttributeError):
         pm.driver_object.extra
+
+
+from lightlab import logger, log_to_screen, DEBUG
+
+if __name__ == '__main__':
+    ''' Call with python or ipython instead of py.test to see output
+    '''
+    log_to_screen(DEBUG)
+    test_configurable()
+

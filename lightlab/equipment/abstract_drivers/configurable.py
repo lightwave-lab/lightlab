@@ -217,7 +217,7 @@ class TekConfig(object):
             fx.write(str(configToSave)) # __str__ gives nice json format
 
 
-class Configurable(AbstractDriver, metaclass=concreteRequires('query', 'write')):
+class Configurable(AbstractDriver):
     ''' Instruments can be configurable and use TekConfig.
 
         This clas uses query/write methods that are not directly inherited, so the subclass or its parents must implement those functions

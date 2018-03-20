@@ -1,7 +1,7 @@
 from . import AbstractDriver, concreteRequires
 from lightlab.util.io import ChannelError
 
-class PowerMeterAbstract(AbstractDriver, metaclass=concreteRequires('powerDbm')):
+class PowerMeterAbstract(AbstractDriver):
     '''
         For the `HP_8152A <http://www.lightwavestore.com/product_datasheet/OTI-OPM-L-030C_pdf4.pdf>`__
         and the `Advantest_Q8221 <https://www.advantest.com/documents/11348/146687/pdf_mn_EQ7761_PROGRAMMING_GUIDE.pdf>`__
