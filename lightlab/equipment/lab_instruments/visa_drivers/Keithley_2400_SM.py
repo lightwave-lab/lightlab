@@ -14,7 +14,11 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         Also provides interface methods for measuring resistance and measuring power
 
         Todo:
-            Lots. This is currently limited only to set current, measure voltage, single-shot
+            Protection attributes could instead be properties to simplify.
+            It is preferable to have 1 way to do 1 thing.
+            Possible exception: setCurrentMode(protectionVoltage=1) should still be allowed.
+
+            Consider privatizing setCurrentMode/setVoltageMode. Just set the voltage and it will change into that mode.
     '''
     autoDisable = None  # in seconds. NOT IMPLEMENTED
     _latestCurrentVal = 0
