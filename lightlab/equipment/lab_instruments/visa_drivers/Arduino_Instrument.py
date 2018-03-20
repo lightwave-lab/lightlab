@@ -1,4 +1,4 @@
-from ..visa_drivers import VISAInstrumentDriver
+from . import VISAInstrumentDriver
 
 class Arduino_Instrument(VISAInstrumentDriver):
     ''' Read/write interface for an arduino. Could make use of TCPIP or maybe USB
@@ -6,9 +6,8 @@ class Arduino_Instrument(VISAInstrumentDriver):
         Todo:
             To be implemented.
     '''
-    def __init__(self, arg=None):
-        # super().__init__()
-        self.arg = arg
+    def __init__(self, name='Arduino', **kwargs):
+        super().__init__(name=name, **kwargs)
 
     def write(self, writeStr):
         pass

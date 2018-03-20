@@ -22,6 +22,12 @@ class VISAInstrumentDriver(VISAObject):
     def startup(self):
         logger.debug("{}startup method empty".format(self.__class__.__name__))
 
+    def open(self):
+        super().open()
+        if not self.__started:
+            self.startup()
+            self.__started = True
+
 
 DefaultDriver = VISAInstrumentDriver
 
@@ -33,26 +39,18 @@ DefaultDriver = VISAInstrumentDriver
 # USBinstrument = USBinstrumentDriver
 
 
-from .Advantest_Q8221_PM import Advantest_Q8221_PM
-from .Agilent_83712B_clock import Agilent_83712B_clock
-from .Agilent_N5183A_VG import Agilent_N5183A_VG
-from .Agilent_N5222A_NA import Agilent_N5222A_NA
-from .Anritsu_MP1763B_PPG import Anritsu_MP1763B_PPG
-from .Apex_AP2440A_OSA import Apex_AP2440A_OSA
-from .Arduino_Instrument import Arduino_Instrument
-from .current_source import CurrentSources
-from .current_source import NI_PCI_SourceCard
-from .digital_phosphor_scope import DigitalPhosphorScope
-from .HP_8116A_FG import HP_8116A_FG
-from .HP_8152A_PM import HP_8152A_PM
-from .HP_8156A_VA import HP_8156A_VA
-from .ILX_7900B_LS import ILX_7900B_LS
-from .Keithley_2400_SM import Keithley_2400_SM, Keithley_2400_SM_noRamp
-from .RandS_SMBV100A_VG import RandS_SMBV100A_VG
-from .Tektronix_CSA8000_CAS import Tektronix_CSA8000_CAS
-from .Tektronix_DPO4032_Oscope import Tektronix_DPO4032_Oscope
-from .Tektronix_DPO4034_Oscope import Tektronix_DPO4034_Oscope
-from .Tektronix_DSA8300_Oscope import Tektronix_DSA8300_Oscope
-from .Tektronix_RSA6120B_RFSA import Tektronix_RSA6120B_RFSA
-from .Tektronix_TDS6154C_Oscope import Tektronix_TDS6154C_Oscope
-from .Temp_SM import Temp_SM
+# This imports all of the modules in this folder
+# As well as all their member classes that are VISAInstrumentDrivers
+import importlib
+import pkgutil
+
+for loader, name, is_pkg in pkgutil.walk_packages(__path__):
+    full_name = __name__ + '.' + name
+    _temp = importlib.import_module(full_name)
+    for k, v in _temp.__dict__.items():
+        try:
+            mro = v.mro()
+        except AttributeError:
+            continue
+        if VISAInstrumentDriver in mro:
+            globals()[k] = v

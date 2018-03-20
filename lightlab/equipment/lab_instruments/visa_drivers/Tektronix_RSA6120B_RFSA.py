@@ -1,5 +1,7 @@
-from ..visa_drivers import VISAInstrumentDriver
-from ..configure.configurable import Configurable
+from lightlab import logger
+
+from . import VISAInstrumentDriver
+from lightlab.equipment.abstract_drivers import Configurable
 
 class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     ''' TEKTRONIX RSA6120B, RF spectrum analyzer
@@ -72,10 +74,10 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     def sgramTransfer(self, duration=1., nLines=100):
         ''' Transfers data that has already been taken. Typical usage::
 
-            self.sgramInit()
-            ... << some activity >>
-            self.run(False)
-            self.spectrogram()
+                self.sgramInit()
+                ... << some activity >>
+                self.run(False)
+                self.spectrogram()
 
             Currently only supports free running mode, so time is approximate.
             The accuracy of timing and consistency of timing between lines is not guaranteed.
@@ -114,9 +116,9 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         sgramMat = np.zeros((nLines, nFreqs))
 
         # Transfer data
-        debug('Preparing to transfer spectrogram of shape', sgramMat.shape, '...')
+        logger.debug('Preparing to transfer spectrogram of shape', sgramMat.shape, '...')
         self.__sgramLines(lineNos, container=sgramMat, debugEvery=100)
-        debug('Transfer complete.')
+        logger.debug('Transfer complete.')
 
         # Scaling
         fStart = float(self.getConfigParam('SGR:FREQ:START', forceHardware=True))
@@ -132,17 +134,17 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     def __sgramLines(self, lineNos, container=None, debugEvery=None):
         if container is None:
             container = [None] * len(lineNos)
-        VISAObject.open(self)
+        VISAInstrumentDriver.open(self)
         for i, lno in enumerate(lineNos):
             if debugEvery is not None and i % debugEvery == 0:
-                debug('Transferring {} / {}'.format(lno, lineNos[-1]))
+                logger.debug('Transferring {} / {}'.format(lno, lineNos[-1]))
             self.mbSession.write('TRAC:SGR:SEL:LINE {}'.format(lno))
             for _ in range(2):  # Sometimes the query just fails so we try again
                 rawLine = self.mbSession.query_binary_values('FETCH:SGR?')
                 if len(rawLine) > 0:
                     break
             else:
-                debug('Ran out of data on line', lno)
+                logger.debug('Ran out of data on line', lno)
                 continue
             try:
                 container[i] = rawLine
@@ -154,9 +156,9 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
                     print('np.shape(container) =', np.shape(container))
                 else:
                     print('len(container) =', len(container))
-                VISAObject.close(self)
+                VISAInstrumentDriver.close(self)
                 raise err
-        VISAObject.close(self)
+        VISAInstrumentDriver.close(self)
         return container
 
 
@@ -188,9 +190,9 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         self.__setupMultiSpectrum(typAvg, nAvg)
 
         # Single trigger and data transfer
-        VISAObject.open(self)
+        VISAInstrumentDriver.open(self)
         dbmRaw = self.mbSession.query_binary_values('READ:SPEC:TRACE1?')
-        VISAObject.close(self)
+        VISAInstrumentDriver.close(self)
 
         # Scaling
         freqRangeActual = np.zeros(2, dtype=float)

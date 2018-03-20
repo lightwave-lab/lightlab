@@ -1,11 +1,11 @@
-from ..visa_drivers import VISAInstrumentDriver
 import numpy as np
 import time
-from lightlab.util import io
-from lightlab import logger
 import visa as pyvisa
 
-from lightlab.equipment.abstract_instruments import MultiModalSource, ElectricalSource
+from . import VISAInstrumentDriver
+from lightlab.equipment.abstract_drivers import MultiModalSource, ElectricalSource
+from lightlab.util import io
+from lightlab import logger
 
 
 class CurrentSources(VISAInstrumentDriver):
@@ -48,6 +48,11 @@ class CurrentSources(VISAInstrumentDriver):
 
     # The above is the old versioin of initialization, and the below is the new version!
     def __init__(self, name='The current source', address=None, **kwargs):
+        logger.warning('This class to be deprecated. Use NI_PCI_6723.')
+        logger.warning('Backwards incompatibilities:\n',
+            'No stateDict argument in __init__\n',
+            'No tuneState property. Use setChannelTuning and getChannelTuning')
+
         self.useChans = kwargs.pop("useChans", None)
         self.stateDict = kwargs.pop("stateDict", None)
         # sourceMode = kwargs.pop("sourceMode", None)
@@ -235,16 +240,16 @@ class CurrentSources(VISAInstrumentDriver):
         raise NotImplementedError()
 
 
-class NI_PCI_SourceCard(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
+class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
     ''' Uses abstract classes. Roughly speaking
 
             :py:class:`~lightlab.equipment.lab_instruments.visa_drivers.VISAInstrumentDriver`
             provides communication to the board
 
-            :py:class:`~lightlab.equipment.abstract_instruments.electrical_sources.MultiModalSource`
+            :py:class:`~lightlab.equipment.abstract_drivers.electrical_sources.MultiModalSource`
             provides unit support and range checking
 
-            :py:class:`~lightlab.equipment.abstract_instruments.electrical_sources.ElectricalSource`
+            :py:class:`~lightlab.equipment.abstract_drivers.electrical_sources.ElectricalSource`
             provides *notion of state* (stateDict) and channel support
     '''
 
@@ -286,7 +291,8 @@ class NI_PCI_SourceCard(VISAInstrumentDriver, MultiModalSource, ElectricalSource
             pyvisa.constants.VI_ATTR_IO_PROT, pyvisa.constants.VI_PROT_4882_STRS)
 
     def instrID(self):
-        '''
+        ''' There is no "\*IDN?" command. Instead, test if it is alive,
+            and then return a reasonable string
         '''
         self.tcpTest()
         return 'Current Source'
@@ -314,7 +320,7 @@ class NI_PCI_SourceCard(VISAInstrumentDriver, MultiModalSource, ElectricalSource
             chanBaseDict[ch] = self.val2baseUnit(enforced, mode)
 
         # Change the state
-        ElectricalSource.setChannelTuning(self, chanBaseDict)
+        super().setChannelTuning(chanBaseDict)
 
         # Was there a change
         if not oldState == self.getChannelTuning(mode):
@@ -322,12 +328,12 @@ class NI_PCI_SourceCard(VISAInstrumentDriver, MultiModalSource, ElectricalSource
         else:
             self.wake()
 
-    def getChannelTuning(self, mode, **kwargs):
-        baseDict = ElectricalSource.getChannelTuning(self)
+    def getChannelTuning(self, mode):
+        baseDict = super().getChannelTuning()
         return self.baseUnit2val(baseDict, mode)
 
     def off(self):
-        ElectricalSource.off(self, 'volt')
+        self.setChannelTuning(dict([ch, 0] for ch in self.stateDict.keys()), 'volt')
 
     def wake(self):
         ''' Don't change the value but make sure it doesn't go to sleep after inactivity.

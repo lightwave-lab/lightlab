@@ -1,6 +1,7 @@
-from ..visa_drivers import VISAInstrumentDriver
-from ..configure.configurable import Configurable
 import numpy as np
+
+from . import VISAInstrumentDriver
+from lightlab.equipment.abstract_drivers import Configurable
 
 
 class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):

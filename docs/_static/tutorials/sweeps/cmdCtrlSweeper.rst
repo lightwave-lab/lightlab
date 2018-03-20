@@ -67,7 +67,7 @@ Usage
 .. toctree::
     :caption: Demo
 
-    /ipynbs/GenericCmdCtrlSweep.ipynb
+    /ipynbs/Tests/GenericCmdCtrlSweep.ipynb
 
 * :ref:`genindex`
 * :ref:`modindex`

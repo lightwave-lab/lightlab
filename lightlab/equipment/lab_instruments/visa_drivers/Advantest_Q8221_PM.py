@@ -1,6 +1,5 @@
-from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
-from lightlab.equipment.lab_instruments.visa_drivers.HP_8152A_PM import HP_8152A_PM
-from lightlab.util import io
+from . import VISAInstrumentDriver
+from lightlab.util.io import ChannelError
 
 
 class Advantest_Q8221_PM(VISAInstrumentDriver):
@@ -31,19 +30,19 @@ class Advantest_Q8221_PM(VISAInstrumentDriver):
         :rtype: double
         """
         if channel not in range(1, 4):
-            raise io.ChannelError(
+            raise ChannelError(
                 'Not a valid PowerMeter channel. Use 1(A), 2(B), or 3(A/B)')
         # Sometimes it gets out of range, so we have to try a few times
         self.write('CH' + str(channel))
         powStr = self.query('CH' + str(channel))
         return float(powStr[3:])
-            
+
         # for trial in range(10):
         #     self.write('CH' + str(channel))
         #     # powStr = self.query('TRG')
         #     powStr = self.query('CH' + str(channel))
         #     return float(powStr[3:])
-            
+
         # else:
         #     raise Exception('Power meter values are unreasonable')
 

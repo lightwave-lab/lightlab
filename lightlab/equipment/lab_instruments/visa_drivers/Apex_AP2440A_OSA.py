@@ -1,8 +1,6 @@
-from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
-from .. import debug
-from .. import debugWait
+from . import VISAInstrumentDriver
 import numpy as np
-from lightlab.util import data
+from lightlab.util.data import Spectrum
 import pyvisa
 import time
 from lightlab import logger
@@ -38,24 +36,24 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         we need to set the host address, and the port.
         """
         tempSess = kwargs.pop("tempSess", True)
-        # visaAddress = address
-        VISAInstrumentDriver.__init__(self, name=name,
-                                      address=address,
-                                      tempSess=tempSess,
-                                      **kwargs)
-
+        super().__init__(name=name,
+                         address=address,
+                         tempSess=tempSess,
+                         **kwargs)
         self.__wlRange = None
 
-        # setup standard OSA parameters
-
     def startup(self):
+        ''' Checks if it is alive, sets up standard OSA parameters
+        '''
         self.instrID()
-        self.write('SPTRACESWP0')  # activate trace 0
+        self.write('SPTRACESWP0')
         # x-axis mode to wavelength
         # resolution to 0.80
         # others?
 
     def open(self):
+        if self.address is None:
+            raise RuntimeError("Attempting to open connection to unknown address.")
         # Check if ip port is open
         address_array = self.address.split("::")  # should be something like ['TCPIP0', 'xxx.xxx.xxx.xxx', '6501', 'SOCKET']
         if address_array[0] == 'TCPIP0':
@@ -130,11 +128,11 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         Returns an array of dBm values as doubles
         :rtype: array
         """
-        debugWait('The OSA is sweeping')
+        logger.debug('The OSA is sweeping')
         self.write('SPTRACESWP0')  # activate trace 0
         self.write('SPSWP1')  # Initiates a sweep
         # self.write('*WAI') # Bus and entire program stall until sweep completes.
-        debug('Done')
+        logger.debug('Done')
 
     def transferData(self):
         """ Performs a sweep and reads the data
@@ -192,7 +190,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
                 dbmAvg = dbm / avgCnt
             else:
                 dbmAvg = dbmAvg + dbm / avgCnt
-        return data.Spectrum(nm.copy(), dbmAvg.copy(), inDbm=True)
+        return Spectrum(nm.copy(), dbmAvg.copy(), inDbm=True)
 
     ''' TLS access methods currently not implemented '''
 

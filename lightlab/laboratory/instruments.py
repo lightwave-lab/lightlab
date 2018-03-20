@@ -9,6 +9,7 @@ from lightlab.equipment.lab_instruments import VISAObject, DefaultDriver
 from lightlab import logger
 import os
 import pyvisa
+from contextlib import contextmanager
 
 
 class Host(Node):
@@ -225,7 +226,7 @@ class Instrument(Node):
     __host = None
     ports = None
 
-    essentialMethods = []
+    essentialMethods = ['startup']
     essentialProperties = []
 
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
@@ -249,6 +250,7 @@ class Instrument(Node):
         ''' For autocompletion in ipython '''
         return super().__dir__() + self.essentialProperties + self.essentialMethods
 
+    # These control feedthroughs to the driver
     def __getattr__(self, attrName):
         if attrName in self.essentialProperties + self.essentialMethods: # or methods
             return getattr(self.driver, attrName)
@@ -267,6 +269,32 @@ class Instrument(Node):
         else:
             return super().__delattr__(attrName)
 
+    # These control contextual behavior. They are used by DualInstrument
+    def hardware_warmup(self):
+        pass
+
+    def hardware_cooldown(self):
+        pass
+
+    @contextmanager
+    def warmedUp(self):
+        ''' A context manager that warms up and cools down in a "with" block
+        '''
+        try:
+            self.hardware_warmup()
+            yield self
+        finally:
+            self.hardware_cooldown()
+
+    # These control properties
+    @property
+    def driver_class(self):
+        if self._driver_class is None:
+            logger.warning("Using default driver for %s.", self)
+            return DefaultDriver
+        else:
+            return self._driver_class
+
     @property
     def driver_object(self):
         if self.__driver_object is None:
@@ -281,16 +309,9 @@ class Instrument(Node):
                 name=self.name, address=self.address, **kwargs)
         return self.__driver_object
 
-    def startup(self):
-        return self.driver_object.startup()
-
     @property
-    def driver_class(self):
-        if self._driver_class is None:
-            logger.warning("Using default driver for %s.", self)
-            return DefaultDriver
-        else:
-            return self._driver_class
+    def driver(self):
+        return self.driver_object
 
     @property
     def bench(self):
@@ -377,10 +398,6 @@ class Instrument(Node):
         #     self.gpib_address = gpib_address
         self.host = host
 
-    @property
-    def driver(self):
-        return self.driver_object
-
     # @classmethod
     # def fromGpibAddress(cls, gpib_address):
     #     visa_object = VISAObject(gpib_address, tempSess=True)
@@ -398,17 +415,25 @@ class NotFoundError(RuntimeError):
 # TODO VERIFY CODE BELOW
 
 class PowerMeter(Instrument):
-    essentialMethods = ['powerDbm', 'powerLin']
+    essentialMethods = Instrument.essentialMethods + \
+        ['powerDbm',
+        'powerLin']
 
 
 class SourceMeter(Instrument):
-    essentialMethods = [
-        'setCurrent',
+    essentialMethods = Instrument.essentialMethods + \
+        ['setCurrent',
         'getCurrent',
         'measVoltage',
         'setProtectionVoltage',
         'setProtectionCurrent',
         'enable']
+
+    def hardware_warmup(self):
+        self.enable(True)
+
+    def hardware_cooldown(self):
+        self.enable(False)
 
 
 class Keithley(SourceMeter):
@@ -423,7 +448,8 @@ class Keithley(SourceMeter):
 
 
 class VectorGenerator(Instrument):
-    essentialMethods = ['amplitude',
+    essentialMethods = Instrument.essentialMethods + \
+        ['amplitude',
         'frequency',
         'enable',
         'modulationEnable',
@@ -437,27 +463,31 @@ class VectorGenerator(Instrument):
 
 
 class Clock(Instrument):
-    essentialMethods = ['on']
-    essentialProperties = ['frequency']
+    essentialMethods = Instrument.essentialMethods + \
+        ['on']
+    essentialProperties = Instrument.essentialProperties + \
+        ['frequency']
 
 
 class CurrentSource(Instrument):
-    essentialMethods = ['setChannelTuning', 'getChannelTuning', 'off']
+    essentialMethods = Instrument.essentialMethods + \
+        ['setChannelTuning',
+        'getChannelTuning',
+        'off']
     # Must init with `useChans` somehow
 
 
-from lightlab.equipment.abstract_instruments import ElectricalSource, MultiModalSource
-class NICurrentSource(CurrentSource, ElectricalSource, MultiModalSource):
-    def __init__(self, *args, useChans, **kwargs):
-        super().__init__(*args, useChans=useChans, **kwargs)
-
-
 class FunctionGenerator(Instrument):
-    essentialMethods = ['frequency', 'waveform', 'amplAndOffs', 'duty']
+    essentialMethods = Instrument.essentialMethods + \
+        ['frequency',
+        'waveform',
+        'amplAndOffs',
+        'duty']
 
 
 class LaserSource(Instrument):
-    essentialMethods = ['setChannelEnable',
+    essentialMethods = Instrument.essentialMethods + \
+        ['setChannelEnable',
         'getChannelEnable',
         'setChannelWls',
         'getChannelWls',
@@ -465,26 +495,41 @@ class LaserSource(Instrument):
         'getChannelPowers',
         'getAsSpectrum',
         'off']
-    essentialProperties = ['enableState', 'wls', 'powers']
+    essentialProperties = Instrument.essentialProperties + \
+        ['enableState',
+        'wls',
+        'powers']
 
 
 class OpticalSpectrumAnalyzer(Instrument):
-    essentialMethods = ['spectrum']
-    essentialProperties = ['wlRange']
+    essentialMethods = Instrument.essentialMethods + \
+        ['spectrum']
+    essentialProperties = Instrument.essentialProperties + \
+        ['wlRange']
 
 
 class Oscilloscope(Instrument):
-    essentialMethods = ['acquire', 'wfmDb', 'run']
+    essentialMethods = Instrument.essentialMethods + \
+        ['acquire',
+        'wfmDb',
+        'run']
+
+    def hardware_cooldown(self):
+        ''' Keep it running continuously in case you are in lab and want to watch
+        '''
+        self.run()
 
 class CommunicationAnalyzerScope(Oscilloscope):
     pass
+
 
 class DigitalPhosphorScope(Oscilloscope):
     pass
 
 
 class PulsePatternGenerator(Instrument):
-    essentialMethods = ['setPrbs',
+    essentialMethods = Instrument.essentialMethods + \
+        ['setPrbs',
         'setPattern',
         'getPattern',
         'on',
@@ -493,7 +538,8 @@ class PulsePatternGenerator(Instrument):
 
 
 class RFSpectrumAnalyzer(Instrument):
-    essentialMethods = ['getMeasurements',
+    essentialMethods = Instrument.essentialMethods + \
+        ['getMeasurements',
         'setMeasurement',
         'run',
         'sgramInit',
@@ -502,12 +548,17 @@ class RFSpectrumAnalyzer(Instrument):
 
 
 class VariableAttenuator(Instrument):
-    essentialMethods = ['on', 'off']
-    essentialProperties = ['attenDB', 'attenLin']
+    essentialMethods = Instrument.essentialMethods + \
+        ['on',
+        'off']
+    essentialProperties = Instrument.essentialProperties + \
+        ['attenDB',
+        'attenLin']
 
 
 class NetworkAnalyzer(Instrument):
-    essentialMethods = ['amplitude',
+    essentialMethods = Instrument.essentialMethods + \
+        ['amplitude',
         'frequency',
         'enable',
         'run',
@@ -519,7 +570,10 @@ class NetworkAnalyzer(Instrument):
         'spectrum',
         'multiSpectra']
 
+
 class ArduinoInstrument(Instrument):
-    essentialMethods = ['write', 'query']
+    essentialMethods = Instrument.essentialMethods + \
+        ['write',
+        'query']
 
 

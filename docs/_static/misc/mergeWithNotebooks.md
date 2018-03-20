@@ -1,12 +1,13 @@
 # Git with ipython notebooks
-Interactive tutorials are in notebooks. A full "experiment" in the lab is contained in a notebook. Notebooks are supposed to change a lot and meant to be played with. They are graphical. They are essential to track.
+Interactive tutorials are in notebooks. A full "experiment" in the lab is contained in a notebook. Notebooks are supposed to change a lot and meant to be played with. They are graphical. They are also essential to track.
 
+### Problem 1
 - Diff-ing your work against someone else's is impossible
 - Changes to binary outputs take up a huge amount of space, even if nothing significant actually changed
 
 Jupyter notebooks have two sections: inputs (code, markdown) and outputs (stdout, plots, images). Interactive python notebook files embed compiled outputs. This is good if you want to restart a kernel but still see the output, or if you close the file, etc.
 
-### Solution/Problem 1: The nbstripout filter
+### Solution 1 and Problem 2: The nbstripout filter
 This is a cool thing that is integrated within the git commands. It basically ignores all of the outputs and metadata of `.ipynb` files. When you commit and push, it only pushes the inputs. It is installed via the requirements.txt, but there is also some interesting [discussion](https://stackoverflow.com/questions/18734739/using-ipython-notebooks-under-version-control/20844506) and [documentation](https://github.com/toobaz/ipynb_output_filter)
 
 #### There are three downsides:
@@ -22,8 +23,29 @@ This is a cool thing that is integrated within the git commands. It basically ig
 
 Never think about it again... until you have to merge.
 
+## Best practice
+Ultimately, some of the work in notebooks will be lost. This is desireable in the case where two people made slightly different versions of the same figure. However, it is impossible to tell if something important changed in a source cell.
+
+Use semi-libraries for long and complex code segments. These are regular python files in the same directory as the notebook. They can be diffed easily.
+
+    > notebooks/myFolder
+    | gatherData.ipynb
+    | libStuff.py
+    -
+
+In "libStuff.py":
+
+    def squareIt(x):
+        return x ** 2
+
+In "gatherData.ipynb":
+    
+    from libStuff import squareIt
+    y = squareIt(3)
+
+
 ## The merge scenario
-You have branches `development` and `BSS-feature`, and you want to merge `BSS-feature` into `development`. Both have lots of notebooks with outputs, possibly with corrupted first lines.
+You have branches `development` and `cool-feature`, and you want to merge `cool-feature` into `development`. Both have lots of notebooks with outputs, possibly with corrupted first lines.
 
 ### Preliminaries
 `nbstripout` is in your venv, so activate the venv. Later, when we install the filter, it expects a clean attributes file.
@@ -37,7 +59,7 @@ Be aware of the `cleannbline` script. Sometimes non-JSON and _non-unicode_ chara
 
 ### Process
 #### Create a test branch for merge
-    git checkout -b test_merge_BSS-feature-into-development
+    git checkout -b test_merge_cool-feature-into-development
 
 #### Activate your filter
     nbstripout --install
@@ -53,7 +75,7 @@ Run
     
     git status
 
-It takes some time. What the hell is that error? It means that some of the notebooks are not sufficiently JSON for the nbstripout filter. 
+It takes some time. What is that error? It means that some of the notebooks are not sufficiently JSON for the nbstripout filter. 
 
 In the crash log, it should point to a certain file, let's say `notebooks/Test.ipynb` First, clean it with
 
@@ -66,18 +88,18 @@ Return to running `git status` until it completes without error. It should show 
     git add .
     git commit -m "stripped notebooks for merge"
 
-#### Strip the notebooks on BSS-feature branch
+#### Strip the notebooks on cool-feature branch
 Your filter is currently active, so when you try
 
-    git checkout BSS-feature
+    git checkout cool-feature
 
 it will automatically crash. As above though, it will point to a file. Keep going until `git status` completes. Add those and commit.
 
 Side note: even though `git status` shows a ton of modifications, you should get a clean `git diff` (Although sometimes it will just crash, NBD). Both commands are applying the ipynb filter... in some way.
 
 #### Do the merge
-    git checkout test_merge_BSS-feature-into-development
-    git merge BSS-feature
+    git checkout test_merge_cool-feature-into-development
+    git merge cool-feature
 
 You will get conflicts in two categories: notebooks and other. Since there are `<<<<` things everywhere, your `git diff` will crash while you're in the merge. It also doesn't point you to an offending file. Here is where you'll really appreciate Sublime. 
 
@@ -107,14 +129,14 @@ This will take a while. If it causes crashes, do the thing above to make sure al
 
     git add .
     git commit -m "stripped notebooks from target branch"
-    git merge test_merge_BSS-feature-into-development
+    git merge test_merge_cool-feature-into-development
 
 This should succeed without conflict. 
 
 #### Cleanup
 Remove the test branch
 
-    git branch -d test_merge_BSS-feature-into-development
+    git branch -d test_merge_cool-feature-into-development
 
 Then you __must__ deactivate the filter
 
@@ -127,11 +149,9 @@ While you're at it, leave the venv
     deactivate
 
 ## Some additional notes on the filter:
-When you have the filter active and checkout a normal branch, it will checkout AND strip the outputs in git’s mind (not the HEAD version though… confusing)
+When you have the filter active and checkout a normal branch, it will checkout AND strip the outputs in git’s mind (not the HEAD version though... confusing)
 
 When you have the filter active and leave a branch that has outputs, it will generate changes, thereby not allowing you to checkout without committing changes
 
 You can turn it on and off with the `nbstripout --install`, `nbstripout --uninstall` commands, as long as the attributes file has nothing else in it
 This is the easiest way to check: `cat .git/info/attributes`
-You can also check: `nbstripout --is-installed && echo $?`
-If it returns 0, then it IS installed

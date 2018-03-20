@@ -1,7 +1,8 @@
-from ..visa_drivers import VISAInstrumentDriver
-from ..configure.configurable import Configurable
-import time
 import numpy as np
+import time
+
+from . import VISAInstrumentDriver
+from lightlab.equipment.abstract_drivers import Configurable
 
 
 class HP_8116A_FG(VISAInstrumentDriver, Configurable):
