@@ -16,8 +16,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         Todo:
             Lots. This is currently limited only to set current, measure voltage, single-shot
     '''
+    self.enable(False)
     autoDisable = None  # in seconds. NOT IMPLEMENTED
-    function_mode = None
     _latestCurrentVal = 0
     _latestVoltageVal = 0
 
@@ -60,14 +60,14 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
 
     def setVoltageMode(self, protectionCurrent=0.05):
+        self.enable(False)
         self.__setSourceMode(isCurrentSource=False)
-        self.function_mode = 'voltage'
         self.setProtectionCurrent(protectionCurrent)
         self._configVoltage(0)
 
     def setCurrentMode(self, protectionVoltage=1):
+        self.enable(False)
         self.__setSourceMode(isCurrentSource=True)
-        self.function_mode = 'current'
         self.setProtectionVoltage(protectionVoltage)
         self._configCurrent(0)
 
@@ -160,9 +160,9 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         ''' get/set enable state
         '''
         if newState is False:
-            if (self.function_mode == 'current'):
+            if self.getConfigParam('SOURCE:FUNC') == 'CURR':
                 self.setCurrent(0)
-            elif (self.function_mode == 'voltage'):
+            else:
                 self.setVoltage(0)
         if newState is not None:
             self.setConfigParam('OUTP:STATE', 1 if newState else 0)
