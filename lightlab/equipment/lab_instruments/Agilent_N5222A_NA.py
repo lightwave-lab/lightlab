@@ -25,8 +25,8 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
     instrument_category = NetworkAnalyzer
 
     def __init__(self, name='The network analyzer', address=None, **kwargs):
-        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-        Configurable.__init__(self, headerIsOptional=False)
+        super().__init__(name=name, address=address,
+                         headerIsOptional=False, **kwargs)
         self.chanNum = 1
         self.traceNum = 1
         self.auxTrigNum = 1

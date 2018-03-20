@@ -15,9 +15,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     instrument_category = RFSpectrumAnalyzer
 
     def __init__(self, name='The RF spectrum analyzer', address=None, **kwargs):
-        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-        Configurable.__init__(self)
-
+        super().__init__(name=name, address=address, **kwargs)
 
     def startup(self):
         # Turn off the measurements that are not supported by this class

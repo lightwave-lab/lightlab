@@ -16,10 +16,9 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     amplitudeRange = (.01, 10)
 
     def __init__(self, name='The slow synth (FUNCTION GENERATOR)', address=None, **kwargs):
-        VISAInstrumentDriver.__init__(
-            self, name=name, address=address, **kwargs)
-        Configurable.__init__(self, precedingColon=False,
-                              interveningSpace=False)
+        super().__init__(name=name, address=address,
+                         precedingColon=False, interveningSpace=False,
+                         **kwargs)
 
     def startup(self):
         self.write('D0')  # enable output

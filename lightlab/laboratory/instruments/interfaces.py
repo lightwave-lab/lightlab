@@ -2,6 +2,7 @@
 '''
 from .bases import Instrument
 
+
 class PowerMeter(Instrument):
     essentialMethods = Instrument.essentialMethods + \
         ['powerDbm',
@@ -9,7 +10,7 @@ class PowerMeter(Instrument):
 
 
 class SourceMeter(Instrument):
-    essentialMethods = super().essentialMethods + \
+    essentialMethods = Instrument.essentialMethods + \
         ['setCurrent',
         'getCurrent',
         'measVoltage',
@@ -25,7 +26,7 @@ class SourceMeter(Instrument):
 
 
 class Keithley(SourceMeter):
-    essentialMethods = super().essentialMethods + \
+    essentialMethods = SourceMeter.essentialMethods + \
         ['setPort',
         'setCurrentMode',
         'setVoltageMode',
@@ -67,6 +68,7 @@ class FunctionGenerator(Instrument):
         ['frequency',
         'waveform',
         'amplAndOffs',
+        'amplitudeRange', # This should be a class attribute, not a method
         'duty']
 
 
