@@ -1,18 +1,20 @@
+from . import VISAInstrumentDriver
+from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.laboratory.instruments import FunctionGenerator
+
 import numpy as np
 import time
 
-from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable
-
-
 class HP_8116A_FG(VISAInstrumentDriver, Configurable):
-    """
-    Function Generator
-    """
-    allowedRange = (.01, 10)
+    '''
+        Function Generator
 
-    # def __init__(self, address = 16, hostname = 'andromeda'): # To initialize the FunctionGenerator, we need to set the GPIB address and hostname.
-    #     super().__init__('The slow synth', address, hostNS[hostname])
+        Manual?
+    '''
+    instrument_category = FunctionGenerator
+
+    amplitudeRange = (.01, 10)
+
     def __init__(self, name='The slow synth (FUNCTION GENERATOR)', address=None, **kwargs):
         VISAInstrumentDriver.__init__(
             self, name=name, address=address, **kwargs)
@@ -86,7 +88,7 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
             raise ValueError('amplOffs must be a tuple. ' +
                              'You can specify one element as None if you don\'t want to set it')
         amplitude, offset = amplOffs
-        amplitude = np.clip(amplitude, *self.allowedRange)
+        amplitude = np.clip(amplitude, *self.amplitudeRange)
 
         if amplitude is not None:
             self.setConfigParam('AMP', '{} V'.format(amplitude))

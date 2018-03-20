@@ -1,23 +1,30 @@
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
-
+from lightlab.laboratory.instruments import Clock
 
 class Agilent_83712B_clock(VISAInstrumentDriver, Configurable):
-    """
-    """
-    # def __init__(self, address=19, hostname='andromeda'): # Add GPIB address and hostname to Clock
-    #     super().__init__('The clock on the PPG', address, hostNS[hostname])
-    # id string:HEWLETT-PACKARD,83712B,US37101574,REV  10.0
+    '''
+        Where is manual?
+    '''
+    instrument_category = Clock
+
     def __init__(self, name='The clock on PPG', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self)
 
     def startup(self):
-        self.on()
+        self.enable(True)
 
     def on(self, turnOn=True):
-        onStr = 'ON' if turnOn else 'OFF'
-        self.setConfigParam('OUTP:STATE', onStr)
+        from lightlab import logger
+        logger.warning('Deprecation warning of method `on()`. Use `enable(True)`')
+        self.enable(turnOn)
+
+    def enable(self, enaState=None):
+        if enaState is not None:
+            self.setConfigParam('OUTP:STATE', 'ON' if enaState else 'OFF')
+        retStr = self.getConfigParam('OUTP:STAT')
+        return retStr in [True, 'ON', 1, '1']
 
     @property
     def frequency(self):

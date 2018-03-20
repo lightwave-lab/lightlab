@@ -1,4 +1,6 @@
 from . import VISAInstrumentDriver
+from lightlab.laboratory.instruments import OpticalSpectrumAnalyzer
+
 import numpy as np
 from lightlab.util.data import Spectrum
 import pyvisa
@@ -28,6 +30,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
 
     The primary function is spectrum, which returns a Spectrum object
     """
+    instrument_category = OpticalSpectrumAnalyzer
 
     def __init__(self, name='The OSA', address=None, **kwargs):
         # def __init__(self, host='128.112.48.148', port=6500):

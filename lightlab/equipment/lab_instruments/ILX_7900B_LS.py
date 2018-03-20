@@ -1,9 +1,11 @@
 from . import VISAInstrumentDriver
+from lightlab.laboratory.instruments import LaserSource
+
 import numpy as np
-from lightlab.util import io
+import time
+from lightlab.util.io import ChannelError
 from lightlab.util.data import Spectrum
 from lightlab import logger
-import time
 
 
 class ILX_7900B_LS(VISAInstrumentDriver):
@@ -22,6 +24,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
 
             Deprecate stateDict
     '''
+    instrument_category = LaserSource
     ordering_left = [1, 2, 3, 4, 5, 6, 7, 8]  # left bank
     ordering_right = [10, 9, 11, 12, 13, 14, 15, 16]  # right bank
     fullChannelNums = np.size(ordering_left)
@@ -75,7 +78,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         '''
         newState = np.array(newState)
         if len(newState) != len(self.useChans):
-            raise io.ChannelError('Wrong number of channels. ' +
+            raise ChannelError('Wrong number of channels. ' +
                                   'Requested ' + str(len(newState)) +
                                   ', Expecting ' + str(len(self.useChans)))
         # enforce valueBounds
@@ -209,7 +212,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
                             '. Need enableState, wls, or powers')
         for chan in chanValDict.keys():
             if chan not in self.useChans:
-                raise io.ChannelError('Channel index not blocked out. ' +
+                raise ChannelError('Channel index not blocked out. ' +
                                       'Requested ' + str(chan) +
                                       ', Available ' + str(self.useChans))
         for iCh, chan in enumerate(self.useChans):

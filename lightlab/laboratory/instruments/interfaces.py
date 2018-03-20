@@ -9,7 +9,7 @@ class PowerMeter(Instrument):
 
 
 class SourceMeter(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
+    essentialMethods = super().essentialMethods + \
         ['setCurrent',
         'getCurrent',
         'measVoltage',
@@ -25,7 +25,7 @@ class SourceMeter(Instrument):
 
 
 class Keithley(SourceMeter):
-    essentialMethods = SourceMeter.essentialMethods + \
+    essentialMethods = super().essentialMethods + \
         ['setPort',
         'setCurrentMode',
         'setVoltageMode',
@@ -45,16 +45,13 @@ class VectorGenerator(Instrument):
         'setPattern',
         'digiMod',
         'carrierMod',
-        'listEnable',
-        'sweepSetup',
-        'sweepEnable']
+        'listEnable']
 
 
 class Clock(Instrument):
     essentialMethods = Instrument.essentialMethods + \
-        ['on']
-    essentialProperties = Instrument.essentialProperties + \
-        ['frequency']
+        ['enable',
+        'frequency']
 
 
 class CurrentSource(Instrument):
@@ -108,12 +105,9 @@ class Oscilloscope(Instrument):
         self.run()
 
 
-class CommunicationAnalyzerScope(Oscilloscope):
-    pass
-
-
-class DigitalPhosphorScope(Oscilloscope):
-    pass
+class DSAOscilloscope(Oscilloscope):
+    essentialMethods = Oscilloscope.essentialMethods + \
+        ['histogramStats']
 
 
 class PulsePatternGenerator(Instrument):

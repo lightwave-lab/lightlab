@@ -1,8 +1,9 @@
-import numpy as np
-import time
-
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.laboratory.instruments import Keithley
+
+import numpy as np
+import time
 
 class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     ''' A Keithley 2400 driver.
@@ -16,6 +17,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         Todo:
             Lots. This is currently limited only to set current, measure voltage, single-shot
     '''
+    instrument_category = Keithley
     autoDisable = None  # in seconds. NOT IMPLEMENTED
     function_mode = None
 

@@ -1,9 +1,10 @@
+from . import VISAInstrumentDriver
+from lightlab.equipment.abstract_drivers import MultiModalSource, ElectricalSource
+from lightlab.laboratory.instruments import CurrentSource
+
 import numpy as np
 import time
 import visa as pyvisa
-
-from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import MultiModalSource, ElectricalSource
 from lightlab.util import io
 from lightlab import logger
 
@@ -24,6 +25,8 @@ class CurrentSources(VISAInstrumentDriver):
                 Labview DAQ listener is hard coded for the first 12 channels only (of 32)
                 same for Labview TCPIP listener
     """
+    instrument_category = CurrentSource
+
     voltBounds = [0, 10]  # in volts, artificially constrain this if you want to be safe
     v2maCoef = 4  # current (milliamps) = v2maCoef * voltage (volts)
     fullChannelNums = 32  # number of dimensions that the current sources are expecting
@@ -243,15 +246,16 @@ class CurrentSources(VISAInstrumentDriver):
 class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
     ''' Uses abstract classes. Roughly speaking
 
-            :py:class:`~lightlab.equipment.lab_instruments.visa_drivers.VISAInstrumentDriver`
+            :py:class:`~lightlab.equipment.lab_instruments.VISAInstrumentDriver`
             provides communication to the board
 
-            :py:class:`~lightlab.equipment.abstract_drivers.electrical_sources.MultiModalSource`
+            :py:class:`~lightlab.equipment.abstract_drivers.MultiModalSource`
             provides unit support and range checking
 
-            :py:class:`~lightlab.equipment.abstract_drivers.electrical_sources.ElectricalSource`
+            :py:class:`~lightlab.equipment.abstract_drivers.ElectricalSource`
             provides *notion of state* (stateDict) and channel support
     '''
+    instrument_category = CurrentSource
 
     # The natural unit is volts so don't confuse
     supportedModes = MultiModalSource.supportedModes - {'baseunit'}

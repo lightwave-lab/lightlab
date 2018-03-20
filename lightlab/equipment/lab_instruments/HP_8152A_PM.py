@@ -10,10 +10,9 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
         Todo:
             Maybe allow a rapid continuous mode that just spits out numbers ('T0')
     '''
+    instrument_category = PowerMeter
     channelDescriptions = {1: 'A', 2: 'B', 3: 'A/B'}
     doReadDoubleCheck = False
-
-    instrument_category = PowerMeter
 
     def __init__(self, name='The HP power meter', address=None, **kwargs):
         super().__init__(name=name, address=address, **kwargs)

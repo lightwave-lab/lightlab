@@ -1,17 +1,16 @@
 from . import VISAInstrumentDriver
+from lightlab.laboratory.instruments import VariableAttenuator
+
 import numpy as np
 import time
 
-safeSleepTime = 1  # Time it takes to settle
-
-
 class HP_8156A_VA(VISAInstrumentDriver):
     ''' HP8156A variable attenuator
-        Manual: https://www.artisantg.com/info/ATGt6b5s.pdf
+        `Manual <https://www.artisantg.com/info/ATGt6b5s.pdf>`__
     '''
+    instrument_category = VariableAttenuator
+    safeSleepTime = 1  # Time it takes to settle
 
-    # def __init__(self, address=24, hostname='andromeda'): #Add GPIB address and hostname
-    #     super().__init__('The VOA on the GC bench', address, hostNS[hostname])
     def __init__(self, name='The VOA on the GC bench', address=None, **kwargs):
         super().__init__(name=name, address=address, **kwargs)
         self.__attenDB = None
@@ -58,6 +57,6 @@ class HP_8156A_VA(VISAInstrumentDriver):
 
     def sendToHardware(self, sleepTime=None):
         if sleepTime is None:
-            sleepTime = safeSleepTime
+            sleepTime = self.safeSleepTime
         self.write('INP:ATT ' + str(self.attenDB) + 'DB')
         time.sleep(sleepTime)  # Let it settle

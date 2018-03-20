@@ -1,13 +1,13 @@
-import numpy as np
-
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.laboratory.instruments import VectorGenerator
 
+import numpy as np
 
 class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
     ''' Rohde and Schwartz SMBV100A
 
-        `MANUAL <https://cdn.rohde-schwarz.com/pws/dl_downloads/dl_common_library/dl_manuals/gb_1/s/smbv/SMBV100A_OperatingManual_en_16.pdf>`_
+        `Manual <https://cdn.rohde-schwarz.com/pws/dl_downloads/dl_common_library/dl_manuals/gb_1/s/smbv/SMBV100A_OperatingManual_en_16.pdf>`_
 
         This is a complicated class even though it is implementing about 1 percent of what the R&S can do.
         The philosophy is that there are several blocks that work independently.
@@ -21,6 +21,8 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
         1. All RF outputs; switched with :meth:`enable`
         2. All modulations; switched with :meth:`modulationEnable`
     '''
+    instrument_category = VectorGenerator
+
     def __init__(self, name='The Rohde and Schwartz', address=None, **kwargs):
         ''' Initializer has no arguments '''
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
