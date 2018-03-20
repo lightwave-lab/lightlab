@@ -268,19 +268,10 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
     targetPort = 16022  # TCPIP server port; charge of an electron (Coulombs)
     waitMsOnWrite = 500 # Time to settle after tuning
 
-    def __init__(self, name='The current source', **kwargs):
-        ESkwargs = dict()
-        for key in ('useChans',):
-            ESkwargs[key] = kwargs.pop(key, None)
-        VISAkwargs = dict()
-        for key in ('name', 'address'):
-            VISAkwargs[key] = kwargs.pop(key, None)
-        VISAkwargs['tempSess'] = True
-        remainKwargs = kwargs
-
-        # MultiModalSource has no initializer
-        ElectricalSource.__init__(self, **ESkwargs, **remainKwargs)
-        VISAInstrumentDriver.__init__(self, **VISAkwargs, **remainKwargs)
+    def __init__(self, name='The current source', address=None, useChans=None, **kwargs):
+        kwargs['tempSess'] = kwargs.get('tempSess', True)
+        VISAInstrumentDriver.__init__(name=name, address=address, **kwargs)
+        ElectricalSource.__init__(useChans=useChans)
 
     def startup(self):
         self.off()

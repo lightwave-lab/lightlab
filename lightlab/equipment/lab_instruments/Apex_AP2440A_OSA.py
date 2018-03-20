@@ -31,6 +31,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
     The primary function is spectrum, which returns a Spectrum object
     """
     instrument_category = OpticalSpectrumAnalyzer
+    __wlRange = None
 
     def __init__(self, name='The OSA', address=None, **kwargs):
         # def __init__(self, host='128.112.48.148', port=6500):
@@ -38,12 +39,8 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         This has only happened once in the past. To initialize the optical spectrum analyzer,
         we need to set the host address, and the port.
         """
-        tempSess = kwargs.pop("tempSess", True)
-        super().__init__(name=name,
-                         address=address,
-                         tempSess=tempSess,
-                         **kwargs)
-        self.__wlRange = None
+        kwargs['tempSess'] = kwargs.pop('tempSess', True)
+        super().__init__(name=name, address=address, **kwargs)
 
     def startup(self):
         ''' Checks if it is alive, sets up standard OSA parameters

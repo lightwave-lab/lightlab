@@ -10,10 +10,10 @@ class HP_8156A_VA(VISAInstrumentDriver):
     '''
     instrument_category = VariableAttenuator
     safeSleepTime = 1  # Time it takes to settle
+    __attenDB = None
 
     def __init__(self, name='The VOA on the GC bench', address=None, **kwargs):
         super().__init__(name=name, address=address, **kwargs)
-        self.__attenDB = None
 
     def startup(self):
         self.on()

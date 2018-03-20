@@ -14,15 +14,19 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         Channels are zero-indexed (i.e. 0,1,2...15) based on wavelength order
         NOTE: 'modules' are used to refer to the index of DFB module within a given bank
 
-        This class is (should be) static, so that only one exists, except...
 
         TODO:
-            This class WILL have a special property in that lockouts occur on a channel basis
-            Currently only one user should be using it at a time
+            Deprecate stateDict, as in NI_PCI_6723 vs. CurrentSources
 
             Use Configurable so it doesn't have to be getting from hardware all the time
 
-            Deprecate stateDict
+            The overarching problem is that multiple users are likely
+            to be using this one at the same time, different channels of course.
+            Currently only one user can be using it at a time.
+
+                * This class could be singleton, so that only one exists, and/or...
+
+                * It could have a special property in that lockouts occur on a channel basis
     '''
     instrument_category = LaserSource
     ordering_left = [1, 2, 3, 4, 5, 6, 7, 8]  # left bank
@@ -39,7 +43,8 @@ class ILX_7900B_LS(VISAInstrumentDriver):
     powerRange = np.array([-20, 13])
 
     def __init__(self, name='The laser source', address=None, useChans=[1], **kwargs):
-        super().__init__(name=name, address=address, tempSess=False, **kwargs)
+        kwargs['tempSess'] = kwargs.pop('tempSess', False)
+        super().__init__(name=name, address=address, **kwargs)
         self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
 
         useChans, stateDict = useChans, kwargs.pop("stateDict", None)
