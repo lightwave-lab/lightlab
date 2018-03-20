@@ -4,6 +4,7 @@ from lightlab.laboratory.instruments import Keithley
 
 import numpy as np
 import time
+from lightlab import logger
 
 class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     ''' A Keithley 2400 driver.
@@ -146,11 +147,11 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             voltGlob = voltGlob['&']
         return voltGlob
 
-    def setProtectionVoltage(self, protectionVoltage, autoOn=False):
+    def setProtectionVoltage(self, protectionVoltage):
         self.protectionVoltage = protectionVoltage
         self.setConfigParam('VOLT:PROT', self.protectionVoltage)
 
-    def setProtectionCurrent(self, protectionCurrent, autoOn=False):
+    def setProtectionCurrent(self, protectionCurrent):
         self.protectionCurrent = protectionCurrent
         self.setConfigParam('CURR:PROT', self.protectionCurrent)
 
@@ -160,10 +161,10 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         if autoOff:
             self.enable(False)
         if v >= self.protectionVoltage:
-            print('Warning: Keithley compliance voltage of',
-                  self.protectionVoltage, 'reached.')
-            print('Warning: You are sourcing', v *
-                  self.latestCurrentVal * 1e-3, 'mW into the load.')
+            logger.warning('Keithley compliance voltage of',
+                           self.protectionVoltage, 'reached.')
+            logger.warning('You are sourcing', v *
+                           self.latestCurrentVal * 1e-3, 'mW into the load.')
         return v
 
     def measCurrent(self, autoOff=False):
@@ -172,10 +173,10 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         if autoOff:
             self.enable(False)
         if i >= self.protectionCurrent:
-            print('Warning: Keithley compliance current of',
-                  self.protectionCurrent, 'reached.')
-            print('Warning: You are sourcing', i *
-                  self.latestVoltageVal * 1e-3, 'mW into the load.')
+            logger.warning('Keithley compliance current of',
+                           self.protectionCurrent, 'reached.')
+            logger.warning('You are sourcing', i *
+                           self.latestVoltageVal * 1e-3, 'mW into the load.')
         return i
 
     def enable(self, newState=None):
