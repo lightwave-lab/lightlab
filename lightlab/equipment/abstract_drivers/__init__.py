@@ -21,7 +21,7 @@ def concreteRequires(*attrs):
             if AbstractDriver not in bases:
                 for driver_method in attrs:
                     if driver_method not in dir(cls):
-                        raise TypeError(str(cls) + ' must implement {} '.format(driver_method) + \
+                        raise TypeError(cls.__name__ + ' must implement {} '.format(driver_method) + \
                                         'since it inherits from an AbstractDriver')
             super().__init__(name, bases, dct)
     return MetaWithRequirements

@@ -85,11 +85,22 @@ def test_configurable():
     assert alice.getConfigParam('spam') \
            == bob.getConfigParam('spam')
 
-from lightlab.equipment.lab_instruments import HP_8152A_PM, VISAInstrumentDriver
+from lightlab.equipment.visa_bases import VISAInstrumentDriver, DriverMeta
+from lightlab.equipment.lab_instruments import HP_8152A_PM
 from lightlab.laboratory.instruments import PowerMeter
-from lightlab.equipment.abstract_drivers import PowerMeterAbstract
 def test_driver_init():
+    # Catches incomplete API at class time
+    with pytest.raises(TypeError):
+        class Delinquent_PM(VISAInstrumentDriver, metaclass=DriverMeta):
+            instrument_category = PowerMeter
+            def powerLin(self): pass
+            # def powerDbm(self): pass
 
-    pm = HP_8152A_PM(name='a PM', address='NULL')
-    # assert pm.__class__ == PowerMeter  # not SourceMeter or HP_8152A_PM
-    # assert pm._driver_class == HP_8152A_PM
+    # Old style still works
+    pm = PowerMeter(name='a PM', address='NULL', _driver_class=HP_8152A_PM, extra='foolio')
+    assert pm.__class__ == PowerMeter  # not SourceMeter or HP_8152A_PM
+    assert pm._driver_class == HP_8152A_PM
+    # New style
+    pm = HP_8152A_PM(name='a PM', address='NULL', extra='foolio')
+    assert pm.__class__ == PowerMeter  # not SourceMeter or HP_8152A_PM
+    assert pm._driver_class == HP_8152A_PM

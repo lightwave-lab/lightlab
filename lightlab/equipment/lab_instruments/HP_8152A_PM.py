@@ -1,8 +1,9 @@
 from . import VISAInstrumentDriver
+from ..visa_bases import DriverMeta
 from lightlab.equipment.abstract_drivers import PowerMeterAbstract
 from lightlab.laboratory.instruments import PowerMeter
 
-class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
+class HP_8152A_PM(VISAInstrumentDriver, metaclass=DriverMeta):
     ''' HP8152A power meter
 
         `Manual <http://www.lightwavestore.com/product_datasheet/OTI-OPM-L-030C_pdf4.pdf>`__
@@ -26,6 +27,8 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
         super().open()
         self.mbSession.write_termination = ''
         self.mbSession.clear()
+
+    def powerLin(): pass
 
     @staticmethod
     def proccessWeirdRead(readString):

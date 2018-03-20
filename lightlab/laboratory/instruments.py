@@ -234,13 +234,16 @@ class Instrument(Node):
         self.__host = kwargs.pop("host", None)
         self.ports = kwargs.pop("ports", dict())
 
-        driver_klass = kwargs.get('_driver_class', None)
-        for attrName in self.essentialMethods + self.essentialProperties:
-            if attrName in kwargs.keys():
-                raise AttributeError('Ambiguous attributes between Instrument and its driver: ' + attrName)
-            if driver_klass is not None:
-                if not hasattr(driver_klass, attrName):
-                    raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
+        self.__driver_object = kwargs.pop("driver_object", None)
+        if self.__driver_object is not None:
+            self._driver_class = type(self.__driver_object)
+        # driver_klass = kwargs.get('_driver_class', None)
+        # for attrName in self.essentialMethods + self.essentialProperties:
+        #     if attrName in kwargs.keys():
+        #         raise AttributeError('Ambiguous attributes between Instrument and its driver: ' + attrName)
+        #     if driver_klass is not None:
+        #         if not hasattr(driver_klass, attrName):
+        #             raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
 
         super().__init__(_name=name,
                          _id_string=id_string,

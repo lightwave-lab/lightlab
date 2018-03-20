@@ -9,9 +9,10 @@ for _, modname, _ in pkgutil.walk_packages(path=__path__,
                                            prefix=__name__ + '.'):
     _temp = importlib.import_module(modname)
     for k, v in _temp.__dict__.items():
-        try:
-            mro = v.mro()
-        except AttributeError:
-            continue
-        if VISAInstrumentDriver in mro:
-            globals()[k] = v
+        if k[0] != '_' and type(v) is not type:
+            try:
+                mro = v.mro()
+            except AttributeError:
+                continue
+            if VISAInstrumentDriver in mro:
+                globals()[k] = v
