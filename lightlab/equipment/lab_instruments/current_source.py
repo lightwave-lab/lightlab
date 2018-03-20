@@ -268,9 +268,11 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
     targetPort = 16022  # TCPIP server port; charge of an electron (Coulombs)
     waitMsOnWrite = 500 # Time to settle after tuning
 
-    def __init__(self, name='The current source', address=None, **kwargs):
+
+    def __init__(self, name='The current source', address=None, useChans=None, **kwargs):
         kwargs['tempSess'] = kwargs.get('tempSess', True)
-        super().__init__(name=name, address=address, **kwargs)
+        VISAInstrumentDriver.__init__(name=name, address=address, **kwargs)
+        ElectricalSource.__init__(useChans=useChans)
 
     def startup(self):
         self.off()
