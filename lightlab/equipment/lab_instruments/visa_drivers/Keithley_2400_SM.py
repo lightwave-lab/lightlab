@@ -96,16 +96,20 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     def setCurrent(self, currAmps):
         ''' This leaves the output on indefinitely '''
         currTemp = self._latestCurrentVal
-        if self.enable() & (abs(currTemp - currAmps) > self.currStep):
-            for curr in np.linspace(currTemp, currAmps, 1 + abs(currTemp - currAmps) / self.currStep):
+        if (self.enable() \
+                and self.currStep is not None \
+                and abs(currTemp - currAmps) > self.currStep):
+            for curr in np.linspace(currTemp, currAmps, 1 + abs(currTemp - currAmps) / self.currStep)[1:]:
                 self._configCurrent(curr)
         else:
             self._configCurrent(currAmps)
 
     def setVoltage(self, volt):
         voltTemp = self._latestVoltageVal
-        if self.enable() & (abs(voltTemp - volt) > self.voltStep):
-            for volt in np.linspace(voltTemp, volt, 1 + abs(voltTemp - volt) / self.voltStep):
+        if (self.enable() \
+                and self.voltStep is not None \
+                and abs(voltTemp - volt) > self.voltStep):
+            for volt in np.linspace(voltTemp, volt, 1 + abs(voltTemp - volt) / self.voltStep)[1:]:
                 self._configVoltage(volt)
         else:
             self._configVoltage(volt)
