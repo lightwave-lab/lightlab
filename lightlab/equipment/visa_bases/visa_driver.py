@@ -2,6 +2,9 @@ from .visa_object import VISAObject
 from lightlab import logger
 import inspect
 
+class IncompleteClass(Exception):
+    pass
+
 class DriverMeta(type):
     ''' Checks driver API at compile time
 
@@ -17,8 +20,8 @@ class DriverMeta(type):
             inst_klass = cls.instrument_category
             for essential in inst_klass.essentialMethods + inst_klass.essentialProperties:
                 if essential not in dir(cls):
-                    raise TypeError(cls.__name__ + ' does not implement {}, '.format(essential) + \
-                                    'which is essential to its category of {}'.format(inst_klass.__name__))
+                    raise IncompleteClass(cls.__name__ + ' does not implement {}, '.format(essential) + \
+                                          'which is essential for {}'.format(inst_klass.__name__))
         super().__init__(name, bases, dct)
 
     def __call__(cls, *args, **kwargs):
@@ -48,7 +51,7 @@ class DriverMeta(type):
             for k, v in kwargs.items():
                 if k in cls.instrument_category.essentialMethods + cls.instrument_category.essentialProperties:
                     raise ValueError('Essential attribute {} cannot be '.format(k) +
-                                    'passed as a kwarg to the initializer of {}.'.format(cls.__name__))
+                                     'passed as a kwarg to the initializer of {}.'.format(cls.__name__))
                 if k in driver_initArgNames:
                     driver_kwargs[k] = v
                 else:
