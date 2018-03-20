@@ -96,11 +96,25 @@ def test_driver_init():
             def powerLin(self): pass
             # def powerDbm(self): pass
 
+    initArgs = ()
+    initKwargs = dict(name='a PM', address='NULL', extra='foolio', tempSess=True)
     # Old style still works
-    pm = PowerMeter(name='a PM', address='NULL', _driver_class=HP_8152A_PM, extra='foolio')
+    pm = PowerMeter(*initArgs, _driver_class=HP_8152A_PM, **initKwargs)
     assert pm.__class__ == PowerMeter  # not SourceMeter or HP_8152A_PM
     assert pm._driver_class == HP_8152A_PM
+    assert pm.extra == 'foolio'
+    # Still fails to initialize the driver with correct options
+    with pytest.raises(AssertionError):
+        assert pm.driver_object.tempSess == True
+
     # New style
-    pm = HP_8152A_PM(name='a PM', address='NULL', extra='foolio')
+    pm = HP_8152A_PM(*initArgs, **initKwargs)
     assert pm.__class__ == PowerMeter  # not SourceMeter or HP_8152A_PM
-    assert pm._driver_class == HP_8152A_PM
+    assert pm.driver_class == HP_8152A_PM
+    assert pm.extra == 'foolio'
+    # These arguments went to the driver
+    assert pm.driver_object.tempSess == True
+    with pytest.raises(AttributeError):
+        pm.tempSess
+    with pytest.raises(AttributeError):
+        pm.driver_object.extra

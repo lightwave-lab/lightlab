@@ -1,5 +1,6 @@
 from .visa_object import VISAObject
 from lightlab import logger
+import inspect
 
 class DriverMeta(type):
     '''
@@ -19,25 +20,44 @@ class DriverMeta(type):
 
     def __call__(cls, *args, **kwargs):
         '''
-            Todo:
-                Figure out how to pass any arguments needed by bases into cls() kwargs.
-                We might need to inspect the mro.
+            All \*args go to the driver.
+            name and address go to both.
+            kwargs go priority to driver bases, otherwise to Instrument
 
-                What do we do with \*args?
-
-                End goal is to remove that line in Instrument that asks for 'useChans' etc.
         '''
-        instName = kwargs.pop('name', None)
-        instAddress = kwargs.pop('address', None)
-        # Basically, can we put kwargs in here and get out everything that doesn't get sucked up
-        driver_obj = type.__call__(cls, *args, name=instName, address=instAddress)
         if cls.instrument_category is not None:
-            instrument_obj = type.__call__(cls.instrument_category, *args,
-                                           name=instName, address=instAddress,
-                                           driver_object=driver_obj, **kwargs)
+            name = kwargs.pop('name', None)
+            address = kwargs.pop('address', None)
+
+            # Split the kwargs into those needed by
+            # 1) driver and its bases and 2) the leftovers
+            def getArgs(klass):
+                if klass is object:
+                    return []
+                initArgs = inspect.getargspec(klass.__init__)[0]
+                for base_klass in klass.__bases__:
+                    initArgs.extend(getArgs(base_klass))
+                return initArgs
+            driver_initArgNames = getArgs(cls)
+            driver_kwargs = dict()
+            instrument_kwargs = dict()
+            for k, v in kwargs.items():
+                if k in driver_initArgNames:
+                    driver_kwargs[k] = v
+                else:
+                    instrument_kwargs[k] = v
+
+            driver_obj = type.__call__(cls, *args,
+                                       name=name, address=address,
+                                       **driver_kwargs)
+            instrument_obj = type.__call__(cls.instrument_category,
+                                           name=name, address=address,
+                                           driver_object=driver_obj,
+                                           driver_kwargs=driver_kwargs,
+                                           **instrument_kwargs)
             return instrument_obj
         else:
-            return driver_obj
+            return type.__call__(cls, *args, **kwargs)
 
 class VISAInstrumentDriver(VISAObject):
     """Generic (but not abstract) class for an instrument

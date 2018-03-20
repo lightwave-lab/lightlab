@@ -301,14 +301,16 @@ class Instrument(Node):
     @property
     def driver_object(self):
         if self.__driver_object is None:
-            kwargs = dict()
-            for kwarg in ["useChans", "stateDict", "sourceMode"]:
-                try:
-                    kwargs[kwarg] = getattr(self, kwarg)
-                except AttributeError:
-                    pass
-            driver_class = self.driver_class
-            self.__driver_object = driver_class(
+            try:
+                kwargs = self.driver_kwargs
+            except AttributeError:  # Fall back to the jank version where we try to guess what is important
+                kwargs = dict()
+                for kwarg in ["useChans", "stateDict", "sourceMode"]:
+                    try:
+                        kwargs[kwarg] = getattr(self, kwarg)
+                    except AttributeError:
+                        pass
+            self.__driver_object = self.driver_class(
                 name=self.name, address=self.address, **kwargs)
         return self.__driver_object
 
