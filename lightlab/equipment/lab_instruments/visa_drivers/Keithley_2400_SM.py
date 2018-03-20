@@ -18,50 +18,33 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     '''
     autoDisable = None  # in seconds. NOT IMPLEMENTED
     function_mode = None
+    _latestCurrentVal = None
+    _latestVoltageVal = None
 
-    # TODO: send config params in a delayed fashion (only when necessary)
     def __init__(self, name=None, address=None, **kwargs):
         '''
             Args:
-                sourceMode (str): UNUSED NOW, \'mwpwerohm\' or \'milliamps\'
                 hostID (str): There are three different hosts in the lab, \'andromeda'\, \'corinna'\,\'olympias'\
                 protectionVoltage : The unit of compliance voltage is Volt.
         '''
+        super().__init__(name=name, address=address,
+                         headerIsOptional=False, verboseIsOptional=False,
+                         **kwargs)
 
-        # visaAddress = address
-        VISAInstrumentDriver.__init__(
-            self, name=name, address=address, **kwargs)
-        Configurable.__init__(self, headerIsOptional=False,
-                              verboseIsOptional=False)
-        sourceMode = kwargs.pop("sourceMode", 'mwperohm')
-        protectionVoltage = kwargs.pop("protectionVoltage", 4)
-        protectionCurrent = kwargs.pop("protectionCurrent", 200E-3)
-        currStep = kwargs.pop("currStep", 1.0E-3)
-        voltStep = kwargs.pop("voltStep", 0.1)
-        if sourceMode not in ['mwperohm', 'milliamps']:
-            raise ValueError(
-                'sourceMode must be \'mwpwerohm\' or \'milliamps\'')
-        self.sourceMode = sourceMode
-        self.currStep = currStep
-        self.voltStep = voltStep
-        self.protectionVoltage = protectionVoltage
-        self.protectionCurrent = protectionCurrent
-        self.latestCurrentVal = None
-        self.latestVoltageVal = None
-        # self.setConfigParam('SOURCE:FUNC', 'CURR')
-        # self.setConfigParam('SOURCE:CURR:MODE', 'FIXED')
-        # self.setConfigParam('VOLT:PROT', self.protectionVoltage)
-        # self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
-        # self._configCurrent(0)
+        self.protectionVoltage = kwargs.pop("protectionVoltage", 4)
+        self.protectionCurrent = kwargs.pop("protectionCurrent", 200E-3)
+
+        self.currStep = kwargs.pop("currStep", 1.0E-3)
+        self.voltStep = kwargs.pop("voltStep", 0.1)
 
     def startup(self):
         self.write('*RST')
 
     def setPort(self, port):
         if port == 'Front':
-            self.write(':ROUT:TERM FRON')
+            self.setConfigParam('ROUT:TERM', 'FRON')
         elif port == 'Rear':
-            self.write(':ROUT:TERM REAR')
+            self.setConfigParam('ROUT:TERM', 'REAR')
 
     def setVoltageMode(self, protectionCurrent=0.05):
         # TODO: make proper automata flowchart for this.
@@ -96,7 +79,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             needRange = 10 ** np.ceil(np.log10(abs(currAmps)))
             self.setConfigParam('SOURCE:CURR:RANGE', needRange)
         self.setConfigParam('SOURCE:CURR', currAmps)
-        self.latestCurrentVal = currAmps
+        self._latestCurrentVal = currAmps
         if autoOn:
             self.enable(True)
         time.sleep(time_delay)
@@ -106,16 +89,16 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             needRange = 10 ** np.ceil(np.log10(np.abs(volt)))
             self.setConfigParam('SOURCE:VOLT:RANGE', needRange)
         self.setConfigParam('SOURCE:VOLT', volt)
-        self.latestVoltageVal = volt
+        self._latestVoltageVal = volt
         if autoOn:
             self.enable(True)
         time.sleep(time_delay)
 
     def setCurrent(self, currAmps, autoOn=False):
         ''' This leaves the output on indefinitely '''
-        if self.latestCurrentVal is None:
-            self.latestCurrentVal = 0.
-        currTemp = self.latestCurrentVal
+        if self._latestCurrentVal is None:
+            self._latestCurrentVal = 0.
+        currTemp = self._latestCurrentVal
 
         if self.enable() & (abs(currTemp - currAmps) > self.currStep):
             for curr in np.linspace(currTemp, currAmps, 1 + abs(currTemp - currAmps) / self.currStep):
@@ -124,9 +107,9 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             self._configCurrent(currAmps)
 
     def setVoltage(self, volt, autoOn=False):
-        if self.latestVoltageVal is None:
-            self.latestVoltageVal = 0
-        voltTemp = self.latestVoltageVal
+        if self._latestVoltageVal is None:
+            self._latestVoltageVal = 0
+        voltTemp = self._latestVoltageVal
 
         if self.enable() & (abs(voltTemp - volt) > self.voltStep):
             for volt in np.linspace(voltTemp, volt, 1 + abs(voltTemp - volt) / self.voltStep):
@@ -163,7 +146,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             print('Warning: Keithley compliance voltage of',
                   self.protectionVoltage, 'reached.')
             print('Warning: You are sourcing', v *
-                  self.latestCurrentVal * 1e-3, 'mW into the load.')
+                  self._latestCurrentVal * 1e-3, 'mW into the load.')
         return v
 
     def measCurrent(self, autoOff=False):
@@ -175,7 +158,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             print('Warning: Keithley compliance current of',
                   self.protectionCurrent, 'reached.')
             print('Warning: You are sourcing', i *
-                  self.latestVoltageVal * 1e-3, 'mW into the load.')
+                  self._latestVoltageVal * 1e-3, 'mW into the load.')
         return i
 
     def enable(self, newState=None):
