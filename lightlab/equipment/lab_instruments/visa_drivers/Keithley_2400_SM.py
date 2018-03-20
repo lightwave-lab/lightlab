@@ -46,30 +46,30 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         elif port == 'Rear':
             self.setConfigParam('ROUT:TERM', 'REAR')
 
-    def setVoltageMode(self, protectionCurrent=0.05):
+    def __setSourceMode(self, isCurrentSource):
         # TODO: make proper automata flowchart for this.
+        if isCurrentSource:
+            sourceStr, meterStr = ('CURR', 'VOLT')
+        else:
+            sourceStr, meterStr = ('VOLT', 'CURR')
         self.enable(False)
-        self.function_mode = 'voltage'
-        self.setConfigParam('SOURCE:FUNC', 'VOLT')
-        self.setConfigParam('SOURCE:VOLT:MODE', 'FIXED')
+        self.setConfigParam('SOURCE:FUNC', sourceStr)
+        self.setConfigParam('SOURCE:{}:MODE'.format(sourceStr), 'FIXED')
         self.setConfigParam('SENSE:FUNCTION:OFF:ALL')
         self.setConfigParam('SENSE:FUNCTION:ON', '"CURR"')
-        self.setConfigParam('SENSE:CURR:RANGE:AUTO', 'ON')
-        self.setProtectionCurrent(protectionCurrent)
+        self.setConfigParam('SENSE:{}:RANGE:AUTO'.format(meterStr), 'ON')
         self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
+
+    def setVoltageMode(self, protectionCurrent=0.05):
+        self.__setSourceMode(isCurrentSource=False)
+        self.function_mode = 'voltage'
+        self.setProtectionCurrent(protectionCurrent)
         self._configVoltage(0)
 
     def setCurrentMode(self, protectionVoltage=1):
-        # TODO: make proper automata flowchart for this.
-        self.enable(False)
+        self.__setSourceMode(isCurrentSource=True)
         self.function_mode = 'current'
-        self.setConfigParam('SOURCE:FUNC', 'CURR')
-        self.setConfigParam('SOURCE:CURR:MODE', 'FIXED')
-        self.setConfigParam('SENSE:FUNCTION:OFF:ALL')
-        self.setConfigParam('SENSE:FUNCTION:ON', '"VOLT"')
-        self.setConfigParam('SENSE:VOLT:RANGE:AUTO', 'ON')
         self.setProtectionVoltage(protectionVoltage)
-        self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
         self._configCurrent(0)
 
     def _configCurrent(self, currAmps, autoOn=False, time_delay=0.0):
