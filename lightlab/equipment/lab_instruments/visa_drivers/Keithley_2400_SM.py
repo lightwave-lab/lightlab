@@ -16,7 +16,6 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         Todo:
             Lots. This is currently limited only to set current, measure voltage, single-shot
     '''
-    self.enable(False)
     autoDisable = None  # in seconds. NOT IMPLEMENTED
     _latestCurrentVal = 0
     _latestVoltageVal = 0
@@ -173,9 +172,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
 class Keithley_2400_SM_noRamp(Keithley_2400_SM):
     ''' Same except with no ramping. You see what you get
     '''
-    def setCurrent(self, *args, **kwargs):
-        return self._configCurrent(*args, **kwargs)
-
-    def setVoltage(self, *args, **kwargs):
-        return self._configVoltage(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.voltStep = None
+        self.currStep = None
 
