@@ -1,4 +1,4 @@
-from ..visa_connection import VISAObject
+from .visa_object import VISAObject
 from lightlab import logger
 
 
@@ -31,26 +31,3 @@ class VISAInstrumentDriver(VISAObject):
 
 DefaultDriver = VISAInstrumentDriver
 
-# Instrument = VISAInstrumentDriver
-# USBinstrumentDriver = Instrument
-# GpibInstrumentDriver = VISAInstrumentDriver
-# GPIBinstrument = VISAInstrumentDriver
-# TCPIPinstrument = TCPIPinstrumentDriver
-# USBinstrument = USBinstrumentDriver
-
-
-# This imports all of the modules in this folder
-# As well as all their member classes that are VISAInstrumentDrivers
-import importlib
-import pkgutil
-
-for _, modname, _ in pkgutil.walk_packages(path=__path__,
-                                                  prefix=__name__ + '.'):
-    _temp = importlib.import_module(modname)
-    for k, v in _temp.__dict__.items():
-        try:
-            mro = v.mro()
-        except AttributeError:
-            continue
-        if VISAInstrumentDriver in mro:
-            globals()[k] = v

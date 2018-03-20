@@ -1,6 +1,6 @@
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import PowerMeterAbstract
-
+from lightlab.laboratory.instruments import PowerMeter
 
 class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
     ''' HP8152A power meter
@@ -12,6 +12,8 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
     '''
     channelDescriptions = {1: 'A', 2: 'B', 3: 'A/B'}
     doReadDoubleCheck = False
+
+    instrument_category = PowerMeter
 
     def __init__(self, name='The HP power meter', address=None, **kwargs):
         super().__init__(name=name, address=address, **kwargs)

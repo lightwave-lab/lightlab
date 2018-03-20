@@ -10,7 +10,7 @@ class DriverRequiresQuery(type):
         if AbstractDriver not in bases:
             for driver_method in ['query']:
                 if driver_method not in dir(cls):
-                    raise TypeError(str(cls) + ' must implement query '
+                    raise TypeError(cls.__name__ + ' must implement query '
                                     'since it inherits from an AbstractDriver')
         super().__init__(name, bases, dct)
 

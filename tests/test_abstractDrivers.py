@@ -85,3 +85,11 @@ def test_configurable():
     assert alice.getConfigParam('spam') \
            == bob.getConfigParam('spam')
 
+from lightlab.equipment.lab_instruments import HP_8152A_PM, VISAInstrumentDriver
+from lightlab.laboratory.instruments import PowerMeter
+from lightlab.equipment.abstract_drivers import PowerMeterAbstract
+def test_driver_init():
+
+    pm = HP_8152A_PM(name='a PM', address='NULL')
+    # assert pm.__class__ == PowerMeter  # not SourceMeter or HP_8152A_PM
+    # assert pm._driver_class == HP_8152A_PM

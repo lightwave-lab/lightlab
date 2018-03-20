@@ -4,7 +4,7 @@ This module provides an interface for instruments in the lab and virtual ones.
 from lightlab.laboratory import Node
 from lightlab.laboratory.devices import Device
 import lightlab.laboratory.state as labstate
-from lightlab.equipment.lab_instruments import VISAObject, DefaultDriver
+from lightlab.equipment.visa_bases import VISAObject, DefaultDriver
 
 from lightlab import logger
 import os

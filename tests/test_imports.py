@@ -24,10 +24,10 @@ def test_some_visa_driver_imports():
     # Concise, recommended
     from lightlab.equipment.lab_instruments import Tektronix_DSA8300_Oscope
     # Also work
-    from lightlab.equipment.lab_instruments.visa_drivers import Tektronix_DSA8300_Oscope
-    from lightlab.equipment.lab_instruments.visa_drivers.Tektronix_DSA8300_Oscope import Tektronix_DSA8300_Oscope
+    # from lightlab.equipment.lab_instruments.visa_drivers import Tektronix_DSA8300_Oscope
+    # from lightlab.equipment.lab_instruments.visa_drivers.Tektronix_DSA8300_Oscope import Tektronix_DSA8300_Oscope
 
     from lightlab.equipment.lab_instruments import Keithley_2400_SM
     from lightlab.equipment.lab_instruments import Keithley_2400_SM_noRamp
-    from lightlab.equipment.lab_instruments.visa_drivers.Keithley_2400_SM import Keithley_2400_SM
-    from lightlab.equipment.lab_instruments.visa_drivers.Keithley_2400_SM import Keithley_2400_SM_noRamp
+    # from lightlab.equipment.lab_instruments.visa_drivers.Keithley_2400_SM import Keithley_2400_SM
+    # from lightlab.equipment.lab_instruments.visa_drivers.Keithley_2400_SM import Keithley_2400_SM_noRamp
