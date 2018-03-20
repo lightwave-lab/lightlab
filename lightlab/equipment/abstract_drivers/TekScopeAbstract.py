@@ -4,7 +4,7 @@ from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
 
 from .configurable import Configurable
-from . import AbstractDriver, DriverRequiresQuery
+from . import AbstractDriver
 
 
 class TekScopeAbstract(Configurable, AbstractDriver):

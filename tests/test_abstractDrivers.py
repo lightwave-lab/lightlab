@@ -10,7 +10,7 @@
     configurable instrument works.
 '''
 import pytest
-from lightlab.equipment.abstract_drivers import Configurable, AbstractDriver, DriverRequiresQuery
+from lightlab.equipment.abstract_drivers import Configurable, AbstractDriver
 import lightlab
 
 # def test_metaclass_init():

@@ -271,8 +271,8 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
 
     def __init__(self, name='The current source', address=None, useChans=None, **kwargs):
         kwargs['tempSess'] = kwargs.get('tempSess', True)
-        VISAInstrumentDriver.__init__(name=name, address=address, **kwargs)
-        ElectricalSource.__init__(useChans=useChans)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        ElectricalSource.__init__(self, useChans=useChans)
 
     def startup(self):
         self.off()

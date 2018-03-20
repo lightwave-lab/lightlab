@@ -1,4 +1,4 @@
-from . import AbstractDriver, concreteRequires
+from . import AbstractDriver
 from lightlab.util.io import ChannelError
 
 class PowerMeterAbstract(AbstractDriver):

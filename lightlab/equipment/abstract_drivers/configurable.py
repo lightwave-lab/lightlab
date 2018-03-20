@@ -8,7 +8,7 @@ from numpy import floor
 from lightlab.util.io import lightlabDevelopmentDir
 defaultFileDir = lightlabDevelopmentDir / 'savedConfigDefaults/'
 
-from . import AbstractDriver, concreteRequires
+from . import AbstractDriver
 
 class AccessException(Exception):
     pass
