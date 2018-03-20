@@ -310,6 +310,7 @@ class Instrument(Node):
                         kwargs[kwarg] = getattr(self, kwarg)
                     except AttributeError:
                         pass
+            kwargs['directInit'] = True
             self.__driver_object = self.driver_class(
                 name=self.name, address=self.address, **kwargs)
         return self.__driver_object

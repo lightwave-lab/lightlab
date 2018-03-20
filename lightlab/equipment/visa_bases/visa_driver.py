@@ -3,9 +3,12 @@ from lightlab import logger
 import inspect
 
 class DriverMeta(type):
-    '''
-        Todo:
-            Make this play nice with other metaclasses, such as MetaWithRequirements
+    ''' Checks driver API at compile time
+
+        Driver initializer returns an instrument in ``instrument_catagory``,
+        not an instance of the Driver itself, unless
+            * ``instrument_category`` is None
+            * ``directInit=True`` is passed in
     '''
     def __init__(cls, name, bases, dct):
         ''' Checks that it satisfies the API of its Instrument
@@ -25,7 +28,8 @@ class DriverMeta(type):
             kwargs go priority to driver bases, otherwise to Instrument
 
         '''
-        if cls.instrument_category is not None:
+        if (cls.instrument_category is not None \
+                and not kwargs.pop('directInit', False)):
             name = kwargs.pop('name', None)
             address = kwargs.pop('address', None)
 
@@ -42,6 +46,9 @@ class DriverMeta(type):
             driver_kwargs = dict()
             instrument_kwargs = dict()
             for k, v in kwargs.items():
+                if k in cls.instrument_category.essentialMethods + cls.instrument_category.essentialProperties:
+                    raise ValueError('Essential attribute {} cannot be '.format(k) +
+                                    'passed as a kwarg to the initializer of {}.'.format(cls.__name__))
                 if k in driver_initArgNames:
                     driver_kwargs[k] = v
                 else:
@@ -59,7 +66,7 @@ class DriverMeta(type):
         else:
             return type.__call__(cls, *args, **kwargs)
 
-class VISAInstrumentDriver(VISAObject):
+class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
     """Generic (but not abstract) class for an instrument
     Initialize using the literal visa address
 
@@ -70,11 +77,11 @@ class VISAInstrumentDriver(VISAObject):
     """
     instrument_category = None
 
-    def __init__(self, name='Default Driver', address=None, **kwargs):
+    def __init__(self, name='Default Driver', address=None, directInit=False, **kwargs):
         self.name = name
         if 'tempSess' not in kwargs.keys():
             kwargs['tempSess'] = True
-        super().__init__(address, **kwargs)
+        super().__init__(address=address, **kwargs)
         self.__started = False
 
     def startup(self):
