@@ -3,12 +3,7 @@ import numpy as np
 from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
 
-# Circular dependency. Instead it is imported within __init__.
-# Python resolves this but Sphinx does not!
-# from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
-
 from .configurable import Configurable
-
 
 
 class TekScopeAbstract(Configurable):
@@ -40,13 +35,6 @@ class TekScopeAbstract(Configurable):
     __measurementSourceParam = None
     __runModeParam = None
     __runModeSingleShot = None
-
-    def __init__(self, *args, **kwargs):
-        # These lines require a circular import dependency, so it is done within the method
-        from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
-        if not isinstance(self, VISAInstrumentDriver):
-            raise TypeError(str(type(self)) + ' is abstract and cannot be initialized')
-        super().__init__(*args, **kwargs)
 
     def startup(self):
         # Make sure sampling and data transferring are in a consistent state
@@ -259,7 +247,7 @@ class TekScopeAbstract(Configurable):
                 (float)
         '''
         measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
-        return float(self.query(measSubmenu + 'VALUE?'))
+        return float(self.getConfigParam(measSubmenu + 'VALUE', forceHardware=True))
 
     def autoAdjust(self, chans):
         ''' Adjusts offsets and scaling so that waveforms are not clipped '''

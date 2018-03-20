@@ -1,6 +1,6 @@
-import lightlab.util.io as io
-
 import numpy as np
+
+from lightlab.util.io import ChannelError, RangeError
 from lightlab import logger
 
 
@@ -28,7 +28,7 @@ class MultiModalSource(object):
                            'Requested ' + str(val) +
                            '. Allowed range is' + str(bnds) + ' in ' + mode + 's.')
             if cls.exceptOnRangeError:
-                raise io.RangeError('Current sources requested out of range.')
+                raise RangeError('Current sources requested out of range.')
         return enforcedValue
 
     @classmethod
@@ -112,16 +112,18 @@ class ElectricalSource(object):
     """
     maxChannel = None  # number of dimensions that the current sources are expecting
 
-    def __init__(self, useChans=None, *args, **kwargs):
+    def __init__(self, useChans=None, **kwargs):
         if useChans is None:
             useChans = list()
+            logger.warning('No useChans specified for ElectricalSource')
         self.stateDict = dict([ch, 0] for ch in useChans)
 
         # Check that the requested channels are available to be blocked out
-        if type(self).maxChannel is not None:
+        if self.maxChannel is not None:
             if any(ch > type(self).maxChannel - 1 for ch in self.getChannels()):
                 raise Exception(
                     'Requested channel is more than there are available')
+        super().__init__(**kwargs)
 
     def getChannels(self):
         return list(self.stateDict.keys())
@@ -143,7 +145,7 @@ class ElectricalSource(object):
         # Check channels
         for chan in chanValDict.keys():
             if chan not in self.stateDict.keys():
-                raise io.ChannelError('Channel index not blocked out. ' +
+                raise ChannelError('Channel index not blocked out. ' +
                                       'Requested ' + str(chan) +
                                       ', Available ' + str(self.stateDict.keys()))
 
