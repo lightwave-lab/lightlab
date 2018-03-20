@@ -18,8 +18,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     '''
     autoDisable = None  # in seconds. NOT IMPLEMENTED
     function_mode = None
-    _latestCurrentVal = None
-    _latestVoltageVal = None
+    _latestCurrentVal = 0
+    _latestVoltageVal = 0
 
     def __init__(self, name=None, address=None, **kwargs):
         '''
@@ -52,7 +52,6 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             sourceStr, meterStr = ('CURR', 'VOLT')
         else:
             sourceStr, meterStr = ('VOLT', 'CURR')
-        self.enable(False)
         self.setConfigParam('SOURCE:FUNC', sourceStr)
         self.setConfigParam('SOURCE:{}:MODE'.format(sourceStr), 'FIXED')
         self.setConfigParam('SENSE:FUNCTION:OFF:ALL')
@@ -94,23 +93,17 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             self.enable(True)
         time.sleep(time_delay)
 
-    def setCurrent(self, currAmps, autoOn=False):
+    def setCurrent(self, currAmps):
         ''' This leaves the output on indefinitely '''
-        if self._latestCurrentVal is None:
-            self._latestCurrentVal = 0.
         currTemp = self._latestCurrentVal
-
         if self.enable() & (abs(currTemp - currAmps) > self.currStep):
             for curr in np.linspace(currTemp, currAmps, 1 + abs(currTemp - currAmps) / self.currStep):
                 self._configCurrent(curr)
         else:
             self._configCurrent(currAmps)
 
-    def setVoltage(self, volt, autoOn=False):
-        if self._latestVoltageVal is None:
-            self._latestVoltageVal = 0
+    def setVoltage(self, volt):
         voltTemp = self._latestVoltageVal
-
         if self.enable() & (abs(voltTemp - volt) > self.voltStep):
             for volt in np.linspace(voltTemp, volt, 1 + abs(voltTemp - volt) / self.voltStep):
                 self._configVoltage(volt)
