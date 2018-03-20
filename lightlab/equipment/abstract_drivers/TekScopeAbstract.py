@@ -4,9 +4,10 @@ from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
 
 from .configurable import Configurable
+from . import AbstractDriver, DriverRequiresQuery
 
 
-class TekScopeAbstract(Configurable):
+class TekScopeAbstract(Configurable, AbstractDriver):
     '''
         General class for several Tektronix scopes, including
 

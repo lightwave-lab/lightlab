@@ -8,7 +8,7 @@ from numpy import floor
 from lightlab.util.io import lightlabDevelopmentDir
 defaultFileDir = lightlabDevelopmentDir / 'savedConfigDefaults/'
 
-from . import AbstractDriver
+from . import AbstractDriver, concreteRequires
 
 class AccessException(Exception):
     pass
@@ -217,7 +217,7 @@ class TekConfig(object):
             fx.write(str(configToSave)) # __str__ gives nice json format
 
 
-class Configurable(AbstractDriver):
+class Configurable(AbstractDriver, metaclass=concreteRequires('query', 'write')):
     ''' Instruments can be configurable and use TekConfig.
 
         This clas uses query/write methods that are not directly inherited, so the subclass or its parents must implement those functions

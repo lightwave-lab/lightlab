@@ -10,7 +10,7 @@
     configurable instrument works.
 '''
 import pytest
-from lightlab.equipment.abstract_drivers import Configurable, AbstractDriver
+from lightlab.equipment.abstract_drivers import Configurable, AbstractDriver, DriverRequiresQuery
 import lightlab
 
 from lightlab import logger, log_to_screen, DEBUG
@@ -18,6 +18,20 @@ from lightlab import logger, log_to_screen, DEBUG
 if __name__ == '__main__':
     log_to_screen(DEBUG)
     test_configurable()
+
+def test_metaclass_init():
+    ''' Catches incomplete API at class time, not instantiation time, not runtime
+    '''
+    class ARealDriver(Configurable):
+        def query():
+            pass
+        def write():
+            pass
+    class AnAbstractDriver(Configurable, AbstractDriver):
+        pass
+    with pytest.raises(TypeError):
+        class NotARealDriver(Configurable):
+            pass
 
 def test_configurable():
     class MessagePasser(Configurable):
@@ -71,26 +85,3 @@ def test_configurable():
     assert alice.getConfigParam('spam') \
            == bob.getConfigParam('spam')
 
-import pkgutil
-import importlib
-
-package = lightlab.equipment.abstract_drivers
-modules = list()
-for _, modname, _ in pkgutil.walk_packages(path=package.__path__,
-                                           prefix=package.__name__ + '.',
-                                           onerror=lambda x: None):
-    modules.append(modname)
-
-@pytest.mark.parametrize("modname", modules)
-def test_abstracts_init(modname):
-    """ Abstracts should not initialize without write and query defined by a child
-    """
-    _temp = importlib.import_module(modname)
-    for abstract_klass in _temp.__dict__.values():
-        try:
-            mro = abstract_klass.mro()
-        except AttributeError:
-            continue
-        if AbstractDriver in mro:
-            with pytest.raises(TypeError):
-                abstract_klass()
