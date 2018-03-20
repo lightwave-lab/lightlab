@@ -44,9 +44,9 @@ DefaultDriver = VISAInstrumentDriver
 import importlib
 import pkgutil
 
-for loader, name, is_pkg in pkgutil.walk_packages(__path__):
-    full_name = __name__ + '.' + name
-    _temp = importlib.import_module(full_name)
+for _, modname, _ in pkgutil.walk_packages(path=__path__,
+                                                  prefix=__name__ + '.'):
+    _temp = importlib.import_module(modname)
     for k, v in _temp.__dict__.items():
         try:
             mro = v.mro()
