@@ -414,4 +414,3 @@ class Instrument(Node):
 
 class NotFoundError(RuntimeError):
     pass
-
