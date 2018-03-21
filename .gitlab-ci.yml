@@ -48,8 +48,9 @@ deploy-dev:
     - doc-ci-host
   script:
   - ls -lah $DATAHOME
-  - mkdir $DATAHOME/docs || true
-  - touch $DATAHOME/docs/test
+  - test -d $DATAHOME/docs || mkdir $DATAHOME/docs
+  - make docs-ci
+  - cp -RL docs/_build/html/* $DATAHOME/docs
 
 deploy-master:
   stage: deploy

@@ -122,6 +122,9 @@ venvinfo/docreqs~: $(REINSTALL_DEPS) doc-requirements.txt
 docs: docbuild
 	source venv/bin/activate; $(MAKE) -C docs $(DOCTYPE_DEFAULT)
 
+docs-ci: docbuild
+	source venv/bin/activate; $(MAKE) -C docs html
+
 
 dochost: docs
 	( \
