@@ -50,7 +50,7 @@ deploy-dev:
   - ls -lah $DATAHOME
   - test -d $DATAHOME/docs || mkdir $DATAHOME/docs
   - make docs-ci
-  - cp -RL docs/_build/html/* $DATAHOME/docs
+  - rsync -av --del docs/_build/html/ $DATAHOME/docs
 
 deploy-master:
   stage: deploy
