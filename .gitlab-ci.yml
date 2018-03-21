@@ -39,18 +39,18 @@ deploy-dev:
   - pip install -U -r dev-requirements.txt
   - pip install --upgrade --no-deps --force-reinstall .
 
-deploy-dev:
+deploy-dev-docs:
   stage: deploy
   tags:
   - jupyter-shell
   - cassander
   only:
-    - doc-ci-host
+    - development
   script:
   - ls -lah $DATAHOME
   - test -d $DATAHOME/docs || mkdir $DATAHOME/docs
   - make docs-ci
-  - rsync -av --del docs/_build/html/ $DATAHOME/docs
+  - rsync -avr --delete-after --checksum docs/_build/html/ $DATAHOME/docs
 
 deploy-master:
   stage: deploy
