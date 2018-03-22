@@ -55,7 +55,7 @@ class Clock(Instrument):
         'frequency']
 
 
-class CurrentSource(Instrument):
+class NICurrentSource(Instrument):
     essentialMethods = Instrument.essentialMethods + \
         ['setChannelTuning',
         'getChannelTuning',

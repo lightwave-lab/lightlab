@@ -158,7 +158,7 @@ class LabState(Hashable):
         return None
 
     @classmethod
-    def loadState(cls, filename=_filename):
+    def loadState(cls, filename=_filename, validateHash=True):
         with open(filename, 'r') as file:
             frozen_json = file.read()
         json_state = json.decode(frozen_json)
@@ -169,7 +169,7 @@ class LabState(Hashable):
         # Check integrity of stored version
         sha256 = json_state.pop("__sha256__")
         jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)
-        if sha256 != hash_sha256(json.encode(json_state)):
+        if validateHash and sha256 != hash_sha256(json.encode(json_state)):
             raise RuntimeError("Labstate is corrupted. {} vs {}.".format(
                 sha256, hash_sha256(json.encode(json_state))))
 

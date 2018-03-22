@@ -258,7 +258,7 @@ class Instrument(Node):
         if attrName in self.essentialProperties + self.essentialMethods: # or methods
             return getattr(self.driver, attrName)
         else:
-            return super().__getattr__(attrName)
+            raise AttributeError(str(self) + ' has no attribute ' + attrName)
 
     def __setattr__(self, attrName, newVal):
         if attrName in self.essentialProperties + self.essentialMethods: # or methods
