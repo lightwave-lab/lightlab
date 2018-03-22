@@ -52,8 +52,8 @@ class CurrentSources(VISAInstrumentDriver):
     # The above is the old versioin of initialization, and the below is the new version!
     def __init__(self, name='The current source', address=None, **kwargs):
         logger.warning('This class to be deprecated. Use NI_PCI_6723.')
-        logger.warning('Backwards incompatibilities:\n',
-            'No stateDict argument in __init__\n',
+        logger.warning('Backwards incompatibilities:\n' +
+            'No stateDict argument in __init__\n' +
             'No tuneState property. Use setChannelTuning and getChannelTuning')
 
         self.useChans = kwargs.pop("useChans", None)

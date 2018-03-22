@@ -62,6 +62,13 @@ class NICurrentSource(Instrument):
         'off']
     # Must init with `useChans` somehow
 
+class CurrentSource(Instrument):
+    essentialMethods = Instrument.essentialMethods + \
+        ['setChannelTuning',
+        'getChannelTuning',
+        'off']
+    # Must init with `useChans` somehow
+
 
 class FunctionGenerator(Instrument):
     essentialMethods = Instrument.essentialMethods + \
