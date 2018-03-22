@@ -1,4 +1,4 @@
-from lightlab import logger
+from lightlab import visalogger as logger
 
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
