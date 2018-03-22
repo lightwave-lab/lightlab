@@ -32,12 +32,10 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         '''
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self, headerIsOptional=False, verboseIsOptional=False)
-
         self.setProtectionVoltage(kwargs.pop("protectionVoltage", 4))
         self.setProtectionCurrent(kwargs.pop("protectionCurrent", 200E-3))
-
-        self.currStep = kwargs.pop("currStep", 1.0E-3)
-        self.voltStep = kwargs.pop("voltStep", 0.1)
+        self.currStep = kwargs.pop("currStep", None)
+        self.voltStep = kwargs.pop("voltStep", None)
 
     def startup(self):
         self.write('*RST')
@@ -104,11 +102,11 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     def setVoltage(self, voltVolts):
         voltTemp = self._latestVoltageVal
         if not self.enable() or self.voltStep is None:
-            self._configCurrent(voltVolts)
+            self._configVoltage(voltVolts)
         else:
             nSteps = int(np.floor(abs(voltTemp - voltVolts) / self.voltStep))
             for volt in np.linspace(voltTemp, voltVolts, 1 + nSteps)[1:]:
-                self._configCurrent(volt)
+                self._configVoltage(volt)
 
     def getCurrent(self):
         currGlob = self.getConfigParam('SOURCE:CURR')
