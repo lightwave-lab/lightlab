@@ -30,9 +30,8 @@ class Keithley(SourceMeter):
         ['setPort',
         'setCurrentMode',
         'setVoltageMode',
-        'getCurrent',
-        'getVoltage',
         'setVoltage',
+        'getVoltage',
         'measCurrent']
 
 
