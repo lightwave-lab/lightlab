@@ -12,9 +12,8 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
     storedPattern = None
 
     def __init__(self, name='The PPG', address=None, **kwargs):
-        super().__init__(name=name, address=address,
-                         headerIsOptional=False, precedingColon=False,
-                         **kwargs)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        Configurable.__init__(self, headerIsOptional=False, precedingColon=False)
 
     def startup(self):
         self.on()
