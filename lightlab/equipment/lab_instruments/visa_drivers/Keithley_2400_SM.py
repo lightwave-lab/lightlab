@@ -33,8 +33,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self, headerIsOptional=False, verboseIsOptional=False)
 
-        self.protectionVoltage = kwargs.pop("protectionVoltage", 4)
-        self.protectionCurrent = kwargs.pop("protectionCurrent", 200E-3)
+        self.setProtectionVoltage(kwargs.pop("protectionVoltage", 4))
+        self.setProtectionCurrent(kwargs.pop("protectionCurrent", 200E-3))
 
         self.currStep = kwargs.pop("currStep", 1.0E-3)
         self.voltStep = kwargs.pop("voltStep", 0.1)
@@ -57,7 +57,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         self.setConfigParam('SOURCE:FUNC', sourceStr)
         self.setConfigParam('SOURCE:{}:MODE'.format(sourceStr), 'FIXED')
         self.setConfigParam('SENSE:FUNCTION:OFF:ALL')
-        self.setConfigParam('SENSE:FUNCTION:ON', '"CURR"')
+        self.setConfigParam('SENSE:FUNCTION:ON', '"{}"'.format(meterStr))
         self.setConfigParam('SENSE:{}:RANGE:AUTO'.format(meterStr), 'ON')
         self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
 
@@ -73,26 +73,22 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         self.setProtectionVoltage(protectionVoltage)
         self._configCurrent(0)
 
-    def _configCurrent(self, currAmps, autoOn=False, time_delay=0.0):
+    def _configCurrent(self, currAmps, time_delay=0.0):
         currAmps = float(currAmps)
-        np.clip(currAmps, a_min=1e-6, a_max=1.)
+        currAmps = np.clip(currAmps, a_min=1e-6, a_max=1.)
         if currAmps != 0:
             needRange = 10 ** np.ceil(np.log10(abs(currAmps)))
             self.setConfigParam('SOURCE:CURR:RANGE', needRange)
         self.setConfigParam('SOURCE:CURR', currAmps)
         self._latestCurrentVal = currAmps
-        if autoOn:
-            self.enable(True)
         time.sleep(time_delay)
 
-    def _configVoltage(self, volt, autoOn=False, time_delay=0.0):
-        if volt != 0:
-            needRange = 10 ** np.ceil(np.log10(np.abs(volt)))
+    def _configVoltage(self, voltVolts, time_delay=0.0):
+        if voltVolts != 0:
+            needRange = 10 ** np.ceil(np.log10(np.abs(voltVolts)))
             self.setConfigParam('SOURCE:VOLT:RANGE', needRange)
-        self.setConfigParam('SOURCE:VOLT', volt)
-        self._latestVoltageVal = volt
-        if autoOn:
-            self.enable(True)
+        self.setConfigParam('SOURCE:VOLT', voltVolts)
+        self._latestVoltageVal = voltVolts
         time.sleep(time_delay)
 
     def setCurrent(self, currAmps):
@@ -126,19 +122,23 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             voltGlob = voltGlob['&']
         return voltGlob
 
-    def setProtectionVoltage(self, protectionVoltage, autoOn=False):
-        self.protectionVoltage = protectionVoltage
-        self.setConfigParam('VOLT:PROT', self.protectionVoltage)
+    def setProtectionVoltage(self, protectionVoltage):
+        self.setConfigParam('VOLT:PROT', protectionVoltage)
 
-    def setProtectionCurrent(self, protectionCurrent, autoOn=False):
-        self.protectionCurrent = protectionCurrent
-        self.setConfigParam('CURR:PROT', self.protectionCurrent)
+    def setProtectionCurrent(self, protectionCurrent):
+        self.setConfigParam('CURR:PROT', protectionCurrent)
 
-    def measVoltage(self, autoOff=False):
+    @property
+    def protectionVoltage(self):
+        return self.getConfigParam('VOLT:PROT')
+
+    @property
+    def protectionCurrent(self):
+        return self.getConfigParam('CURR:PROT')
+
+    def measVoltage(self):
         retStr = self.query('MEASURE:VOLT?')
         v = float(retStr.split(',')[0])  # first number is voltage always
-        if autoOff:
-            self.enable(False)
         if v >= self.protectionVoltage:
             print('Warning: Keithley compliance voltage of',
                   self.protectionVoltage, 'reached.')
@@ -146,11 +146,9 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
                   self._latestCurrentVal * 1e-3, 'mW into the load.')
         return v
 
-    def measCurrent(self, autoOff=False):
+    def measCurrent(self):
         retStr = self.query('MEASURE:CURR?')
         i = float(retStr.split(',')[1])  # second number is current always
-        if autoOff:
-            self.enable(False)
         if i >= self.protectionCurrent:
             print('Warning: Keithley compliance current of',
                   self.protectionCurrent, 'reached.')
