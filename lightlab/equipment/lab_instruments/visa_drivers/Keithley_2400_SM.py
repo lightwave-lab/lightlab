@@ -7,35 +7,31 @@ from lightlab.equipment.abstract_drivers import Configurable
 class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     ''' A Keithley 2400 driver.
 
-        Manual: http://research.physics.illinois.edu/bezryadin/labprotocol/Keithley2400Manual.pdf
+        `Manual: <http://research.physics.illinois.edu/bezryadin/labprotocol/Keithley2400Manual.pdf>`__
 
         Capable of sourcing current and measuring voltage, such as a Keithley
 
         Also provides interface methods for measuring resistance and measuring power
-
-        Todo:
-            Protection attributes could instead be properties to simplify.
-            It is preferable to have 1 way to do 1 thing.
-            Possible exception: setCurrentMode(protectionVoltage=1) should still be allowed.
-
-            Consider privatizing setCurrentMode/setVoltageMode. Just set the voltage and it will change into that mode.
     '''
     autoDisable = None  # in seconds. NOT IMPLEMENTED
     _latestCurrentVal = 0
     _latestVoltageVal = 0
     currStep = None
     voltStep = None
+    rampStepTime = 0.01 # in seconds.
 
     def __init__(self, name=None, address=None, **kwargs):
         '''
             Args:
-                hostID (str): There are three different hosts in the lab, \'andromeda'\, \'corinna'\,\'olympias'\
-                protectionVoltage : The unit of compliance voltage is Volt.
+                currStep (float): amount to step if ramping in current mode. Default (None) is no ramp
+                voltStep (float): amount to step if ramping in voltage mode. Default (None) is no ramp
+                rampStepTime (float): time to wait on each ramp step point
         '''
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self, headerIsOptional=False, verboseIsOptional=False)
         self.currStep = kwargs.pop("currStep", None)
         self.voltStep = kwargs.pop("voltStep", None)
+        self.rampStepTime = kwargs.pop("rampStepTime", 0.01)
 
     def startup(self):
         self.write('*RST')
@@ -71,7 +67,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         self.setProtectionVoltage(protectionVoltage)
         self._configCurrent(0)
 
-    def _configCurrent(self, currAmps, time_delay=0.0):
+    def _configCurrent(self, currAmps):
         currAmps = float(currAmps)
         currAmps = np.clip(currAmps, a_min=1e-6, a_max=1.)
         if currAmps != 0:
@@ -79,15 +75,13 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             self.setConfigParam('SOURCE:CURR:RANGE', needRange)
         self.setConfigParam('SOURCE:CURR', currAmps)
         self._latestCurrentVal = currAmps
-        time.sleep(time_delay)
 
-    def _configVoltage(self, voltVolts, time_delay=0.0):
+    def _configVoltage(self, voltVolts):
         if voltVolts != 0:
             needRange = 10 ** np.ceil(np.log10(np.abs(voltVolts)))
             self.setConfigParam('SOURCE:VOLT:RANGE', needRange)
         self.setConfigParam('SOURCE:VOLT', voltVolts)
         self._latestVoltageVal = voltVolts
-        time.sleep(time_delay)
 
     def setCurrent(self, currAmps):
         ''' This leaves the output on indefinitely '''
@@ -98,6 +92,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             nSteps = int(np.floor(abs(currTemp - currAmps) / self.currStep))
             for curr in np.linspace(currTemp, currAmps, 1 + nSteps)[1:]:
                 self._configCurrent(curr)
+                time.sleep(self.rampStepTime)
 
     def setVoltage(self, voltVolts):
         voltTemp = self._latestVoltageVal
@@ -107,6 +102,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             nSteps = int(np.floor(abs(voltTemp - voltVolts) / self.voltStep))
             for volt in np.linspace(voltTemp, voltVolts, 1 + nSteps)[1:]:
                 self._configVoltage(volt)
+                time.sleep(self.rampStepTime)
 
     def getCurrent(self):
         currGlob = self.getConfigParam('SOURCE:CURR')
