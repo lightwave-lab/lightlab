@@ -12,18 +12,18 @@ class Tektronix_TDS6154C_Oscope(VISAInstrumentDriver, TekScopeAbstract):
 
     totalChans = 4
     # Similar to the DSA, except
-    __recLenParam = 'HORIZONTAL:RECORDLENGTH'  # this is different from DSA
-    __clearBeforeAcquire = True
-    __measurementSourceParam = 'SOURCE1:WFM'
-    __runModeParam = 'ACQUIRE:STOPAFTER:MODE'
-    __runModeSingleShot = 'CONDITION'
-    __yScaleParam = 'YMULT'                    # this is different from DSA
+    _recLenParam = 'HORIZONTAL:RECORDLENGTH'  # this is different from DSA
+    _clearBeforeAcquire = True
+    _measurementSourceParam = 'SOURCE1:WFM'
+    _runModeParam = 'ACQUIRE:STOPAFTER:MODE'
+    _runModeSingleShot = 'CONDITION'
+    _yScaleParam = 'YMULT'                    # this is different from DSA
 
     def __setupSingleShot(self, isSampling, forcing=False):
         ''' Additional DSA things needed to put it in the right mode.
             If it is not sampling, the trigger source should always be external
         '''
-        super().__setupSingleShot(isSampling, forcing)
+        super()._setupSingleShot(isSampling, forcing)
         self.setConfigParam('ACQUIRE:STOPAFTER:CONDITION',
                             'ACQWFMS' if isSampling else'AVGCOMP',
                             forceHardware=forcing)

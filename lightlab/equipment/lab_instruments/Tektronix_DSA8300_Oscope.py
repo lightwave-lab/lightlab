@@ -2,6 +2,9 @@ from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import TekScopeAbstract
 from lightlab.laboratory.instruments import DSAOscilloscope
 
+import numpy as np
+
+
 class Tektronix_DSA8300_Oscope(VISAInstrumentDriver, TekScopeAbstract):
     ''' Sampling scope.
         See abstract driver for description
@@ -11,18 +14,18 @@ class Tektronix_DSA8300_Oscope(VISAInstrumentDriver, TekScopeAbstract):
     instrument_category = DSAOscilloscope
 
     totalChans = 8
-    __recLenParam = 'MAIN:RECORDLENGTH'
-    __clearBeforeAcquire = True
-    __measurementSourceParam = 'SOURCE1:WFM'
-    __runModeParam = 'ACQUIRE:STOPAFTER:MODE'
-    __runModeSingleShot = 'CONDITION'
-    __yScaleParam = 'YSCALE'
+    _recLenParam = 'HORIZONTAL:MAIN:RECORDLENGTH'
+    _clearBeforeAcquire = True
+    _measurementSourceParam = 'SOURCE1:WFM'
+    _runModeParam = 'ACQUIRE:STOPAFTER:MODE'
+    _runModeSingleShot = 'CONDITION'
+    _yScaleParam = 'YSCALE'
 
-    def __setupSingleShot(self, isSampling, forcing=False):
+    def _setupSingleShot(self, isSampling, forcing=False):
         ''' Additional DSA things needed to put it in the right mode.
             If it is not sampling, the trigger source should always be external
         '''
-        super().__setupSingleShot(isSampling, forcing)
+        super()._setupSingleShot(isSampling, forcing)
         self.setConfigParam('ACQUIRE:STOPAFTER:CONDITION',
                             'ACQWFMS' if isSampling else'AVGCOMP',
                             forceHardware=forcing)
@@ -41,18 +44,18 @@ class Tektronix_DSA8300_Oscope(VISAInstrumentDriver, TekScopeAbstract):
         '''
         # Configuration
         self.setConfigParam('HIS:BOXP', '0, 0, 99.9, 99.9')
-        self.setConfigParam('HIS:ENAB', '')
+        self.setConfigParam('HIS:ENAB', '1')
         self.setConfigParam('HIS:MOD', 'VERTICAL')
         self.setConfigParam('HIS:SOU', chan)
 
         forcing = True
-        self.__setupSingleShot(isSampling=True, forcing=forcing)
+        self._setupSingleShot(isSampling=True, forcing=forcing)
         self.setConfigParam('ACQUIRE:STOPAFTER:COUNT', nWfms, forceHardware=forcing)
 
         # Gathering
         with self.tempConfig('TRIGGER:SOURCE',
                 'FREERUN' if untriggered else 'EXTDIRECT'):
-            self.__triggerAcquire()
+            self._triggerAcquire()
 
         # Transfer data
         stdDev = self.query('HIS:STAT:STD?')

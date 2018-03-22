@@ -28,7 +28,9 @@ class TekConfig(object):
     '''
     separator = ':'
 
-    def __init__(self, initDict={}):
+    def __init__(self, initDict=None):
+        if initDict is None:
+            initDict = dict()
         self.dico = initDict.copy()
 
     def __str__(self):
@@ -236,6 +238,7 @@ class Configurable(AbstractDriver):
         self.config = {}
         self.config['default'] = None
         self.config['live'] = TekConfig()
+        self.separator = self.config['live'].separator
 
         super().__init__(**kwargs)
 
@@ -400,9 +403,15 @@ class Configurable(AbstractDriver):
         for cStr in cStrList:
             if cStr[-1] == '&':  # handle the sibling subdir token
                 cStr = cStr[:-2]
-            logger.debug('Querying ' + str(cStr) +
-                         ' from configurable hardware')
-            ret = self.query(cStr + '?')
+            logger.debug('Querying {} from configurable hardware'.format(cStr))
+
+            try:
+                ret = self.query(cStr + '?')
+            except VisaIOError as err:
+                logger.error('Problematic parameter was {}.\n'.format(cStr) + \
+                    'Likely it does not exist in this instrument command structure.')
+                raise
+
             if self.header:
                 val = ret.split(' ')[-1]
             else:

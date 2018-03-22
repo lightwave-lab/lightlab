@@ -11,9 +11,12 @@ class Tektronix_DPO4034_Oscope(VISAInstrumentDriver, TekScopeAbstract):
     instrument_category = Oscilloscope
 
     totalChans = 4
-    __recLenParam = 'HORIZONTAL:RECORDLENGTH'
-    __clearBeforeAcquire = False
-    __measurementSourceParam = 'SOURCE1'
-    __runModeParam = 'ACQUIRE:STOPAFTER'
-    __runModeSingleShot = 'SEQUENCE'
-    __yScaleParam = 'YMULT'
+    _recLenParam = 'HORIZONTAL:RECORDLENGTH'
+    _clearBeforeAcquire = False
+    _measurementSourceParam = 'SOURCE1'
+    _runModeParam = 'ACQUIRE:STOPAFTER'
+    _runModeSingleShot = 'SEQUENCE'
+    _yScaleParam = 'YMULT'
+
+    def wfmDb(self, *args, **kwargs):
+        print('wfmDb is not working yet with DPOs')
