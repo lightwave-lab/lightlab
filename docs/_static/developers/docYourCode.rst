@@ -6,6 +6,8 @@ How to document your code
 
 This documentation is created with Sphinx. It has automatic API build, so *write good docstrings*!
 
+For now the documentation is hosted on the lab server.
+
 Seeing changes you make
 -----------------------
 To see your changes to the documentation, launch a server from your local machine like this::
