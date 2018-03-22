@@ -30,9 +30,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
                 hostID (str): There are three different hosts in the lab, \'andromeda'\, \'corinna'\,\'olympias'\
                 protectionVoltage : The unit of compliance voltage is Volt.
         '''
-        super().__init__(name=name, address=address,
-                         headerIsOptional=False, verboseIsOptional=False,
-                         **kwargs)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        Configurable.__init__(self, headerIsOptional=False, verboseIsOptional=False)
 
         self.protectionVoltage = kwargs.pop("protectionVoltage", 4)
         self.protectionCurrent = kwargs.pop("protectionCurrent", 200E-3)
