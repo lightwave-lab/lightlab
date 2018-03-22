@@ -1,4 +1,4 @@
-SHELL := /bin/bash
+SHELL := /usr/bin/env bash
 
 # different tests
 TESTARGS = -s --cov=lightlab --cov-config .coveragerc
@@ -9,9 +9,9 @@ REINSTALL_DEPS = $(shell find lightlab -type f) venv setup.py
 
 # DOCTYPE_DEFAULT can be html or latexpdf
 DOCTYPE_DEFAULT = html
-DOCHOSTPORT_FILE = .dochostport
-# Server ports for CI hosting. You can override by making a file .dochostport
-DOCHOSTPORT_DEFAULT = 8049
+
+# Server ports for CI hosting. You can override by setting an environment variable DOCHOSTPORT
+DOCHOSTPORT ?= 8049
 
 venv: venv/bin/activate
 venv/bin/activate:
@@ -108,6 +108,7 @@ monitorhost:
 	@mkdir -p progress-monitor
 	cd progress-monitor && python3 -m http.server $(shell cat .monitorhostport)
 
+
 docbuild: venvinfo/docreqs~
 venvinfo/docreqs~: $(REINSTALL_DEPS) doc-requirements.txt
 	( \
@@ -121,14 +122,15 @@ venvinfo/docreqs~: $(REINSTALL_DEPS) doc-requirements.txt
 docs: docbuild
 	source venv/bin/activate; $(MAKE) -C docs $(DOCTYPE_DEFAULT)
 
-dochostfileexist:
-	test -f $(DOCHOSTPORT_FILE) || echo $(DOCHOSTPORT_DEFAULT) > $(DOCHOSTPORT_FILE)
+docs-ci: docbuild
+	source venv/bin/activate; $(MAKE) -C docs html
 
-dochost: docs dochostfileexist
+
+dochost: docs
 	( \
 		source venv/bin/activate; \
 		cd docs/_build/$(DOCTYPE_DEFAULT); \
-		python3 -m http.server $(shell cat $(DOCHOSTPORT_FILE)); \
+		python3 -m http.server $(DOCHOSTPORT); \
 	)
 
 help:
