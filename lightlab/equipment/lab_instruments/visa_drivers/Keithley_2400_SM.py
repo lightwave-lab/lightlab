@@ -23,6 +23,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     autoDisable = None  # in seconds. NOT IMPLEMENTED
     _latestCurrentVal = 0
     _latestVoltageVal = 0
+    currStep = None
+    voltStep = None
 
     def __init__(self, name=None, address=None, **kwargs):
         '''
@@ -32,8 +34,6 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         '''
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self, headerIsOptional=False, verboseIsOptional=False)
-        self.setProtectionVoltage(kwargs.pop("protectionVoltage", 4))
-        self.setProtectionCurrent(kwargs.pop("protectionCurrent", 200E-3))
         self.currStep = kwargs.pop("currStep", None)
         self.voltStep = kwargs.pop("voltStep", None)
 
