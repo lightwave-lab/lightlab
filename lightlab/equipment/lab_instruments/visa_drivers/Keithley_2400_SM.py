@@ -166,13 +166,3 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             self.setConfigParam('OUTP:STATE', 1 if newState else 0)
         retVal = self.getConfigParam('OUTP:STATE', forceHardware=True)
         return retVal in ['ON', 1, '1']
-
-
-class Keithley_2400_SM_noRamp(Keithley_2400_SM):
-    ''' Same except with no ramping. You see what you get
-    '''
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.voltStep = None
-        self.currStep = None
-
