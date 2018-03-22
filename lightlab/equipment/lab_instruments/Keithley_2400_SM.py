@@ -9,131 +9,103 @@ from lightlab import logger
 class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     ''' A Keithley 2400 driver.
 
-        Manual: http://research.physics.illinois.edu/bezryadin/labprotocol/Keithley2400Manual.pdf
+        `Manual: <http://research.physics.illinois.edu/bezryadin/labprotocol/Keithley2400Manual.pdf>`__
 
         Capable of sourcing current and measuring voltage, such as a Keithley
 
         Also provides interface methods for measuring resistance and measuring power
-
-        Todo:
-            Clean up the initializer and class attributes. There are too many ways to do the same thing
-
-            Consolidate with _noRamp class. Default should be not to ramp unless it is specified.
     '''
     instrument_category = Keithley
     autoDisable = None  # in seconds. NOT IMPLEMENTED
-    function_mode = None
+    _latestCurrentVal = 0
+    _latestVoltageVal = 0
+    currStep = None
+    voltStep = None
+    rampStepTime = 0.01 # in seconds.
 
-    # TODO: send config params in a delayed fashion (only when necessary)
     def __init__(self, name=None, address=None, **kwargs):
         '''
             Args:
-                sourceMode (str): UNUSED NOW, \'mwpwerohm\' or \'milliamps\'
-                hostID (str): There are three different hosts in the lab, \'andromeda'\, \'corinna'\,\'olympias'\
-                protectionVoltage : The unit of compliance voltage is Volt.
+                currStep (float): amount to step if ramping in current mode. Default (None) is no ramp
+                voltStep (float): amount to step if ramping in voltage mode. Default (None) is no ramp
+                rampStepTime (float): time to wait on each ramp step point
         '''
-        super().__init__(name=name, address=address,
-                         headerIsOptional=False, verboseIsOptional=False,
-                         **kwargs)
-
-        self.sourceMode = kwargs.pop("sourceMode", 'mwperohm')
-        if self.sourceMode not in ['mwperohm', 'milliamps']:
-            raise ValueError(
-                'sourceMode must be \'mwpwerohm\' or \'milliamps\'')
-
-        self.protectionVoltage = kwargs.pop("protectionVoltage", 4)
-        self.protectionCurrent = kwargs.pop("protectionCurrent", 200E-3)
-
-        self.currStep = kwargs.pop("currStep", 1.0E-3)
-        self.voltStep = kwargs.pop("voltStep", 0.1)
-        self.latestCurrentVal = None
-        self.latestVoltageVal = None
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        Configurable.__init__(self, headerIsOptional=False, verboseIsOptional=False)
+        self.currStep = kwargs.pop("currStep", None)
+        self.voltStep = kwargs.pop("voltStep", None)
+        self.rampStepTime = kwargs.pop("rampStepTime", 0.01)
 
     def startup(self):
         self.write('*RST')
 
     def setPort(self, port):
         if port == 'Front':
-            self.write(':ROUT:TERM FRON')
+            self.setConfigParam('ROUT:TERM', 'FRON')
         elif port == 'Rear':
-            self.write(':ROUT:TERM REAR')
+            self.setConfigParam('ROUT:TERM', 'REAR')
+
+    def __setSourceMode(self, isCurrentSource):
+        # TODO: make proper automata flowchart for this.
+        if isCurrentSource:
+            sourceStr, meterStr = ('CURR', 'VOLT')
+        else:
+            sourceStr, meterStr = ('VOLT', 'CURR')
+        self.setConfigParam('SOURCE:FUNC', sourceStr)
+        self.setConfigParam('SOURCE:{}:MODE'.format(sourceStr), 'FIXED')
+        self.setConfigParam('SENSE:FUNCTION:OFF:ALL')
+        self.setConfigParam('SENSE:FUNCTION:ON', '"{}"'.format(meterStr))
+        self.setConfigParam('SENSE:{}:RANGE:AUTO'.format(meterStr), 'ON')
+        self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
 
     def setVoltageMode(self, protectionCurrent=0.05):
-        '''
-            Todo:
-                make proper automata flowchart for this.
-        '''
         self.enable(False)
-        self.function_mode = 'voltage'
-        self.setConfigParam('SOURCE:FUNC', 'VOLT')
-        self.setConfigParam('SOURCE:VOLT:MODE', 'FIXED')
-        self.setConfigParam('SENSE:FUNCTION:OFF:ALL')
-        self.setConfigParam('SENSE:FUNCTION:ON', '"CURR"')
-        self.setConfigParam('SENSE:CURR:RANGE:AUTO', 'ON')
+        self.__setSourceMode(isCurrentSource=False)
         self.setProtectionCurrent(protectionCurrent)
-        self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
         self._configVoltage(0)
 
     def setCurrentMode(self, protectionVoltage=1):
-        '''
-            Todo:
-                make proper automata flowchart for this.
-        '''
         self.enable(False)
-        self.function_mode = 'current'
-        self.setConfigParam('SOURCE:FUNC', 'CURR')
-        self.setConfigParam('SOURCE:CURR:MODE', 'FIXED')
-        self.setConfigParam('SENSE:FUNCTION:OFF:ALL')
-        self.setConfigParam('SENSE:FUNCTION:ON', '"VOLT"')
-        self.setConfigParam('SENSE:VOLT:RANGE:AUTO', 'ON')
+        self.__setSourceMode(isCurrentSource=True)
         self.setProtectionVoltage(protectionVoltage)
-        self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
         self._configCurrent(0)
 
-    def _configCurrent(self, currAmps, autoOn=False, time_delay=0.0):
+    def _configCurrent(self, currAmps):
         currAmps = float(currAmps)
-        np.clip(currAmps, a_min=1e-6, a_max=1.)
+        currAmps = np.clip(currAmps, a_min=1e-6, a_max=1.)
         if currAmps != 0:
             needRange = 10 ** np.ceil(np.log10(abs(currAmps)))
             self.setConfigParam('SOURCE:CURR:RANGE', needRange)
         self.setConfigParam('SOURCE:CURR', currAmps)
-        self.latestCurrentVal = currAmps
-        if autoOn:
-            self.enable(True)
-        time.sleep(time_delay)
+        self._latestCurrentVal = currAmps
 
-    def _configVoltage(self, volt, autoOn=False, time_delay=0.0):
-        if volt != 0:
-            needRange = 10 ** np.ceil(np.log10(np.abs(volt)))
+    def _configVoltage(self, voltVolts):
+        if voltVolts != 0:
+            needRange = 10 ** np.ceil(np.log10(np.abs(voltVolts)))
             self.setConfigParam('SOURCE:VOLT:RANGE', needRange)
-        self.setConfigParam('SOURCE:VOLT', volt)
-        self.latestVoltageVal = volt
-        if autoOn:
-            self.enable(True)
-        time.sleep(time_delay)
+        self.setConfigParam('SOURCE:VOLT', voltVolts)
+        self._latestVoltageVal = voltVolts
 
-    def setCurrent(self, currAmps, autoOn=False):
+    def setCurrent(self, currAmps):
         ''' This leaves the output on indefinitely '''
-        if self.latestCurrentVal is None:
-            self.latestCurrentVal = 0.
-        currTemp = self.latestCurrentVal
-
-        if self.enable() & (abs(currTemp - currAmps) > self.currStep):
-            for curr in np.linspace(currTemp, currAmps, 1 + abs(currTemp - currAmps) / self.currStep):
-                self._configCurrent(curr)
-        else:
+        currTemp = self._latestCurrentVal
+        if not self.enable() or self.currStep is None:
             self._configCurrent(currAmps)
-
-    def setVoltage(self, volt, autoOn=False):
-        if self.latestVoltageVal is None:
-            self.latestVoltageVal = 0
-        voltTemp = self.latestVoltageVal
-
-        if self.enable() & (abs(voltTemp - volt) > self.voltStep):
-            for volt in np.linspace(voltTemp, volt, 1 + abs(voltTemp - volt) / self.voltStep):
-                self._configVoltage(volt)
         else:
-            self._configVoltage(volt)
+            nSteps = int(np.floor(abs(currTemp - currAmps) / self.currStep))
+            for curr in np.linspace(currTemp, currAmps, 1 + nSteps)[1:]:
+                self._configCurrent(curr)
+                time.sleep(self.rampStepTime)
+
+    def setVoltage(self, voltVolts):
+        voltTemp = self._latestVoltageVal
+        if not self.enable() or self.voltStep is None:
+            self._configVoltage(voltVolts)
+        else:
+            nSteps = int(np.floor(abs(voltTemp - voltVolts) / self.voltStep))
+            for volt in np.linspace(voltTemp, voltVolts, 1 + nSteps)[1:]:
+                self._configVoltage(volt)
+                time.sleep(self.rampStepTime)
 
     def getCurrent(self):
         currGlob = self.getConfigParam('SOURCE:CURR')
@@ -148,18 +120,22 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         return voltGlob
 
     def setProtectionVoltage(self, protectionVoltage):
-        self.protectionVoltage = protectionVoltage
-        self.setConfigParam('VOLT:PROT', self.protectionVoltage)
+        self.setConfigParam('VOLT:PROT', protectionVoltage)
 
     def setProtectionCurrent(self, protectionCurrent):
-        self.protectionCurrent = protectionCurrent
-        self.setConfigParam('CURR:PROT', self.protectionCurrent)
+        self.setConfigParam('CURR:PROT', protectionCurrent)
 
-    def measVoltage(self, autoOff=False):
+    @property
+    def protectionVoltage(self):
+        return self.getConfigParam('VOLT:PROT')
+
+    @property
+    def protectionCurrent(self):
+        return self.getConfigParam('CURR:PROT')
+
+    def measVoltage(self):
         retStr = self.query('MEASURE:VOLT?')
         v = float(retStr.split(',')[0])  # first number is voltage always
-        if autoOff:
-            self.enable(False)
         if v >= self.protectionVoltage:
             logger.warning('Keithley compliance voltage of',
                            self.protectionVoltage, 'reached.')
@@ -167,11 +143,9 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
                            self.latestCurrentVal * 1e-3, 'mW into the load.')
         return v
 
-    def measCurrent(self, autoOff=False):
+    def measCurrent(self):
         retStr = self.query('MEASURE:CURR?')
         i = float(retStr.split(',')[1])  # second number is current always
-        if autoOff:
-            self.enable(False)
         if i >= self.protectionCurrent:
             logger.warning('Keithley compliance current of',
                            self.protectionCurrent, 'reached.')
@@ -183,22 +157,11 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         ''' get/set enable state
         '''
         if newState is False:
-            if (self.function_mode == 'current'):
+            if self.getConfigParam('SOURCE:FUNC') == 'CURR':
                 self.setCurrent(0)
-            elif (self.function_mode == 'voltage'):
+            else:
                 self.setVoltage(0)
         if newState is not None:
             self.setConfigParam('OUTP:STATE', 1 if newState else 0)
         retVal = self.getConfigParam('OUTP:STATE', forceHardware=True)
         return retVal in ['ON', 1, '1']
-
-
-class Keithley_2400_SM_noRamp(Keithley_2400_SM):
-    ''' Same except with no ramping. You see what you get
-    '''
-    def setCurrent(self, *args, **kwargs):
-        return self._configCurrent(*args, **kwargs)
-
-    def setVoltage(self, *args, **kwargs):
-        return self._configVoltage(*args, **kwargs)
-
