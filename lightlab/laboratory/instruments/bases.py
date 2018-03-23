@@ -271,10 +271,11 @@ class Instrument(Node):
             return getattr(self.driver, attrName)
         # Time to fail
         if attrName in self.optionalAttributes:
-            errorText += '\nThis is an optional attribute not implemented by this particular driver'
-        elif hasattr(self.driver, attrName):
+            errorText += '\nThis is an optional attribute of {} '.format(type(self).__name__)
+            errorText += 'not implemented by this particular driver'
+        elif hasattr(self._driver_class, attrName):
             errorText += '\nIt looks like you are trying to access a low-level attribute'
-            errorText += '\nUse ".driver" to get it'
+            errorText += '\nUse ".driver.{}" to get it'.format(attrName)
         raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
