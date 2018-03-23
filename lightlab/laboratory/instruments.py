@@ -103,7 +103,6 @@ class Host(Node):
         for instrument in instruments:
             try:
                 self.instruments.remove(instrument)
-                instrument._host = None
             except ValueError as err:
                 logger.warn("%s not currently connected to %s",
                             instrument, self)
@@ -166,7 +165,6 @@ class Bench(Node):
         for instrument in instruments:
             try:
                 self.instruments.remove(instrument)
-                instrument._bench = None
             except ValueError as err:
                 logger.warn("%s not currently placed in %s", instrument, self)
 
