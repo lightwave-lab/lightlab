@@ -103,7 +103,7 @@ class Host(Node):
         for instrument in instruments:
             try:
                 self.instruments.remove(instrument)
-                instrument._host = None
+                instrument.__host = None
             except ValueError as err:
                 logger.warn("%s not currently connected to %s",
                             instrument, self)
@@ -164,9 +164,11 @@ class Bench(Node):
     def removeInstrument(self, *instruments):
         # TODO Remove all connections
         for instrument in instruments:
+            if type(instrument) is str:
+                logger.warn('Cannot remove by name string. Use the object')
             try:
                 self.instruments.remove(instrument)
-                instrument._bench = None
+                instrument.__bench = None
             except ValueError as err:
                 logger.warn("%s not currently placed in %s", instrument, self)
 
