@@ -15,7 +15,9 @@ class SourceMeter(Instrument):
         'getCurrent',
         'measVoltage',
         'setProtectionVoltage',
+        'protectionVoltage',
         'setProtectionCurrent',
+        'protectionCurrent',
         'enable']
 
     def hardware_warmup(self):
@@ -91,11 +93,12 @@ class LaserSource(Instrument):
         'setChannelPowers',
         'getChannelPowers',
         'getAsSpectrum',
-        'off']
+        'allOnOff']
     essentialProperties = Instrument.essentialProperties + \
         ['enableState',
         'wls',
-        'powers']
+        'powers',
+        'off']
 
 
 class OpticalSpectrumAnalyzer(Instrument):

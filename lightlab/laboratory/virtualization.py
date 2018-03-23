@@ -235,9 +235,10 @@ class DualInstrument(Virtualizable):
         self.virt_obj = virt_obj
         if real_obj is not None and virt_obj is not None:
             violated = []
-            allowed = real_obj.essentialMethods + real_obj.essentialProperties
+            allowed = real_obj.essentialMethods + real_obj.essentialProperties + dir(VirtualInstrument)
             for attr in dir(type(virt_obj)):
-                if attr not in allowed and attr[:2] != '__':
+                if attr not in allowed \
+                        and '__' not in attr:
                     violated.append(attr)
             if len(violated) > 0:
                 logger.warning('Virtual instrument ({}) violates the \
@@ -245,7 +246,7 @@ class DualInstrument(Virtualizable):
                                     type(virt_obj).__name__,
                                     type(real_obj).__name__))
                 logger.warning('Got: ' + ', '.join(violated))
-                logger.warning('Allowed: ' + ', '.join(allowed))
+                logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
         self.synced = []
 
     @Virtualizable.virtual.setter

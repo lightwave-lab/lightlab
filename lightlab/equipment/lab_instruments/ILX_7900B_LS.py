@@ -257,6 +257,12 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         """
         self.enableState = np.zeros(len(self.useChans))
 
+    def allOnOff(self, allOn=False):
+        if allOn:
+            self.enableState = np.ones(len(self.useChans))
+        else:
+            self.enableState = np.zeros(len(self.useChans))
+
     # Override some messaging methods to account for the fact that there's two GPIB laser banks
     def write(self, writeStr):
         print('Warning: Write not performed because bank was not specified.')
