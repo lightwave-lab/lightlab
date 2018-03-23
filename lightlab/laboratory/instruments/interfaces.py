@@ -106,6 +106,8 @@ class Oscilloscope(Instrument):
         ['acquire',
         'wfmDb',
         'run']
+    optionalAttributes = Instrument.optionalAttributes + \
+        ['histogramStats']
 
     def hardware_cooldown(self):
         ''' Keep it running continuously in case you are in lab and want to watch

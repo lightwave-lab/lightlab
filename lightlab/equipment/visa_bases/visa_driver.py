@@ -49,7 +49,9 @@ class DriverMeta(type):
             driver_kwargs = dict()
             instrument_kwargs = dict()
             for k, v in kwargs.items():
-                if k in cls.instrument_category.essentialMethods + cls.instrument_category.essentialProperties:
+                if k in cls.instrument_category.essentialMethods \
+                        + cls.instrument_category.essentialProperties \
+                        + cls.instrument_category.optionalAttributes:
                     raise ValueError('Essential attribute {} cannot be '.format(k) +
                                      'passed as a kwarg to the initializer of {}.'.format(cls.__name__))
                 if k in driver_initArgNames:
