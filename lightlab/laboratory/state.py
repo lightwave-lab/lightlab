@@ -46,12 +46,11 @@ class LabState(Hashable):
     @property
     def instruments(self):
         instruments = list()
-        for benchanme, bench in self.benches.items():
+        for _, bench in self.benches.items():
             instruments.extend(bench.instruments)
-        for hostname, host in self.hosts.items():
+        for _, host in self.hosts.items():
             instruments.extend(host.instruments)
-
-        return instruments
+        return list(set(instruments))  # unique elements
 
     @property
     def instruments_dict(self):
@@ -79,7 +78,7 @@ class LabState(Hashable):
         if len(matching_instruments) == 1:
             delete = True
         elif len(matching_instruments) > 1:
-            if force:
+            if not force:
                 logger.error("Found multiple instruments named {}.\n Doing nothing.".format(name))
             else:
                 logger.warning("Found multiple instruments named {}.\n Deleting all.".format(name))
@@ -88,7 +87,6 @@ class LabState(Hashable):
             logger.info("No instrument named {} found".format(name))
         if delete:
             for instr_obj in matching_instruments:
-                raise RuntimeError(instr_obj.__bench)
                 instr_obj.bench = None
                 instr_obj.host = None
                 del instr_obj
