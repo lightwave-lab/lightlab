@@ -46,11 +46,10 @@ class LabState(Hashable):
     @property
     def instruments(self):
         instruments = list()
-        for benchanme, bench in self.benches.items():
+        for _, bench in self.benches.items():
             instruments.extend(bench.instruments)
-        for hostname, host in self.hosts.items():
+        for _, host in self.hosts.items():
             instruments.extend(host.instruments)
-
         return list(set(instruments))  # unique elements
 
     @property

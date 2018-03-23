@@ -33,7 +33,7 @@ Keithley_2400_SM.open = open_error
 instrument1 = Keithley(name="keithley1", bench=Bench1, host=Host1,
                        ports=["front_source", "rear_source"], _driver_class=Keithley_2400_SM)
 instrument2 = Instrument(name="instrument2", bench=Bench1, host=Host1, ports=["port1", "channel"])
-instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port1", "channel"])
+instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port11", "channel"])
 device1 = Device(name="device1", bench=Bench1, ports=["input", "output"])
 device2 = Device(name="device2", bench=Bench1, ports=["input", "output"])
 
@@ -41,7 +41,8 @@ device2 = Device(name="device2", bench=Bench1, ports=["input", "output"])
 @pytest.fixture()
 def lab(request):
     # The following instrument gets deleted over and over
-    instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port1", "channel"])
+    instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port11", "channel"])
+
     lab = labstate.LabState(filename=filename)
     lab.updateHost(Host1)
     lab.updateBench(Bench1, Bench2)
@@ -55,6 +56,7 @@ def lab(request):
                     {device1: "output", instrument2: "port1"}]
     lab.updateConnections(*connections1)
     lab._saveState(save_backup=False)
+    labstate.lab = lab
 
     def delete_file():
         os.remove(filename)
@@ -72,10 +74,13 @@ def test_instantiate(lab):
     assert instrument1 in Host1.instruments
     assert instrument1.host == Host1
     assert instrument1 in lab.instruments
+    assert instrument2 in lab.instruments
     assert instrument2bis in lab.instruments
     assert instrument2bis in Bench2.instruments
     assert instrument2bis in Host1.instruments
+    assert len(lab.instruments) == 3
     assert device1 in lab.devices
+    assert len(lab.devices) == 2
     assert {device1: "input", instrument1: "rear_source"} in lab.connections
     assert {device1: "output", instrument2: "port1"} in lab.connections
     assert {device1: "input", instrument1: "front_source"} not in lab.connections
@@ -226,6 +231,7 @@ def test_experiment_invalid_connection(lab):
 
 
 def test_remove_instrument_by_name(lab):
+    assert len(lab.instruments) == 3
     lab.deleteInstrumentFromName("instrument2")
     assert instrument2 in lab.instruments
     assert instrument2bis in lab.instruments
