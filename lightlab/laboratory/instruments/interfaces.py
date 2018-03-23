@@ -52,6 +52,10 @@ class Clock(Instrument):
     essentialMethods = Instrument.essentialMethods + \
         ['enable',
         'frequency']
+    optionalAttributes = Instrument.optionalAttributes + \
+        ['amplitude',
+        'sweepSetup',
+        'sweepEnable']
 
 
 class NICurrentSource(Instrument):
