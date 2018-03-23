@@ -50,7 +50,10 @@ def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=Tru
         ax.cla()
         ax.plot(t[:it+1], v[:it+1])
         display.display(fi)
-    return FunctionBundle(t, v)
+        bund = FunctionBundle()
+        bund.absc = t
+        bund.ordiMat = v
+    return bund
 
 def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
     ''' Takes in a NdSweeper and looks at the effect of delaying between actuation from measurement. Does the gathering.

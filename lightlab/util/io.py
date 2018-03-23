@@ -406,7 +406,7 @@ class JSONpickleable(Hashable):
         if not isinstance(restored_object, cls): # This is likely to happen if lightlab has been reloaded
             if type(restored_object).__name__ != cls.__name__: # This is not ok
                 raise TypeError('Loaded class is different than intended.\n' +
-                    'Got {}, needed {}.'.format(type(restored_object).__name__))
+                    'Got {}, needed {}.'.format(type(restored_object).__name__, cls.__name__))
 
         for a in cls.notPickled:
             setattr(restored_object, a, None)
