@@ -442,7 +442,7 @@ class Configurable(AbstractDriver):
             logger.debug('Sending ' + str(cmd) + ' to configurable hardware')
             self.write(cmd)
 
-    def generateDefaults(cls, filename=None, overwrite=False):
+    def generateDefaults(self, filename=None, overwrite=False):
         ''' Attempts to read every configuration parameter.
             Handles several cases where certain parameters do not make sense and must be skipped
 
