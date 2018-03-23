@@ -109,10 +109,12 @@ class CurrentSources(VISAInstrumentDriver):
 
     @property
     def tuneState(self):
+        logger.warning('CurrentSources.tuneState getting/setting will be deprecated. Use dictionaries')
         return self.__tuneState
 
     @tuneState.setter
     def tuneState(self, newState):
+        logger.warning('CurrentSources.tuneState getting/setting will be deprecated. Use dictionaries')
         newState = np.array(newState)
         if len(newState) != len(self.channels):
             raise io.ChannelError('Wrong number of channels. ' +
@@ -231,16 +233,6 @@ class CurrentSources(VISAInstrumentDriver):
                 print(
                     'Error, cannot communicate with current sources, or session was closed prematurely')
         super().close()
-
-    @property
-    def tuneState(self):
-        logger.warning('CurrentSources.tuneState getting/setting will be deprecated. Use dictionaries')
-        raise NotImplementedError()
-
-    @tuneState.setter
-    def tuneState(self, newState):
-        logger.warning('CurrentSources.tuneState getting/setting will be deprecated. Use dictionaries')
-        raise NotImplementedError()
 
 
 class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
