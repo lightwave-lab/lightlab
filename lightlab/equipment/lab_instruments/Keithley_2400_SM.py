@@ -30,11 +30,11 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
                 voltStep (float): amount to step if ramping in voltage mode. Default (None) is no ramp
                 rampStepTime (float): time to wait on each ramp step point
         '''
-        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-        Configurable.__init__(self, headerIsOptional=False, verboseIsOptional=False)
         self.currStep = kwargs.pop("currStep", None)
         self.voltStep = kwargs.pop("voltStep", None)
         self.rampStepTime = kwargs.pop("rampStepTime", 0.01)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        Configurable.__init__(self, headerIsOptional=False, verboseIsOptional=False)
 
     def startup(self):
         self.write('*RST')

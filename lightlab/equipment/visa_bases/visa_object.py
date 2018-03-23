@@ -1,6 +1,6 @@
 import visa as pyvisa
 import time
-from lightlab import logger
+from lightlab import visalogger as logger
 
 OPEN_RETRIES = 5
 
