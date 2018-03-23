@@ -105,7 +105,7 @@ class Host(Node):
                 self.instruments.remove(instrument)
                 instrument._host = None
             except ValueError as err:
-                logger.warn("%s not currently connectd to %s",
+                logger.warn("%s not currently connected to %s",
                             instrument, self)
 
     def checkInstrumentsLive(self):

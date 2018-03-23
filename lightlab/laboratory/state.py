@@ -72,13 +72,27 @@ class LabState(Hashable):
         for bench in benches:
             self.benches[bench.name] = bench
 
-    def deleteInstrumentFromName(self, name):
-        try:
-            instr_obj = self.instruments_dict[name]
-        except KeyError:
-            return  # nothing to do
-        instr_obj.bench = None
-        instr_obj.host = None
+    def deleteInstrumentFromName(self, name, force=False):
+        matching_instruments = list(filter(lambda x: x.name == name,
+                                           self.instruments))
+        delete = False
+        if len(matching_instruments) == 1:
+            delete = True
+        elif len(matching_instruments) > 1:
+            if force:
+                logger.error("Found multiple instruments named {}.\n Doing nothing.".format(name))
+            else:
+                logger.warning("Found multiple instruments named {}.\n Deleting all.".format(name))
+                delete = True
+        else:
+            logger.info("No instrument named {} found".format(name))
+        if delete:
+            for instr_obj in matching_instruments:
+                raise RuntimeError(instr_obj.__bench)
+                instr_obj.bench = None
+                instr_obj.host = None
+                del instr_obj
+
 
     def insertInstrument(self, instrument):
         # TODO test if bench and/or host are in lab
