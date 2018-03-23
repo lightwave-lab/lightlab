@@ -5,7 +5,8 @@ import numpy as np
 import time
 from lightlab.util.io import ChannelError
 from lightlab.util.data import Spectrum
-from lightlab import logger
+from lightlab import visalogger as logger
+import time
 
 
 class ILX_7900B_LS(VISAInstrumentDriver):

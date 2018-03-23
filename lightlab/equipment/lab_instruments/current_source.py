@@ -6,7 +6,7 @@ import numpy as np
 import time
 import visa as pyvisa
 from lightlab.util import io
-from lightlab import logger
+from lightlab import visalogger as logger
 
 
 class CurrentSources(VISAInstrumentDriver):
