@@ -14,11 +14,6 @@ class Agilent_83712B_clock(VISAInstrumentDriver, Configurable):
     def startup(self):
         self.enable(True)
 
-    def on(self, turnOn=True):
-        from lightlab import logger
-        logger.warning('Deprecation warning of method `on()`. Use `enable(True)`')
-        self.enable(turnOn)
-
     def enable(self, enaState=None):
         if enaState is not None:
             self.setConfigParam('OUTP:STATE', 'ON' if enaState else 'OFF')

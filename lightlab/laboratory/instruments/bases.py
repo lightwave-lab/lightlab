@@ -228,6 +228,7 @@ class Instrument(Node):
 
     essentialMethods = ['startup']
     essentialProperties = []
+    optionalAttributes = []
 
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
         self.__bench = kwargs.pop("bench", None)
@@ -244,21 +245,38 @@ class Instrument(Node):
         #     if driver_klass is not None:
         #         if not hasattr(driver_klass, attrName):
         #             raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
-
         super().__init__(_name=name,
                          _id_string=id_string,
                          address=address, **kwargs)
 
     def __dir__(self):
         ''' For autocompletion in ipython '''
-        return super().__dir__() + self.essentialProperties + self.essentialMethods
+        return super().__dir__() + self.essentialProperties \
+            + self.essentialMethods + self.implementedOptionals
+
+    @property
+    def implementedOptionals(self):
+        implementedOptionals = list()
+        for opAttr in self.optionalAttributes:
+            if hasattr(self._driver_class, opAttr):
+                implementedOptionals.append(opAttr)
+        return implementedOptionals
 
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
-        if attrName in self.essentialProperties + self.essentialMethods: # or methods
+        errorText = str(self) + ' has no attribute ' + attrName
+        if attrName in self.essentialProperties + self.essentialMethods:
             return getattr(self.driver, attrName)
-        else:
-            raise AttributeError(str(self) + ' has no attribute ' + attrName)
+        elif attrName in self.implementedOptionals:
+            return getattr(self.driver, attrName)
+        # Time to fail
+        if attrName in self.optionalAttributes:
+            errorText += '\nThis is an optional attribute of {} '.format(type(self).__name__)
+            errorText += 'not implemented by this particular driver'
+        elif hasattr(self._driver_class, attrName):
+            errorText += '\nIt looks like you are trying to access a low-level attribute'
+            errorText += '\nUse ".driver.{}" to get it'.format(attrName)
+        raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
         if attrName in self.essentialProperties + self.essentialMethods: # or methods

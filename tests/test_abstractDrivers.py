@@ -13,19 +13,6 @@ import pytest
 from lightlab.equipment.abstract_drivers import Configurable, AbstractDriver
 import lightlab
 
-# def test_metaclass_init():
-#     ''' Catches incomplete API at class time, not instantiation time, not runtime
-#     '''
-#     class ARealDriver(Configurable):
-#         def query():
-#             pass
-#         def write():
-#             pass
-#     class AnAbstractDriver(Configurable, AbstractDriver):
-#         pass
-#     with pytest.raises(TypeError):
-#         class NotARealDriver(Configurable):
-#             pass
 
 def test_configurable():
     class MessagePasser(Configurable):
@@ -111,6 +98,28 @@ def test_driver_init():
     with pytest.raises(AttributeError):
         pm.driver_object.extra
 
+from lightlab.laboratory.instruments import Oscilloscope
+def test_optionals():
+    class Driver1(VISAInstrumentDriver):
+        instrument_category = Oscilloscope
+        def acquire(self): pass
+        def run(self): pass
+        def wfmDb(self): pass
+        def notInInterface(self): pass
+    class Driver2(Driver1):
+        def histogramStats(self): pass
+
+    d1 = Driver1()
+    d2 = Driver2()
+    d1.acquire()
+    with pytest.raises(AttributeError):
+        d1.histogramStats()
+    d2.histogramStats()
+    with pytest.raises(AttributeError):
+        d1.notInInterface()
+    d1.driver.notInInterface()
+    assert 'histogramStats' not in dir(d1)
+    assert 'histogramStats' in dir(d2)
 
 from lightlab import logger, log_to_screen, DEBUG
 

@@ -1,6 +1,6 @@
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import TekScopeAbstract
-from lightlab.laboratory.instruments import DSAOscilloscope
+from lightlab.laboratory.instruments import Oscilloscope
 
 import numpy as np
 
@@ -11,7 +11,7 @@ class Tektronix_DSA8300_Oscope(VISAInstrumentDriver, TekScopeAbstract):
 
         `Manual <http://www.tek.com/download?n=975655&f=190886&u=http%3A%2F%2Fdownload.tek.com%2Fsecure%2FDifferential-Channel-Alignment-Application-Online-Help.pdf%3Fnvb%3D20170404035703%26amp%3Bnva%3D20170404041203%26amp%3Btoken%3D0ccdfecc3859114d89c36>`__
     '''
-    instrument_category = DSAOscilloscope
+    instrument_category = Oscilloscope
 
     totalChans = 8
     _recLenParam = 'HORIZONTAL:MAIN:RECORDLENGTH'
