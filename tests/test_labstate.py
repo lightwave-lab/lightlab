@@ -33,17 +33,21 @@ Keithley_2400_SM.open = open_error
 instrument1 = Keithley(name="keithley1", bench=Bench1, host=Host1,
                        ports=["front_source", "rear_source"], _driver_class=Keithley_2400_SM)
 instrument2 = Instrument(name="instrument2", bench=Bench1, host=Host1, ports=["port1", "channel"])
+instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port1", "channel"])
 device1 = Device(name="device1", bench=Bench1, ports=["input", "output"])
 device2 = Device(name="device2", bench=Bench1, ports=["input", "output"])
 
 
 @pytest.fixture()
 def lab(request):
+    # The following instrument gets deleted over and over
+    instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port1", "channel"])
     lab = labstate.LabState(filename=filename)
     lab.updateHost(Host1)
     lab.updateBench(Bench1, Bench2)
     lab.insertInstrument(instrument1)
     lab.insertInstrument(instrument2)
+    lab.insertInstrument(instrument2bis)  # still allows including two instruments with the same name
     lab.insertDevice(device1)
     lab.insertDevice(device2)
 
@@ -64,13 +68,28 @@ def test_instantiate(lab):
     assert Bench1 in lab.benches.values()
     assert Host1 in lab.hosts.values()
     assert instrument1 in Bench1.instruments
+    assert instrument1.bench == Bench1
     assert instrument1 in Host1.instruments
+    assert instrument1.host == Host1
     assert instrument1 in lab.instruments
+    assert instrument2bis in lab.instruments
+    assert instrument2bis in Bench2.instruments
+    assert instrument2bis in Host1.instruments
     assert device1 in lab.devices
     assert {device1: "input", instrument1: "rear_source"} in lab.connections
     assert {device1: "output", instrument2: "port1"} in lab.connections
     assert {device1: "input", instrument1: "front_source"} not in lab.connections
     assert {device1: "output", instrument2: "channel"} not in lab.connections
+
+
+def test_delete(lab):
+    b = instrument2bis.bench
+    h = instrument2bis.host
+    instrument2bis.bench = None
+    instrument2bis.host = None
+    assert instrument2bis not in b
+    assert instrument2bis not in h
+    assert instrument2bis not in lab.instruments
 
 
 def test_savestate(lab):
@@ -204,3 +223,12 @@ def test_experiment_invalid_connection(lab):
 
     test_experiment = TestExperiment(lab=lab)
     assert not test_experiment.is_valid(reset=True)
+
+
+def test_remove_instrument_by_name(lab):
+    lab.deleteInstrumentFromName("instrument2")
+    assert instrument2 in lab.instruments
+    assert instrument2bis in lab.instruments
+    lab.deleteInstrumentFromName("instrument2", force=True)
+    assert instrument2 not in lab.instruments
+    assert instrument2bis not in lab.instruments
