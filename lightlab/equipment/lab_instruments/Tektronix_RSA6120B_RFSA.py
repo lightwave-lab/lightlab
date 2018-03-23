@@ -3,6 +3,7 @@ from lightlab import visalogger as logger
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import RFSpectrumAnalyzer
+import numpy as np
 
 class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     ''' TEKTRONIX RSA6120B, RF spectrum analyzer
