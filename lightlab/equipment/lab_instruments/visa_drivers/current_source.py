@@ -5,7 +5,7 @@ import visa as pyvisa
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import MultiModalSource, ElectricalSource
 from lightlab.util import io
-from lightlab import logger
+from lightlab import visalogger as logger
 
 
 class CurrentSources(VISAInstrumentDriver):

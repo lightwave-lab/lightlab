@@ -1,5 +1,5 @@
 from ..visa_connection import VISAObject
-from lightlab import logger
+from lightlab import visalogger as logger
 
 
 class VISAInstrumentDriver(VISAObject):

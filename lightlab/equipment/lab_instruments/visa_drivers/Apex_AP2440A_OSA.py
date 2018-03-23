@@ -3,7 +3,7 @@ import numpy as np
 from lightlab.util.data import Spectrum
 import pyvisa
 import time
-from lightlab import logger
+from lightlab import visalogger as logger
 import socket
 from contextlib import closing
 WIDEST_WLRANGE = [1505.765, 1572.418]

@@ -2,7 +2,7 @@ from . import VISAInstrumentDriver
 import numpy as np
 from lightlab.util import io
 from lightlab.util.data import Spectrum
-from lightlab import logger
+from lightlab import visalogger as logger
 import time
 
 
