@@ -251,25 +251,31 @@ class Instrument(Node):
 
     def __dir__(self):
         ''' For autocompletion in ipython '''
+        return super().__dir__() + self.essentialProperties \
+            + self.essentialMethods + self.implementedOptionals
+
+    @property
+    def implementedOptionals(self):
         implementedOptionals = list()
         for opAttr in self.optionalAttributes:
             if hasattr(self._driver_class, opAttr):
                 implementedOptionals.append(opAttr)
-        return super().__dir__() + self.essentialProperties + self.essentialMethods + implementedOptionals
+        return implementedOptionals
 
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
-        if attrName in self.essentialProperties + self.essentialMethods: # or methods
+        errorText = str(self) + ' has no attribute ' + attrName
+        if attrName in self.essentialProperties + self.essentialMethods:
             return getattr(self.driver, attrName)
-        elif attrName in self.optionalAttributes:
-            try:
-                return getattr(self.driver, attrName)
-            except AttributeError as err:
-                msg = err.args[0]
-                err.args = (msg + '\nThis is an optional attribute not implemented by this particular driver',) + err.args[1:]
-                raise err
-        else:
-            raise AttributeError(str(self) + ' has no attribute ' + attrName)
+        elif attrName in self.implementedOptionals:
+            return getattr(self.driver, attrName)
+        # Time to fail
+        if attrName in self.optionalAttributes:
+            errorText += '\nThis is an optional attribute not implemented by this particular driver'
+        elif hasattr(self.driver, attrName):
+            errorText += '\nIt looks like you are trying to access a low-level attribute'
+            errorText += '\nUse ".driver" to get it'
+        raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
         if attrName in self.essentialProperties + self.essentialMethods: # or methods
