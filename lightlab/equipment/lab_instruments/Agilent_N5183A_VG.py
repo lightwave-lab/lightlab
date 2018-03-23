@@ -1,16 +1,21 @@
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.laboratory.instruments import Clock
+
+from lightlab import logger
 
 class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
     ''' Agilent N5183A Vector Generator
 
-        Manual: http://www.manualsbase.com/manual/608672/portable_generator/agilent_technologies/n5183a_mxg/
+        `Manual <http://www.manualsbase.com/manual/608672/portable_generator/agilent_technologies/n5183a_mxg/>`__
+
+        Todo:
+            Clock interface does not see sweepSetup and sweepEnable
     '''
-    # def __init__(self, address=10, hostname='andromeda'): # Add GPIB address and hostname to AgilentVectorGenerator
-    #     super().__init__('The Agilent', address, hostNS[hostname])
-    def __init__(self, name='The vector generator', address=None, **kwargs):
-        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-        Configurable.__init__(self)
+    instrument_category = Clock
+
+    def __init__(self, name='The 40GHz clock', address=None, **kwargs):
+        super().__init__(name=name, address=address, **kwargs)
 
     def amplitude(self, amp=None):
         ''' Amplitude is in dBm
@@ -45,10 +50,10 @@ class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
         '''
         if freq is not None:
             if freq > 40e9:
-                print('Warning: Agilent N5183 ony goes up to 40GHz, given {}GHz.'.format(freq / 1e9))
+                logger.warning('Agilent N5183 ony goes up to 40GHz, given {}GHz.'.format(freq / 1e9))
                 freq = 40e9
             if self.sweepEnable():
-                print('Warning: Agilent N5183 was sweeping when you set frequency, moving to CW mode')
+                logger.warning('Agilent N5183 was sweeping when you set frequency, moving to CW mode')
             self.setConfigParam('FREQ:CW', freq)  # Setting this automatically brings to CW mode
             self.sweepEnable(False)               # So we need to update this object's internal state too
         return self.getConfigParam('FREQ:CW')

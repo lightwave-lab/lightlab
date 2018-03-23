@@ -2,20 +2,20 @@ from lightlab import visalogger as logger
 
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.laboratory.instruments import RFSpectrumAnalyzer
 
 class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     ''' TEKTRONIX RSA6120B, RF spectrum analyzer
 
-        `MANUAL <http://www.giakova.com/siti/GIAKOVA/img/upload/Prodotti/file_1/RSA5000_MANUALE.pdf>`_
+        `Manual <http://www.giakova.com/siti/GIAKOVA/img/upload/Prodotti/file_1/RSA5000_MANUALE.pdf>`_
 
         Fairly simple class for getting RF spectra.
         The RSA6120 has a lot of advanced functionality, like spectrograms, which could be implemented later.
     '''
+    instrument_category = RFSpectrumAnalyzer
 
     def __init__(self, name='The RF spectrum analyzer', address=None, **kwargs):
-        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-        Configurable.__init__(self)
-
+        super().__init__(name=name, address=address, **kwargs)
 
     def startup(self):
         # Turn off the measurements that are not supported by this class

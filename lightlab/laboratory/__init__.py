@@ -44,7 +44,7 @@ class Hashable(object):
         klassnames = []
         klassnames.append(self.__class__.__name__.lstrip('_'))
 
-        for base in self.__class__.__bases__:
+        for base in self.__class__.mro():
             klassnames.append(base.__name__.lstrip('_'))
 
         state = self.__dict__.copy()

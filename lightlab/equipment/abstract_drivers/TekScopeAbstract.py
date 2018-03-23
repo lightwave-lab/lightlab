@@ -3,15 +3,11 @@ import numpy as np
 from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
 
-# Circular dependency. Instead it is imported within __init__.
-# Python resolves this but Sphinx does not!
-# from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
-
 from .configurable import Configurable
+from . import AbstractDriver
 
 
-
-class TekScopeAbstract(Configurable):
+class TekScopeAbstract(Configurable, AbstractDriver):
     '''
         General class for several Tektronix scopes, including
 
@@ -35,22 +31,16 @@ class TekScopeAbstract(Configurable):
     # This should be overloaded by the particular driver
     totalChans = None
 
-    __recLenParam = None
-    __clearBeforeAcquire = None
-    __measurementSourceParam = None
-    __runModeParam = None
-    __runModeSingleShot = None
-
-    def __init__(self, *args, **kwargs):
-        # These lines require a circular import dependency, so it is done within the method
-        from lightlab.equipment.lab_instruments.visa_drivers import VISAInstrumentDriver
-        if not isinstance(self, VISAInstrumentDriver):
-            raise TypeError(str(type(self)) + ' is abstract and cannot be initialized')
-        super().__init__(*args, **kwargs)
+    _recLenParam = None
+    _clearBeforeAcquire = None
+    _measurementSourceParam = None
+    _runModeParam = None
+    _runModeSingleShot = None
+    _yScaleParam = None
 
     def startup(self):
         # Make sure sampling and data transferring are in a consistent state
-        initNpts = self.getConfigParam(self.__recLenParam)
+        initNpts = self.getConfigParam(self._recLenParam)
         self.acquire(nPts=initNpts)
 
     def timebaseConfig(self, avgCnt=None, duration=None, position=None, nPts=None):
@@ -72,7 +62,7 @@ class TekScopeAbstract(Configurable):
         if position is not None:
             self.setConfigParam('HORIZONTAL:MAIN:POSITION', position)
         if nPts is not None:
-            self.setConfigParam(self.__recLenParam, nPts)
+            self.setConfigParam(self._recLenParam, nPts)
             self.setConfigParam('DATA:START', 1)
             self.setConfigParam('DATA:STOP', nPts)
 
@@ -80,7 +70,7 @@ class TekScopeAbstract(Configurable):
         presentSettings['avgCnt'] = self.getConfigParam('ACQUIRE:NUMAVG')
         presentSettings['duration'] = self.getConfigParam('HORIZONTAL:MAIN:SCALE')
         presentSettings['position'] = self.getConfigParam('HORIZONTAL:MAIN:POSITION')
-        presentSettings['nPts'] = self.getConfigParam(self.__recLenParam)
+        presentSettings['nPts'] = self.getConfigParam(self._recLenParam)
         return presentSettings
 
     def acquire(self, chans=None, **kwargs):
@@ -111,9 +101,9 @@ class TekScopeAbstract(Configurable):
             thisState = 1 if ich in chans else 0
             self.setConfigParam('SELECT:CH' + str(ich), thisState)
 
-        isSampling = kwargs.get(avgCnt, 0) == 1
-        self.__setupSingleShot(isSampling)
-        self.__triggerAcquire()
+        isSampling = kwargs.get('avgCnt', 0) == 1
+        self._setupSingleShot(isSampling)
+        self._triggerAcquire()
         wfms = [None] * len(chans)
         for i, c in enumerate(chans):
             vRaw = self.__transferData(c)
@@ -122,7 +112,7 @@ class TekScopeAbstract(Configurable):
 
         return wfms
 
-    def __setupSingleShot(self, isSampling, forcing=False):
+    def _setupSingleShot(self, isSampling, forcing=False):
         ''' Set up a single shot acquisition.
 
                 Not running continuous, and
@@ -144,10 +134,10 @@ class TekScopeAbstract(Configurable):
                             'SAMPLE' if isSampling else 'AVERAGE',
                             forceHardware=forcing)
 
-    def __triggerAcquire(self):
+    def _triggerAcquire(self):
         ''' Sends a signal to the scope to wait for a trigger event. Waits until acquisition completes
         '''
-        if self.__clearBeforeAcquire:
+        if self._clearBeforeAcquire:
             self.write('ACQUIRE:DATA:CLEAR') # clear out average history
         self.write('ACQUIRE:STATE 1') # activate the trigger listener
         self.wait(30000) # Bus and entire program stall until acquisition completes. Maximum of 30 seconds
@@ -166,18 +156,18 @@ class TekScopeAbstract(Configurable):
         chStr = 'CH' + str(chan)
         self.setConfigParam('DATA:ENCDG', 'ASCII')
         self.setConfigParam('DATA:SOURCE', chStr)
-        self.open(self)
+        self.open()
         try:
             voltRaw = self.mbSession.query_ascii_values('CURV?')
         except pyvisa.VisaIOError as err:
             logger.error('Problem during query_ascii_values(\'CURV?\')')
             try:
-                self.close(self)
+                self.close()
             except:
                 logger.error('Failed to close!', self.address)
                 pass
             raise err
-        self.close(self)
+        self.close()
         return voltRaw
 
     def __scaleData(self, voltRaw):
@@ -195,7 +185,7 @@ class TekScopeAbstract(Configurable):
         '''
         get = lambda param: float(self.getConfigParam('WFMOUTPRE:' + param, forceHardware=True))
         voltage = (np.array(voltRaw) - get('YZERO')) \
-                  * get(self.yScaleParam) \
+                  * get(self._yScaleParam) \
                   + get('YOFF')
 
         timeDivision = float(self.getConfigParam('HORIZONTAL:MAIN:SCALE'))
@@ -230,8 +220,8 @@ class TekScopeAbstract(Configurable):
             Args:
                 continuousRun (bool)
         '''
-        self.setConfigParam(self.__runModeParam,
-                            'RUNSTOP' if continuousRun else self.__runModeSingleShot,
+        self.setConfigParam(self._runModeParam,
+                            'RUNSTOP' if continuousRun else self._runModeSingleShot,
                             forceHardware=True)
         if continuousRun:
             self.setConfigParam('ACQUIRE:STATE', 1, forceHardware=True)
@@ -246,7 +236,7 @@ class TekScopeAbstract(Configurable):
         if measIndex == 0:
             raise ValueError('measIndex is 1-indexed')
         measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
-        self.setConfigParam(measSubmenu + self.__measurementSourceParam, chStr)
+        self.setConfigParam(measSubmenu + self._measurementSourceParam, chStr)
         self.setConfigParam(measSubmenu + 'TYPE', measType.upper())
         self.setConfigParam(measSubmenu + 'STATE', 1)
 
@@ -259,7 +249,7 @@ class TekScopeAbstract(Configurable):
                 (float)
         '''
         measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
-        return float(self.query(measSubmenu + 'VALUE?'))
+        return float(self.getConfigParam(measSubmenu + 'VALUE', forceHardware=True))
 
     def autoAdjust(self, chans):
         ''' Adjusts offsets and scaling so that waveforms are not clipped '''

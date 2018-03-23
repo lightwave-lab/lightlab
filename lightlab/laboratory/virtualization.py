@@ -237,7 +237,7 @@ class DualInstrument(Virtualizable):
             violated = []
             allowed = real_obj.essentialMethods + real_obj.essentialProperties
             for attr in dir(type(virt_obj)):
-                if attr not in allowed:
+                if attr not in allowed and attr[:2] != '__':
                     violated.append(attr)
             if len(violated) > 0:
                 logger.warning('Virtual instrument ({}) violates the \
