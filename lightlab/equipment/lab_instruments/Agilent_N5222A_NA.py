@@ -5,6 +5,8 @@ from lightlab.laboratory.instruments import NetworkAnalyzer
 import numpy as np
 import time
 from lightlab.util.data import Spectrum, FunctionBundle
+import matplotlib.pyplot as plt
+from IPython import display
 
 class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 
@@ -196,6 +198,7 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 #       return freqs, dbm
         return Spectrum(freqs, dbm)
 
+    # TODO: get this out of here.
     def multiSpectra(self, nSpect=1, livePlot=False):
         bund = FunctionBundle()
         for iSpect in range(nSpect):
