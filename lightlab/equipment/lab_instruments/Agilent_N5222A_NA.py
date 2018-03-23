@@ -1,15 +1,16 @@
-import numpy as np
-import time
-
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.laboratory.instruments import NetworkAnalyzer
+
+import numpy as np
+import time
 from lightlab.util.data import Spectrum, FunctionBundle
 
 class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 
     ''' Agilent PNA N5222A , RF network analyzer
 
-        `MANUAL <http://na.support.keysight.com/pna/help/PNAHelp9_90.pdf>`_
+        `Manual <http://na.support.keysight.com/pna/help/PNAHelp9_90.pdf>`_
 
         WARNING: The address is the same as the slow function generator, so don't use both on andromeda at the same time.
 
@@ -21,6 +22,8 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
             When setting up general, you have to setup sweep before setting CW frequency,
             or else the CW freq becomes the start frequency. Why? See hack in sweepSetup.
     '''
+    instrument_category = NetworkAnalyzer
+
     def __init__(self, name='The network analyzer', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self, headerIsOptional=False)

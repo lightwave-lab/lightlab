@@ -1,11 +1,12 @@
+from . import VISAInstrumentDriver
+from lightlab.equipment.abstract_drivers import MultiModalSource, ElectricalSource
+from lightlab.laboratory.instruments import CurrentSource
+
 import numpy as np
 import time
 import visa as pyvisa
-
-from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import MultiModalSource, ElectricalSource
 from lightlab.util import io
-from lightlab import logger
+from lightlab import visalogger as logger
 
 
 class CurrentSources(VISAInstrumentDriver):
@@ -24,6 +25,8 @@ class CurrentSources(VISAInstrumentDriver):
                 Labview DAQ listener is hard coded for the first 12 channels only (of 32)
                 same for Labview TCPIP listener
     """
+    instrument_category = CurrentSource
+
     voltBounds = [0, 10]  # in volts, artificially constrain this if you want to be safe
     v2maCoef = 4  # current (milliamps) = v2maCoef * voltage (volts)
     fullChannelNums = 32  # number of dimensions that the current sources are expecting
@@ -49,8 +52,8 @@ class CurrentSources(VISAInstrumentDriver):
     # The above is the old versioin of initialization, and the below is the new version!
     def __init__(self, name='The current source', address=None, **kwargs):
         logger.warning('This class to be deprecated. Use NI_PCI_6723.')
-        logger.warning('Backwards incompatibilities:\n',
-            'No stateDict argument in __init__\n',
+        logger.warning('Backwards incompatibilities:\n' +
+            'No stateDict argument in __init__\n' +
             'No tuneState property. Use setChannelTuning and getChannelTuning')
 
         self.useChans = kwargs.pop("useChans", None)
@@ -243,15 +246,16 @@ class CurrentSources(VISAInstrumentDriver):
 class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
     ''' Uses abstract classes. Roughly speaking
 
-            :py:class:`~lightlab.equipment.lab_instruments.visa_drivers.VISAInstrumentDriver`
+            :py:class:`~lightlab.equipment.lab_instruments.VISAInstrumentDriver`
             provides communication to the board
 
-            :py:class:`~lightlab.equipment.abstract_drivers.electrical_sources.MultiModalSource`
+            :py:class:`~lightlab.equipment.abstract_drivers.MultiModalSource`
             provides unit support and range checking
 
-            :py:class:`~lightlab.equipment.abstract_drivers.electrical_sources.ElectricalSource`
+            :py:class:`~lightlab.equipment.abstract_drivers.ElectricalSource`
             provides *notion of state* (stateDict) and channel support
     '''
+    instrument_category = CurrentSource
 
     # The natural unit is volts so don't confuse
     supportedModes = MultiModalSource.supportedModes - {'baseunit'}
@@ -264,19 +268,11 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
     targetPort = 16022  # TCPIP server port; charge of an electron (Coulombs)
     waitMsOnWrite = 500 # Time to settle after tuning
 
-    def __init__(self, name='The current source', **kwargs):
-        ESkwargs = dict()
-        for key in ('useChans',):
-            ESkwargs[key] = kwargs.pop(key, None)
-        VISAkwargs = dict()
-        for key in ('name', 'address'):
-            VISAkwargs[key] = kwargs.pop(key, None)
-        VISAkwargs['tempSess'] = True
-        remainKwargs = kwargs
 
-        # MultiModalSource has no initializer
-        ElectricalSource.__init__(self, **ESkwargs, **remainKwargs)
-        VISAInstrumentDriver.__init__(self, **VISAkwargs, **remainKwargs)
+    def __init__(self, name='The current source', address=None, useChans=None, **kwargs):
+        kwargs['tempSess'] = kwargs.get('tempSess', True)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        ElectricalSource.__init__(self, useChans=useChans)
 
     def startup(self):
         self.off()

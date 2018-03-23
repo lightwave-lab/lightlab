@@ -1,24 +1,25 @@
 from . import VISAInstrumentDriver
-from lightlab.util import io
+from lightlab.equipment.abstract_drivers import PowerMeterAbstract
+from lightlab.laboratory.instruments import PowerMeter
 
+class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
+    ''' HP8152A power meter
 
-class HP_8152A_PM(VISAInstrumentDriver):
-    """ HP8152A power meter
+        `Manual <http://www.lightwavestore.com/product_datasheet/OTI-OPM-L-030C_pdf4.pdf>`__
 
-        `Manual <http://www.lightwavestore.com/product_datasheet/OTI-OPM-L-030C_pdf4.pdf>`_
-    """
-    overrideReadDoublingCheck = False  # This weird thing that happens sometimes is dealt with automatically unless this is True
-    # def __init__(self, address=18, hostID='andromeda'):
-    #     super().__init__('The power meter', address, hostNS[hostID])
+        Todo:
+            Maybe allow a rapid continuous mode that just spits out numbers ('T0')
+    '''
+    instrument_category = PowerMeter
+    channelDescriptions = {1: 'A', 2: 'B', 3: 'A/B'}
+    doReadDoubleCheck = False
 
-    def __init__(self, name='The power meter', address=None, **kwargs):
+    def __init__(self, name='The HP power meter', address=None, **kwargs):
         super().__init__(name=name, address=address, **kwargs)
-        # self.selectedChan = int(self.query('CH?'))
 
     def startup(self):
         self.close()
         self.write('T1')  # single shot mode to make sure averaging occurs correctly
-        # TODO: allow a rapid continuous mode that just spits out numbers
 
     def open(self):
         super().open()
@@ -27,10 +28,17 @@ class HP_8152A_PM(VISAInstrumentDriver):
 
     @staticmethod
     def proccessWeirdRead(readString):
-        ''' we assume that the values encountered are negative and have two digits before and after decimal point
+        ''' The HP 8152 *sometimes* sends double characters.
+            This tries to fix it based on reasonable value ranges.
+
+            We assume that the values encountered have a decimal point
+            and have two digits before and after the decimal point
+
+            Arg:
+                readString (str): what is read from query('TRG')
 
             Returns:
-                (float): the dB value
+                (str): checked string
         '''
         # is there a negative sign?
         unsignStrArr = readString.split('-')
@@ -54,34 +62,36 @@ class HP_8152A_PM(VISAInstrumentDriver):
         val = onesHundredthsVals[0] + .01 * onesHundredthsVals[1]
         if minus:
             val *= -1
-        return val
+        return str(val)
 
     def query(self, *args, **kwargs):
+        ''' Conditionally check for read character doubling
+        '''
         retRaw = super().query(*args, **kwargs)
-        return retRaw
-
-        # Check for this weird thing where characters are printed twice
+        if self.doReadDoubleCheck:
+            return self.proccessWeirdRead(retRaw)
+        else:
+            return retRaw
 
     def powerDbm(self, channel=1):
-        """Returns detected optical power in dB on the specified channel
-        :param: channel: Power Meter channel (1 or 2)
-        :type: channel: int
-        :rtype: double
-        """
-        if channel not in range(1, 4):
-            raise io.ChannelError('Not a valid PowerMeter channel. Use 1(A), 2(B), or 3(A/B)')
+        ''' The detected optical power in dB on the specified channel
+
+            Args:
+                channel (int): Power Meter channel
+
+            Returns:
+                (double): Power in dB or dBm
+        '''
+        self.validateChannel(channel)
         for trial in range(10):  # Sometimes it gets out of range, so we have to try a few times
             self.write('CH' + str(channel))
             powStr = self.query('TRG')
-            if self.overrideReadDoublingCheck:
-                v = self.proccessWeirdRead(powStr)
-            else:
-                v = float(powStr)
+            v = float(powStr)
             if abs(v) < 999:  # check if it's reasonable
-                self.selectedChan = channel
                 return v
+            else:
+                continue
         else:
-            raise Exception('Power meter values are unreasonable')
+            raise Exception('Power meter values are unreasonable.'
+                            ' Got {}'.format(v))
 
-    def powerLin(self, channel=1):
-        return 10 ** (self.powerDbm(channel) / 10)

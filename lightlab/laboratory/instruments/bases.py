@@ -4,7 +4,7 @@ This module provides an interface for instruments in the lab and virtual ones.
 from lightlab.laboratory import Node
 from lightlab.laboratory.devices import Device
 import lightlab.laboratory.state as labstate
-from lightlab.equipment.lab_instruments import VISAObject, DefaultDriver
+from lightlab.equipment.visa_bases import VISAObject, DefaultDriver
 
 from lightlab import logger
 import os
@@ -163,6 +163,8 @@ class Bench(Node):
     def removeInstrument(self, *instruments):
         # TODO Remove all connections
         for instrument in instruments:
+            if type(instrument) is str:
+                logger.warn('Cannot remove by name string. Use the object')
             try:
                 self.instruments.remove(instrument)
             except ValueError as err:
@@ -232,13 +234,16 @@ class Instrument(Node):
         self.__host = kwargs.pop("host", None)
         self.ports = kwargs.pop("ports", dict())
 
-        driver_klass = kwargs.get('_driver_class', None)
-        for attrName in self.essentialMethods + self.essentialProperties:
-            if attrName in kwargs.keys():
-                raise AttributeError('Ambiguous attributes between Instrument and its driver: ' + attrName)
-            if driver_klass is not None:
-                if not hasattr(driver_klass, attrName):
-                    raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
+        self.__driver_object = kwargs.pop("driver_object", None)
+        if self.__driver_object is not None:
+            self._driver_class = type(self.__driver_object)
+        # driver_klass = kwargs.get('_driver_class', None)
+        # for attrName in self.essentialMethods + self.essentialProperties:
+        #     if attrName in kwargs.keys():
+        #         raise AttributeError('Ambiguous attributes between Instrument and its driver: ' + attrName)
+        #     if driver_klass is not None:
+        #         if not hasattr(driver_klass, attrName):
+        #             raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
 
         super().__init__(_name=name,
                          _id_string=id_string,
@@ -253,7 +258,7 @@ class Instrument(Node):
         if attrName in self.essentialProperties + self.essentialMethods: # or methods
             return getattr(self.driver, attrName)
         else:
-            return super().__getattr__(attrName)
+            raise AttributeError(str(self) + ' has no attribute ' + attrName)
 
     def __setattr__(self, attrName, newVal):
         if attrName in self.essentialProperties + self.essentialMethods: # or methods
@@ -296,14 +301,17 @@ class Instrument(Node):
     @property
     def driver_object(self):
         if self.__driver_object is None:
-            kwargs = dict()
-            for kwarg in ["useChans", "stateDict", "sourceMode"]:
-                try:
-                    kwargs[kwarg] = getattr(self, kwarg)
-                except AttributeError:
-                    pass
-            driver_class = self.driver_class
-            self.__driver_object = driver_class(
+            try:
+                kwargs = self.driver_kwargs
+            except AttributeError:  # Fall back to the jank version where we try to guess what is important
+                kwargs = dict()
+                for kwarg in ["useChans", "stateDict", "sourceMode"]:
+                    try:
+                        kwargs[kwarg] = getattr(self, kwarg)
+                    except AttributeError:
+                        pass
+            kwargs['directInit'] = True
+            self.__driver_object = self.driver_class(
                 name=self.name, address=self.address, **kwargs)
         return self.__driver_object
 
@@ -406,172 +414,3 @@ class Instrument(Node):
 
 class NotFoundError(RuntimeError):
     pass
-
-
-
-# Aliases
-# TODO VERIFY CODE BELOW
-
-class PowerMeter(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['powerDbm',
-        'powerLin']
-
-
-class SourceMeter(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['setCurrent',
-        'getCurrent',
-        'measVoltage',
-        'setProtectionVoltage',
-        'setProtectionCurrent',
-        'enable']
-
-    def hardware_warmup(self):
-        self.enable(True)
-
-    def hardware_cooldown(self):
-        self.enable(False)
-
-
-class Keithley(SourceMeter):
-    essentialMethods = SourceMeter.essentialMethods + \
-        ['setPort',
-        'setCurrentMode',
-        'setVoltageMode',
-        'getCurrent',
-        'getVoltage',
-        'setVoltage',
-        'measCurrent']
-
-
-class VectorGenerator(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['amplitude',
-        'frequency',
-        'enable',
-        'modulationEnable',
-        'addNoise',
-        'setPattern',
-        'digiMod',
-        'carrierMod',
-        'listEnable',
-        'sweepSetup',
-        'sweepEnable']
-
-
-class Clock(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['on']
-    essentialProperties = Instrument.essentialProperties + \
-        ['frequency']
-
-
-class CurrentSource(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['setChannelTuning',
-        'getChannelTuning',
-        'off']
-    # Must init with `useChans` somehow
-
-
-class FunctionGenerator(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['frequency',
-        'waveform',
-        'amplAndOffs',
-        'duty']
-
-
-class LaserSource(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['setChannelEnable',
-        'getChannelEnable',
-        'setChannelWls',
-        'getChannelWls',
-        'setChannelPowers',
-        'getChannelPowers',
-        'getAsSpectrum',
-        'off']
-    essentialProperties = Instrument.essentialProperties + \
-        ['enableState',
-        'wls',
-        'powers']
-
-
-class OpticalSpectrumAnalyzer(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['spectrum']
-    essentialProperties = Instrument.essentialProperties + \
-        ['wlRange']
-
-
-class Oscilloscope(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['acquire',
-        'wfmDb',
-        'run']
-
-    def hardware_cooldown(self):
-        ''' Keep it running continuously in case you are in lab and want to watch
-        '''
-        self.run()
-
-class CommunicationAnalyzerScope(Oscilloscope):
-    pass
-
-
-class DigitalPhosphorScope(Oscilloscope):
-    pass
-
-
-class PulsePatternGenerator(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['setPrbs',
-        'setPattern',
-        'getPattern',
-        'on',
-        'syncSource',
-        'amplAndOffs']
-
-
-class RFSpectrumAnalyzer(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['getMeasurements',
-        'setMeasurement',
-        'run',
-        'sgramInit',
-        'sgramTransfer',
-        'spectrum']
-
-
-class VariableAttenuator(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['on',
-        'off']
-    essentialProperties = Instrument.essentialProperties + \
-        ['attenDB',
-        'attenLin']
-
-
-class NetworkAnalyzer(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['amplitude',
-        'frequency',
-        'enable',
-        'run',
-        'sweepSetup',
-        'sweepEnable',
-        'triggerSetup',
-        'getSwpDuration',
-        'measurementSetup',
-        'spectrum',
-        'multiSpectra']
-
-
-class ArduinoInstrument(Instrument):
-    essentialMethods = Instrument.essentialMethods + \
-        ['write',
-        'query']
-
-
