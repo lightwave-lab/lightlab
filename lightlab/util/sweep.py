@@ -23,6 +23,8 @@ class Sweeper(object):
     def __init__(self):
         self.data = None
         self.savefile = None
+        self.plotOptions = dict()
+        self.monitorOptions = dict()
 
     def gather(self):
         print('gather method must be overloaded in subclass')
