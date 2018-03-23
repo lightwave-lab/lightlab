@@ -638,7 +638,7 @@ class MeasuredFunction(object):
         return self * (1 / other)
 
     def __rdiv__(self, other):
-        raise NotImplemented('MeasuredFunction does not support right division. If DB, try subtraction')
+        raise NotImplementedError('MeasuredFunction does not support right division. If DB, try subtraction')
 
     def __eq__(self, other):
         if isinstance(self, type(other)):

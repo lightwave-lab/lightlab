@@ -17,6 +17,9 @@ from ..util import io
 from lightlab import logger
 
 class Sweeper(object):
+    plotOptions = None
+    monitorOptions = None
+
     def __init__(self):
         self.data = None
         self.savefile = None
@@ -66,8 +69,8 @@ class Sweeper(object):
         '''
         for k, v in kwargs.items():
             if k not in self.plotOptions.keys():
-                logger.warning(k, 'is not a valid plot option.')
-                logger.warning('Valid ones are', self.plotOptions.keys())
+                logger.warning(k + ' is not a valid plot option.')
+                logger.warning('Valid ones are {}'.format(self.plotOptions.keys()))
             else:
                 self.plotOptions[k] = v
         return self.plotOptions
@@ -88,8 +91,8 @@ class Sweeper(object):
         '''
         for k, v in kwargs.items():
             if k not in self.monitorOptions.keys():
-                logger.warning(k, 'is not a valid monitor option.')
-                logger.warning('Valid ones are', self.monitorOptions.keys())
+                logger.warning(k + ' is not a valid monitor option.')
+                logger.warning('Valid ones are {}'.format(self.monitorOptions.keys()))
             else:
                 self.monitorOptions[k] = v
         return self.monitorOptions
@@ -177,7 +180,7 @@ class NdSweeper(Sweeper):
                         pass
         try:
             if soakTime is not None:
-                logger.debug('Soaking for', soakTime, 'seconds.')
+                logger.debug('Soaking for {} seconds.'.format(soakTime))
                 for actu in self.actuate.values():
                     f = actu[0]
                     x = actu[1][0]
@@ -341,13 +344,13 @@ class NdSweeper(Sweeper):
                 dataOfPt = OrderedDict()
                 for datKey, datVal in self.data.items():
                     if np.any(datVal.shape != self.swpShape):
-                        logger.debug('Data member', datKey, 'is wrong size for reparsing', pk, '. Skipping.')
+                        logger.debug('Data member {} is wrong size for reparsing {}. Skipping.'.format(datKey, pk))
                     else:
                         dataOfPt[datKey] = datVal[index]
                 try:
                     tempDataMat[index] = pFun(dataOfPt)
                 except KeyError:
-                    logger.debug('Parser', pk, 'depends on unpresent data. Skipping.')
+                    logger.debug('Parser {} depends on unpresent data. Skipping.'.format(pk))
                     break
             else:
                 self.data[pk] = tempDataMat
@@ -652,7 +655,6 @@ class NdSweeper(Sweeper):
     def load(self, savefile=None):
         super().load(savefile)
         self._recalcSwpShape()
-        logger.debug(self.swpShape)
 
 def simpleSweep(actuate, domain, measure=None):
     ''' Basic sweep in one dimension, without function keys, parsing, or plotting.
