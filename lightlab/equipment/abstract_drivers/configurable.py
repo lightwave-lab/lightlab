@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import dpath
 import json
 from numpy import floor
+from pathlib import Path
 
 from lightlab.util.io import lightlabDevelopmentDir
 defaultFileDir = lightlabDevelopmentDir / 'savedConfigDefaults/'
@@ -154,8 +155,8 @@ class TekConfig(object):
         ret.transfer(full, subgroup=subgroup)
         return ret
 
-    @staticmethod
-    def __parseShorthand(setResponse):
+    @classmethod
+    def __parseShorthand(cls, setResponse):
         ''' Turns shorthand multi-command strings into list of proper command tuples
         '''
         pairs = setResponse.split(';')
@@ -168,11 +169,11 @@ class TekConfig(object):
             if len(words) > 2:
                 print('Warning 2-value returns not handled by TekConfig class. Ignoring...')
                 print(*words)
-            if cmdLeaf[0] == self.separator:
+            if cmdLeaf[0] == cls.separator:
                 pat = cmdLeaf[1:]
-                cmdGrp = self.separator.join(pat.split(self.separator)[:-1])
+                cmdGrp = cls.separator.join(pat.split(cls.separator)[:-1])
             else:
-                pat = cmdGrp + self.separator + cmdLeaf
+                pat = cmdGrp + cls.separator + cmdLeaf
             commands[i] = (pat, val)
         return commands
 
