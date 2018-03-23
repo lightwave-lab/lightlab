@@ -201,9 +201,9 @@ class CurrentSources(VISAInstrumentDriver):
         if self.mode == 'volt':
             setVoltage = value
         elif self.mode == 'milliamp':
-            setVoltage = value / CurrentSources.v2iCoef
+            setVoltage = value / CurrentSources.v2maCoef
         elif self.mode == 'mwperohm':  # TODO I think this formula is in the wrong units
-            setVoltage = np.sqrt(value * 1e3) / CurrentSources.v2iCoef
+            setVoltage = np.sqrt(value * 1e3) / CurrentSources.v2maCoef
         return setVoltage
 
     def volt2val(self, volt):
@@ -213,9 +213,9 @@ class CurrentSources(VISAInstrumentDriver):
         if self.mode == 'volt':
             setValue = volt
         elif self.mode == 'milliamp':
-            setValue = volt * CurrentSources.v2iCoef
+            setValue = volt * CurrentSources.v2maCoef
         elif self.mode == 'mwperohm':
-            setValue = (volt * CurrentSources.v2iCoef) ** 2 / 1e3
+            setValue = (volt * CurrentSources.v2maCoef) ** 2 / 1e3
         return setValue
 
     def off(self):
@@ -256,7 +256,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
     v2maCoef = 4  # current (milliamps) = v2maCoef * voltage (volts)
 
     exceptOnRangeError = True # If False, it will constrain it and print a warning
-    maxChannel = 32  # number of dimensions that the current sources are expecting
+    fullChannelNums = 32  # number of dimensions that the current sources are expecting
     targetPort = 16022  # TCPIP server port; charge of an electron (Coulombs)
     waitMsOnWrite = 500 # Time to settle after tuning
 

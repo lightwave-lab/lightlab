@@ -466,7 +466,10 @@ class Configurable(AbstractDriver):
         allSetCmds = allConfig.getList('', asCmd=True)
 
         cfgBuild = TekConfig()
-        oldTimeout = self.timeout
+        try:
+            oldTimeout = self.timeout
+        except AttributeError:
+            pass
         self.timeout = 1000
         for cmd in allSetCmds:
             if cmd[0][-1]  != '&': # handle the sibling subdir token
@@ -482,4 +485,4 @@ class Configurable(AbstractDriver):
         self.timeout = oldTimeout
 
         cfgBuild.save(filename)
-        logger.info('New default saved to', filename)
+        logger.info('New default saved to ' + str(filename))
