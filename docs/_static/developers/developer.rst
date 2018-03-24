@@ -252,7 +252,7 @@ Sometimes the linter is wrong. You can tell it to ignore lines by adding comment
     x = [x for x in sketchy_iterable]  # pylint: disable=not-an-iterable
     from badPractice import *  # noqa
 
-`# noqa` is going to ignore pyflakes linting, whereas `# pylint` configures `pylint` behavior.
+``# noqa`` is going to ignore pyflakes linting, whereas ``# pylint`` configures `pylint` behavior.
 
 Adding a new package
 ^^^^^^^^^^^^^^^^^^^^^
