@@ -1,31 +1,15 @@
-test-master:
+test:
   image: python:3.6
   stage: test
   tags:
   - docker-python
   - cassander
-  only:
-    - master
   script:
   - pip install -U virtualenv pip
   - python --version
   - make test
+  - make test-nb
   - make test-lint
-  - make test-nb
-
-test-dev:
-  image: python:3.6
-  stage: test
-  tags:
-  - docker-python
-  - cassander
-  except:
-    - master
-  script:
-  - pip install -U virtualenv pip
-  - python --version
-  - make test
-  - make test-nb
 
 deploy-dev:
   stage: deploy
