@@ -4,7 +4,8 @@ import pytest
 import lightlab.laboratory.state as labstate
 from lightlab.laboratory.instruments import Host, Bench, Instrument, Keithley
 from lightlab.laboratory.devices import Device
-from lightlab.laboratory.experiments import Experiment, DualFunction
+from lightlab.laboratory.experiments import Experiment
+from lightlab.laboratory.virtualization import DualFunction
 from lightlab.equipment.lab_instruments import Keithley_2400_SM
 import json
 import time

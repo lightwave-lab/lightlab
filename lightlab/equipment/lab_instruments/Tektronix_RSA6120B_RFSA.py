@@ -3,6 +3,8 @@ from lightlab import visalogger as logger
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import RFSpectrumAnalyzer
+from lightlab.util.data import Spectrum, Spectrogram
+import numpy as np
 
 class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     ''' TEKTRONIX RSA6120B, RF spectrum analyzer
@@ -116,7 +118,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         sgramMat = np.zeros((nLines, nFreqs))
 
         # Transfer data
-        logger.debug('Preparing to transfer spectrogram of shape', sgramMat.shape, '...')
+        logger.debug('Preparing to transfer spectrogram of shape {}...'.format(sgramMat.shape))
         self.__sgramLines(lineNos, container=sgramMat, debugEvery=100)
         logger.debug('Transfer complete.')
 
@@ -127,7 +129,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         tBasis = np.linspace(0, duration, nLines)
 
         # Put this in some kind of 2-D measured function structure.
-        gram = data.Spectrogram([fBasis, tBasis], sgramMat)
+        gram = Spectrogram([fBasis, tBasis], sgramMat)
 
         return gram
 
@@ -144,7 +146,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
                 if len(rawLine) > 0:
                     break
             else:
-                logger.debug('Ran out of data on line', lno)
+                logger.debug('Ran out of data on line ' + str(lno))
                 continue
             try:
                 container[i] = rawLine
@@ -199,7 +201,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         freqRangeActual[0] = float(self.getConfigParam('SPEC:FREQ:START', forceHardware=True))
         freqRangeActual[1] = float(self.getConfigParam('SPEC:FREQ:STOP', forceHardware=True))
         fBasis = np.linspace(*freqRangeActual, len(dbmRaw))
-        return data.Spectrum(fBasis, dbmRaw, inDbm=True)
+        return Spectrum(fBasis, dbmRaw, inDbm=True)
 
     def __setupMultiSpectrum(self, typAvg='average', nAvg=None):
         ''' When this is called, stored data is reset, but no new data is acquired

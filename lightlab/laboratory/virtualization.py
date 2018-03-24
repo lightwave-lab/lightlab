@@ -1,7 +1,5 @@
-import numpy as np
 from lightlab import logger
 from contextlib import contextmanager
-from lightlab.util.data import argFlatten
 
 
 ''' Module-wide variable
@@ -249,7 +247,7 @@ class DualInstrument(Virtualizable):
                 logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
         self.synced = []
 
-    @Virtualizable.virtual.setter
+    @Virtualizable.virtual.setter  # pylint: disable=no-member
     def virtual(self, toVirtual):
         ''' An alternative to context managing.
             Note that hardware_warmup will not be called,

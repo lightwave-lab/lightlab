@@ -47,7 +47,7 @@ test: testbuild
 test-lint: testbuild
 	( \
 		source venv/bin/activate; \
-		py.test --pylint -m pylint --pylint-error-types=EF lightlab; \
+		py.test --pylint --flakes --pylint-rcfile=pylintrc lightlab; \
 	)
 
 test-nb: testbuild

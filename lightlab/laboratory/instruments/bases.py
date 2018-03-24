@@ -27,7 +27,8 @@ class Host(Node):
     def __init__(self, instruments=None, *args, **kwargs):
         if instruments is None:
             instruments = list()
-        super().__init__(instruments=instruments, *args, **kwargs)
+        self.instruments = instruments
+        super().__init__(*args, **kwargs)
 
     def __contains__(self, item):
         instrument_search = item in self.instruments
@@ -190,7 +191,8 @@ class Bench(Node):
         lines.append("Instruments")
         lines.append("===========")
         if len(self.instruments) > 0:
-            lines.extend(["   {} ({})".format(str(instrument), str(instrument.host)) for instrument in self.instruments])
+            lines.extend(["   {} ({})".format(str(instrument), str(instrument.host))
+                          for instrument in self.instruments])
         else:
             lines.append("   No instruments.")
         lines.append("=======")
@@ -207,7 +209,7 @@ class Bench(Node):
         return "Bench {}".format(self.name)
 
 
-#TODO add instrument equality function
+# TODO add instrument equality function
 class Instrument(Node):
     """ Class storing information about instruments, for the purpose of
         facilitating verifying whether it is connected to the correct devices.
@@ -279,13 +281,13 @@ class Instrument(Node):
         raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
-        if attrName in self.essentialProperties + self.essentialMethods: # or methods
+        if attrName in self.essentialProperties + self.essentialMethods:  # or methods
             return setattr(self.driver, attrName, newVal)
         else:
             return super().__setattr__(attrName, newVal)
 
     def __delattr__(self, attrName):
-        if attrName in self.essentialProperties + self.essentialMethods: # or methods
+        if attrName in self.essentialProperties + self.essentialMethods:  # or methods
             return self.driver.__delattr__(attrName)
         else:
             return super().__delattr__(attrName)
@@ -329,7 +331,7 @@ class Instrument(Node):
                     except AttributeError:
                         pass
             kwargs['directInit'] = True
-            self.__driver_object = self.driver_class(
+            self.__driver_object = self.driver_class(  # pylint: disable=not-callable
                 name=self.name, address=self.address, **kwargs)
         return self.__driver_object
 

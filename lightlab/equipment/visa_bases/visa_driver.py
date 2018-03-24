@@ -2,8 +2,10 @@ from .visa_object import VISAObject
 from lightlab import logger
 import inspect
 
+
 class IncompleteClass(Exception):
     pass
+
 
 class DriverMeta(type):
     ''' Checks driver API at compile time
@@ -20,7 +22,7 @@ class DriverMeta(type):
             inst_klass = cls.instrument_category
             for essential in inst_klass.essentialMethods + inst_klass.essentialProperties:
                 if essential not in dir(cls):
-                    raise IncompleteClass(cls.__name__ + ' does not implement {}, '.format(essential) + \
+                    raise IncompleteClass(cls.__name__ + ' does not implement {}, '.format(essential) +
                                           'which is essential for {}'.format(inst_klass.__name__))
         super().__init__(name, bases, dct)
 
@@ -31,7 +33,7 @@ class DriverMeta(type):
             kwargs go priority to driver bases, otherwise to Instrument
 
         '''
-        if (cls.instrument_category is not None \
+        if (cls.instrument_category is not None
                 and not kwargs.pop('directInit', False)):
             name = kwargs.pop('name', None)
             address = kwargs.pop('address', None)
@@ -71,6 +73,7 @@ class DriverMeta(type):
         else:
             return type.__call__(cls, *args, **kwargs)
 
+
 class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
     """Generic (but not abstract) class for an instrument
     Initialize using the literal visa address
@@ -101,4 +104,3 @@ class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
 
 
 DefaultDriver = VISAInstrumentDriver
-

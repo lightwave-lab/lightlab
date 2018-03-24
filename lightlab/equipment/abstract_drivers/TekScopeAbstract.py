@@ -1,4 +1,5 @@
 import numpy as np
+import pyvisa
 
 from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
@@ -7,6 +8,7 @@ from .configurable import Configurable
 from . import AbstractDriver
 
 
+# pylint: disable=no-member
 class TekScopeAbstract(Configurable, AbstractDriver):
     '''
         General class for several Tektronix scopes, including
@@ -58,7 +60,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         if avgCnt is not None and avgCnt > 1:
             self.setConfigParam('ACQUIRE:NUMAVG', avgCnt, forceHardware=True)
         if duration is not None:
-            self.setConfigParam('HORIZONTAL:MAIN:SCALE', duration/10)
+            self.setConfigParam('HORIZONTAL:MAIN:SCALE', duration / 10)
         if position is not None:
             self.setConfigParam('HORIZONTAL:MAIN:POSITION', position)
         if nPts is not None:
@@ -94,7 +96,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         for c in chans:
             if c > self.totalChans:
                 raise Exception('Received channel: ' + str(c) +
-                    '. Max channels of this scope is ' + str(self.totalChans))
+                                '. Max channels of this scope is ' + str(self.totalChans))
 
         # Channel select
         for ich in range(1, 1 + self.totalChans):
@@ -138,9 +140,10 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         ''' Sends a signal to the scope to wait for a trigger event. Waits until acquisition completes
         '''
         if self._clearBeforeAcquire:
-            self.write('ACQUIRE:DATA:CLEAR') # clear out average history
-        self.write('ACQUIRE:STATE 1') # activate the trigger listener
-        self.wait(30000) # Bus and entire program stall until acquisition completes. Maximum of 30 seconds
+            self.write('ACQUIRE:DATA:CLEAR')  # clear out average history
+        self.write('ACQUIRE:STATE 1')  # activate the trigger listener
+        # Bus and entire program stall until acquisition completes. Maximum of 30 seconds
+        self.wait(30000)
 
     def __transferData(self, chan):
         ''' Returns the raw data pulled from the scope as time (seconds) and voltage (Volts)
@@ -163,9 +166,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             logger.error('Problem during query_ascii_values(\'CURV?\')')
             try:
                 self.close()
-            except:
-                logger.error('Failed to close!', self.address)
-                pass
+            except Exception:
+                logger.exception('Failed to close! ' + str(self.address))
             raise err
         self.close()
         return voltRaw
@@ -185,11 +187,11 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         '''
         get = lambda param: float(self.getConfigParam('WFMOUTPRE:' + param, forceHardware=True))
         voltage = (np.array(voltRaw) - get('YZERO')) \
-                  * get(self._yScaleParam) \
-                  + get('YOFF')
+            * get(self._yScaleParam) \
+            + get('YOFF')
 
         timeDivision = float(self.getConfigParam('HORIZONTAL:MAIN:SCALE'))
-        time = np.linspace(-1, 1, len(voltage))/2 *  timeDivision * 10
+        time = np.linspace(-1, 1, len(voltage)) / 2 * timeDivision * 10
 
         return time, voltage
 
@@ -208,9 +210,9 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         '''
         bundle = FunctionBundle()
         with self.tempConfig('TRIGGER:SOURCE',
-                'FREERUN' if untriggered else 'EXTDIRECT'):
+                             'FREERUN' if untriggered else 'EXTDIRECT'):
             for _ in range(nWfms):
-                bundle.addDim(self.acquire([chan], avgCnt=1)[0]) # avgCnt=1 sets it to sample mode
+                bundle.addDim(self.acquire([chan], avgCnt=1)[0])  # avgCnt=1 sets it to sample mode
         return bundle
 
     def run(self, continuousRun=True):
@@ -226,7 +228,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         if continuousRun:
             self.setConfigParam('ACQUIRE:STATE', 1, forceHardware=True)
 
-    def setMeasurement(measIndex, chan, measType):
+    def setMeasurement(self, measIndex, chan, measType):
         '''
             Args:
                 measIndex (int): used to refer to this measurement itself. 1-indexed
@@ -236,11 +238,11 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         if measIndex == 0:
             raise ValueError('measIndex is 1-indexed')
         measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
-        self.setConfigParam(measSubmenu + self._measurementSourceParam, chStr)
+        self.setConfigParam(measSubmenu + self._measurementSourceParam, 'CH' + str(chan))
         self.setConfigParam(measSubmenu + 'TYPE', measType.upper())
         self.setConfigParam(measSubmenu + 'STATE', 1)
 
-    def measure(measIndex):
+    def measure(self, measIndex):
         '''
             Args:
                 measIndex (int): used to refer to this measurement itself. 1-indexed
@@ -300,4 +302,4 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         self.loadConfig(source='+autoAdjTemp', subgroup='MEASUREMENT')
         self.config.pop('autoAdjTemp')
 
-
+# pylint: enable=no-member

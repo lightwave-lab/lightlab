@@ -60,8 +60,11 @@ class LabState(Hashable):
         return instruments_dict
 
     def __init__(self, filename=_filename):
-        super().__init__(hosts=dict(), benches=dict(),
-                         connections=list(), filename=filename)
+        self.hosts = dict()
+        self.benches = dict()
+        self.connections = list()
+        self.filename = filename
+        super().__init__()
 
     def updateHost(self, *hosts):
         for host in hosts:
@@ -90,7 +93,6 @@ class LabState(Hashable):
                 instr_obj.bench = None
                 instr_obj.host = None
                 del instr_obj
-
 
     def insertInstrument(self, instrument):
         # TODO test if bench and/or host are in lab
@@ -270,14 +272,15 @@ class LabState(Hashable):
 
         # it is good to backup this file in caseit exists
         if save_backup:
-            if filepath.exists():
+            if filepath.exists():  # pylint: disable=no-member
                 # gets folder/filename.* and transforms into folder/filename_{timestamp}.json
-                filepath_backup = Path(filepath).with_name("{}_{}.json".format(filepath.stem, timestamp_string()))
+                filepath_backup = Path(filepath).with_name(
+                    "{}_{}.json".format(filepath.stem, timestamp_string()))
                 logger.debug(f"Backup {filepath} to {filepath_backup}")
                 shutil.copy2(filepath, filepath_backup)
 
         # save to filepath, overwriting
-        filepath.touch()
+        filepath.touch()  # pylint: disable=no-member
         with open(filepath, 'w') as file:
             json_state = self.__toJSON()
             file.write(json.encode(json_state))

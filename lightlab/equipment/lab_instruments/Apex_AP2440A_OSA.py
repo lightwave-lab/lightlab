@@ -14,7 +14,7 @@ WIDEST_WLRANGE = [1505.765, 1572.418]
 def check_socket(host, port):
     # learned from https://stackoverflow.com/questions/19196105/python-how-to-check-if-a-network-port-is-open-on-linux
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-        if sock.connect_ex((host, port)) == 0:
+        if sock.connect_ex((host, port)) == 0:  # pylint: disable=no-member
             logger.debug("{}:{} socket is open".format(host, port))
             port_open = True  # Port is open
         else:
@@ -190,7 +190,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
                 dbmAvg = dbm / avgCnt
             else:
                 dbmAvg = dbmAvg + dbm / avgCnt
-        return Spectrum(nm.copy(), dbmAvg.copy(), inDbm=True)
+        return Spectrum(nm, dbmAvg, inDbm=True)
 
     ''' TLS access methods currently not implemented '''
 

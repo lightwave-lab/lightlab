@@ -2,10 +2,9 @@
 This module contains tokens for experiments that use devices and instruments.
 This is useful to keep track of what is connected to what.
 '''
-import numpy as np
 from lightlab import logger
 import lightlab.laboratory.state as labstate
-from lightlab.laboratory.virtualization import DualFunction, Virtualizable
+from lightlab.laboratory.virtualization import Virtualizable
 from contextlib import contextmanager
 
 class Experiment(Virtualizable):
@@ -86,11 +85,6 @@ class Experiment(Virtualizable):
     def startup(self):
         raise NotImplementedError()
 
-    def asReal(self):
-        if not self.valid:
-            raise RuntimeError("Experiment is offline.")
-        return super().asReal()
-
     def global_hardware_warmup(self):
         try:
             self.instruments
@@ -111,6 +105,8 @@ class Experiment(Virtualizable):
         ''' Wraps making self.virtual to False.
             Also does hardware warmup and cooldown
         '''
+        if not self.valid:
+            raise RuntimeError("Experiment is offline.")
         with super().asReal():
             try:
                 self.global_hardware_warmup()

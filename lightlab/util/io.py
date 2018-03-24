@@ -68,7 +68,6 @@ except IOError:
     lightlabDevelopmentDir = projectDir
 
 
-
 def printWait(*args):
     ''' Prints your message followed by ``...``
 
@@ -150,8 +149,8 @@ class ProgressWriter(object):
         if self.serving:
             print('See sweep progress online at')
             print(self.getUrl())
-            monitorDir.mkdir(exist_ok=True)
-            fp = Path(ProgressWriter.progFileDefault)
+            monitorDir.mkdir(exist_ok=True)  # pylint: disable=no-member
+            fp = Path(ProgressWriter.progFileDefault)  # pylint: disable=no-member
             fp.touch()
             self.filePath = fp.resolve()
             self.__writeHtml()
@@ -204,10 +203,11 @@ class ProgressWriter(object):
 
     def __writeHtmlEnd(self):
         self.__tagHead = None
+        self.__tagFoot = None
         body = '<h2>Sweep completed!</h2>\n'
         body += ptag('At ' + ProgressWriter.tims(time.time()))
         htmlText = self.__tag(body, autorefresh=False)
-        with self.filePath.open('w') as fx:
+        with self.filePath.open('w') as fx:  # pylint: disable=no-member
             fx.write(htmlText)
 
     def __writeStdio(self):
@@ -245,7 +245,7 @@ class ProgressWriter(object):
         # Write to html file
         if self.serving:
             htmlText = self.__tag(body, autorefresh=True)
-            with self.filePath.open('w') as fx:
+            with self.filePath.open('w') as fx:  # pylint: disable=no-member
                 fx.write(htmlText)
 
     def update(self, steps=1):
@@ -280,9 +280,9 @@ class ProgressWriter(object):
     def tims(cls, epochTime):
         return time.strftime(cls.tFmt, time.localtime(epochTime)) + '\n'
 
+
 def ptag(s):
     return '<p>' + s + '</p>\n'
-
 
 
 # File functions. You must set the fileDir first
@@ -320,16 +320,20 @@ def loadPickle(filename):
 
 
 class HardwareReference(object):
+
     def __init__(self, klassname):
         self.klassname = klassname
 
+
 class SerializedNumpy(object):
+
     def __init__(self, arrayVersion):
         self.encoded = msgpack.packb(arrayVersion, default=msgpack_numpy.encode)
 
     @classmethod
     def deserialize(self, bytesVersion):
         return msgpack.unpackb(bytesVersion, object_hook=msgpack_numpy.decode)
+
 
 class JSONpickleable(Hashable):
     ''' Produces human readable json files. Inherits _toJSON from Hashable
@@ -366,7 +370,7 @@ class JSONpickleable(Hashable):
                 if key in allNotPickled:
                     keys_to_delete.add(key)
                 elif (val.__class__.__name__ == 'VISAObject' or
-                    any(base.__name__ == 'VISAObject' for base in val.__class__.__bases__)):
+                      any(base.__name__ == 'VISAObject' for base in val.__class__.__bases__)):
                     klassname = val.__class__.__name__
                     logger.warning('Not pickling {} = {}.'.format(key, klassname))
                     state[key] = HardwareReference('Reference to a ' + klassname)
@@ -399,14 +403,15 @@ class JSONpickleable(Hashable):
         try:
             restored_object = context.restore(json_state, reset=True)
         except AttributeError as err:
-            newm = err.args[0] + '\n' + 'This is that strange jsonpickle error trying to get aDict.__name__. You might be trying to pickle a function.'
+            newm = err.args[
+                0] + '\n' + 'This is that strange jsonpickle error trying to get aDict.__name__. You might be trying to pickle a function.'
             err.args = (newm,) + err.args[1:]
             raise
 
-        if not isinstance(restored_object, cls): # This is likely to happen if lightlab has been reloaded
-            if type(restored_object).__name__ != cls.__name__: # This is not ok
+        if not isinstance(restored_object, cls):  # This is likely to happen if lightlab has been reloaded
+            if type(restored_object).__name__ != cls.__name__:  # This is not ok
                 raise TypeError('Loaded class is different than intended.\n' +
-                    'Got {}, needed {}.'.format(type(restored_object).__name__))
+                                'Got {}, needed {}.'.format(type(restored_object).__name__, cls.__name__))
 
         for a in cls.notPickled:
             setattr(restored_object, a, None)

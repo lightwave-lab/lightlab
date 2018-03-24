@@ -4,11 +4,13 @@ from contextlib import contextmanager
 import dpath
 import json
 from numpy import floor
+from pathlib import Path
 
 from lightlab.util.io import lightlabDevelopmentDir
 defaultFileDir = lightlabDevelopmentDir / 'savedConfigDefaults/'
 
 from . import AbstractDriver
+
 
 class AccessException(Exception):
     pass
@@ -75,7 +77,7 @@ class TekConfig(object):
 
         cmd = (cStr, val)
         success = dpath.util.set(self.dico, *cmd, separator=self.separator)
-        if success != 1: # it doesn't exist yet
+        if success != 1:  # it doesn't exist yet
             try:
                 dpath.util.new(self.dico, *cmd, separator=self.separator)
             except ValueError as e:
@@ -100,7 +102,8 @@ class TekConfig(object):
                 list: list of valid commands (cstr, val) on the subgroup subdirectory
         '''
         cList = []
-        children = dpath.util.search(self.dico, subgroup + '*', yielded=True, separator=self.separator)
+        children = dpath.util.search(self.dico, subgroup + '*',
+                                     yielded=True, separator=self.separator)
         for cmd in children:
             s, v = cmd
             if type(v) is not dict:
@@ -115,7 +118,7 @@ class TekConfig(object):
             writeList = [None] * len(cList)
             for i, cmd in enumerate(cList):
                 cStr, val = cmd
-                if cStr[-1] == '&': # check for tokens
+                if cStr[-1] == '&':  # check for tokens
                     cStr = cStr[:-2]
                 writeList[i] = cStr + ' ' + str(val)
             return writeList
@@ -154,8 +157,8 @@ class TekConfig(object):
         ret.transfer(full, subgroup=subgroup)
         return ret
 
-    @staticmethod
-    def __parseShorthand(setResponse):
+    @classmethod
+    def __parseShorthand(cls, setResponse):
         ''' Turns shorthand multi-command strings into list of proper command tuples
         '''
         pairs = setResponse.split(';')
@@ -168,11 +171,11 @@ class TekConfig(object):
             if len(words) > 2:
                 print('Warning 2-value returns not handled by TekConfig class. Ignoring...')
                 print(*words)
-            if cmdLeaf[0] == self.separator:
+            if cmdLeaf[0] == cls.separator:
                 pat = cmdLeaf[1:]
-                cmdGrp = self.separator.join(pat.split(self.separator)[:-1])
+                cmdGrp = cls.separator.join(pat.split(cls.separator)[:-1])
             else:
-                pat = cmdGrp + self.separator + cmdLeaf
+                pat = cmdGrp + cls.separator + cmdLeaf
             commands[i] = (pat, val)
         return commands
 
@@ -205,7 +208,7 @@ class TekConfig(object):
         except FileNotFoundError:
             # file probably doesn't exist
             existingConfig = None
-            overwrite=True
+            overwrite = True
 
         if overwrite:
             configToSave = type(self)()
@@ -216,14 +219,16 @@ class TekConfig(object):
         from pathlib import Path
         fpath = Path(fname)
         with fpath.open('w+') as fx:
-            fx.write(str(configToSave)) # __str__ gives nice json format
+            fx.write(str(configToSave))  # __str__ gives nice json format
 
 
+# pylint: disable=no-member
 class Configurable(AbstractDriver):
     ''' Instruments can be configurable and use TekConfig.
 
         This clas uses query/write methods that are not directly inherited, so the subclass or its parents must implement those functions
     '''
+
     def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True, **kwargs):
 
         self._hardwareinit = False
@@ -408,8 +413,8 @@ class Configurable(AbstractDriver):
             try:
                 ret = self.query(cStr + '?')
             except VisaIOError as err:
-                logger.error('Problematic parameter was {}.\n'.format(cStr) + \
-                    'Likely it does not exist in this instrument command structure.')
+                logger.error('Problematic parameter was {}.\n'.format(cStr) +
+                             'Likely it does not exist in this instrument command structure.')
                 raise
 
             if self.header:
@@ -441,7 +446,7 @@ class Configurable(AbstractDriver):
             logger.debug('Sending ' + str(cmd) + ' to configurable hardware')
             self.write(cmd)
 
-    def generateDefaults(cls, filename=None, overwrite=False):
+    def generateDefaults(self, filename=None, overwrite=False):
         ''' Attempts to read every configuration parameter.
             Handles several cases where certain parameters do not make sense and must be skipped
 
@@ -465,10 +470,9 @@ class Configurable(AbstractDriver):
         allSetCmds = allConfig.getList('', asCmd=True)
 
         cfgBuild = TekConfig()
-        oldTimeout = self.timeout
-        self.timeout = 1000
+
         for cmd in allSetCmds:
-            if cmd[0][-1]  != '&': # handle the sibling subdir token
+            if cmd[0][-1] != '&':  # handle the sibling subdir token
                 cStr = cmd[0]
             else:
                 cStr = cmd[0][:-2]
@@ -478,7 +482,7 @@ class Configurable(AbstractDriver):
                 logger.info(cStr, '<--', val)
             except VisaIOError as e:
                 logger.info(cStr, 'X -- skipping')
-        self.timeout = oldTimeout
 
         cfgBuild.save(filename)
-        logger.info('New default saved to', filename)
+        logger.info('New default saved to ' + str(filename))
+# pylint: enable=no-member

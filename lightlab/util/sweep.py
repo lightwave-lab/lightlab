@@ -4,9 +4,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import time
-import itertools
 from IPython import display
-from enum import Enum
 import matplotlib.cm
 from collections import OrderedDict
 
@@ -17,9 +15,14 @@ from ..util import io
 from lightlab import logger
 
 class Sweeper(object):
+    plotOptions = None
+    monitorOptions = None
+
     def __init__(self):
         self.data = None
         self.savefile = None
+        self.plotOptions = dict()
+        self.monitorOptions = dict()
 
     def gather(self):
         print('gather method must be overloaded in subclass')
@@ -66,8 +69,8 @@ class Sweeper(object):
         '''
         for k, v in kwargs.items():
             if k not in self.plotOptions.keys():
-                logger.warning(k, 'is not a valid plot option.')
-                logger.warning('Valid ones are', self.plotOptions.keys())
+                logger.warning(k + ' is not a valid plot option.')
+                logger.warning('Valid ones are {}'.format(self.plotOptions.keys()))
             else:
                 self.plotOptions[k] = v
         return self.plotOptions
@@ -88,8 +91,8 @@ class Sweeper(object):
         '''
         for k, v in kwargs.items():
             if k not in self.monitorOptions.keys():
-                logger.warning(k, 'is not a valid monitor option.')
-                logger.warning('Valid ones are', self.monitorOptions.keys())
+                logger.warning(k + ' is not a valid monitor option.')
+                logger.warning('Valid ones are {}'.format(self.monitorOptions.keys()))
             else:
                 self.monitorOptions[k] = v
         return self.monitorOptions
@@ -130,6 +133,7 @@ class NdSweeper(Sweeper):
                 parse (dict): dict of functions, operate on measurements, produce scalars
                     Use descriptive keys please.
         '''
+        super().__init__()
         self.reinitActuation()
 
         self.measure = OrderedDict()
@@ -138,9 +142,8 @@ class NdSweeper(Sweeper):
         self.static = OrderedDict()
 
         self.monitorOptions = {'livePlot': False, 'plotEvery': 1, 'stdoutPrint': True, 'runServer': False}
-        self.plotOptions = {'plType': 'curves', 'xKey': None, 'yKey': None, 'axArr': None, 'cmap-surf': matplotlib.cm.inferno, 'cmap-curves': matplotlib.cm.viridis}
+        self.plotOptions = {'plType': 'curves', 'xKey': None, 'yKey': None, 'axArr': None, 'cmap-surf': matplotlib.cm.inferno, 'cmap-curves': matplotlib.cm.viridis}  # pylint: disable=no-member
 
-        super().__init__()
 
     @classmethod
     def repeater(cls, nTrials):
@@ -177,7 +180,7 @@ class NdSweeper(Sweeper):
                         pass
         try:
             if soakTime is not None:
-                logger.debug('Soaking for', soakTime, 'seconds.')
+                logger.debug('Soaking for {} seconds.'.format(soakTime))
                 for actu in self.actuate.values():
                     f = actu[0]
                     x = actu[1][0]
@@ -341,13 +344,13 @@ class NdSweeper(Sweeper):
                 dataOfPt = OrderedDict()
                 for datKey, datVal in self.data.items():
                     if np.any(datVal.shape != self.swpShape):
-                        logger.debug('Data member', datKey, 'is wrong size for reparsing', pk, '. Skipping.')
+                        logger.debug('Data member {} is wrong size for reparsing {}. Skipping.'.format(datKey, pk))
                     else:
                         dataOfPt[datKey] = datVal[index]
                 try:
                     tempDataMat[index] = pFun(dataOfPt)
                 except KeyError:
-                    logger.debug('Parser', pk, 'depends on unpresent data. Skipping.')
+                    logger.debug('Parser {} depends on unpresent data. Skipping.'.format(pk))
                     break
             else:
                 self.data[pk] = tempDataMat
@@ -549,7 +552,7 @@ class NdSweeper(Sweeper):
                     if hCurves is None:
                         hCurves = np.empty(axArr.shape, dtype=object)
                     else:
-                        if hCurves[iAx] is not None:
+                        if hCurves[iAx] is not None:  # pylint:disable=unsubscriptable-object
                             try:
                                 hCurves[iAx][0].remove()
                             except ValueError:
@@ -607,7 +610,7 @@ class NdSweeper(Sweeper):
                 if 'shading' not in pltKwargs.keys():
                     pltKwargs['shading'] = 'gouraud'
                 cax = ax.pcolormesh(*domainGrids, yData, **pltKwargs)
-                cbar = plt.gcf().colorbar(cax, ax=ax)
+                plt.gcf().colorbar(cax, ax=ax)
                 ax.autoscale(tight=True)
                 ax.set_title(yK)
                 if iAx[0] == plotArrShape[0] - 1:
@@ -634,7 +637,7 @@ class NdSweeper(Sweeper):
     def loadObj(cls, savefile):
         ''' savefile must have been saved with saveObj
         '''
-        newObj = super().fromFile(savefile)
+        newObj = cls.fromFile(savefile)
         try:
             actKeyList = newObj.data.pop('actuation-keys')
         except KeyError:
@@ -652,7 +655,6 @@ class NdSweeper(Sweeper):
     def load(self, savefile=None):
         super().load(savefile)
         self._recalcSwpShape()
-        logger.debug(self.swpShape)
 
 def simpleSweep(actuate, domain, measure=None):
     ''' Basic sweep in one dimension, without function keys, parsing, or plotting.
@@ -666,7 +668,7 @@ def simpleSweep(actuate, domain, measure=None):
             (ndarray): what is measured. Same length as domain
     '''
     swpObj = NdSweeper()
-    swpObj.addActuation('act0', actuate, domain)
+    swpObj.addActuation('act0', actuate, domain)  # pylint:disable=no-member
     if measure is not None:
         swpObj.addMeasurement('meas0', measure)
     swpObj.setMonitorOptions(stdoutPrint=False)
@@ -698,6 +700,7 @@ class CommandControlSweeper(Sweeper):
                 swpIndeces (tuple, int): which channels to sweep
                 domain (tuple, iterable): the values over which the sweep channels will be swept
         '''
+        super().__init__()
         self.evaluate = evaluate
         self.isScalar = np.isscalar(defaultArg)
         if self.isScalar:
@@ -722,7 +725,6 @@ class CommandControlSweeper(Sweeper):
 
         self.nTrials = nTrials
 
-        super().__init__()
 
     def saveObj(self, savefile=None):
         ''' Instead of just saving data, save the whole damn thing.
@@ -770,7 +772,7 @@ class CommandControlSweeper(Sweeper):
                 for iDim in range(self.swpDims):
                     index[iDim + 1] = randizers[iDim][index[iDim + 1]]
                 index = tuple(index)
-            iTrial = index[0]
+            # iTrial = index[0]
             gridIndex = index[1:]
             cmdArr = self.defaultArg.copy()
             cmdArr[np.array(self.swpInds)] = self.cmdGrid[gridIndex]
@@ -874,13 +876,13 @@ class CommandControlSweeper(Sweeper):
         measWeights = self.data[..., np.array(self.swpInds)]
 
         # Statistics of every dimension at every grid point (so we're norming over trials) --
-        errRmsVsWeight = dUtil.rms(measWeights - cmdWeights, axis=0) # Total error
+        # errRmsVsWeight = dUtil.rms(measWeights - cmdWeights, axis=0) # Total error
         meanVsWeight = np.mean(measWeights, axis=0)
         errMeanVsWeight = meanVsWeight - cmdWeights
         errStddevVsWeight = dUtil.rms(measWeights - meanVsWeight, axis=0)
 
         # Statistics normed over channels at every grid point
-        netErrRmsVsWeight = dUtil.rms(errRmsVsWeight, axis=-1)
+        # netErrRmsVsWeight = dUtil.rms(errRmsVsWeight, axis=-1)
         netErrMeanVsWeight = dUtil.rms(errMeanVsWeight, axis=-1)
         netErrStddevVsWeight = dUtil.rms(errStddevVsWeight, axis=-1)
 
