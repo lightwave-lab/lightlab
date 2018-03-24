@@ -166,8 +166,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             logger.error('Problem during query_ascii_values(\'CURV?\')')
             try:
                 self.close()
-            except Exception:
-                logger.exception('Failed to close! ' + str(self.address))
+            except pyvisa.VisaIOError:
+                logger.error('Failed to close! %s', self.address)
             raise err
         self.close()
         return voltRaw
@@ -265,7 +265,9 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             self.setMeasurement(1, ch, 'pk2pk')
             self.setMeasurement(2, ch, 'mean')
 
-            for iTrial in range(100):
+            iTrial = 0
+
+            while iTrial<100:
                 # Acquire new data
                 self.acquire(chans=[ch], avgCnt=1)
 
@@ -297,6 +299,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 # Adjust settings
                 self.setConfigParam(chStr + ':SCALE', newSpan / 10)
                 self.setConfigParam(chStr + ':OFFSET', newOffs)
+
+                iTrial += 1
 
         # Recover the measurement setup from before adjustment
         self.loadConfig(source='+autoAdjTemp', subgroup='MEASUREMENT')
