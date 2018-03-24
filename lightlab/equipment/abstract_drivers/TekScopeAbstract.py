@@ -237,7 +237,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         if measIndex == 0:
             raise ValueError('measIndex is 1-indexed')
         measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
-        self.setConfigParam(measSubmenu + self._measurementSourceParam, 'CH' + str(ch))
+        self.setConfigParam(measSubmenu + self._measurementSourceParam, 'CH' + str(chan))
         self.setConfigParam(measSubmenu + 'TYPE', measType.upper())
         self.setConfigParam(measSubmenu + 'STATE', 1)
 

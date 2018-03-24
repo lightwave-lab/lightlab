@@ -135,6 +135,7 @@ class NdSweeper(Sweeper):
                 parse (dict): dict of functions, operate on measurements, produce scalars
                     Use descriptive keys please.
         '''
+        super().__init__()
         self.reinitActuation()
 
         self.measure = OrderedDict()
@@ -145,7 +146,6 @@ class NdSweeper(Sweeper):
         self.monitorOptions = {'livePlot': False, 'plotEvery': 1, 'stdoutPrint': True, 'runServer': False}
         self.plotOptions = {'plType': 'curves', 'xKey': None, 'yKey': None, 'axArr': None, 'cmap-surf': matplotlib.cm.inferno, 'cmap-curves': matplotlib.cm.viridis}
 
-        super().__init__()
 
     @classmethod
     def repeater(cls, nTrials):
@@ -702,6 +702,7 @@ class CommandControlSweeper(Sweeper):
                 swpIndeces (tuple, int): which channels to sweep
                 domain (tuple, iterable): the values over which the sweep channels will be swept
         '''
+        super().__init__()
         self.evaluate = evaluate
         self.isScalar = np.isscalar(defaultArg)
         if self.isScalar:
@@ -726,7 +727,6 @@ class CommandControlSweeper(Sweeper):
 
         self.nTrials = nTrials
 
-        super().__init__()
 
     def saveObj(self, savefile=None):
         ''' Instead of just saving data, save the whole damn thing.
