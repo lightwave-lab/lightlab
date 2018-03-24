@@ -8,6 +8,7 @@ from lightlab.util.data import Spectrum, FunctionBundle
 import matplotlib.pyplot as plt
 from IPython import display
 
+
 class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 
     ''' Agilent PNA N5222A , RF network analyzer
