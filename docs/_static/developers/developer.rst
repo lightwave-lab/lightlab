@@ -233,7 +233,18 @@ Documenting as you go is helpful for other developers and code reviewers.  So us
 
 PEP-8
 ^^^^^^^
-As of now, we don't require `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance, but we might in the future. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-pycodestyle>`_ is a good linter.
+As of now, we don't require strict `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance, but we might in the future. However, we try to follow as many of their guidelines as possible. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-flake8>`_ is a good linter. It visually shows what is going on while you code, saving lots of headaches:
+
+.. figure:: images/sublimelinter_example_bad.png
+    :alt: bad pep8 example
+
+    Example of valid python code that violates some of the PEP8 guidelines.
+
+.. figure:: images/sublimelinter_example_good.png
+    :alt: good pep8 example
+
+    Fixing the PEP8 violations of the previous figure.
+    
 
 Adding a new package
 ^^^^^^^^^^^^^^^^^^^^^
