@@ -12,7 +12,7 @@ test:
   - make test-unit
   - make test-lint-errors
 
-test:
+test-master:
   image: python:3.6
   stage: test
   tags:
