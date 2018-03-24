@@ -231,9 +231,14 @@ Documenting
 ^^^^^^^^^^^^^^
 Documenting as you go is helpful for other developers and code reviewers.  So useful that we made a whole :doc:`tutorial <docYourCode>` on it. We use auto-API so that docstrings in code make it into the official documentation.
 
-PEP-8
+Linting
 ^^^^^^^
-As of now, we don't require `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance, but we might in the future. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-pycodestyle>`_ is a good linter.
+As of now, we require partial Flake 8 and py-lint compliance. This is tested with `make test-lint` by continuous integration. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-pycodestyle>`_ is a good linter.
+
+Sometimes the linter is wrong. You can tell it to ignore lines by adding the _ flag like so::
+
+    sketchy = code  # pylint: disable=not-an-iterable
+    from badPractice import \*  #noqa
 
 Adding a new package
 ^^^^^^^^^^^^^^^^^^^^^

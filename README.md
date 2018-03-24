@@ -22,7 +22,9 @@ The project is on git here (not yet). Clone that project to your lab instrumenta
     git clone <project url>
 
 #### Supported platforms
-Mac OS and Linux running ≥python3.6; not tested on Windows (to do).
+Server: Mac OS and Linux running ≥python3.6; not tested on Windows (to do).
+
+Auxiliary hosts: Mac OS, Linux, Windows
 
 ### Contributing
 We welcome contributions, especially for new drivers. Fork the repo to your github user account and clone from there. Please unittest your contributions in a repeatable virtual laboratory; test the driver in experiment, not unittests; then create a pull request.

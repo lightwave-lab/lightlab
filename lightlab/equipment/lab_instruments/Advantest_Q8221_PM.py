@@ -17,8 +17,11 @@ class Advantest_Q8221_PM(VISAInstrumentDriver, PowerMeterAbstract):
         '''
             Todo:
                 Read manual and set the channels to DBM and default channel to A
-                    * Default read: "DBA-054.8686E+00\r\n"
-                    * query("CH1"): "DBB-054.8686E+00\r\n"
+
+                * Default read: "DBA-054.8686E+00\r\n"
+                * query("CH1"): "DBB-054.8686E+00\r\n"
+
+            Behaves the same as super.
         '''
         super().startup()
 
