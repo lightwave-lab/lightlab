@@ -1,2 +1,6 @@
 [run]
+source = lightlab
 omit = lightlab/equipment/lab_instruments/*
+
+[report]
+skip_covered = True
