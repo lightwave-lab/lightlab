@@ -1,15 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import time
-import itertools
 from IPython import display
-from enum import Enum
-import matplotlib.cm
-from collections import OrderedDict
 
-from ..util import data as dUtil
-from ..util import plot as pUtil
-from ..util import io
+from .data import MeasuredFunction
 
 def NelderMead1D(evalPointFun, startBounds, nVertices=2, xTol=0., yTol=0., alpha=0.2, beta=1.25, gamma=0.5, theta=0.5, livePlot=False, quiet=False):
     ''' Perform similar functionality as peakSearch, but employ Nelder-Mead algorithm
@@ -27,7 +20,7 @@ def NelderMead1D(evalPointFun, startBounds, nVertices=2, xTol=0., yTol=0., alpha
             (float, float): best (x,y) point of the peak
     '''
 
-    tracker = dUtil.MeasuredFunction([], [])
+    tracker = MeasuredFunction([], [])
     offsToMeasure = np.linspace(*startBounds, nVertices)
     measuredVals = np.zeros(nVertices)
     for iIter in range(20):

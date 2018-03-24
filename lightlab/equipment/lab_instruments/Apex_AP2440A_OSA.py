@@ -190,7 +190,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
                 dbmAvg = dbm / avgCnt
             else:
                 dbmAvg = dbmAvg + dbm / avgCnt
-        return Spectrum(nm.copy(), dbmAvg.copy(), inDbm=True)
+        return Spectrum(nm, dbmAvg, inDbm=True)
 
     ''' TLS access methods currently not implemented '''
 

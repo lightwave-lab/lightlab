@@ -7,10 +7,8 @@ from cycler import cycler
 import numpy as np
 import time
 from IPython import display
-from collections import OrderedDict
 
-from .data import Waveform, FunctionBundle
-from ..util import sweep as sUtil
+from .data import FunctionBundle
 
 
 def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=True):

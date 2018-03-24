@@ -1,7 +1,5 @@
-import numpy as np
 from lightlab import logger
 from contextlib import contextmanager
-from lightlab.util.data import argFlatten
 
 
 ''' Module-wide variable

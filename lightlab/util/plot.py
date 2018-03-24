@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.figure as fig
 import numpy as np
-import time
 plt.ion()
 
 
@@ -99,17 +98,3 @@ def plotCovEllipse(cov, pos, volume=.5, ax=None, **kwargs):
 
     return ax.add_artist(ellip)
 
-# Tests
-if __name__ == '__main__':
-    import numpy as np
-    import time
-    xdata = []
-    ydata = []
-    d = DynamicLine(geometry=[(0, 0), (5, 3)])
-    e = DynamicLine('r*', existing=d)
-    for x in np.arange(0, 10, 0.5):
-        xdata.append(x)
-        ydata.append(np.exp(-x**2) + 10 * np.exp(-(x - 7)**2))
-        d.refresh(xdata, ydata)
-        e.refresh(ydata, xdata)
-        time.sleep(.2)

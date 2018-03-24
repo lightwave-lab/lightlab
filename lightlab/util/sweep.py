@@ -4,9 +4,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import time
-import itertools
 from IPython import display
-from enum import Enum
 import matplotlib.cm
 from collections import OrderedDict
 
@@ -612,7 +610,7 @@ class NdSweeper(Sweeper):
                 if 'shading' not in pltKwargs.keys():
                     pltKwargs['shading'] = 'gouraud'
                 cax = ax.pcolormesh(*domainGrids, yData, **pltKwargs)
-                cbar = plt.gcf().colorbar(cax, ax=ax)
+                plt.gcf().colorbar(cax, ax=ax)
                 ax.autoscale(tight=True)
                 ax.set_title(yK)
                 if iAx[0] == plotArrShape[0] - 1:
@@ -774,7 +772,7 @@ class CommandControlSweeper(Sweeper):
                 for iDim in range(self.swpDims):
                     index[iDim + 1] = randizers[iDim][index[iDim + 1]]
                 index = tuple(index)
-            iTrial = index[0]
+            # iTrial = index[0]
             gridIndex = index[1:]
             cmdArr = self.defaultArg.copy()
             cmdArr[np.array(self.swpInds)] = self.cmdGrid[gridIndex]
@@ -878,13 +876,13 @@ class CommandControlSweeper(Sweeper):
         measWeights = self.data[..., np.array(self.swpInds)]
 
         # Statistics of every dimension at every grid point (so we're norming over trials) --
-        errRmsVsWeight = dUtil.rms(measWeights - cmdWeights, axis=0) # Total error
+        # errRmsVsWeight = dUtil.rms(measWeights - cmdWeights, axis=0) # Total error
         meanVsWeight = np.mean(measWeights, axis=0)
         errMeanVsWeight = meanVsWeight - cmdWeights
         errStddevVsWeight = dUtil.rms(measWeights - meanVsWeight, axis=0)
 
         # Statistics normed over channels at every grid point
-        netErrRmsVsWeight = dUtil.rms(errRmsVsWeight, axis=-1)
+        # netErrRmsVsWeight = dUtil.rms(errRmsVsWeight, axis=-1)
         netErrMeanVsWeight = dUtil.rms(errMeanVsWeight, axis=-1)
         netErrStddevVsWeight = dUtil.rms(errStddevVsWeight, axis=-1)
 

@@ -6,7 +6,6 @@ import time
 from lightlab.util.io import ChannelError
 from lightlab.util.data import Spectrum
 from lightlab import visalogger as logger
-import time
 
 
 class ILX_7900B_LS(VISAInstrumentDriver):
@@ -91,9 +90,9 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         enforcedState = newState
         enforcedState = [1 if s != 0 else 0 for s in enforcedState]
         if np.any(newState != enforcedState):
-            print('Warning: Unexpected enable state value. ' +
-                  'Requested = ' + str(newState) + '. ' +
-                  'Expected values = 0 or 1.')
+            logger.warning('Unexpected enable state value. ' +
+                           'Requested = {}. '.format(newState) +
+                           'Expected values = 0 or 1.')
         self.stateDict = dict(zip(self.useChans, enforcedState))
 
         # Refresh and sleep only if different

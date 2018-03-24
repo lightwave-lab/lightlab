@@ -2,10 +2,9 @@
 This module contains tokens for experiments that use devices and instruments.
 This is useful to keep track of what is connected to what.
 '''
-import numpy as np
 from lightlab import logger
 import lightlab.laboratory.state as labstate
-from lightlab.laboratory.virtualization import DualFunction, Virtualizable
+from lightlab.laboratory.virtualization import Virtualizable
 from contextlib import contextmanager
 
 class Experiment(Virtualizable):

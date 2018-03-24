@@ -4,7 +4,6 @@ findPeaks obviously is important.
 '''
 import matplotlib.pyplot as plt
 import numpy as np
-import types
 from scipy import interpolate
 import lightlab.util.io as io
 from lightlab import logger
