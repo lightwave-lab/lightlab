@@ -11,9 +11,10 @@ class DriverMeta(type):
     ''' Checks driver API at compile time
 
         Driver initializer returns an instrument in ``instrument_catagory``,
-        not an instance of the Driver itself, unless
-            * ``instrument_category`` is None
-            * ``directInit=True`` is passed in
+        not an instance of the Driver itself, unless:
+        * ``instrument_category`` is None
+        * ``directInit=True`` is passed in
+
     '''
     def __init__(cls, name, bases, dct):
         ''' Checks that it satisfies the API of its Instrument

@@ -1,7 +1,7 @@
-better-apidoc==0.1.2
+better-apidoc==0.1.4
 mock==2.0.0
 nbsphinx==0.3.1
-Sphinx==1.6.7
+Sphinx==1.7.2
 sphinx-autoapi==0.5.0
 sphinx-autobuild==0.7.1
 sphinx-rtd-theme==0.2.4
