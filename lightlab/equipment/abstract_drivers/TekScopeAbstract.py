@@ -165,7 +165,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             try:
                 self.close()
             except:
-                logger.error('Failed to close! ' str(self.address))
+                logger.error('Failed to close! ' + str(self.address))
                 pass
             raise err
         self.close()
