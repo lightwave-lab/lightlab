@@ -1,5 +1,7 @@
 ''' This module defines the essential interfaces for each kind of instrument
+bla
 '''
+
 from .bases import Instrument
 
 
@@ -15,7 +17,9 @@ class SourceMeter(Instrument):
          'getCurrent',
          'measVoltage',
          'setProtectionVoltage',
+         'protectionVoltage',
          'setProtectionCurrent',
+         'protectionCurrent',
          'enable']
 
     def hardware_warmup(self):
@@ -52,6 +56,10 @@ class Clock(Instrument):
     essentialMethods = Instrument.essentialMethods + \
         ['enable',
          'frequency']
+    optionalAttributes = Instrument.optionalAttributes + \
+        ['amplitude',
+         'sweepSetup',
+         'sweepEnable']
 
 
 class NICurrentSource(Instrument):
@@ -88,11 +96,12 @@ class LaserSource(Instrument):
          'setChannelPowers',
          'getChannelPowers',
          'getAsSpectrum',
-         'off']
+         'allOnOff']
     essentialProperties = Instrument.essentialProperties + \
         ['enableState',
          'wls',
-         'powers']
+         'powers',
+         'off']
 
 
 class OpticalSpectrumAnalyzer(Instrument):
@@ -107,6 +116,8 @@ class Oscilloscope(Instrument):
         ['acquire',
          'wfmDb',
          'run']
+    optionalAttributes = Instrument.optionalAttributes + \
+        ['histogramStats']
 
     def hardware_cooldown(self):
         ''' Keep it running continuously in case you are in lab and want to watch
