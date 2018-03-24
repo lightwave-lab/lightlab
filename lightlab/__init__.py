@@ -10,11 +10,12 @@ WARNING = logging.WARNING
 ERROR = logging.ERROR
 CRITICAL = logging.CRITICAL
 
-# inspired from pyvisa
-def log_to_screen(level=INFO, logger=logger):
+
+def log_to_screen(level=INFO):
     logger.setLevel(level)
 
-    stream_handlers = [handler for handler in logger.handlers if isinstance(handler, logging.StreamHandler)]
+    stream_handlers = [handler for handler in logger.handlers if isinstance(
+        handler, logging.StreamHandler)]
 
     if len(stream_handlers) <= 0:
         ch = logging.StreamHandler()
@@ -25,8 +26,10 @@ def log_to_screen(level=INFO, logger=logger):
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s:\n\t%(message)s')
     ch.setFormatter(formatter)
 
+
 def log_visa_to_screen(level=WARNING):
     visalogger.setLevel(level)
 
-log_to_screen(INFO, logger)
+
+log_to_screen(INFO)
 log_visa_to_screen(WARNING)
