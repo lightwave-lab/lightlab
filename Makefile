@@ -110,7 +110,7 @@ monitorhost:
 
 
 docbuild: venvinfo/docreqs~
-venvinfo/docreqs~: $(REINSTALL_DEPS) doc-requirements.txt
+venvinfo/docreqs~: $(REINSTALL_DEPS) notebooks/Tests doc-requirements.txt
 	( \
 		source venv/bin/activate; \
 		pip install -r doc-requirements.txt | grep -v 'Requirement already satisfied'; \
@@ -120,6 +120,7 @@ venvinfo/docreqs~: $(REINSTALL_DEPS) doc-requirements.txt
 	@touch venvinfo/docreqs~
 
 docs: docbuild
+	rsync -rau notebooks/Tests/*.ipynb docs/ipynbs/Tests
 	source venv/bin/activate; $(MAKE) -C docs $(DOCTYPE_DEFAULT)
 
 docs-ci: docbuild

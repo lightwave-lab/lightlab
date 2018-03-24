@@ -11,9 +11,8 @@ class DriverMeta(type):
     '''
         Driver initializer returns an instrument in ``instrument_category``,
         not an instance of the Driver itself, unless
-
-        * ``instrument_category`` is None
-        * ``directInit=True`` is passed in
+            * ``instrument_category`` is None
+            * ``directInit=True`` is passed in
 
         Also checks that the API is satistied at compile time
     '''
