@@ -9,7 +9,7 @@ class IncompleteClass(Exception):
 
 class DriverMeta(type):
     '''
-        Driver initializer returns an instrument in ``instrument_catagory``,
+        Driver initializer returns an instrument in ``instrument_category``,
         not an instance of the Driver itself, unless
 
         * ``instrument_category`` is None

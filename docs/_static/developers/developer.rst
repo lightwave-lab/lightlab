@@ -233,12 +233,26 @@ Documenting as you go is helpful for other developers and code reviewers.  So us
 
 Linting
 ^^^^^^^
-As of now, we require partial Flake 8 and py-lint compliance. This is tested with `make test-lint` by continuous integration. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-pycodestyle>`_ is a good linter.
+As of now, we don't require strict `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance, but we might in the future. However, we try to follow as many of their guidelines as possible. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-flake8>`_ is a good linter. It visually shows what is going on while you code, saving lots of headaches:
 
-Sometimes the linter is wrong. You can tell it to ignore lines by adding the _ flag like so::
+.. figure:: images/sublimelinter_example_bad.png
+    :alt: bad pep8 example
 
-    sketchy = code  # pylint: disable=not-an-iterable
-    from badPractice import \*  #noqa
+    Example of valid python code that violates some of the PEP8 guidelines.
+
+.. figure:: images/sublimelinter_example_good.png
+    :alt: good pep8 example
+
+    Fixing the PEP8 violations of the previous figure.
+
+Sometimes the linter is wrong. You can tell it to ignore lines by adding comment flags like the following example:
+
+.. code:: python
+
+    x = [x for x in sketchy_iterable]  # pylint: disable=not-an-iterable
+    from badPractice import *  # noqa
+
+`# noqa` is going to ignore pyflakes linting, whereas `# pylint` configures `pylint` behavior.
 
 Adding a new package
 ^^^^^^^^^^^^^^^^^^^^^
