@@ -6,7 +6,7 @@
 '''
 
 import inspect
-from functools import wraps, update_wrapper
+from functools import wraps
 import re
 
 
@@ -76,12 +76,12 @@ class InheritanceBase(metaclass=MetaInheritanceBase):
 
         All direct children should init super::
 
-            def __init__(self, myA, **kwargs):
+            def __init__(self, myA, \*\*kwargs):
                 self.something = myA
-                super().__init__(**kwargs)
+                super().__init__(\*\*kwargs)
 
-        The child subclass might have a method ``foo(self, alice)`` -- no **kwargs
-        The grandchild version of foo must have **kwargs and, at some point, call super().foo(**kwargs)
+        The child subclass might have a method ``foo(self, alice)`` -- no \*\*kwargs
+        The grandchild version of foo must have \*\*kwargs and, at some point, call super().foo(\*\*kwargs)
     '''
     def __init__(self, **kwargs):
         if kwargs:

@@ -1,16 +1,18 @@
-from lightlab import logger, DEBUG
+from ..visa_bases import VISAInstrumentDriver
 
-debug_mode = logger
+# This imports all of the modules in this folder
+# As well as all their member classes that are VISAInstrumentDriver
+import importlib
+import pkgutil
 
-def debug(*args):
-    '''Debug printing. If debugOn is true, it will print a bunch of useful stuff
-    '''
-    if logger.level == DEBUG:
-        logger.debug(args)
-
-
-debugWait = debug
-
-from .configure import *
-from .visa_connection import *
-from .visa_drivers import *
+for _, modname, _ in pkgutil.walk_packages(path=__path__,
+                                           prefix=__name__ + '.'):
+    _temp = importlib.import_module(modname)
+    for k, v in _temp.__dict__.items():
+        if k[0] != '_' and type(v) is not type:
+            try:
+                mro = v.mro()
+            except AttributeError:
+                continue
+            if VISAInstrumentDriver in mro:
+                globals()[k] = v

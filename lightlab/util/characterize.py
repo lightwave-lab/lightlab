@@ -7,10 +7,9 @@ from cycler import cycler
 import numpy as np
 import time
 from IPython import display
-from collections import OrderedDict
 
-from .data import Waveform, FunctionBundle
-from ..util import sweep as sUtil
+from .data import FunctionBundle
+
 
 def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=True):
     ''' Looks at a sense variable at different delays after calling an actuate function.
@@ -25,7 +24,7 @@ def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=Tru
         Returns:
             (FunctionBundle): fSense values vs. delay
     '''
-    fi, ax = plt.subplots(figsize=(12,7))
+    fi, ax = plt.subplots(figsize=(12, 7))
     delays = np.linspace(0, maxDelay, nPts)
 
     # Figure out if sense is scalar or array; wrap accordingly
@@ -48,9 +47,13 @@ def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=Tru
         v[it, :] = fWrapped()
         display.clear_output(wait=True)
         ax.cla()
-        ax.plot(t[:it+1], v[:it+1])
+        ax.plot(t[:it + 1], v[:it + 1])
         display.display(fi)
-    return FunctionBundle(t, v)
+        bund = FunctionBundle()
+        bund.absc = t
+        bund.ordiMat = v
+    return bund
+
 
 def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
     ''' Takes in a NdSweeper and looks at the effect of delaying between actuation from measurement. Does the gathering.
@@ -70,7 +73,8 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
             It would be nice to provide timeconstant analysis, perhaps by looking at 50%, or by fitting an exponential
     '''
     if len(varSwp.actuate) > 1:
-        raise NotImplementedError('Since sweeper does not do well with >2 dimensions, you can only strobe a 1-D sweep')
+        raise NotImplementedError(
+            'Since sweeper does not do well with >2 dimensions, you can only strobe a 1-D sweep')
     aKey, actu = list(varSwp.actuate.items())[0]
     varFun, varDom, varEvery = actu
     measParseKeys = list(varSwp.measure.keys()) + list(varSwp.parse.keys())
@@ -96,7 +100,7 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
     startValSwp.gather()
     startValData = {}
     for mpKey in measParseKeys:
-        startValData[mpKey+'-start'] = startValSwp.data[mpKey][0]
+        startValData[mpKey + '-start'] = startValSwp.data[mpKey][0]
     for sdKey, sdVal in startValData.items():
         strobeSwp.addStaticData(sdKey, sdVal)
 
@@ -111,11 +115,12 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
     endValSwp.gather()
     endValData = {}
     for mpKey in measParseKeys:
-        endValData[mpKey+'-end'] = endValSwp.data[mpKey]
+        endValData[mpKey + '-end'] = endValSwp.data[mpKey]
     for edKey, edVal in endValData.items():
         strobeSwp.addStaticData(edKey, edVal)
 
-    # Adding actuation following reset: the default actuation, then a delay associated with the strobe
+    # Adding actuation following reset: the default actuation, then a delay
+    # associated with the strobe
     strobeSwp.addActuation('strobeDelay', lambda t: time.sleep(t), np.linspace(0, maxDelay, nPts))
 
     # Provides normalized parsers for plotting
@@ -123,10 +128,11 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
     strobeSwp.plotOptions['yKey'] = ()
     for mpKey in measParseKeys:
         strobeSwp.addParser(mpKey + '-normalized',
-            lambda dat: (dat[mpKey] - dat[mpKey+'-start']) / (dat[mpKey+'-end'] - dat[mpKey+'-start']))
-        strobeSwp.plotOptions['yKey'] += (mpKey+'-normalized', )
+                            lambda dat: (dat[mpKey] - dat[mpKey + '-start']) / (dat[mpKey + '-end'] - dat[mpKey + '-start']))
+        strobeSwp.plotOptions['yKey'] += (mpKey + '-normalized', )
 
     return strobeSwp
+
 
 def monitorVariable(fValue, sleepSec=0, nReps=100, plotEvery=1):
     ''' Monitors some process over time. Good for observing drift.
@@ -146,7 +152,7 @@ def monitorVariable(fValue, sleepSec=0, nReps=100, plotEvery=1):
     t0 = time.time()
     timeFun = lambda: time.time() - t0
 
-    fi, ax = plt.subplots(figsize=(12,7))
+    fi, ax = plt.subplots(figsize=(12, 7))
     cycleDefault = plt.rcParams['axes.prop_cycle'].by_key()['color']
     cycleContrained = cycleDefault[:w]
     ax.set_prop_cycle(cycler('color', cycleContrained))
@@ -156,15 +162,14 @@ def monitorVariable(fValue, sleepSec=0, nReps=100, plotEvery=1):
     for it in range(nReps):
         t[it] = timeFun()
         v[it, :] = fWrapped()
-        if (it+1) % plotEvery == 0:
+        if (it + 1) % plotEvery == 0:
             if curves is not None:
                 try:
-                    [c.remove() for c in curves]
+                    [c.remove() for c in curves]  # pylint: disable=not-an-iterable
                 except ValueError:
                     # it was probably an old one
                     pass
-            curves = ax.plot(t[:it+1], v[:it+1])
+            curves = ax.plot(t[:it + 1], v[:it + 1])
             display.clear_output(wait=True)
             display.display(plt.gcf())
         time.sleep(sleepSec)
-
