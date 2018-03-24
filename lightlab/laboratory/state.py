@@ -42,6 +42,7 @@ class LabState(Hashable):
     hosts = None
     benches = None
     connections = None
+    filename = None
 
     @property
     def instruments(self):
@@ -60,8 +61,11 @@ class LabState(Hashable):
         return instruments_dict
 
     def __init__(self, filename=_filename):
-        super().__init__(hosts=dict(), benches=dict(),
-                         connections=list(), filename=filename)
+        self.hosts = dict()
+        self.benches = dict()
+        self.connections = list()
+        self.filename = filename
+        super().__init__()
 
     def updateHost(self, *hosts):
         for host in hosts:
@@ -90,7 +94,6 @@ class LabState(Hashable):
                 instr_obj.bench = None
                 instr_obj.host = None
                 del instr_obj
-
 
     def insertInstrument(self, instrument):
         # TODO test if bench and/or host are in lab
@@ -272,7 +275,8 @@ class LabState(Hashable):
         if save_backup:
             if filepath.exists():
                 # gets folder/filename.* and transforms into folder/filename_{timestamp}.json
-                filepath_backup = Path(filepath).with_name("{}_{}.json".format(filepath.stem, timestamp_string()))
+                filepath_backup = Path(filepath).with_name(
+                    "{}_{}.json".format(filepath.stem, timestamp_string()))
                 logger.debug(f"Backup {filepath} to {filepath_backup}")
                 shutil.copy2(filepath, filepath_backup)
 

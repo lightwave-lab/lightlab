@@ -1,2 +1,2 @@
-from .bases import *
-from .interfaces import *
+from .bases import Host, Bench, Instrument  # NOQA
+from .interfaces import *  # NOQA
