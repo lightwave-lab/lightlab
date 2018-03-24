@@ -38,10 +38,10 @@ venvinfo/testreqs~: $(REINSTALL_DEPS) test-requirements.txt
 	@mkdir -p venvinfo
 	touch venvinfo/testreqs~
 
-test: testbuild
+test-unit: testbuild
 	( \
 		source venv/bin/activate; \
-		py.test $(TESTARGS) tests; \
+		py.test $(TESTARGS) $(TESTARGSNB) tests notebooks/Tests; \
 	)
 
 test-lint: testbuild
@@ -50,17 +50,20 @@ test-lint: testbuild
 		py.test --pylint --flakes --pylint-rcfile=pylintrc lightlab; \
 	)
 
+test-lint-errors: testbuild
+	( \
+		source venv/bin/activate; \
+		py.test --pylint --flakes --pylint-rcfile=pylintrc-errors lightlab; \
+	)
+
 test-nb: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test $(TESTARGS) $(TESTARGSNB) notebooks/Tests; \
 	)
 
-test-all: testbuild
-	( \
-		source venv/bin/activate; \
-		py.test $(TESTARGS) $(TESTARGSNB) tests notebooks/Tests; \
-	)
+test: testbuild test-unit test-lint ;
+
 
 clean:
 	rm -rf dist
@@ -145,10 +148,11 @@ help:
 	@echo "  devbuild          document it"
 	@echo "--- testing ---"
 	@echo "  testbuild         document it"
-	@echo "  test              document it"
-	@echo "  test-lint         document it"
+	@echo "  test-unit         document it"
 	@echo "  test-nb           document it"
-	@echo "  test-all          document it"
+	@echo "  test-lint         document it"
+	@echo "  test-lint-errors  document it"
+	@echo "  test              document it"
 	@echo "--- documentation ---"
 	@echo "  docbuild          document it"
 	@echo "  docs              document it"
@@ -162,4 +166,4 @@ help:
 	@echo "  monitorhost       document it"
 
 
-.PHONY: help test docs test-nb test-all clean purge dochost monitorhost
+.PHONY: help test docs test-nb test-unit test-lint test-lint-errors clean purge dochost monitorhost
