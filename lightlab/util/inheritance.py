@@ -6,7 +6,7 @@
 '''
 
 import inspect
-from functools import wraps, update_wrapper
+from functools import wraps
 import re
 
 

@@ -1,18 +1,7 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import time
-import itertools
-from IPython import display
-from enum import Enum
-import matplotlib.cm
-from collections import OrderedDict
-
-from ..util import data as dUtil
-from ..util import plot as pUtil
-from ..util import io
 
 def GramSchmidt3D(initial_weights, vec_first=None, vec_second=None, orthogonal_first=False, orthogonal_second=False):
-    ''' Perform 3D Gram-Schmidt orthogonalization 
+    ''' Perform 3D Gram-Schmidt orthogonalization
 
         Args:
             initial_weights(array): weight vectors to be orthogonalized
@@ -35,7 +24,7 @@ def GramSchmidt3D(initial_weights, vec_first=None, vec_second=None, orthogonal_f
         orthogonal_weight_second[j] = initial_weights[j] / np.linalg.norm(initial_weights[j])
     if orthogonal_second:
         return orthogonal_weight_second
-    
+
 def GramSchmidt(initial_weights, vec):
     shape1 = np.shape(initial_weights)
     shape2 = np.shape(vec)
@@ -48,7 +37,7 @@ def GramSchmidt(initial_weights, vec):
 
 def GramSchmidt1Dvec(initial_weights, vec):
     shape1 = np.shape(initial_weights)
-    shape2 = np.shape(vec)
+    # shape2 = np.shape(vec)
     orthogonal_weights = np.zeros((shape1[0],shape1[1]))
     for i in range(shape1[0]):
         initial_weights[i] -= np.dot(np.dot(initial_weights[i],vec),vec)
