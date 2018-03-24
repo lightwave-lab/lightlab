@@ -490,9 +490,9 @@ class MeasuredFunction(object):
         if type(self) == Spectrum:
             # For Spectrum objects only
             if isPeak:
-                spectFun = self.lin()
+                spectFun = self.lin()  # pylint: disable=no-member
             else:
-                spectFun = 1 - self.lin()
+                spectFun = 1 - self.lin()  # pylint: disable=no-member
             for i in range(len(filtShapes)):
                 if type(filtShapes[i]).__name__ != 'Spectrum':
                     raise Exception('If calling object is Spectrum, the filter shapes must also be Spectrum types')
@@ -992,7 +992,7 @@ class MeasuredSurface(object):
     def simplePlot(self, *args, **kwargs):
         import matplotlib.cm as cm
         if 'cmap' not in kwargs.keys():
-            kwargs['cmap'] = cm.inferno
+            kwargs['cmap'] = cm.inferno  # pylint: disable=no-member
         if 'shading' not in kwargs.keys():
             kwargs['shading'] = 'flat'
         YY, XX = np.meshgrid(self.absc[0], self.absc[1])
