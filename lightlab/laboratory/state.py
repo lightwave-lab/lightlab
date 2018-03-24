@@ -318,3 +318,4 @@ class _Sneaky(object):
 
 
 _Sneaky(__name__)
+lab = None  # This actually helps with the linting and debugging. No side effect.
