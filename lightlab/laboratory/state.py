@@ -34,7 +34,7 @@ def hash_sha256(string):
 
 
 class LabState(Hashable):
-    __version__ = 0
+    __version__ = 1
     __sha256__ = None
     __user__ = None
     __datetime__ = None
