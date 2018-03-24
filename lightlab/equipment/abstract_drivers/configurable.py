@@ -11,6 +11,7 @@ defaultFileDir = lightlabDevelopmentDir / 'savedConfigDefaults/'
 
 from . import AbstractDriver
 
+
 class AccessException(Exception):
     pass
 
@@ -76,7 +77,7 @@ class TekConfig(object):
 
         cmd = (cStr, val)
         success = dpath.util.set(self.dico, *cmd, separator=self.separator)
-        if success != 1: # it doesn't exist yet
+        if success != 1:  # it doesn't exist yet
             try:
                 dpath.util.new(self.dico, *cmd, separator=self.separator)
             except ValueError as e:
@@ -101,7 +102,8 @@ class TekConfig(object):
                 list: list of valid commands (cstr, val) on the subgroup subdirectory
         '''
         cList = []
-        children = dpath.util.search(self.dico, subgroup + '*', yielded=True, separator=self.separator)
+        children = dpath.util.search(self.dico, subgroup + '*',
+                                     yielded=True, separator=self.separator)
         for cmd in children:
             s, v = cmd
             if type(v) is not dict:
@@ -116,7 +118,7 @@ class TekConfig(object):
             writeList = [None] * len(cList)
             for i, cmd in enumerate(cList):
                 cStr, val = cmd
-                if cStr[-1] == '&': # check for tokens
+                if cStr[-1] == '&':  # check for tokens
                     cStr = cStr[:-2]
                 writeList[i] = cStr + ' ' + str(val)
             return writeList
@@ -206,7 +208,7 @@ class TekConfig(object):
         except FileNotFoundError:
             # file probably doesn't exist
             existingConfig = None
-            overwrite=True
+            overwrite = True
 
         if overwrite:
             configToSave = type(self)()
@@ -217,7 +219,7 @@ class TekConfig(object):
         from pathlib import Path
         fpath = Path(fname)
         with fpath.open('w+') as fx:
-            fx.write(str(configToSave)) # __str__ gives nice json format
+            fx.write(str(configToSave))  # __str__ gives nice json format
 
 
 class Configurable(AbstractDriver):
@@ -225,6 +227,7 @@ class Configurable(AbstractDriver):
 
         This clas uses query/write methods that are not directly inherited, so the subclass or its parents must implement those functions
     '''
+
     def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True, **kwargs):
 
         self._hardwareinit = False
@@ -409,8 +412,8 @@ class Configurable(AbstractDriver):
             try:
                 ret = self.query(cStr + '?')
             except VisaIOError as err:
-                logger.error('Problematic parameter was {}.\n'.format(cStr) + \
-                    'Likely it does not exist in this instrument command structure.')
+                logger.error('Problematic parameter was {}.\n'.format(cStr) +
+                             'Likely it does not exist in this instrument command structure.')
                 raise
 
             if self.header:
@@ -466,13 +469,9 @@ class Configurable(AbstractDriver):
         allSetCmds = allConfig.getList('', asCmd=True)
 
         cfgBuild = TekConfig()
-        try:
-            oldTimeout = self.timeout
-        except AttributeError:
-            pass
-        self.timeout = 1000
+
         for cmd in allSetCmds:
-            if cmd[0][-1]  != '&': # handle the sibling subdir token
+            if cmd[0][-1] != '&':  # handle the sibling subdir token
                 cStr = cmd[0]
             else:
                 cStr = cmd[0][:-2]
@@ -482,7 +481,6 @@ class Configurable(AbstractDriver):
                 logger.info(cStr, '<--', val)
             except VisaIOError as e:
                 logger.info(cStr, 'X -- skipping')
-        self.timeout = oldTimeout
 
         cfgBuild.save(filename)
         logger.info('New default saved to ' + str(filename))

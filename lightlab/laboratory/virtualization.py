@@ -248,7 +248,7 @@ class DualInstrument(Virtualizable):
                 logger.warning('Allowed: ' + ', '.join(allowed))
         self.synced = []
 
-    @Virtualizable.virtual.setter
+    @Virtualizable.virtual.setter  # pylint: disable=no-member
     def virtual(self, toVirtual):
         ''' An alternative to context managing.
             Note that hardware_warmup will not be called,

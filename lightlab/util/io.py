@@ -149,7 +149,7 @@ class ProgressWriter(object):
         if self.serving:
             print('See sweep progress online at')
             print(self.getUrl())
-            monitorDir.mkdir(exist_ok=True)
+            monitorDir.mkdir(exist_ok=True)  # pylint: disable=no-member
             fp = Path(ProgressWriter.progFileDefault)  # pylint: disable=no-member
             fp.touch()
             self.filePath = fp.resolve()
