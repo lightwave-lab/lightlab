@@ -1,6 +1,8 @@
 from . import AbstractDriver
 from lightlab.util.io import ChannelError
 
+
+# pylint: disable=no-member
 class PowerMeterAbstract(AbstractDriver):
     '''
         For the `HP_8152A <http://www.lightwavestore.com/product_datasheet/OTI-OPM-L-030C_pdf4.pdf>`__
@@ -13,9 +15,11 @@ class PowerMeterAbstract(AbstractDriver):
         '''
         if channel not in self.channelDescriptions.keys():
             raise ChannelError(
-                'Not a valid PowerMeter channel. Use ' \
-                + ' '.join(('{} ({})'.format(k, v) \
-                           for k, v in self.channelDescriptions)))
+                'Not a valid PowerMeter channel. Use ' + ' '.join(
+                    ('{} ({})'.format(k, v)
+                     for k, v in self.channelDescriptions)))
 
     def powerLin(self, channel=1):
         return 10 ** (self.powerDbm(channel) / 10)
+
+# pylint: enable=no-member

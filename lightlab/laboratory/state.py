@@ -42,7 +42,6 @@ class LabState(Hashable):
     hosts = None
     benches = None
     connections = None
-    filename = None
 
     @property
     def instruments(self):
@@ -273,7 +272,7 @@ class LabState(Hashable):
 
         # it is good to backup this file in caseit exists
         if save_backup:
-            if filepath.exists():
+            if filepath.exists():  # pylint: disable=no-member
                 # gets folder/filename.* and transforms into folder/filename_{timestamp}.json
                 filepath_backup = Path(filepath).with_name(
                     "{}_{}.json".format(filepath.stem, timestamp_string()))
@@ -281,7 +280,7 @@ class LabState(Hashable):
                 shutil.copy2(filepath, filepath_backup)
 
         # save to filepath, overwriting
-        filepath.touch()
+        filepath.touch()  # pylint: disable=no-member
         with open(filepath, 'w') as file:
             json_state = self.__toJSON()
             file.write(json.encode(json_state))

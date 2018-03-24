@@ -12,10 +12,10 @@ class MultiModalSource(object):
         Default class constants come from NI PCI source array
     '''
     supportedModes = {'milliamp', 'amp', 'mwperohm', 'wattperohm', 'volt', 'baseunit'}
-    baseUnitBounds = [0, 1] # Scaled voltage
-    baseToVoltCoef = 10 # This ends up setting the volt bounds
+    baseUnitBounds = [0, 1]  # Scaled voltage
+    baseToVoltCoef = 10  # This ends up setting the volt bounds
     v2maCoef = 4  # current (milliamps) = v2maCoef * voltage (volts)
-    exceptOnRangeError = False # If False, it will constrain it and print a warning
+    exceptOnRangeError = False  # If False, it will constrain it and print a warning
 
     @classmethod
     def enforceRange(cls, val, mode):
@@ -146,8 +146,8 @@ class ElectricalSource(object):
         for chan in chanValDict.keys():
             if chan not in self.stateDict.keys():
                 raise ChannelError('Channel index not blocked out. ' +
-                                      'Requested ' + str(chan) +
-                                      ', Available ' + str(self.stateDict.keys()))
+                                   'Requested ' + str(chan) +
+                                   ', Available ' + str(self.stateDict.keys()))
 
         # Change our *internal* state
         self.stateDict.update(chanValDict)
@@ -218,5 +218,3 @@ class ElectricalSource(object):
 #     def measureVoltage(self):
 #         voltDict = super().measureVoltage()
 #         return voltDict[0]
-
-

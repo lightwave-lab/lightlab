@@ -222,6 +222,7 @@ class TekConfig(object):
             fx.write(str(configToSave))  # __str__ gives nice json format
 
 
+# pylint: disable=no-member
 class Configurable(AbstractDriver):
     ''' Instruments can be configurable and use TekConfig.
 
@@ -484,3 +485,4 @@ class Configurable(AbstractDriver):
 
         cfgBuild.save(filename)
         logger.info('New default saved to ' + str(filename))
+# pylint: enable=no-member
