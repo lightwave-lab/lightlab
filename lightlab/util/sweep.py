@@ -144,7 +144,7 @@ class NdSweeper(Sweeper):
         self.static = OrderedDict()
 
         self.monitorOptions = {'livePlot': False, 'plotEvery': 1, 'stdoutPrint': True, 'runServer': False}
-        self.plotOptions = {'plType': 'curves', 'xKey': None, 'yKey': None, 'axArr': None, 'cmap-surf': matplotlib.cm.inferno, 'cmap-curves': matplotlib.cm.viridis}
+        self.plotOptions = {'plType': 'curves', 'xKey': None, 'yKey': None, 'axArr': None, 'cmap-surf': matplotlib.cm.inferno, 'cmap-curves': matplotlib.cm.viridis}  # pylint: disable=no-member
 
 
     @classmethod
@@ -554,7 +554,7 @@ class NdSweeper(Sweeper):
                     if hCurves is None:
                         hCurves = np.empty(axArr.shape, dtype=object)
                     else:
-                        if hCurves[iAx] is not None:
+                        if hCurves[iAx] is not None:  # pylint:disable=unsubscriptable-object
                             try:
                                 hCurves[iAx][0].remove()
                             except ValueError:
@@ -639,7 +639,7 @@ class NdSweeper(Sweeper):
     def loadObj(cls, savefile):
         ''' savefile must have been saved with saveObj
         '''
-        newObj = super().fromFile(savefile)
+        newObj = cls.fromFile(savefile)
         try:
             actKeyList = newObj.data.pop('actuation-keys')
         except KeyError:
@@ -670,7 +670,7 @@ def simpleSweep(actuate, domain, measure=None):
             (ndarray): what is measured. Same length as domain
     '''
     swpObj = NdSweeper()
-    swpObj.addActuation('act0', actuate, domain)
+    swpObj.addActuation('act0', actuate, domain)  # pylint:disable=no-member
     if measure is not None:
         swpObj.addMeasurement('meas0', measure)
     swpObj.setMonitorOptions(stdoutPrint=False)
