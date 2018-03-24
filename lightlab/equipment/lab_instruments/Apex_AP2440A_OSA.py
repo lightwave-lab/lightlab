@@ -14,7 +14,7 @@ WIDEST_WLRANGE = [1505.765, 1572.418]
 def check_socket(host, port):
     # learned from https://stackoverflow.com/questions/19196105/python-how-to-check-if-a-network-port-is-open-on-linux
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-        if sock.connect_ex((host, port)) == 0:  # pyling: disable=no-member
+        if sock.connect_ex((host, port)) == 0:  # pylint: disable=no-member
             logger.debug("{}:{} socket is open".format(host, port))
             port_open = True  # Port is open
         else:
