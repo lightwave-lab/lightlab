@@ -1,5 +1,24 @@
 '''
-This module contains classes responsible to maintain a record of the current state of the lab.
+This module contains classes responsible to maintain a record of the
+current state of the lab.
+
+Users typically just have to import the variable :py:data:`lab`.
+
+Warning:
+    **Developers**: do not import :py:data:`lab` anywhere inside the
+    `lightlab` package. This will cause the deserialization of the
+    JSON file before the definition of the classes of the objects
+    serialized. If you want to make use of the variable lab, import
+    it like this:
+
+    .. code-block:: python
+
+        import lightlab.laboratory.state as labstate
+
+        # developer code
+        device = function_that_returns_device()
+        bench = labstate.lab.findBenchFromInstrument(device)
+
 '''
 from lightlab.laboratory import Hashable
 import hashlib
@@ -15,6 +34,7 @@ import os
 
 
 def timestamp_string():
+    """ Returns timestamp in iso format (e.g. 2018-03-25T18:30:55.328389)"""
     return str(datetime.now().isoformat())
 
 
@@ -31,7 +51,7 @@ except OSError as error:
         logger.warning("%s was not found.", _filename)
     if isinstance(error, PermissionError):
         logger.warning("You don't have permission to read %s.", _filename)
-    new_filename = 'test_{}.json'.format(timestamp_string())
+    new_filename = 'labstate-local.json'.format(timestamp_string())
     logger.warning(f"{_filename} not available. Fallback to local {new_filename}.")
     _filename = new_filename
 
@@ -322,6 +342,7 @@ class LabState(Hashable):
             RuntimeError: if file version is newer than lightlab.
             RuntimeError: if the hash file inside the .json file does not
                 match the computed hash during import.
+            OSError: if there is any problem loading the file.
 
         """
         with open(filename, 'r') as file:
@@ -381,6 +402,7 @@ class LabState(Hashable):
     # filename need not be serialized
     @property
     def filename(self):
+        """ Filename used to serialize labstate."""
         if self.__filename__ is None:
             return _filename
         else:
@@ -391,6 +413,21 @@ class LabState(Hashable):
         self.__filename__ = fname
 
     def saveState(self, fname=None, save_backup=True):
+        """ Saves the current lab, together with all its dependencies,
+        to a JSON file.
+
+        But first, it checks whether the file has the same hash as the
+        previously loaded one. If file is not found, skip this check.
+
+        If the labstate was created from scratch, save with ``_saveState()``.
+
+        Args:
+            fname (str or Path): file path to save
+            save_backup (bool): saves a backup just in case, defaults to True.
+
+        Raises:
+            OSError: if there is any problem saving the file.
+        """
         if fname is None:
             fname = self.filename
         try:
@@ -411,12 +448,12 @@ class LabState(Hashable):
 
         if loaded_lab.__sha256__ == self.__sha256__:
             self._saveState(fname, save_backup)
-
         else:
             logger.error(
                 "{}'s hash does not match with the one loaded in memory. Aborting save.".format(fname))
 
     def _saveState(self, fname=None, save_backup=True):
+        """ Saves the file without checking hash """
         if fname is None:
             fname = self.filename
         filepath = Path(fname).resolve()
