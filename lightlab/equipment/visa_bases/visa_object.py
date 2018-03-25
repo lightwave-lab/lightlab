@@ -36,14 +36,14 @@ class VISAObject(object):
         try:
             self.mbSession = self.resMan.open_resource(self.address)
             if not self.tempSess:
-                logger.debug('Opened ' + self.address)
+                logger.debug('Opened %s', self.address)
         except pyvisa.VisaIOError as err:
             logger.warning('There was a problem opening the VISA %s... Error code: %s',
                            self.address, err.error_code)
             if self._open_retries < OPEN_RETRIES:
                 self._open_retries += 1
                 time.sleep(0.5 * self._open_retries)
-                logger.warning('Trying again... (try = {}/{})'.format(self._open_retries, OPEN_RETRIES))
+                logger.warning('Trying again... (try = {}/{}) %s', (self._open_retries, OPEN_RETRIES))
                 self.open()
             else:
                 logger.error(err)
@@ -59,11 +59,11 @@ class VISAObject(object):
         try:
             self.mbSession.close()
         except pyvisa.VisaIOError as err:
-            logger.error('There was a problem closing the VISA ' + self.address)
+            logger.error('There was a problem closing the VISA %s', self.address)
             raise err
         self.mbSession = None
         if not self.tempSess:
-            logger.debug('Closed ' + self.address)
+            logger.debug('Closed %s', self.address)
 
     def write(self, writeStr):
         try:
@@ -71,9 +71,9 @@ class VISAObject(object):
             try:
                 self.mbSession.write(writeStr)
             except Exception as err:
-                logger.error('Problem writing to ' + self.address)
+                logger.error('Problem writing to %s', self.address)
                 raise err
-            logger.debug('{} - W - {}'.format(self.address, writeStr))
+            logger.debug('{} - W - {} %s', (self.address, writeStr))
         finally:
             if self.tempSess:
                 self.close()
@@ -82,7 +82,7 @@ class VISAObject(object):
         retStr = None
         try:
             self.open()
-            logger.debug('{} - Q - {}'.format(self.address, queryStr))
+            logger.debug('{} - Q - {} %s', (self.address, queryStr))
             toutOrig = self.timeout
             try:
                 if withTimeout is not None:
@@ -91,19 +91,18 @@ class VISAObject(object):
                 if withTimeout is not None:
                     self.timeout = toutOrig
             except Exception as err:
-                logger.error('Problem querying to ' + self.address)
+                logger.error('Problem querying to %s', self.address)
                 # self.close()
                 raise err
             retStr = retStr.rstrip()
-            logger.debug('Query Read - ' + retStr)
+            logger.debug('Query Read - %s', retStr)
         finally:
             if self.tempSess:
                 self.close()
         return retStr
 
     def instrID(self):
-        ''' Returns the \*IDN? string
-        '''
+        #Returns the \*IDN? string
         return self.query('*IDN?')
 
     @property
@@ -132,8 +131,7 @@ class VISAObject(object):
         self.__timeout = newTimeout
 
     def reset(self):
-        '''Writes \*RST
-        '''
+        #Writes \*RST
         self.write('*RST')
 
     def wait(self, bigMsTimeout=10000):
