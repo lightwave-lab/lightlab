@@ -42,7 +42,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
 
     powerRange = np.array([-20, 13])
 
-    def __init__(self, name='The laser source', address=None, useChans=[1], **kwargs):
+    def __init__(self, name='The laser source', address=None, useChans=1, **kwargs):
         kwargs['tempSess'] = kwargs.pop('tempSess', False)
         super().__init__(name=name, address=address, **kwargs)
         self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
@@ -68,7 +68,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         self.close()  # For temporary serial access
 
     # Module-level parameter setters and getters.
-    # TODO: generalize this into parameter structures using a dictionary-based parameter names and communication tokens.
+    # fixme: generalize this into parameter structures using a dictionary-based parameter names and communication tokens.
     # I.e. setChanParameter(self, token, chanValDict) --> returns None
     # getChanParameter(self, token, chanValSet) --> returns dict  [chanValSet
     # as in set([1,3,4])]
@@ -90,8 +90,8 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         enforcedState = newState
         enforcedState = [1 if s != 0 else 0 for s in enforcedState]
         if np.any(newState != enforcedState):
-            logger.warning('Unexpected enable state value. ' +
-                           'Requested = {}. '.format(newState) +
+            logger.warning('Unexpected enable state value. %s %s %s',
+                           'Requested = {}. ', newState,
                            'Expected values = 0 or 1.')
         self.stateDict = dict(zip(self.useChans, enforcedState))
 
@@ -185,7 +185,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         return tuple(zip(minArr, maxArr))
 
     @wlRanges.setter
-    def wlRanges(self, *args):
+    def wlRanges(self):
         print('Warning. wlRanges of the DFB modules is not settable. Ignoring this command')
 
     @property
@@ -194,7 +194,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         return list(self.moduleIterate('*IDN'))
 
     @moduleIds.setter
-    def moduleIds(self, *args):
+    def moduleIds(self):
         print('Warning. moduleIds of the DFB modules is not settable. Ignoring this command')
 
     def parseDictionary(self, chanValDict, setArrayType=None):
@@ -268,7 +268,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         print('Warning: Write not performed because bank was not specified.')
         print('    Instead, call write like this <this>.bankInstruments.write(writeStr)')
 
-    def query(self, queryStr):
+    def query(self, queryStr, withTimeout=None):
         print('Warning: Query not performed because bank was not specified.')
         print('    Instead, call query like this <this>.bankInstruments.query(queryStr)')
 
