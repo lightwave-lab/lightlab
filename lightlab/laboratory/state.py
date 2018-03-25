@@ -34,6 +34,9 @@ def hash_sha256(string):
 
 
 class LabState(Hashable):
+    """ Represents the set of objects and connections present in lab,
+    with the ability to safely save and load to and from a ``.json`` file.
+    """
     __version__ = 1
     __sha256__ = None
     __user__ = None
@@ -296,7 +299,7 @@ class LabState(Hashable):
 def __init__(module):
     # do something that imports this module again
     try:
-        module.lab = module.LabState.loadState()
+        module.lab = module.LabState.loadState(_filename)
     except JSONDecodeError as e:
         logger.error("JSONDecodeError: {}".format(e))
         module.lab = module.LabState()
@@ -309,9 +312,13 @@ class _Sneaky(object):
         sys.modules[name] = self
         self.initializing = True
 
-    def __getattr__(self, name):
-        # call module.__init__ after import introspection is done
-        if self.initializing and not name[:2] == '__' == name[-2:]:
+    def __getattribute__(self, name):
+        if name in ["initializing", "module"]:
+            return super().__getattribute__(name)
+
+        # call module.__init__ only after import introspection is done
+        # e.g. if we need module.lab
+        if self.initializing:
             self.initializing = False
             __init__(self.module)
         return getattr(self.module, name)
