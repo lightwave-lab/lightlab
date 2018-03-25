@@ -14,7 +14,8 @@ from contextlib import contextmanager
 
 class Host(Node):
     """ Class storing information about computer hosts, from which GPIB commands
-    are issued."""
+    are issued.
+    """
     name = None
     mac_address = None
     hostname = None
@@ -46,6 +47,18 @@ class Host(Node):
         return response == 0
 
     def list_resources_info(self, use_cached=True, is_local=False):
+        """ Executes a query to the NI Visa Resource manager and
+        returns a list of instruments connected to it.
+
+        Args:
+            use_cached (bool): query only if not cached, default True
+            is_local (bool): True if querying local instruments, False
+                host is remote.
+
+        Returns:
+            list: list of `pyvisa.highlevel.ResourceInfo` named tuples.
+
+        """
         if self.__cached_list_resources_info is None:
             use_cached = False
         if use_cached:
@@ -62,11 +75,37 @@ class Host(Node):
             return self.__cached_list_resources_info
 
     def list_gpib_resources_info(self, use_cached=True, is_local=False):
+        """ Like :py:meth:`list_resources_info`, but only returns gpib
+        resources.
+
+        Args:
+            use_cached (bool): query only if not cached, default True.
+            is_local (bool): True if querying local instruments, False
+                host is remote, default False.
+
+        Returns:
+            list: list of `pyvisa.highlevel.ResourceInfo` named tuples.
+
+        """
         return {resource_name: resource
                 for resource_name, resource in self.list_resources_info(use_cached=use_cached, is_local=is_local).items()
                 if resource.interface_type == pyvisa.constants.InterfaceType.gpib}
 
     def get_all_gpib_id(self, use_cached=True, is_local=False):
+        """ Queries the host for all connected GPIB instruments, and
+        queries their identities with ``instrID()``.
+
+        Warning: This might cause your instrument to lock into remote mode.
+
+        Args:
+            use_cached (bool): query only if not cached, default True
+            is_local (bool): True if querying local instruments, False
+                host is remote.
+
+        Returns:
+            dict: dictionary with gpib addresses as keys and \
+                identity strings as values.
+        """
         gpib_resources = self.list_gpib_resources_info(use_cached=use_cached, is_local=is_local)
         if self.__cached_gpib_instrument_list is None:
             use_cached = False
@@ -85,8 +124,24 @@ class Host(Node):
             self.__cached_gpib_instrument_list = gpib_instrument_list
             return gpib_instrument_list
 
-    def findGpibAddressById(self, id_string_search, use_cached=True):
-        gpib_ids = self.get_all_gpib_id(use_cached=use_cached)
+    def findGpibAddressById(self, id_string_search, use_cached=True, is_local=False):
+        """ Finds a gpib address using :py:meth:`get_all_gpib_id`, given
+        an identity string.
+
+        Args:
+            id_string_search (str): identity string
+            use_cached (bool): query only if not cached, default True
+            is_local (bool): True if querying local instruments, False
+                host is remote.
+
+        Returns:
+            str: address if found.
+
+        Raises:
+            NotFoundError: If the instrument is not found.
+
+        """
+        gpib_ids = self.get_all_gpib_id(use_cached=use_cached, is_local=is_local)
         for gpib_address, id_string in gpib_ids.items():
             if id_string_search == id_string:
                 logger.info("Found %s in %s.", id_string_search, gpib_address)
@@ -423,6 +478,9 @@ class Instrument(Node):
         #     logger.info("Manually locating %s in %s", self, gpib_address)
         #     self.gpib_address = gpib_address
         self.host = host
+
+    def placeBench(self, new_bench):
+        self.bench = new_bench
 
     # @classmethod
     # def fromGpibAddress(cls, gpib_address):

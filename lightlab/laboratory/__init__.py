@@ -1,3 +1,9 @@
+"""
+The laboratory module facilitates the organization and documentation
+of instruments, experiments and devices. The objects defined here are
+designed to be "hashable", i.e., easy to store and share.
+"""
+
 import jsonpickle
 
 __all__ = ["Node"]
@@ -5,8 +11,12 @@ __all__ = ["Node"]
 
 class Hashable(object):
     """
-    Hashable class to be used with jsonpickle's module. No instance
-    variables starting with "__" will be serialized.
+    Hashable class to be used with jsonpickle's module.
+    No instance variables starting with "__" will be serialized.
+
+    By default, every key-value in the initializer will become instance
+    variables. E.g. ``Hashable(a=1).a == 1``
+
     """
     context = jsonpickle.pickler.Pickler(unpicklable=True, warn=True, keys=True)
 
@@ -71,5 +81,14 @@ class Hashable(object):
 
 
 class Node(Hashable):
-    def placeBench(self, new_bench):
-        self.bench = new_bench
+    """
+    Node is a token of an object that exists in a laboratory.
+    For example, subclasses are:
+
+        - a :py:class:`~lightlab.laboratory.devices.Device`
+        - a :py:class:`~lightlab.laboratory.instruments.bases.Host`
+        - a :py:class:`~lightlab.laboratory.instruments.bases.Bench`
+        - an :py:class:`~lightlab.laboratory.instruments.bases.Instrument`
+
+    """
+    pass
