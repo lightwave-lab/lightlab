@@ -5,7 +5,7 @@ from lightlab.laboratory import Node
 import lightlab.laboratory.state as labstate
 
 
-#TODO add device equality function
+#fixme: add device equality function
 class Device(Node):
     name = None
     ports = None
