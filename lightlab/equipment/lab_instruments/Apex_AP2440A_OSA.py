@@ -15,7 +15,7 @@ def check_socket(host, port):
     # learned from https://stackoverflow.com/questions/19196105/python-how-to-check-if-a-network-port-is-open-on-linux
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
         if sock.connect_ex((host, port)) == 0:  # pylint: disable=no-member
-            logger.debug("{}:{} socket is open".format(host, port))
+            logger.debug("{}:{} socket is open %s", (host, port))
             port_open = True  # Port is open
         else:
             port_open = False  # Port is closed
@@ -76,9 +76,9 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         time.sleep(0.2)
 
     def instrID(self):
-        """Overloads the super function because the OSA does not respond to \*IDN?
-            Instead sends a simple command and waits for a confirmed return
-        """
+        #Overloads the super function because the OSA does not respond to \*IDN?
+        #Instead sends a simple command and waits for a confirmed return
+        
         try:
             self.write('SPSWPMSK?')
         except pyvisa.VisaIOError as err:
@@ -192,7 +192,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
                 dbmAvg = dbmAvg + dbm / avgCnt
         return Spectrum(nm, dbmAvg, inDbm=True)
 
-    ''' TLS access methods currently not implemented '''
+    #TLS access methods currently not implemented
 
     @property
     def tlsEnable(self):
