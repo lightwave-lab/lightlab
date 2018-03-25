@@ -42,7 +42,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
 
     powerRange = np.array([-20, 13])
 
-    def __init__(self, name='The laser source', address=None, useChans=1, **kwargs):
+    def __init__(self, name='The laser source', address=None, useChans=None, **kwargs):
         kwargs['tempSess'] = kwargs.pop('tempSess', False)
         super().__init__(name=name, address=address, **kwargs)
         self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
