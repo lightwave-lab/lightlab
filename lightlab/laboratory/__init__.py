@@ -71,5 +71,9 @@ class Hashable(object):
 
 
 class Node(Hashable):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.bench = None
+
     def placeBench(self, new_bench):
         self.bench = new_bench
