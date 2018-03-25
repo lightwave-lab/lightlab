@@ -8,7 +8,9 @@ from lightlab.laboratory.virtualization import Virtualizable
 from contextlib import contextmanager
 
 class Experiment(Virtualizable):
-    """ Experiment class
+    """ Experiment base class.
+
+    This class is intended to be inherited by the user.
 
     Usage:
 
@@ -16,14 +18,14 @@ class Experiment(Virtualizable):
 
         experiment = Experiment()
         with experiment.asVirtual():
-            experiment.measure()
+            experiment.measure()  # measure is a DualFunction
 
 
+        # Quick tutorial on decorators:
         with obj as foo:
             foo.something()
 
         # this is equivalent to
-
         foo = obj.__enter__()
         foo.something()
         obj.__exit__()

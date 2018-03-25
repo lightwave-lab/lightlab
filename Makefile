@@ -46,6 +46,12 @@ test-unit: testbuild
 		py.test $(TESTARGS) $(TESTARGSNB) tests notebooks/Tests; \
 	)
 
+test-simple: testbuild
+	( \
+		source venv/bin/activate; \
+		py.test $(TESTARGS) $(TESTARGSNB) tests; \
+	)
+
 test-lint: testbuild
 	( \
 		source venv/bin/activate; \

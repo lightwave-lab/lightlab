@@ -78,7 +78,7 @@ class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
     ''' Generic (but not abstract) class for an instrument.
         Initialize using the literal visa address
 
-        Contains a visa communication object
+        Contains a visa communication object.
 
         Todo:
             This might be the place to handle lockouts
