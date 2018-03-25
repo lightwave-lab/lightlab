@@ -52,8 +52,8 @@ class CurrentSources(VISAInstrumentDriver):
     # The above is the old versioin of initialization, and the below is the new version!
     def __init__(self, name='The current source', address=None, **kwargs):
         logger.warning('This class to be deprecated. Use NI_PCI_6723.')
-        logger.warning('Backwards incompatibilities:\n' +
-            'No stateDict argument in __init__\n' +
+        logger.warning('Backwards incompatibilities:\n %s %s',
+            'No stateDict argument in __init__\n',
             'No tuneState property. Use setChannelTuning and getChannelTuning')
 
         self.useChans = kwargs.pop("useChans", None)
@@ -76,6 +76,7 @@ class CurrentSources(VISAInstrumentDriver):
             raise Exception(
                 'Requested channel is more than there are available')
         self.__tuneState = np.zeros(len(self.channels))
+        self.mode = None
         # self.mode = sourceMode.lower()
         # if self.mode not in ['volt', 'milliamp', 'mwperohm']:
         #     raise Exception(
@@ -202,7 +203,7 @@ class CurrentSources(VISAInstrumentDriver):
             setVoltage = value
         elif self.mode == 'milliamp':
             setVoltage = value / CurrentSources.v2maCoef
-        elif self.mode == 'mwperohm':  # TODO I think this formula is in the wrong units
+        elif self.mode == 'mwperohm':  # fixme: I think this formula is in the wrong units
             setVoltage = np.sqrt(value * 1e3) / CurrentSources.v2maCoef
         return setVoltage
 
@@ -229,7 +230,7 @@ class CurrentSources(VISAInstrumentDriver):
         if self.mbSession is not None:
             try:
                 self.mbSession.write('close')
-            except Exception as err:
+            except pyvisa.VisaIOError:
                 print(
                     'Error, cannot communicate with current sources, or session was closed prematurely')
         super().close()
@@ -279,9 +280,9 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
             pyvisa.constants.VI_ATTR_IO_PROT, pyvisa.constants.VI_PROT_4882_STRS)
 
     def instrID(self):
-        ''' There is no "\*IDN?" command. Instead, test if it is alive,
-            and then return a reasonable string
-        '''
+        #There is no "\*IDN?" command. Instead, test if it is alive,
+        #and then return a reasonable string
+        
         self.tcpTest()
         return 'Current Source'
 
@@ -295,7 +296,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
             retNum[i] = float(s) + .01
         print('[x+1, x+1.5] = ' + str(retNum))
 
-    def setChannelTuning(self, chanValDict, mode, waitTime=None, **kwargs):
+    def setChannelTuning(self, chanValDict, mode, waitTime=None): # pylint: disable=W0221
         oldState = self.getChannelTuning(mode)
         # Check range and convert to base units
         chanBaseDict = dict()
@@ -316,11 +317,11 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
         else:
             self.wake()
 
-    def getChannelTuning(self, mode):
+    def getChannelTuning(self, mode): # pylint: disable=W0221
         baseDict = super().getChannelTuning()
         return self.baseUnit2val(baseDict, mode)
 
-    def off(self):
+    def off(self, *setArgs):
         self.setChannelTuning(dict([ch, 0] for ch in self.stateDict.keys()), 'volt')
 
     def wake(self):
