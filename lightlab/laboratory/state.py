@@ -51,7 +51,7 @@ except OSError as error:
         logger.warning("%s was not found.", _filename)
     if isinstance(error, PermissionError):
         logger.warning("You don't have permission to read %s.", _filename)
-    new_filename = 'labstate-local.json'.format(timestamp_string())
+    new_filename = 'labstate-local.json'
     logger.warning(f"{_filename} not available. Fallback to local {new_filename}.")
     _filename = new_filename
 
