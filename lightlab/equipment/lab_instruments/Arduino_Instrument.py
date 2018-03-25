@@ -15,5 +15,5 @@ class Arduino_Instrument(VISAInstrumentDriver):
     def write(self, writeStr):
         pass
 
-    def query(self):
+    def query(self, queryStr, withTimeout=None):
         return 'hey'
