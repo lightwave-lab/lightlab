@@ -24,9 +24,9 @@ class MultiModalSource(object):
         bnds = [cls.baseUnit2val(vBnd, mode) for vBnd in cls.baseUnitBounds]
         enforcedValue = np.clip(val, *bnds)
         if enforcedValue != val:
-            logger.warning('Warning: value out of range was constrained.\n' +
-                           'Requested ' + str(val) +
-                           '. Allowed range is' + str(bnds) + ' in ' + mode + 's.')
+            logger.warning('Warning: value out of range was constrained.\n %s %s %s %s %s %s %s',
+                           'Requested ', val,
+                           '. Allowed range is', bnds, ' in ', mode, 's.')
             if cls.exceptOnRangeError:
                 raise RangeError('Current sources requested out of range.')
         return enforcedValue
@@ -128,7 +128,7 @@ class ElectricalSource(object):
     def getChannels(self):
         return list(self.stateDict.keys())
 
-    def setChannelTuning(self, chanValDict, *args, **kwargs):
+    def setChannelTuning(self, chanValDict):
         ''' Sets a number of channel values and updates hardware
 
             Args:
@@ -152,7 +152,7 @@ class ElectricalSource(object):
         # Change our *internal* state
         self.stateDict.update(chanValDict)
 
-    def getChannelTuning(self, *args, **kwargs):
+    def getChannelTuning(self):
         ''' The inverse of setChannelTuning
 
             Args:
