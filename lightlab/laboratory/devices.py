@@ -5,20 +5,24 @@ from lightlab.laboratory import Node
 import lightlab.laboratory.state as labstate
 
 
-#TODO add device equality function
 class Device(Node):
-    name = None
-    ports = None
+    """ Represents a device in lab.
+
+    Only useful for documenting the experiment.
+    """
+    name = None  #: device name
+    ports = None  #: list(str) port names
     __bench = None
 
     def __init__(self, name, **kwargs):
         self.name = name
-        self.ports = kwargs.pop("ports", dict())
+        self.ports = kwargs.pop("ports", list())
         self.__bench = kwargs.pop("bench", None)
         super().__init__(**kwargs)
 
     @property
     def bench(self):
+        """ (property) Bench in which device is placed."""
         if self.__bench is None:
             self.__bench = labstate.lab.findBenchFromDevice(self)
         return self.__bench
@@ -35,7 +39,7 @@ class Device(Node):
         return "Device {}".format(self.name)
 
     def display(self):
-        # Print benches table
+        """ Displays the device's info table in a nice format."""
         lines = ["{}".format(self)]
         lines.append("Bench: {}".format(self.bench))
         lines.append("=====")

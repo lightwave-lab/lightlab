@@ -373,7 +373,7 @@ class Instrument(Node):
     _name = None
     __bench = None
     __host = None
-    ports = None  #: Port names of instruments. To be used with labstate connections.
+    ports = None  #: list(str) Port names of instruments. To be used with labstate connections.
 
     essentialMethods = ['startup']  #: list of methods to be fed through the driver
     essentialProperties = []  #: list of properties to be fed through the driver
@@ -382,7 +382,7 @@ class Instrument(Node):
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
         self.__bench = kwargs.pop("bench", None)
         self.__host = kwargs.pop("host", None)
-        self.ports = kwargs.pop("ports", dict())
+        self.ports = kwargs.pop("ports", list())
 
         self.__driver_object = kwargs.pop("driver_object", None)
         if self.__driver_object is not None:
