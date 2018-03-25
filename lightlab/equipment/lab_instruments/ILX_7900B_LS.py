@@ -48,6 +48,8 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
 
         useChans, stateDict = useChans, kwargs.pop("stateDict", None)
+        if useChans is None:
+            useChans = []
         if useChans is None and stateDict is None:
             raise Exception(
                 'Must specify either useChans or stateDict when initializing laser sources')
