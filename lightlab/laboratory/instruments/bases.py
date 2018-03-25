@@ -1,5 +1,5 @@
 '''
-This module provides an interface for instruments in the lab and virtual ones.
+This module provides an interface for instruments, hosts and benches in the lab.
 '''
 from lightlab.laboratory import Node
 from lightlab.laboratory.devices import Device
@@ -13,23 +13,28 @@ from contextlib import contextmanager
 
 
 class Host(Node):
-    """ Class storing information about computer hosts, from which GPIB commands
-    are issued.
+    """ Computer host, from which GPIB/VISA commands are issued.
     """
-    name = None
-    mac_address = None
-    hostname = None
-    os = "linux-ubuntu"  # linux-ubuntu, linux-centos, windows, mac etc.
-    instruments = None
+    name = None  #: Print friendly name of the host
+    mac_address = None  #: Mac address of the machine (future use: Wake on Lan)
+    hostname = None  #: DNS hostname for connection (e.g. ``lab-pc-2.school.edu``)
+    os = "linux-ubuntu"  #: OS: linux-ubuntu, linux-centos, windows, mac etc.
+    instruments = None  #: list of instruments controlled by host.
 
     __cached_list_resources_info = None
     __cached_gpib_instrument_list = None
 
-    def __init__(self, instruments=None, *args, **kwargs):
+    def __init__(self, name='Unnamed Host', instruments=None, hostname=None, **kwargs):
         if instruments is None:
             instruments = list()
         self.instruments = instruments
-        super().__init__(*args, **kwargs)
+        if hostname is None:
+            logger.warning("Hostname not set. isLive and list_resources not functional.")
+
+        self.hostname = hostname
+        self.instruments = instruments
+        self.name = name
+        super().__init__(**kwargs)
 
     def __contains__(self, item):
         instrument_search = item in self.instruments
@@ -40,11 +45,15 @@ class Host(Node):
     def isLive(self):
         ''' Pings the system and returns if it is alive.
         '''
-        logger.debug("Pinging %s...", self.hostname)
-        response = os.system("ping -c 1 {}".format(self.hostname))
-        if response != 0:
-            logger.warning("%s is not reachable via ping.", self)
-        return response == 0
+        if self.hostname is not None:
+            logger.debug("Pinging %s...", self.hostname)
+            response = os.system("ping -c 1 {}".format(self.hostname))
+            if response != 0:
+                logger.warning("%s is not reachable via ping.", self)
+            return response == 0
+        else:
+            logger.warning("Hostname not set. Unable to ping.")
+            return False
 
     def list_resources_info(self, use_cached=True, is_local=False):
         """ Executes a query to the NI Visa Resource manager and
@@ -64,14 +73,18 @@ class Host(Node):
         if use_cached:
             return self.__cached_list_resources_info
         else:
-            if is_local:
-                list_query = "?*::INSTR"
+            if self.hostname is not None:
+                if is_local:
+                    list_query = "?*::INSTR"
+                else:
+                    list_query = "visa://" + self.hostname + "/?*::INSTR"
+                rm = pyvisa.ResourceManager()
+                logger.debug("Caching resource list in %s", self)
+                self.__cached_list_resources_info = rm.list_resources_info(
+                    query=list_query)
             else:
-                list_query = "visa://" + self.hostname + "/?*::INSTR"
-            rm = pyvisa.ResourceManager()
-            logger.debug("Caching resource list in %s", self)
-            self.__cached_list_resources_info = rm.list_resources_info(
-                query=list_query)
+                logger.warning("Hostname not set. Unable to list resources.")
+                self.__cached_list_resources_info = list()
             return self.__cached_list_resources_info
 
     def list_gpib_resources_info(self, use_cached=True, is_local=False):
@@ -151,11 +164,24 @@ class Host(Node):
             "{} not found in {}".format(id_string_search, self))
 
     def addInstrument(self, *instruments):
+        """ Adds an instrument to self.instruments if it is not already present.
+
+        Args:
+            *instruments (:py:class:`Instrument`): instruments
+
+        """
         for instrument in instruments:
             if instrument not in self.instruments:
                 self.instruments.append(instrument)
 
     def removeInstrument(self, *instruments):
+        """ Removes an instrument from self.instruments.
+        Warns the user if the instrument is not already present.
+
+        Args:
+            *instruments (:py:class:`Instrument`): instruments
+
+        """
         for instrument in instruments:
             try:
                 self.instruments.remove(instrument)
@@ -164,6 +190,15 @@ class Host(Node):
                             instrument, self)
 
     def checkInstrumentsLive(self):
+        """ Checks whether all instruments are "live".
+
+        Instrument status is checked with the :py:meth:`Instrument.isLive()` method
+
+        Returns:
+            bool: True if all instruments are live, False otherwise
+
+
+        """
         all_live = True
         for instrument in self.instruments:
             if instrument.isLive():
@@ -177,11 +212,12 @@ class Host(Node):
 
 
 class Bench(Node):
-    """ Class storing information about benches, for the purpose of
-    facilitating location in lab. """
-    name = None
-    devices = None
-    instruments = None
+    """ Represents an experiment bench for the purpose of facilitating
+    its location in lab.
+    """
+    name = None  #: Print friendly name of the bench. (Not optional)
+    devices = None  #: List of devices placed on bench
+    instruments = None  #: List of instruments placed on bench
 
     def __contains__(self, item):
 
@@ -266,7 +302,9 @@ class Bench(Node):
 
 # TODO add instrument equality function
 class Instrument(Node):
-    """ Class storing information about instruments, for the purpose of
+    """ Represents an instrument in lab.
+
+        This class stores information about instruments, for the purpose of
         facilitating verifying whether it is connected to the correct devices.
 
         Driver feedthrough: methods, properties, and even regular attributes
@@ -491,4 +529,6 @@ class Instrument(Node):
 
 
 class NotFoundError(RuntimeError):
+    """ Error thrown when instrument is not found
+    """
     pass
