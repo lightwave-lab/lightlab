@@ -64,6 +64,13 @@ def lab(request):
     request.addfinalizer(delete_file)
     return lab
 
+def test_insert():
+    Bench1.addInstrument(instrument1, instrument2)
+    assert instrument1 in Bench1
+    assert instrument2 in Bench1
+    with pytest.raises(TypeError, message="failed to detect wrong instrument type"):
+        Bench1.addInstrument(device1)
+
 
 def test_instantiate(lab):
     '''Initializing LabState with two instruments, devices, and interconnections,

@@ -171,6 +171,8 @@ class Host(Node):
 
         """
         for instrument in instruments:
+            if not isinstance(instrument, Instrument):
+                raise TypeError(f"{instrument} is not an instance of Instrument.")
             if instrument not in self.instruments:
                 self.instruments.append(instrument)
 
@@ -183,6 +185,8 @@ class Host(Node):
 
         """
         for instrument in instruments:
+            if type(instrument) is str:
+                raise TypeError('Cannot remove by name string. Use the object')
             try:
                 self.instruments.remove(instrument)
             except ValueError as err:
@@ -209,6 +213,20 @@ class Host(Node):
 
     def __str__(self):
         return "Host {}".format(self.name)
+
+    def display(self):
+        """ Displays the host's instrument table in a nice format."""
+        lines = ["{}".format(self)]
+        lines.append("===========")
+        lines.append("Instruments")
+        lines.append("===========")
+        if len(self.instruments) > 0:
+            lines.extend(["   {} ({})".format(str(instrument), str(instrument.host))
+                          for instrument in self.instruments])
+        else:
+            lines.append("   No instruments.")
+        lines.append("***")
+        print("\n".join(lines))
 
 
 class Bench(Node):
@@ -245,38 +263,72 @@ class Bench(Node):
         if instruments is None:
             instruments = list()
         self.instruments = instruments
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
     def addInstrument(self, *instruments):
+        """ Adds an instrument to self.instruments if it is not already present.
+
+        Args:
+            *instruments (:py:class:`Instrument`): instruments
+
+        """
         for instrument in instruments:
+            if not isinstance(instrument, Instrument):
+                raise TypeError(f"{instrument} is not an instance of Instrument.")
             if instrument not in self.instruments:
                 self.instruments.append(instrument)
 
     def removeInstrument(self, *instruments):
-        # TODO Remove all connections
+        """ Removes an instrument from self.instruments.
+        Warns the user if the instrument is not already present.
+
+        Args:
+            *instruments (:py:class:`Instrument`): instruments
+
+        Todo:
+            Remove all connections
+        """
         for instrument in instruments:
             if type(instrument) is str:
-                logger.warn('Cannot remove by name string. Use the object')
+                raise TypeError('Cannot remove by name string. Use the object')
             try:
                 self.instruments.remove(instrument)
             except ValueError as err:
                 logger.warn("%s not currently placed in %s", instrument, self)
 
     def addDevice(self, *devices):
+        """ Adds a device to self.devices if it is not already present.
+
+        Args:
+            *(:py:class:`Device`): devices
+
+        """
         for device in devices:
+            if not isinstance(device, Device):
+                raise TypeError(f"{device} is not an instance of Device.")
             if device not in self.devices:
                 self.devices.append(device)
 
     def removeDevice(self, *devices):
-        # TODO Remove all connections
+        """ Removes a device from self.devices.
+        Warns the user if the device is not already present.
+
+        Args:
+            *(:py:class:`Device`): devices
+
+        Todo:
+            Remove all connections
+        """
         for device in devices:
+            if type(device) is str:
+                raise TypeError('Cannot remove by name string. Use the object')
             try:
                 self.devices.remove(device)
             except ValueError as err:
                 logger.warn("%s not currently placed in %s", device, self)
 
     def display(self):
-        # Print benches table
+        """ Displays the bench's table in a nice format."""
         lines = ["{}".format(self)]
         lines.append("===========")
         lines.append("Instruments")
@@ -300,7 +352,6 @@ class Bench(Node):
         return "Bench {}".format(self.name)
 
 
-# TODO add instrument equality function
 class Instrument(Node):
     """ Represents an instrument in lab.
 
@@ -310,20 +361,23 @@ class Instrument(Node):
         Driver feedthrough: methods, properties, and even regular attributes
         that are in ``essentialMethods`` and ``essentialProperties`` of the class
         will get/set/call through to the driver object.
+
+        Todo:
+            Add example of instrument instantiation and point to relevant ipynb.
     """
     _driver_class = None
     __driver_object = None
-    address = None
+    address = None  #: Complete Visa address of the instrument (e.g. :literal:`visa\://hostname/GPIB0::1::INSTR`)
 
     _id_string = None
     _name = None
     __bench = None
     __host = None
-    ports = None
+    ports = None  #: Port names of instruments. To be used with labstate connections.
 
-    essentialMethods = ['startup']
-    essentialProperties = []
-    optionalAttributes = []
+    essentialMethods = ['startup']  #: list of methods to be fed through the driver
+    essentialProperties = []  #: list of properties to be fed through the driver
+    optionalAttributes = []  #: list of optional attributes to be fed through the driver
 
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
         self.__bench = kwargs.pop("bench", None)
@@ -340,9 +394,10 @@ class Instrument(Node):
         #     if driver_klass is not None:
         #         if not hasattr(driver_klass, attrName):
         #             raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
-        super().__init__(_name=name,
-                         _id_string=id_string,
-                         address=address, **kwargs)
+        self._name = name
+        self._id_string = id_string
+        self.address = address
+        super().__init__(**kwargs)
 
     def __dir__(self):
         ''' For autocompletion in ipython '''
@@ -387,14 +442,33 @@ class Instrument(Node):
 
     # These control contextual behavior. They are used by DualInstrument
     def hardware_warmup(self):
+        """ Called before the beginning of an experiment.
+
+        Typical warmup procedures include RESET gpib commands.
+        """
         pass
 
     def hardware_cooldown(self):
+        """ Called after the end of an experiment.
+
+        Typical cooldown procedures include laser turn-off, or orderly
+        wind-down of current etc.
+        """
         pass
 
     @contextmanager
     def warmedUp(self):
         ''' A context manager that warms up and cools down in a "with" block
+
+        Usage:
+
+        .. code-block:: python
+
+            with instr.warmedUp() as instr:  # warms up instrument
+                instr.doStuff()
+                raise Exception("Interrupting experiment")
+            # cools down instrument, even in the event of exception
+
         '''
         try:
             self.hardware_warmup()
@@ -405,6 +479,12 @@ class Instrument(Node):
     # These control properties
     @property
     def driver_class(self):
+        """ Class of the actual equipment driver
+        (from :py:mod:`lightlab.equipment.lab_instruments`)
+
+        This way the object knows how to instantiate a driver instance
+        from the labstate.
+        """
         if self._driver_class is None:
             logger.warning("Using default driver for %s.", self)
             return DefaultDriver
@@ -413,6 +493,7 @@ class Instrument(Node):
 
     @property
     def driver_object(self):
+        """ Instance of the equipment driver."""
         if self.__driver_object is None:
             try:
                 kwargs = self.driver_kwargs
@@ -430,16 +511,19 @@ class Instrument(Node):
 
     @property
     def driver(self):
+        """ Alias of :py:meth:`driver_object`."""
         return self.driver_object
 
     @property
     def bench(self):
+        """ (property) Bench in which instrument is placed."""
         if self.__bench is None:
             self.__bench = labstate.lab.findBenchFromInstrument(self)
         return self.__bench
 
     @bench.setter
     def bench(self, new_bench):
+        """ Sets the bench in which instrument is placed."""
         if self.bench is not None:
             self.bench.removeInstrument(self)
         if new_bench is not None:
@@ -448,12 +532,14 @@ class Instrument(Node):
 
     @property
     def host(self):
+        """ (property) Host in which instrument is placed."""
         if self.__host is None:
             self.__host = labstate.lab.findHostFromInstrument(self)
         return self.__host
 
     @host.setter
     def host(self, new_host):
+        """ Sets the host in which instrument is placed."""
         if self.host is not None:
             self.host.removeInstrument(self)
         if new_host is not None:
@@ -462,17 +548,21 @@ class Instrument(Node):
 
     @property
     def name(self):
+        """ (property) Instrument name (can only set during initialization) """
         return self._name
 
     @property
     def id_string(self):
+        """ (property) Instrument id string matching
+        ``self.driver.instrID()`` (can only set during initialization)
+        """
         return self._id_string
 
     def __str__(self):
         return "{}".format(self.name)
 
     def display(self):
-        # Print benches table
+        """ Displays the instrument's info table in a nice format."""
         lines = ["{}".format(self)]
         lines.append("Bench: {}".format(self.bench))
         lines.append("Host: {}".format(self.host))
@@ -489,6 +579,12 @@ class Instrument(Node):
         print("\n".join(lines))
 
     def isLive(self):
+        """ Attempts VISA connection to instrument, and checks whether
+        ``instrID()`` matches :py:data:`id_string`.
+
+        Returns:
+            (bool): True if "live", false otherwise.
+        """
         try:
             driver = self.driver_object
             if self.id_string is not None:
@@ -508,16 +604,24 @@ class Instrument(Node):
             logger.warning(err)
             return False
 
-    def connectHost(self, host):
+    def connectHost(self, new_host):
+        """ Sets/changes instrument's host.
+
+        Equivalent to ``self.host = new_host``
+        """
         # if gpib_address is None:
         #     if self.gpib_address is None:
         #         self.gpib_address = self.findAddressById(host)
         # else:
         #     logger.info("Manually locating %s in %s", self, gpib_address)
         #     self.gpib_address = gpib_address
-        self.host = host
+        self.host = new_host
 
     def placeBench(self, new_bench):
+        """ Sets/changes instrument's bench.
+
+        Equivalent to ``self.bench = new_bench``
+        """
         self.bench = new_bench
 
     # @classmethod
