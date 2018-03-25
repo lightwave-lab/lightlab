@@ -128,7 +128,7 @@ class ElectricalSource(object):
     def getChannels(self):
         return list(self.stateDict.keys())
 
-    def setChannelTuning(self, chanValDict):
+    def setChannelTuning(self, chanValDict, *args, **kwargs): # pylint: disable=W0613
         ''' Sets a number of channel values and updates hardware
 
             Args:
@@ -152,7 +152,7 @@ class ElectricalSource(object):
         # Change our *internal* state
         self.stateDict.update(chanValDict)
 
-    def getChannelTuning(self):
+    def getChannelTuning(self, *args, **kwargs): # pylint: disable=W0613
         ''' The inverse of setChannelTuning
 
             Args:
