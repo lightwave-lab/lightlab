@@ -11,6 +11,7 @@ from datetime import datetime
 from json import JSONDecodeError
 from pathlib import Path
 import shutil
+import os
 
 
 def timestamp_string():
@@ -22,7 +23,14 @@ _filename = Path("/home/jupyter/labstate.json")
 try:
     with open(_filename, 'r'):
         pass
-except Exception:
+    if not os.access(_filename, os.W_OK):
+        logger.warning("Write permission to %s denied. " \
+            "You will not be able to use lab.saveState().", _filename)
+except OSError as error:
+    if isinstance(error, FileNotFoundError):
+        logger.warning("%s was not found.", _filename)
+    if isinstance(error, PermissionError):
+        logger.warning("You don't have permission to read %s.", _filename)
     new_filename = 'test_{}.json'.format(timestamp_string())
     logger.warning(f"{_filename} not available. Fallback to local {new_filename}.")
     _filename = new_filename
@@ -42,21 +50,33 @@ class LabState(Hashable):
     __user__ = None
     __datetime__ = None
     __filename__ = None
-    hosts = None
-    benches = None
-    connections = None
+    hosts = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Host`) list of hosts
+    benches = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Bench`) list of benches
+    connections = None  #: list(dict(str -> str)) list of connections
 
     @property
     def instruments(self):
+        """ List of :py:class:`~lightlab.laboratory.instruments.bases.Instrument`,
+        concatenated from ``benches.instruments`` and ``hosts.instruments``.
+        """
         instruments = list()
         for _, bench in self.benches.items():
             instruments.extend(bench.instruments)
         for _, host in self.hosts.items():
             instruments.extend(host.instruments)
-        return list(set(instruments))  # unique elements
+        unique_instruments = list(set(instruments))
+        return unique_instruments  # unique elements
 
     @property
     def instruments_dict(self):
+        """ Dictionary of instruments, concatenated from ``lab.instruments``.
+
+            Access with ``instruments_dict[instr.name]``
+
+            Todo:
+
+                Logs a warning if duplicate is found.
+        """
         instruments_dict = dict()
         for instrument in self.instruments:
             instruments_dict[instrument.name] = instrument
@@ -70,14 +90,42 @@ class LabState(Hashable):
         super().__init__()
 
     def updateHost(self, *hosts):
+        """ Updates hosts in the hosts dictionary.
+
+        Args:
+            *(:py:class:`~lightlab.laboratory.instruments.bases.Host`): hosts
+
+        """
         for host in hosts:
             self.hosts[host.name] = host
 
     def updateBench(self, *benches):
+        """ Updates benches in the benches dictionary.
+
+        Args:
+            *(:py:class:`~lightlab.laboratory.instruments.bases.Bench`): benches
+
+        """
         for bench in benches:
             self.benches[bench.name] = bench
 
     def deleteInstrumentFromName(self, name, force=False):
+        """ Deletes an instrument by their name.
+
+        It will only delete if only one element is found.
+
+        Example:
+
+        .. code-block:: python
+
+            lab.deleteInstrumentFromName("Keithley2")
+
+        Args:
+            name (str): Instrument name
+            force (bool, optional): If True, forces deletion even if
+                duplicate names are found. Default False.
+
+        """
         matching_instruments = list(filter(lambda x: x.name == name,
                                            self.instruments))
         delete = False
@@ -98,7 +146,17 @@ class LabState(Hashable):
                 del instr_obj
 
     def insertInstrument(self, instrument):
-        # TODO test if bench and/or host are in lab
+        """ Inserts instrument in labstate.
+
+        Args:
+            instrument (:py:class:`~lightlab.laboratory.instruments.bases.Instrument`): instrument
+                to insert. It must have either `bench` or `host` set.
+        Raises:
+            RuntimeError: Raised if neither `host` nor `bench` are set.
+
+        Todo:
+            test if bench and/or host are in lab
+        """
         inserted = False
         if instrument.bench is not None:
             instrument.bench.addInstrument(instrument)
@@ -107,16 +165,50 @@ class LabState(Hashable):
             instrument.host.addInstrument(instrument)
             inserted = True
         if not inserted:
-            logger.error("host or bench variables must be assigned.")
+            raise RuntimeError("host or bench variables must be assigned.")
 
     def insertDevice(self, device):
+        """ Inserts device in labstate.
+
+        Args:
+            device (:py:class:`~lightlab.laboratory.devices.Device`): device
+                to insert. It must have either `bench` or `host` set.
+
+        Raises:
+            RuntimeError: Raised if `bench` is not set.
+
+        Todo:
+            test if bench is in lab
+        """
         # TODO test if bench is in lab
         if device.bench is not None:
             device.bench.addDevice(device)
         else:
-            logger.error("bench variable must be assigned.")
+            raise RuntimeError("bench variable must be assigned.")
 
     def updateConnections(self, *connections):
+        """ Updates connections between instruments and devices.
+
+        A connection is a tuple with a pair of one-entry dictionaries, as such:
+
+        .. code-block:: python
+
+            conn = ({instr1: port1}, {instr2: port2})
+
+        The code assumes that there can only be one connection per port.
+        This method performs the following action:
+
+            1. verifies that `port` is one of `instr.ports`. Otherwise raises
+                a ``RuntimeError``.
+            2. deletes any connection in ``lab.connections`` that has
+                either ``{instr1: port1}`` or ``{instr1: port1}``, and
+                logs the deleted connection as a warning.
+            3. adds new connection
+
+        Args:
+            connections (tuple(dict)): connection to update
+        """
+
         # Verify if ports are valid, otherwise do nothing.
         for connection in connections:
             for k1, v1 in connection.items():
@@ -147,6 +239,9 @@ class LabState(Hashable):
 
     @property
     def devices(self):
+        """ List of :py:class:`~lightlab.laboratory.devices.Device` objects
+        present in all benches.
+        """
         devices = list()
         for bench in self.benches.values():
             devices.extend(bench.devices)
@@ -154,21 +249,44 @@ class LabState(Hashable):
 
     @property
     def devices_dict(self):
+        """ Dictionary of devices, concatenated from ``lab.devices``.
+
+            Access with ``devices_dict[device.name]``
+
+            Todo:
+
+                Logs a warning if duplicate is found.
+        """
         return {device.name: device for device in self.devices}
 
     def findBenchFromInstrument(self, instrument):
+        """ Returns the bench that contains the instrument.
+
+        This obviously assumes that one instrument can only be present
+        in one bench.
+        """
         for benchname, bench in self.benches.items():
             if instrument in bench.instruments:
                 return bench
         return None
 
     def findBenchFromDevice(self, device):
+        """ Returns the bench that contains the device.
+
+        This obviously assumes that one device can only be present
+        in one bench.
+        """
         for benchname, bench in self.benches.items():
             if device in bench.devices:
                 return bench
         return None
 
     def findHostFromInstrument(self, instrument):
+        """ Returns the host that contains the instrument.
+
+        This obviously assumes that one instrument can only be present
+        in one host.
+        """
         for hostname, host in self.hosts.items():
             if instrument in host.instruments:
                 return host
@@ -176,6 +294,36 @@ class LabState(Hashable):
 
     @classmethod
     def loadState(cls, filename=_filename, validateHash=True):
+        """ Loads a :py:class:`LabState` object from a file.
+
+        It loads and instantiates a copy of every object serialized
+        with ``lab.saveState(filename)``. The objects are saved with
+        :py:mod:`jsonpickle`, and must be hashable and contain no
+        C-object references. For convenience, lab objects are inherited
+        from `:py:class:`lightlab.laboratory.Hashable`.
+
+        By default, the sha256 hash is verified at import time to prevent
+        instantiating objects from a corrupted file.
+
+        A file version is also compared to the code version. If a new
+        version of this class is present, but your ``json`` file is older,
+        a ``RuntimeWarning`` is issued.
+
+        Todo:
+            When importing older ``json`` files, know what to do to
+            upgrade it without bugs.
+
+        Args:
+            filename (str or Path): file to load from.
+            validateHash (bool): whether to check the hash, default True.
+
+        Raises:
+            RuntimeWarning: if file version is older than lightlab.
+            RuntimeError: if file version is newer than lightlab.
+            RuntimeError: if the hash file inside the .json file does not
+                match the computed hash during import.
+
+        """
         with open(filename, 'r') as file:
             frozen_json = file.read()
         json_state = json.decode(frozen_json)
@@ -249,7 +397,7 @@ class LabState(Hashable):
             loaded_lab = LabState.loadState(fname)
         except FileNotFoundError:
             logger.debug(f"File not found: {fname}. Saving for the first time.")
-            self._saveState(fname, save_backup)
+            self._saveState(fname, save_backup=False)
             return
 
         if not self.__sha256__:
@@ -298,10 +446,19 @@ class LabState(Hashable):
 
 def __init__(module):
     # do something that imports this module again
+    empty_lab = False
     try:
         module.lab = module.LabState.loadState(_filename)
-    except JSONDecodeError as e:
-        logger.error("JSONDecodeError: {}".format(e))
+    except (OSError) as e:
+        logger.error("%s: %s.", e.__class__.__name__, e)
+        empty_lab = True
+    except (JSONDecodeError) as e:
+        logger.error("%s: %s corrupted. %s.", e.__class__.__name__, _filename, e)
+        empty_lab = True
+
+    if empty_lab:
+        logger.error("Starting fresh new LabState(). " \
+            "Save for the first time with lab._saveState()")
         module.lab = module.LabState()
 
 
@@ -318,7 +475,7 @@ class _Sneaky(object):
 
         # call module.__init__ only after import introspection is done
         # e.g. if we need module.lab
-        if self.initializing:
+        if self.initializing and name == "lab":
             self.initializing = False
             __init__(self.module)
         return getattr(self.module, name)
