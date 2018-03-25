@@ -199,7 +199,7 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 #       return freqs, dbm
         return Spectrum(freqs, dbm)
 
-    # TODO: get this out of here.
+    # fixme: get this out of here.
     def multiSpectra(self, nSpect=1, livePlot=False):
         bund = FunctionBundle()
         for iSpect in range(nSpect):
