@@ -92,7 +92,7 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
         if src is not None:
             try:
                 iTok = tokens.index(src)
-            except ValueError as e:
+            except ValueError:
                 raise ValueError(
                     src + ' is not a valid sync source: ' + str(tokens))
             self.setConfigParam('SOP', iTok)
