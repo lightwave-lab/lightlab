@@ -8,7 +8,7 @@ class DynamicLine(object):
     ''' A line that can refresh when called
     '''
 
-    def __init__(self, formatStr='b-', existing=None, geometry=[(0, 0), (4, 4)]):
+    def __init__(self, formatStr='b-', existing=None, geometry=[(0, 0), (4, 4)]): # pylint: disable=dangerous-default-value
         '''
             Args:
                 formatStr (str): plotting line format
