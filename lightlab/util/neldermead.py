@@ -23,7 +23,7 @@ def NelderMead1D(evalPointFun, startBounds, nVertices=2, xTol=0., yTol=0., alpha
     tracker = MeasuredFunction([], [])
     offsToMeasure = np.linspace(*startBounds, nVertices)
     measuredVals = np.zeros(nVertices)
-    for iIter in range(20):
+    for _ in range(20):
         # Take measurements of the points
         for iPt, offs in enumerate(offsToMeasure):
             meas = evalPointFun(offs)
@@ -83,7 +83,7 @@ def NelderMead2D(bTest, weiQuery, nVertices=3, iteration=10, order=2, relativeGa
     #weiQuery = np.array([[1.,0.],[0.,1.],[1.*np.cos(np.pi/4),-1.*np.sin(np.pi/4)]])
     #weiQuery = np.array([[-1.,0.],[0.,1.],[0.,-1.]])
     momMeas = np.zeros(nVertices)
-    for iIter in range(iteration):
+    for _ in range(iteration):
         momMeas = bTest.getMoment(weiQuery, order, relativeGauss)
         # compute the centroid
         meanweiQuery = np.mean(weiQuery, axis=0)
@@ -140,7 +140,7 @@ def NelderMead3D(bTest, weiQuery, nVertices=4, iteration=10, order=2, relativeGa
     #weiQuery = np.array([[1.,0.],[0.,1.],[1.*np.cos(np.pi/4),-1.*np.sin(np.pi/4)]])
     #weiQuery = np.array([[-1.,0.],[0.,1.],[0.,-1.]])
     momMeas = np.zeros(nVertices)
-    for iIter in range(iteration):
+    for _ in range(iteration):
         momMeas = bTest.getMoment(weiQuery, order, relativeGauss)
         # compute the centroid
         meanweiQuery = np.mean(weiQuery, axis=0)
@@ -197,7 +197,7 @@ def NelderMead(bTest, weiQuery, iteration=10, order=2, relativeGauss=False, Tol=
     shape = np.shape(weiQuery)
     nVertices = shape[0]
     momMeas = np.zeros(nVertices)
-    for iIter in range(iteration):
+    for _ in range(iteration):
         momMeas = bTest.getMoment(weiQuery, order, relativeGauss)
         # compute the centroid
         meanweiQuery = np.mean(weiQuery, axis=0)
@@ -245,7 +245,7 @@ def NelderMeadSweepAlpha(bTest, weiQueryInitial, iteration=10, order=2, relative
     momOpti = np.zeros(sweep_num)
     weiQuery = np.tile(weiQueryInitial,(sweep_num,1))
     for i in range(sweep_num):
-        weight, momOpti[i] = NelderMead(bTest, np.array([weiQuery[i]]), iteration=iteration, order=order, relativeGauss=relativeGauss, Tol=Tol, alpha=alpha[i], beta=beta, gamma=gamma, theta=theta)
+        _, momOpti[i] = NelderMead(bTest, np.array([weiQuery[i]]), iteration=iteration, order=order, relativeGauss=relativeGauss, Tol=Tol, alpha=alpha[i], beta=beta, gamma=gamma, theta=theta)
         print(alpha[i], momOpti[i])
     plt.plot(alpha,momOpti)
     plt.xlabel('alpha')
@@ -256,7 +256,7 @@ def NelderMeadSweepBeta(bTest, weiQueryInitial, iteration=10, order=2, relativeG
     momOpti = np.zeros(sweep_num)
     weiQuery = np.tile(weiQueryInitial,(sweep_num,1))
     for i in range(sweep_num):
-        weight, momOpti[i] = NelderMead(bTest, np.array([weiQuery[i]]), iteration=iteration, order=order, relativeGauss=relativeGauss, Tol=Tol, alpha=alpha, beta=beta[i], gamma=gamma, theta=theta)
+        _, momOpti[i] = NelderMead(bTest, np.array([weiQuery[i]]), iteration=iteration, order=order, relativeGauss=relativeGauss, Tol=Tol, alpha=alpha, beta=beta[i], gamma=gamma, theta=theta)
         print(beta[i], momOpti[i])
     plt.plot(beta,momOpti)
     plt.xlabel('beta')
@@ -267,7 +267,7 @@ def NelderMeadSweepGamma(bTest, weiQueryInitial, iteration=10, order=2, relative
     momOpti = np.zeros(sweep_num)
     weiQuery = np.tile(weiQueryInitial,(sweep_num,1))
     for i in range(sweep_num):
-        weight, momOpti[i] = NelderMead(bTest, np.array([weiQuery[i]]), iteration=iteration, order=order, relativeGauss=relativeGauss, Tol=Tol, alpha=alpha, beta=beta, gamma=gamma[i], theta=theta)
+        _, momOpti[i] = NelderMead(bTest, np.array([weiQuery[i]]), iteration=iteration, order=order, relativeGauss=relativeGauss, Tol=Tol, alpha=alpha, beta=beta, gamma=gamma[i], theta=theta)
         print(gamma[i], momOpti[i])
     plt.plot(gamma,momOpti)
     plt.xlabel('gamma')
@@ -278,7 +278,7 @@ def NelderMeadSweepTheta(bTest, weiQueryInitial, iteration=10, order=2, relative
     momOpti = np.zeros(sweep_num)
     weiQuery = np.tile(weiQueryInitial,(sweep_num,1))
     for i in range(sweep_num):
-        weight, momOpti[i] = NelderMead(bTest, np.array([weiQuery[i]]), iteration=iteration, order=order, relativeGauss=relativeGauss, Tol=Tol, alpha=alpha, beta=beta, gamma=gamma, theta=theta[i])
+        _, momOpti[i] = NelderMead(bTest, np.array([weiQuery[i]]), iteration=iteration, order=order, relativeGauss=relativeGauss, Tol=Tol, alpha=alpha, beta=beta, gamma=gamma, theta=theta[i])
         print(theta[i], momOpti[i])
     plt.plot(theta,momOpti)
     plt.xlabel('theta')
