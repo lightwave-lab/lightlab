@@ -222,8 +222,7 @@ MOCK_MODULES = ['numpy',
                 'IPython',
                 'IPython.lib',
                 'IPython.lib.lexers',
-                'matplotlib.cm',
-                'jsonpickle']
+                'matplotlib.cm']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
