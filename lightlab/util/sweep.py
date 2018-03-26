@@ -69,8 +69,8 @@ class Sweeper(object):
         '''
         for k, v in kwargs.items():
             if k not in self.plotOptions.keys():
-                logger.warning(k + ' is not a valid plot option.')
-                logger.warning('Valid ones are {}'.format(self.plotOptions.keys()))
+                logger.warning(k, '%s is not a valid plot option.')
+                logger.warning('Valid ones are %s', self.plotOptions.keys())
             else:
                 self.plotOptions[k] = v
         return self.plotOptions
@@ -91,8 +91,8 @@ class Sweeper(object):
         '''
         for k, v in kwargs.items():
             if k not in self.monitorOptions.keys():
-                logger.warning(k + ' is not a valid monitor option.')
-                logger.warning('Valid ones are {}'.format(self.monitorOptions.keys()))
+                logger.warning(k, '%s is not a valid monitor option.')
+                logger.warning('Valid ones are %s', self.monitorOptions.keys())
             else:
                 self.monitorOptions[k] = v
         return self.monitorOptions
@@ -151,7 +151,7 @@ class NdSweeper(Sweeper):
         new.addActuation('trial', lambda a: None, np.arange(nTrials))
         return new
 
-    def gather(self, soakTime=None, autoSave=False, returnToStart=False):
+    def gather(self, soakTime=None, autoSave=False, returnToStart=False): # pylint: disable=arguments-differ
         ''' Perform the sweep
 
             Args:
@@ -180,7 +180,7 @@ class NdSweeper(Sweeper):
                         pass
         try:
             if soakTime is not None:
-                logger.debug('Soaking for {} seconds.'.format(soakTime))
+                logger.debug('Soaking for %s seconds.', soakTime)
                 for actu in self.actuate.values():
                     f = actu[0]
                     x = actu[1][0]
@@ -288,8 +288,8 @@ class NdSweeper(Sweeper):
         self._recalcSwpShape()
 
     def _recalcSwpShape(self):
-        self.actuDims = 0
-        self.swpShape = ()
+        self.actuDims = 0 # pylint: disable=attribute-defined-outside-init
+        self.swpShape = () # pylint: disable=attribute-defined-outside-init
         for actu in self.actuate.values():
             if actu[1] is not None:
                 self.actuDims += 1
@@ -344,13 +344,13 @@ class NdSweeper(Sweeper):
                 dataOfPt = OrderedDict()
                 for datKey, datVal in self.data.items():
                     if np.any(datVal.shape != self.swpShape):
-                        logger.debug('Data member {} is wrong size for reparsing {}. Skipping.'.format(datKey, pk))
+                        logger.debug('Data member %s is wrong size for reparsing %s. Skipping.', datKey, pk)
                     else:
                         dataOfPt[datKey] = datVal[index]
                 try:
                     tempDataMat[index] = pFun(dataOfPt)
                 except KeyError:
-                    logger.debug('Parser {} depends on unpresent data. Skipping.'.format(pk))
+                    logger.debug('Parser %s depends on unpresent data. Skipping.', pk)
                     break
             else:
                 self.data[pk] = tempDataMat
@@ -456,7 +456,7 @@ class NdSweeper(Sweeper):
                 axArr (ndarray), plt.axis): axes to plot on. Equivalent to what is returned by this method
                 pltKwargs: passed through to plotting function
         '''
-        global hCurves
+        global hCurves # pylint: disable=global-statement
         if index is None or np.all(np.array(index) == 0):
             hCurves = None
 
@@ -513,7 +513,7 @@ class NdSweeper(Sweeper):
             return
         if axArr is None:
             if self.plotOptions['axArr'] is None:
-                fi, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1], figsize=(10, plotArrShape[0]*2.5))
+                fi, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1], figsize=(10, plotArrShape[0]*2.5)) # pylint: disable=unused-variable
             else:
                 axArr = self.plotOptions['axArr']
         axArr = np.array(axArr)
@@ -750,7 +750,7 @@ class CommandControlSweeper(Sweeper):
         '''
         return io.loadPickle(savefile)
 
-    def gather(self, autoSave=False, randomize=False):
+    def gather(self, autoSave=False, randomize=False): # pylint: disable=arguments-differ
         ''' Executes the sweep
 
             Todo:
@@ -818,11 +818,11 @@ class CommandControlSweeper(Sweeper):
             if axArr is not None:
                 plt.sca(axArr)
             elif index is None or np.all(index == 0):
-                fi, ax = plt.subplots(figsize=(6, 6))
+                plt.subplots(figsize=(6, 6))
             else:
                 plt.cla()
                 # display.clear_output(wait=True)
-            cmdMat, measMat, monitMat = self.toSweepData()
+            cmdMat, measMat, monitMat = self.toSweepData() # pylint: disable=unused-variable
             xFull = cmdMat[:, 0]
 
             # All points over trials and the sweep parameter
@@ -916,9 +916,9 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
         Todo:
             Fix the global hack for persistent plots
     '''
-    global interAx
-    global hArrow
-    global hEllipse
+    global interAx # pylint: disable=global-statement
+    global hArrow # pylint: disable=global-statement
+    global hEllipse # pylint: disable=global-statement
 
     cmdWeights, measWeights, monitWeights = sweepData
 
@@ -938,7 +938,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
         if interAx is None or all(i == 0 for i in index):
             # Initialize plotting objects
             if ax is None:
-                fig, ax = plt.subplots(figsize=(5,5))
+                fig, ax = plt.subplots(figsize=(5,5)) # pylint: disable=unused-variable
             interAx = ax
             plt.cla()
             if is2D:
@@ -1103,7 +1103,7 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=F
     tracker = dUtil.MeasuredFunction([], [])
 
     offsToMeasure = np.linspace(*startBounds, nSwarm)
-    for iIter in range(20):
+    for _ in range(20):
         # Take measurements of the points
         measuredVals = np.zeros(nSwarm)
         for iPt, offs in enumerate(offsToMeasure):
