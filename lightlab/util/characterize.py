@@ -76,7 +76,7 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
         raise NotImplementedError(
             'Since sweeper does not do well with >2 dimensions, you can only strobe a 1-D sweep')
     aKey, actu = list(varSwp.actuate.items())[0]
-    varFun, varDom = actu
+    varFun, varDom, varEvery = actu # fixme: unused varEvery 
     measParseKeys = list(varSwp.measure.keys()) + list(varSwp.parse.keys())
 
     # soakFun wraps the existing actuator with a long delay afterwards to ensure equilibration
