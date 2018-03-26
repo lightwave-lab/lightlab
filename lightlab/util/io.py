@@ -50,9 +50,9 @@ except IOError as e:
     # git repo not found, logging that.
     logger.warning(e)
     projectDir = Path(os.getcwd())
-    logger.warning("Default projectDir='{}'".format(projectDir))
+    logger.warning("Default projectDir='%s'", projectDir)
 if not os.access(projectDir, 7):
-    logger.warning("Cannot write to this projectDir({}).".format(projectDir))
+    logger.warning("Cannot write to this projectDir(%s).", projectDir)
 
 # Data files
 dataHome = projectDir / 'data'
@@ -75,7 +75,7 @@ def printWait(*args):
             * your next print will show up on the same line
 
         Args:
-            \*args (Tuple(str)): Strings that will be written
+            *args (Tuple(str)): Strings that will be written
     '''
     msg = ''
     for a in args:
@@ -124,7 +124,7 @@ class ProgressWriter(object):
     progFileDefault = monitorDir / 'sweep.html'
     tFmt = '%a, %d %b %Y %H:%M:%S'
 
-    def __init__(self, name, swpSize, runServer=True, stdoutPrint=False, **kwargs):
+    def __init__(self, name, swpSize, runServer=True, stdoutPrint=False, **kwargs): # pylint: disable=W0613
         '''
             Args:
                 name (str): name to be displayed
@@ -158,7 +158,7 @@ class ProgressWriter(object):
         if self.printing:
             print(self.name)
             prntStr = ''
-            for iterDim, dimSize in enumerate(self.size):
+            for iterDim in enumerate(self.size):
                 prntStr += 'Dim-' + str(iterDim) + '...'
             print(prntStr)
             self.__writeStdio()
@@ -170,7 +170,7 @@ class ProgressWriter(object):
         prefix = 'http://'
         host = socket.getfqdn().lower()
         try:
-            with open(projectDir / '.monitorhostport', 'r') as fx:
+            with open(projectDir / '.monitorhostport', 'r') as fx: # pylint: disable=W0621
                 port = int(fx.readline())
         except FileNotFoundError:
             port = 'null'
@@ -189,12 +189,12 @@ class ProgressWriter(object):
                 t += '<meta http-equiv="refresh" content="5" />\n'  # Autorefresh every 5 seconds
             t += '<body>\n'
             t += '<h1>' + self.name + '</h1>\n'
-            t += '<hr \>\n'
-            self.__tagHead = t
+            t += '<hr \>\n' # pylint: disable=W1401
+            self.__tagHead = t # pylint: disable=W0201
         if not hasattr(self, '__tagFoot') or self.__tagFoot is None:
             t = '</body>\n'
             t += '</html>\n'
-            self.__tagFoot = t
+            self.__tagFoot = t # pylint: disable=W0201
         return self.__tagHead + bodytext + self.__tagFoot
 
     def __writeStdioEnd(self):
@@ -202,12 +202,12 @@ class ProgressWriter(object):
         print('Sweep completed!')
 
     def __writeHtmlEnd(self):
-        self.__tagHead = None
-        self.__tagFoot = None
+        self.__tagHead = None # pylint: disable=W0201
+        self.__tagFoot = None # pylint: disable=W0201
         body = '<h2>Sweep completed!</h2>\n'
         body += ptag('At ' + ProgressWriter.tims(time.time()))
         htmlText = self.__tag(body, autorefresh=False)
-        with self.filePath.open('w') as fx:  # pylint: disable=no-member
+        with self.filePath.open('w') as fx:  # pylint: disable=W0621, E1101
             fx.write(htmlText)
 
     def __writeStdio(self):
@@ -224,7 +224,7 @@ class ProgressWriter(object):
             dimStr = i * 'sub-' + 'dimension[' + str(i) + '] : '
             dimStr += str(p + 1) + ' of ' + str(self.size[i])
             body += ptag(dimStr)
-        body += '<hr \>\n'
+        body += '<hr \>\n' # pylint: disable=W1401
 
         # Calculating timing
         currentTime = time.time()
@@ -245,14 +245,14 @@ class ProgressWriter(object):
         # Write to html file
         if self.serving:
             htmlText = self.__tag(body, autorefresh=True)
-            with self.filePath.open('w') as fx:  # pylint: disable=no-member
+            with self.filePath.open('w') as fx:  # pylint: disable=W0621, E1101
                 fx.write(htmlText)
 
     def update(self, steps=1):
         if self.completed:
             raise Exception(
                 'This sweep has supposedly completed. Make a new object to go again')
-        for i in range(steps):
+        for _ in range(steps):
             self.__updateOneInternal()
         if not self.completed:
             if self.serving:
@@ -297,7 +297,7 @@ def _makeFileExist(filename):
     os.makedirs(fileDir, mode=0o775, exist_ok=True)
     p.touch()
     rp = p.resolve()
-    logger.debug("Saving to file: {}".format(rp))
+    logger.debug("Saving to file: %s", rp)
     return rp
 
 
@@ -307,7 +307,7 @@ def savePickle(filename, dataTuple):
         Todo: timestamping would be cool
     '''
     rp = _makeFileExist(filename)
-    with rp.open('wb') as fx:
+    with rp.open('wb') as fx: # pylint: disable=W0621
         pickle.dump(dataTuple, fx)
 
 
@@ -315,7 +315,7 @@ def loadPickle(filename):
     ''' Uses pickle '''
     p = fileDir / filename
     rp = p.resolve()
-    with rp.open('rb') as fx:
+    with rp.open('rb') as fx: # pylint: disable=W0621
         return pickle.load(fx)
 
 
@@ -372,7 +372,7 @@ class JSONpickleable(Hashable):
                 elif (val.__class__.__name__ == 'VISAObject' or
                       any(base.__name__ == 'VISAObject' for base in val.__class__.__bases__)):
                     klassname = val.__class__.__name__
-                    logger.warning('Not pickling {} = {}.'.format(key, klassname))
+                    logger.warning('Not pickling %s = %s.', key, klassname)
                     state[key] = HardwareReference('Reference to a ' + klassname)
                 elif isinstance(val, np.ndarray):
                     state[key] = SerializedNumpy(val)
@@ -462,7 +462,7 @@ def loadPickleGzip(filename):
     ''' Uses pickle and then gzips the file'''
     p = fileDir / _gzfilename(filename)
     rp = p.resolve()
-    with gzip.open(rp, 'rb') as fx:
+    with gzip.open(rp, 'rb') as fx: # pylint: disable=W0621
         return pickle.load(fx)
 
 
@@ -472,7 +472,7 @@ def savePickleGzip(filename, dataTuple):
         Todo: timestamping would be cool
     '''
     rp = _makeFileExist(_gzfilename(filename))
-    with gzip.open(rp, 'wb') as fx:
+    with gzip.open(rp, 'wb') as fx: # pylint: disable=W0621
         pickle.dump(dataTuple, fx)
 
 
