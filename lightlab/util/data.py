@@ -49,7 +49,7 @@ class MeasuredFunction(object):
             if self.absc.shape != self.ordi.shape:
                 raise ValueError('Shapes do not match. Got ' + str(self.absc.shape) + ' and ' + str(self.ordi.shape))
 
-    ''' Data structuring and usage stuff '''
+    ''' Data structuring and usage stuff ''' #pylint: disable=W0105
     def __call__(self, testAbscissa=None):
         ''' Interpolates the discrete function
 
@@ -124,15 +124,15 @@ class MeasuredFunction(object):
         ''' Plots on the current axis
 
         Args:
-            \*args (tuple): arguments passed through to ``pyplot.plot``
-            \*\*kwargs (dict): arguments passed through to ``pyplot.plot``
+            *args (tuple): arguments passed through to ``pyplot.plot``
+            **kwargs (dict): arguments passed through to ``pyplot.plot``
 
         Returns:
             Whatever is returned by ``pyplot.plot``
         '''
         return plt.plot(*(self.getData()+args), **kwargs)
 
-    ''' Simple data handling operations '''
+    ''' Simple data handling operations ''' #pylint: disable=W0105
     def __newOfSameSubclass(self, newAbsc, newOrdi):
         ''' Helper functions that ensures proper inheritance of other methods.
 
@@ -279,7 +279,7 @@ class MeasuredFunction(object):
         self.ordi = np.insert(self.ordi, i, y)
 
 
-    ''' Signal processing stuff '''
+    ''' Signal processing stuff ''' #pylint: disable=W0105
     def lowPass(self, windowWidth=None, mode='valid'):
         ''' Low pass filter performed by convolving a moving average window.
 
@@ -426,12 +426,12 @@ class MeasuredFunction(object):
                 kurtosis -= 3
             return kurtosis
 
-    ''' Peak and trough related '''
+    ''' Peak and trough related ''' #pylint: disable=W0105
     def findResonanceFeatures(self, **kwargs):
         ''' A convenient wrapper for :py:func:`findPeaks` that works with this class.
 
             Args:
-                \*\*kwargs: kwargs passed to :py:func:`findPeaks`
+                **kwargs: kwargs passed to :py:func:`findPeaks`
 
             Returns:
                 list[ResonanceFeature]: the detected features as nice objects
@@ -526,7 +526,7 @@ class MeasuredFunction(object):
 
         The returned result is the same subclass as self,
         and its properties other than absc and ordi will be the SAME as the first operand
-    '''
+    ''' #pylint: disable=W0105
     def __binMathHelper(self, other):
         ''' returns the new abcissa and a tuple of arrays: the ordinates to operate on
         '''
@@ -645,7 +645,7 @@ class MeasuredFunction(object):
         return False
 
 
-class Spectrum(MeasuredFunction):
+class Spectrum(MeasuredFunction): # pylint: disable=W0223
     ''' simply stores a nm, dbm pair
 
         Also provides some decent handling of linear/dbm units.
@@ -710,7 +710,7 @@ class Spectrum(MeasuredFunction):
         ''' Overloads :py:mod:``MeasuredFunction.findResonanceFeatures`` to make sure it's in db scale
 
             Args:
-                \*\*kwargs: kwargs passed to :py:mod:`findPeaks`
+                **kwargs: kwargs passed to :py:mod:`findPeaks`
 
             Returns:
                 list[ResonanceFeature]: the detected features as nice objects
@@ -764,8 +764,8 @@ class ResonanceFeature(object):
             The box is centered on the peak ``lam`` and ``amp`` with a width of ``fwhm``.
 
             Args:
-                \*args: args passed to ``pyplot.plot``
-                \*\*kwargs: kwargs passed to ``pyplot.plot``
+                *args: args passed to ``pyplot.plot``
+                **kwargs: kwargs passed to ``pyplot.plot``
 
             Returns:
                 whatever ``pyplot.plot`` returns
@@ -822,7 +822,7 @@ def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, desc
     yArrOrig = yArr.copy()
 
     for iPk in range(expectedCnt):  # Loop over peaks
-        logger.debug('--iPk = ' + str(iPk))
+        logger.debug('--iPk = %s', iPk)
         isValidPeak = False
         for iAttempt in range(1000):  # Loop through falsities like edges and previously found peaks
             if isValidPeak:
@@ -834,18 +834,17 @@ def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, desc
                 absThresh = peakAmp - descendBy
             else:
                 absThresh = min(descendBy, peakAmp-descendBy)
-            logger.debug('absThresh = ' + str(absThresh))
+            logger.debug('absThresh = %s', absThresh)
 
             # Didn't find a peak anywhere
             if blanked.all() or absThresh <= np.amin(yArr) or iAttempt == 999:
                 descendBy -= .5                             # Try reducing the selectivity
                 if descendBy >= descendMin:
-                    logger.debug('Reducing required descent to ' + str(descendBy))
+                    logger.debug('Reducing required descent to %s', descendBy)
                     continue
                 else:
                     # plot a debug view of the spectrum that throws an error when exited
-                    logger.warning('Found {} of {} peaks.'.format(iPk, expectedCnt) + \
-                        'Look at the plot.')
+                    logger.warning('Found %s of %s peaks. Look at the plot.', iPk, expectedCnt)
                     plt.plot(yArr)
                     plt.plot(yArrOrig)
                     plt.show(block=True)
@@ -879,7 +878,7 @@ def descend(yArr, invalidIndeces, startIndex, direction, threshVal):
     validPeak = True
     tooCloseToEdge = False
     tooCloseToOtherPeak = False
-    for it in range(iterUntilFail):
+    for _ in range(iterUntilFail):
         if not validPeak:
             break
 
@@ -894,7 +893,7 @@ def descend(yArr, invalidIndeces, startIndex, direction, threshVal):
         if yArr[i] <= threshVal:
             break
 
-        logger.debug('Index {}: blanked={}, yArr={}'.format(i, invalidIndeces[i], yArr[i]))
+        logger.debug('Index %s: blanked=%s, yArr=%s', i, invalidIndeces[i], yArr[i])
         i += sideSgn
     else:
         validPeak = False
@@ -913,12 +912,12 @@ def interpInverse(xArrIn, yArrIn, startIndex, direction, threshVal):
     yArr = yArr - threshVal
 
     possibleRange = (np.min(yArrIn), np.max(yArrIn))
-    warnStr = 'Inversion requested y = {}, but {} of range is {}'
+    #warnStr = 'Inversion requested y = {}, but {} of range is {}'
     if threshVal < possibleRange[0]:
-        logger.warning(warnStr.format(threshVal, 'minimum', np.min(yArrIn)))
+        logger.warning('Inversion requested y = %s, but %s of range is %s', threshVal, 'minimum', np.min(yArrIn))
         return xArr[-1]
     elif threshVal > possibleRange[1]:
-        logger.warning(warnStr.format(threshVal, 'maximum', np.max(yArrIn)))
+        logger.warning('Inversion requested y = %s, but %s of range is %s', threshVal, 'maximum', np.max(yArrIn))
         return xArr[0]
 
     fakeInvalidIndeces = np.zeros(len(yArr), dtype=bool)
@@ -1092,7 +1091,7 @@ class Spectrogram(MeasuredSurface):
         super().__init__(*args)
 
 
-class Waveform(MeasuredFunction):
+class Waveform(MeasuredFunction): # pylint: disable=W0223
     ''' stores a time, voltage pair. That's about it right now '''
     def __init__(self, t, v, unsafe=False):
         super().__init__(t, v, unsafe=unsafe)
@@ -1261,13 +1260,13 @@ class FunctionBundle(object):
         for f in self:
             f.simplePlot(*args, **kwargs)
 
-    def multiAxisPlot(self, axList=None, *args, titleRoot=None, **kwargs):
+    def multiAxisPlot(self, *args, axList=None, titleRoot=None, **kwargs):
         ''' titleRoot must take one argument in its format method, which is given the index
             Returns:
                 (list(axis)): The axes that were plotted upon
         '''
         if axList is None:
-            fi, axList = plt.subplots(nrows=len(self), figsize=(14,14))
+            fi, axList = plt.subplots(nrows=len(self), figsize=(14,14)) # pylint: disable=W0612
             #fi, axList = plt.subplots(nrows=len(self), figsize=(14,16))
         if len(axList) != len(self):
             raise ValueError('Wrong number of axes. Got {}, need {}.'.format(len(axList), len(self)))

@@ -152,7 +152,7 @@ def monitorVariable(fValue, sleepSec=0, nReps=100, plotEvery=1):
     t0 = time.time()
     timeFun = lambda: time.time() - t0
 
-    fi, ax = plt.subplots(figsize=(12, 7)) #pylint: disable=W0612
+    fi, ax = plt.subplots(figsize=(12, 7)) # pylint: disable=W0612
     cycleDefault = plt.rcParams['axes.prop_cycle'].by_key()['color']
     cycleContrained = cycleDefault[:w]
     ax.set_prop_cycle(cycler('color', cycleContrained))
