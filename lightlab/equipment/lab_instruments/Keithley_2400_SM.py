@@ -137,16 +137,16 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         retStr = self.query('MEASURE:VOLT?')
         v = float(retStr.split(',')[0])  # first number is voltage always
         if v >= self.protectionVoltage:
-            logger.warning('Keithley compliance voltage of {} reached %s', self.protectionVoltage)
-            logger.warning('You are sourcing {}mW into the load. %s', v * self._latestCurrentVal * 1e-3)
+            logger.warning('Keithley compliance voltage of %s reached', self.protectionVoltage)
+            logger.warning('You are sourcing %s mW into the load.', v * self._latestCurrentVal * 1e-3)
         return v
 
     def measCurrent(self):
         retStr = self.query('MEASURE:CURR?')
         i = float(retStr.split(',')[1])  # second number is current always
         if i >= self.protectionCurrent:
-            logger.warning('Keithley compliance current of {} reached %s', self.protectionCurrent)
-            logger.warning('You are sourcing {}mW into the load. %s', i * self._latestVoltageVal * 1e-3)
+            logger.warning('Keithley compliance current of %s reached.', self.protectionCurrent)
+            logger.warning('You are sourcing %s mW into the load.', i * self._latestVoltageVal * 1e-3)
         return i
 
     def enable(self, newState=None):

@@ -43,7 +43,7 @@ class VISAObject(object):
             if self._open_retries < OPEN_RETRIES:
                 self._open_retries += 1
                 time.sleep(0.5 * self._open_retries)
-                logger.warning('Trying again... (try = {}/{}) %s', (self._open_retries, OPEN_RETRIES))
+                logger.warning('Trying again... (try = %s/%s)', self._open_retries, OPEN_RETRIES)
                 self.open()
             else:
                 logger.error(err)
@@ -73,7 +73,7 @@ class VISAObject(object):
             except Exception as err:
                 logger.error('Problem writing to %s', self.address)
                 raise err
-            logger.debug('{} - W - {} %s', (self.address, writeStr))
+            logger.debug('%s - W - %s', self.address, writeStr)
         finally:
             if self.tempSess:
                 self.close()
@@ -82,7 +82,7 @@ class VISAObject(object):
         retStr = None
         try:
             self.open()
-            logger.debug('{} - Q - {} %s', (self.address, queryStr))
+            logger.debug('%s - Q - %s', self.address, queryStr)
             toutOrig = self.timeout
             try:
                 if withTimeout is not None:
@@ -102,7 +102,7 @@ class VISAObject(object):
         return retStr
 
     def instrID(self):
-        #Returns the \*IDN? string
+        """Returns the *IDN? string"""
         return self.query('*IDN?')
 
     @property
@@ -131,7 +131,7 @@ class VISAObject(object):
         self.__timeout = newTimeout
 
     def reset(self):
-        #Writes \*RST
+        """Writes *RST"""
         self.write('*RST')
 
     def wait(self, bigMsTimeout=10000):

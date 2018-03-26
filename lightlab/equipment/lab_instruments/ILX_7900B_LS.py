@@ -92,9 +92,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         enforcedState = newState
         enforcedState = [1 if s != 0 else 0 for s in enforcedState]
         if np.any(newState != enforcedState):
-            logger.warning('Unexpected enable state value. %s %s %s',
-                           'Requested = {}. ', newState,
-                           'Expected values = 0 or 1.')
+            logger.warning('Unexpected enable state value. Requested = %s. Expected values = 0 or 1.', newState)
         self.stateDict = dict(zip(self.useChans, enforcedState))
 
         # Refresh and sleep only if different
@@ -269,8 +267,8 @@ class ILX_7900B_LS(VISAInstrumentDriver):
     def write(self, writeStr):
         print('Warning: Write not performed because bank was not specified.')
         print('    Instead, call write like this <this>.bankInstruments.write(writeStr)')
-
-    def query(self, queryStr, withTimeout=None):
+ 
+    def query(self, queryStr): # pylint: disable=W0221, W0613
         print('Warning: Query not performed because bank was not specified.')
         print('    Instead, call query like this <this>.bankInstruments.query(queryStr)')
 

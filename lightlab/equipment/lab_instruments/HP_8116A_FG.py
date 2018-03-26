@@ -1,4 +1,5 @@
 from . import VISAInstrumentDriver
+from lightlab import logger
 from pyvisa import VisaIOError
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import FunctionGenerator
@@ -94,12 +95,14 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
         try:
             ampl = float(self.getConfigParam('AMP').split(' ')[0])
         except VisaIOError:
+            logger.error('unable to get the amplitude')
             ampl = None
         if offset is not None:
             self.setConfigParam('OFS', '{} V'.format(offset))
         try:
             offs = float(self.getConfigParam('OFS').split(' ')[0])
         except VisaIOError:
+            logger.error('unable to get the offset')
             offs = None
         return (ampl, offs)
 

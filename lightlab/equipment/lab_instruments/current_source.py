@@ -52,7 +52,7 @@ class CurrentSources(VISAInstrumentDriver):
     # The above is the old versioin of initialization, and the below is the new version!
     def __init__(self, name='The current source', address=None, **kwargs):
         logger.warning('This class to be deprecated. Use NI_PCI_6723.')
-        logger.warning('Backwards incompatibilities:\n %s %s',
+        logger.warning('Backwards incompatibilities:\n', #pylint: disable=E1205
             'No stateDict argument in __init__\n',
             'No tuneState property. Use setChannelTuning and getChannelTuning')
 
@@ -280,9 +280,9 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
             pyvisa.constants.VI_ATTR_IO_PROT, pyvisa.constants.VI_PROT_4882_STRS)
 
     def instrID(self):
-        #There is no "\*IDN?" command. Instead, test if it is alive,
-        #and then return a reasonable string
-        
+        """There is no "*IDN?" command. Instead, test if it is alive,
+        and then return a reasonable string
+        """
         self.tcpTest()
         return 'Current Source'
 

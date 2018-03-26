@@ -118,7 +118,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         sgramMat = np.zeros((nLines, nFreqs))
 
         # Transfer data
-        logger.debug('Preparing to transfer spectrogram of shape {}... %s', sgramMat.shape)
+        logger.debug('Preparing to transfer spectrogram of shape %s...', sgramMat.shape)
         self.__sgramLines(lineNos, container=sgramMat, debugEvery=100)
         logger.debug('Transfer complete.')
 
@@ -139,7 +139,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         VISAInstrumentDriver.open(self)
         for i, lno in enumerate(lineNos):
             if debugEvery is not None and i % debugEvery == 0:
-                logger.debug('Transferring {} / {} %s', (lno, lineNos[-1]))
+                logger.debug('Transferring %s / %s', lno, lineNos[-1])
             self.mbSession.write('TRAC:SGR:SEL:LINE {}'.format(lno))
             for _ in range(2):  # Sometimes the query just fails so we try again
                 rawLine = self.mbSession.query_binary_values('FETCH:SGR?')

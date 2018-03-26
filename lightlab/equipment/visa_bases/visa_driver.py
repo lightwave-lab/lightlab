@@ -27,9 +27,10 @@ class DriverMeta(type):
         super().__init__(name, bases, dct)
 
     def __call__(cls, *args, **kwargs):
-        #All \*args go to the driver.
-        #name and address go to both.
-        #kwargs go priority to driver bases, otherwise to Instrument
+        """All *args go to the driver.
+        name and address go to both.
+        kwargs go priority to driver bases, otherwise to Instrument
+        """
         if (cls.instrument_category is not None
                 and not kwargs.pop('directInit', False)):
             name = kwargs.pop('name', None)
