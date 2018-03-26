@@ -18,5 +18,5 @@ class Tektronix_DPO4034_Oscope(VISAInstrumentDriver, TekScopeAbstract):
     _runModeSingleShot = 'SEQUENCE'
     _yScaleParam = 'YMULT'
 
-    def wfmDb(self): # pylint: disable=W0613, W0221
+    def wfmDb(self): # pylint: disable=arguments-differ
         print('wfmDb is not working yet with DPOs')

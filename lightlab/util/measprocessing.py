@@ -59,12 +59,12 @@ class SpectrumMeasurementAssistant(object):
         res = spect.findResonanceFeatures(expectedCnt=self.nChan, isPeak=self.arePeaks, **self.peakfinderOptions)
         # Advanced correlation based peak finder
         if self.filtShapesForConvolution is not None:
-            fineRes, confidence = spect.refineResonanceWavelengths(self.filtShapesForConvolution, seedRes=res)
+            fineRes, confidence = spect.refineResonanceWavelengths(self.filtShapesForConvolution, seedRes=res) # pylint: disable=unused-variable
             res = fineRes
         lamSort = np.argsort([r.lam for r in res])
         return res[lamSort]
 
-    def fgResPlot(self, spect=None, axis=None, avgCnt=1):
+    def fgResPlot(self, spect=None, avgCnt=1):
         ''' Takes a foreground spectrum, plots it and its peaks.
         Currently the axis input is unused.
         '''
@@ -72,7 +72,7 @@ class SpectrumMeasurementAssistant(object):
             spect = self.fgSpect(avgCnt)
         res = self.resonances(spect)
         spect.simplePlot()
-        [r.simplePlot() for r in res]
+        [r.simplePlot() for r in res] # pylint: disable=expression-not-assigned
 
     def setBgConst(self, raw):
         ''' Makes a background the maximum transmission observed '''
@@ -132,7 +132,7 @@ class SpectrumMeasurementAssistant(object):
             for k in preferredOrder:
                 try:
                     return self.__backgrounds[k]
-                except KeyError as e:
+                except KeyError:
                     pass
             else:
                 return 0
@@ -140,7 +140,7 @@ class SpectrumMeasurementAssistant(object):
         elif bgType in preferredOrder:
             try:
                 return self.__backgrounds[bgType]
-            except KeyError as e:
+            except KeyError:
                 raise KeyError('Background of type \'' + bgType + '\' has not been taken yet.')
         else:
             raise ValueError('Invalid background token: ' + bgType +

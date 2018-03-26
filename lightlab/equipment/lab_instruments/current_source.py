@@ -296,7 +296,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
             retNum[i] = float(s) + .01
         print('[x+1, x+1.5] = ' + str(retNum))
 
-    def setChannelTuning(self, chanValDict, mode, waitTime=None): # pylint: disable=W0221
+    def setChannelTuning(self, chanValDict, mode, waitTime=None): # pylint: disable=arguments-differ
         oldState = self.getChannelTuning(mode)
         # Check range and convert to base units
         chanBaseDict = dict()
@@ -317,7 +317,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
         else:
             self.wake()
 
-    def getChannelTuning(self, mode): # pylint: disable=W0221
+    def getChannelTuning(self, mode): # pylint: disable=arguments-differ
         baseDict = super().getChannelTuning()
         return self.baseUnit2val(baseDict, mode)
 

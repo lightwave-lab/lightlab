@@ -268,7 +268,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         print('Warning: Write not performed because bank was not specified.')
         print('    Instead, call write like this <this>.bankInstruments.write(writeStr)')
  
-    def query(self, queryStr): # pylint: disable=W0221, W0613
+    def query(self, queryStr): # pylint: disable=arguments-differ, unused-argument
         print('Warning: Query not performed because bank was not specified.')
         print('    Instead, call query like this <this>.bankInstruments.query(queryStr)')
 

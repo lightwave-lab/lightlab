@@ -76,7 +76,7 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
         raise NotImplementedError(
             'Since sweeper does not do well with >2 dimensions, you can only strobe a 1-D sweep')
     aKey, actu = list(varSwp.actuate.items())[0]
-    varFun, varDom, varEvery = actu # fixme: unused varEvery 
+    varFun, varDom, varEvery = actu # fixme: unused varEvery
     measParseKeys = list(varSwp.measure.keys()) + list(varSwp.parse.keys())
 
     # soakFun wraps the existing actuator with a long delay afterwards to ensure equilibration
@@ -152,7 +152,7 @@ def monitorVariable(fValue, sleepSec=0, nReps=100, plotEvery=1):
     t0 = time.time()
     timeFun = lambda: time.time() - t0
 
-    fi, ax = plt.subplots(figsize=(12, 7)) # pylint: disable=W0612
+    fi, ax = plt.subplots(figsize=(12, 7)) # pylint: disable=unused-variable
     cycleDefault = plt.rcParams['axes.prop_cycle'].by_key()['color']
     cycleContrained = cycleDefault[:w]
     ax.set_prop_cycle(cycler('color', cycleContrained))

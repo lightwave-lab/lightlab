@@ -64,10 +64,10 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
             val *= -1
         return str(val)
 
-    def query(self, *args, **kwargs): # pylint: disable=W0221
+    def query(self, *args, **kwargs): # pylint: disable=arguments-differ
         ''' Conditionally check for read character doubling
         '''
-        retRaw = super().query(*args, **kwargs) # pylint: disable=W0221
+        retRaw = super().query(*args, **kwargs) # pylint: disable=arguments-differ
         if self.doReadDoubleCheck:
             return self.proccessWeirdRead(retRaw)
         else:

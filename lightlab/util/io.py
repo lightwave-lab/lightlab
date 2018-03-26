@@ -124,7 +124,7 @@ class ProgressWriter(object):
     progFileDefault = monitorDir / 'sweep.html'
     tFmt = '%a, %d %b %Y %H:%M:%S'
 
-    def __init__(self, name, swpSize, runServer=True, stdoutPrint=False, **kwargs): # pylint: disable=W0613
+    def __init__(self, name, swpSize, runServer=True, stdoutPrint=False, **kwargs): # pylint: disable=unused-argument
         '''
             Args:
                 name (str): name to be displayed
@@ -170,7 +170,7 @@ class ProgressWriter(object):
         prefix = 'http://'
         host = socket.getfqdn().lower()
         try:
-            with open(projectDir / '.monitorhostport', 'r') as fx: # pylint: disable=W0621
+            with open(projectDir / '.monitorhostport', 'r') as fx: # pylint: disable=redefined-outer-name
                 port = int(fx.readline())
         except FileNotFoundError:
             port = 'null'
@@ -189,12 +189,12 @@ class ProgressWriter(object):
                 t += '<meta http-equiv="refresh" content="5" />\n'  # Autorefresh every 5 seconds
             t += '<body>\n'
             t += '<h1>' + self.name + '</h1>\n'
-            t += '<hr \>\n' # pylint: disable=W1401
-            self.__tagHead = t # pylint: disable=W0201
+            t += '<hr \>\n' # pylint: disable=anomalous-backslash-in-string
+            self.__tagHead = t # pylint: disable=attribute-defined-outside-init
         if not hasattr(self, '__tagFoot') or self.__tagFoot is None:
             t = '</body>\n'
             t += '</html>\n'
-            self.__tagFoot = t # pylint: disable=W0201
+            self.__tagFoot = t # pylint: disable=attribute-defined-outside-init
         return self.__tagHead + bodytext + self.__tagFoot
 
     def __writeStdioEnd(self):
@@ -202,12 +202,12 @@ class ProgressWriter(object):
         print('Sweep completed!')
 
     def __writeHtmlEnd(self):
-        self.__tagHead = None # pylint: disable=W0201
-        self.__tagFoot = None # pylint: disable=W0201
+        self.__tagHead = None # pylint: disable=attribute-defined-outside-init
+        self.__tagFoot = None # pylint: disable=attribute-defined-outside-init
         body = '<h2>Sweep completed!</h2>\n'
         body += ptag('At ' + ProgressWriter.tims(time.time()))
         htmlText = self.__tag(body, autorefresh=False)
-        with self.filePath.open('w') as fx:  # pylint: disable=W0621, E1101
+        with self.filePath.open('w') as fx:  # pylint: disable=redefined-outer-name, no-member
             fx.write(htmlText)
 
     def __writeStdio(self):
@@ -224,7 +224,7 @@ class ProgressWriter(object):
             dimStr = i * 'sub-' + 'dimension[' + str(i) + '] : '
             dimStr += str(p + 1) + ' of ' + str(self.size[i])
             body += ptag(dimStr)
-        body += '<hr \>\n' # pylint: disable=W1401
+        body += '<hr \>\n' # pylint: disable=anomalous-backslash-in-string
 
         # Calculating timing
         currentTime = time.time()
@@ -245,7 +245,7 @@ class ProgressWriter(object):
         # Write to html file
         if self.serving:
             htmlText = self.__tag(body, autorefresh=True)
-            with self.filePath.open('w') as fx:  # pylint: disable=W0621, E1101
+            with self.filePath.open('w') as fx:  # pylint: disable=redefined-outer-name, no-member
                 fx.write(htmlText)
 
     def update(self, steps=1):
@@ -307,7 +307,7 @@ def savePickle(filename, dataTuple):
         Todo: timestamping would be cool
     '''
     rp = _makeFileExist(filename)
-    with rp.open('wb') as fx: # pylint: disable=W0621
+    with rp.open('wb') as fx: # pylint: disable=redefined-outer-name
         pickle.dump(dataTuple, fx)
 
 
@@ -315,7 +315,7 @@ def loadPickle(filename):
     ''' Uses pickle '''
     p = fileDir / filename
     rp = p.resolve()
-    with rp.open('rb') as fx: # pylint: disable=W0621
+    with rp.open('rb') as fx: # pylint: disable=redefined-outer-name
         return pickle.load(fx)
 
 
@@ -462,7 +462,7 @@ def loadPickleGzip(filename):
     ''' Uses pickle and then gzips the file'''
     p = fileDir / _gzfilename(filename)
     rp = p.resolve()
-    with gzip.open(rp, 'rb') as fx: # pylint: disable=W0621
+    with gzip.open(rp, 'rb') as fx: # pylint: disable=redefined-outer-name
         return pickle.load(fx)
 
 
@@ -472,7 +472,7 @@ def savePickleGzip(filename, dataTuple):
         Todo: timestamping would be cool
     '''
     rp = _makeFileExist(_gzfilename(filename))
-    with gzip.open(rp, 'wb') as fx: # pylint: disable=W0621
+    with gzip.open(rp, 'wb') as fx: # pylint: disable=redefined-outer-name
         pickle.dump(dataTuple, fx)
 
 

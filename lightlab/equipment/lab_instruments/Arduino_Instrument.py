@@ -15,5 +15,5 @@ class Arduino_Instrument(VISAInstrumentDriver):
     def write(self, writeStr):
         pass
 
-    def query(self): # pylint: disable=W0221
+    def query(self): # pylint: disable=arguments-differ
         return 'hey'

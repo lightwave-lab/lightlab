@@ -645,7 +645,7 @@ class MeasuredFunction(object):
         return False
 
 
-class Spectrum(MeasuredFunction): # pylint: disable=W0223
+class Spectrum(MeasuredFunction): # pylint: disable=abstract-method
     ''' simply stores a nm, dbm pair
 
         Also provides some decent handling of linear/dbm units.
@@ -1091,7 +1091,7 @@ class Spectrogram(MeasuredSurface):
         super().__init__(*args)
 
 
-class Waveform(MeasuredFunction): # pylint: disable=W0223
+class Waveform(MeasuredFunction): # pylint: disable=abstract-method
     ''' stores a time, voltage pair. That's about it right now '''
     def __init__(self, t, v, unsafe=False):
         super().__init__(t, v, unsafe=unsafe)
@@ -1266,7 +1266,7 @@ class FunctionBundle(object):
                 (list(axis)): The axes that were plotted upon
         '''
         if axList is None:
-            fi, axList = plt.subplots(nrows=len(self), figsize=(14,14)) # pylint: disable=W0612
+            fi, axList = plt.subplots(nrows=len(self), figsize=(14,14)) # pylint: disable=unused-variable
             #fi, axList = plt.subplots(nrows=len(self), figsize=(14,16))
         if len(axList) != len(self):
             raise ValueError('Wrong number of axes. Got {}, need {}.'.format(len(axList), len(self)))

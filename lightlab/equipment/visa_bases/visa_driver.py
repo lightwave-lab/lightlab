@@ -83,7 +83,7 @@ class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
     """
     instrument_category = None
 
-    def __init__(self, name='Default Driver', address=None, directInit=False, **kwargs): # pylint: disable=W0613
+    def __init__(self, name='Default Driver', address=None, directInit=False, **kwargs): # pylint: disable=unused-argument
         self.name = name
         if 'tempSess' not in kwargs.keys():
             kwargs['tempSess'] = True
