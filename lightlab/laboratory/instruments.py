@@ -488,7 +488,8 @@ class PulsePatternGenerator(Instrument):
         'getPattern',
         'on',
         'syncSource',
-        'amplAndOffs']
+        'amplAndOffs',
+        'bitseq']
 
 
 class RFSpectrumAnalyzer(Instrument):

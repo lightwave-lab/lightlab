@@ -126,3 +126,80 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
         ampl = float(self.getConfigParam('DAP'))
         offs = float(self.getConfigParam('DOS'))
         return (ampl, offs)
+
+    # defining function bitsequence, that takes delays and transfer them into a sequence we want.
+
+    def bitseq(self, chpulses, clockfreq, ext=0, addplot=False, mult=1, res=5):
+        '''
+        bitseq: Takes in dictionary 'chpulses', clock freq 'clockfreq', and opt.
+        parameter 'ext.' Also includes plotting parameters (see below).
+        chdelays: a dictionary in which keys are channel delays, and values
+        contain a list of tuple pairs. Each pair contains pulse times (rising 
+        edges) and their duration (in ns).
+        clockfreq: set the current clock frequency, in GHz
+        ext: a continuous value from 0 to 1 which extends the pattern length, 
+        resulting in different synchronization between adjacent time windows.
+        0 -- will result in maximum similarity between time  windows, plus or 
+        minus variabilities resulting from delay lines. This is ideal when 
+        only approximate timings are required, since channels IDs can be 
+        shuffled by time scrolling through the same PPG pattern.
+        1 -- will result in minimum similarity between adjacent time windows,
+        at the cost of a larger total PPG pattern length. Anything beyond this
+        value is not useful. Values between 0 and 1 will trade-off pattern length 
+        with window similarity.
+        addplot: Adds a plot to visualize the output of the PPG along all channels.
+        mult: graphing parameter - how many multiples of pattern length to display in time
+        res: graphing parameter - how many sampling points per pattern bit
+        Author: Mitchell A. Nahmias, Feb. 2018
+        '''
+            
+        delays = sorted(chpulses.keys())
+        timeWindow = min(np.diff(delays))
+        ChNum = len(chpulses)
+        totalTime = np.mean(np.diff(delays))*ChNum*(1+ext)
+
+        bitLength = int(np.round(timeWindow*clockfreq))
+        totalBitLength = int(np.round(totalTime*clockfreq))
+
+        pattern = np.zeros(totalBitLength, dtype=int)
+        warningFlag = False
+
+        for delay in chpulses:
+            for pulses in chpulses[delay]:
+
+                pulsePos = pulses[0]
+                pulseWidth = pulses[1]
+
+                if not warningFlag and pulseWidth < 2/clockfreq:
+                    warnings.warn('Pulse width(s) may be too short. Consider increasing the clock rate.')
+                    warningFlag = True
+
+                #for X active channels, apply a [delay(X) - delay(X-i)] time offset
+
+                '''
+                Note: Given N channels, the synchronized pulses appear at time window N. Therefore, the minimum
+                delay channel (D=0) outputs the (P=N) set of pulses, the second min. delay channel (D=1)
+                outputs the (P=N-1) set of pulses, etc.
+                As a result, each pulse receives an inverse channel delay: K - current_delay + pulsePosition, for some K.
+                We set K to max(delay) since that sets the last channel [max(delay)] at the beginning of the pattern.
+                '''
+                pIndex = int(np.round((max(chpulses.keys()) - delay + pulsePos)*clockfreq))
+                pattern[pIndex:pIndex+int(np.round(pulseWidth*clockfreq))] = 1 # add pulse to pattern at correct delay
+        
+        # optional plotting function
+        # if addplot:
+        #     T = np.linspace(0,mult*len(pattern)/clockfreq,mult*res*len(pattern))
+            
+        #     # allows cyclical access to pattern array via any input index
+        #     def circ_time(T,pattern) :
+        #         pattern_ind = (np.round(T*clockfreq) % len(pattern)).astype(int)
+        #         return pattern[pattern_ind]
+
+        #     plt.figure(figsize=(15,5))
+        #     plts = [plt.plot(T,circ_time(T-d,pattern),label=str(int(d)) + ' ns') for d in delays]
+        #     plt.xlabel('Time (ns)')
+        #     plt.ylabel('a.u.')
+        #     plt.title('Expected Output')
+        #     plt.legend()
+            
+        return pattern
