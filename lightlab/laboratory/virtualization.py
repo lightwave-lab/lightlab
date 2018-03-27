@@ -1,7 +1,5 @@
-import numpy as np
 from lightlab import logger
 from contextlib import contextmanager
-from lightlab.util.data import argFlatten
 
 
 ''' Module-wide variable
@@ -101,6 +99,9 @@ class Virtualizable(object):
     ''' Virtualizable means that it can switch between two states,
         usually corresponding
         to a real-life situation and a virtual/simulated situation.
+
+        The attribute synced refers to other Virtualizables whose states
+        will be synchronized with this one
     '''
     _virtual = None
     synced = None
@@ -112,26 +113,13 @@ class Virtualizable(object):
             super().__init__()
         self.synced = list()
 
-    def global_hardware_warmup(self):
-        pass
-
-    def hardware_warmup(self):
-        ''' Be warned that this only works when using the context manager
-        '''
-        pass
-
-    def hardware_cooldown(self):
-        ''' Be warned that this only works when using the context manager
-        '''
-        pass
-
     def synchronize(self, *newVirtualizables):
         ''' Adds another object that this one will put in the same virtual
             state as itself.
 
             Args:
 
-                newVirtualizables (*args): Other virtualizable things
+                newVirtualizables (\*args): Other virtualizable things
         '''
         for virtualObject in newVirtualizables:
             if virtualObject is None or virtualObject in self.synced:
@@ -153,32 +141,33 @@ class Virtualizable(object):
     @virtual.setter
     def virtual(self, toVirtual):
         ''' An alternative to context managing.
-            Note that hardware_warmup will not be called
         '''
         global virtualOnly
         if virtualOnly and not toVirtual:
             toVirtual = None
         self._virtual = toVirtual
-        for iSub, sub in enumerate(self.synced):
-            sub._virtual = toVirtual
+        for sub in self.synced:
+            sub.virtual = toVirtual
 
     @contextmanager
     def asVirtual(self):
         old_value = self._virtual
         self.virtual = True
-        old_subvalues = dict()
+        old_subvalues = list()
         for iSub, sub in enumerate(self.synced):
-            old_subvalues[iSub] = sub.virtual
+            old_subvalues.append(sub._virtual)
             sub.virtual = True
         try:
             yield self
         finally:
-            self._virtual = old_value
+            self.virtual = old_value
             for iSub, sub in enumerate(self.synced):
-                sub._virtual = old_subvalues[iSub]
+                sub.virtual = old_subvalues[iSub]
 
     @contextmanager
     def asReal(self):
+        ''' If virtualOnly is True, it will skip the block without error
+        '''
         global virtualOnly
         if virtualOnly:
             try:
@@ -190,27 +179,24 @@ class Virtualizable(object):
 
         old_value = self._virtual
         self.virtual = False
-        old_subvalues = dict()
+        old_subvalues = list()
         for iSub, sub in enumerate(self.synced):
-            old_subvalues[iSub] = sub.virtual
+            old_subvalues.append(sub._virtual)
             sub.virtual = False
         try:
-            self.global_hardware_warmup()
-            self.hardware_warmup()
-            for sub in self.synced:
-                sub.hardware_warmup()
             yield self
         finally:
-            self.hardware_cooldown()
             self.virtual = old_value
             for iSub, sub in enumerate(self.synced):
-                sub.hardware_cooldown()
                 sub.virtual = old_subvalues[iSub]
 
 
 class VirtualInstrument(object):
     ''' Just a placeholder for future functionality '''
-    pass
+    @contextmanager
+    def asVirtual(self):
+        ''' do nothing '''
+        yield self
 
 
 class DualInstrument(Virtualizable):
@@ -219,6 +205,12 @@ class DualInstrument(Virtualizable):
         It basically appears as one or the other instrument, as determined
         by whether it is in virtual or real mode.
 
+        This is especially useful if you have an instrument
+        stored in the JSON labstate,
+        and would then like to virtualize it in your notebook.
+        In that case, it does not reinitialize the driver.
+
+
         isinstance() and __class__ will tell you the underlying instrument type
         type() will give you the DualInstrument subclass::
 
@@ -226,34 +218,78 @@ class DualInstrument(Virtualizable):
             with dual.asReal():
                 isinstance(dual, type(realOne))  # True
             isinstance(dual, type(realOne))  # False
-
-        Subclassing
-
-            A typical subclass might look like this::
-
-                class DualSourceMeter(DualInstrument):
-                    real_klass = SourceMeter
-                    virt_klass = VirtualSourceMeter
-
-                    def __init__(self, *args, viResistiveRef=None, **kwargs):
-                        super().__init__(real=self.real_klass(*args, **kwargs),
-                            virt=self.virt_klass(viResistiveRef))
-
-            Notice that real_klass and virt_klass are the major points.
-            The __init__ *args and **kwargs are passed
-            to *hardware* initializer, while the explicit ones
-            go the the virtual instrument initializer.
     '''
-    real_klass = None
-    virt_klass = None
     real_obj = None
     virt_obj = None
-    synced = None
 
     def __init__(self, real_obj=None, virt_obj=None):
+        '''
+            Args:
+
+                real_obj (Instrument): the real reference
+                virt_obj (VirtualInstrument): the virtual reference
+        '''
         self.real_obj = real_obj
         self.virt_obj = virt_obj
+        if real_obj is not None and virt_obj is not None:
+            violated = []
+            allowed = real_obj.essentialMethods + real_obj.essentialProperties + dir(VirtualInstrument)
+            for attr in dir(type(virt_obj)):
+                if attr not in allowed \
+                        and '__' not in attr:
+                    violated.append(attr)
+            if len(violated) > 0:
+                logger.warning('Virtual instrument ({}) violates the \
+                                interface of the real one ({})'.format(
+                                    type(virt_obj).__name__,
+                                    type(real_obj).__name__))
+                logger.warning('Got: ' + ', '.join(violated))
+                logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
         self.synced = []
+
+    @Virtualizable.virtual.setter  # pylint: disable=no-member
+    def virtual(self, toVirtual):
+        ''' An alternative to context managing.
+            Note that hardware_warmup will not be called,
+            so it is not recommended to be called directly.
+        '''
+        global virtualOnly
+        if virtualOnly and not toVirtual:
+            toVirtual = None
+        if toVirtual == True and self.virt_obj is None:
+            raise VirtualizationError('No virtual object specified in',
+                                      type(self.real_obj))
+        elif toVirtual == False and self.real_obj is None:
+            raise VirtualizationError('No real object specified in',
+                                      type(self.virt_obj))
+        self._virtual = toVirtual
+        for sub in self.synced:
+            sub.virtual = toVirtual
+
+    @contextmanager
+    def asReal(self):
+        ''' Wraps making self.virtual to False.
+            Also does hardware warmup and cooldown
+        '''
+        global virtualOnly
+        if virtualOnly:
+            try:
+                yield self
+            except VirtualizationError:
+                pass
+            finally:
+                return
+
+        with super().asReal():
+            try:
+                self.hardware_warmup()
+                for sub in self.synced:
+                    sub.hardware_warmup()
+                yield self
+            finally:
+                self.hardware_cooldown()
+                for sub in self.synced:
+                    sub.hardware_cooldown()
 
     def __getattribute__(self, att):
         if att in (list(DualInstrument.__dict__.keys()) +
@@ -294,11 +330,6 @@ class DualInstrument(Virtualizable):
         ''' Gives a new dual instrument that has all the same
             properties and references.
 
-            This is especially useful if you have an instrument
-            stored in the JSON labstate,
-            and would then like to virtualize it in your notebook.
-
-            Does not reinitialize the driver. Keeps the same one.
 
             The instrument base of hwOnlyInstr must be the same instrument
             base of this class

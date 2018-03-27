@@ -10,7 +10,7 @@ Strobe tests are much more interesting. Check out :py:func:`~lightlab.util.chara
 .. toctree::
     :maxdepth: 1
 
-    /ipynbs/TestStrober.ipynb
+    /ipynbs/Tests/TestStrober.ipynb
 
 * :ref:`genindex`
 * :ref:`modindex`

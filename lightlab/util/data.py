@@ -4,7 +4,6 @@ findPeaks obviously is important.
 '''
 import matplotlib.pyplot as plt
 import numpy as np
-import types
 from scipy import interpolate
 import lightlab.util.io as io
 from lightlab import logger
@@ -490,9 +489,9 @@ class MeasuredFunction(object):
         if type(self) == Spectrum:
             # For Spectrum objects only
             if isPeak:
-                spectFun = self.lin()
+                spectFun = self.lin()  # pylint: disable=no-member
             else:
-                spectFun = 1 - self.lin()
+                spectFun = 1 - self.lin()  # pylint: disable=no-member
             for i in range(len(filtShapes)):
                 if type(filtShapes[i]).__name__ != 'Spectrum':
                     raise Exception('If calling object is Spectrum, the filter shapes must also be Spectrum types')
@@ -638,7 +637,7 @@ class MeasuredFunction(object):
         return self * (1 / other)
 
     def __rdiv__(self, other):
-        raise NotImplemented('MeasuredFunction does not support right division. If DB, try subtraction')
+        raise NotImplementedError('MeasuredFunction does not support right division. If DB, try subtraction')
 
     def __eq__(self, other):
         if isinstance(self, type(other)):
@@ -823,7 +822,7 @@ def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, desc
     yArrOrig = yArr.copy()
 
     for iPk in range(expectedCnt):  # Loop over peaks
-        logger.debug('--iPk = ', iPk)
+        logger.debug('--iPk = ' + str(iPk))
         isValidPeak = False
         for iAttempt in range(1000):  # Loop through falsities like edges and previously found peaks
             if isValidPeak:
@@ -835,17 +834,18 @@ def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, desc
                 absThresh = peakAmp - descendBy
             else:
                 absThresh = min(descendBy, peakAmp-descendBy)
-            logger.debug('absThresh=', absThresh)
+            logger.debug('absThresh = ' + str(absThresh))
 
             # Didn't find a peak anywhere
             if blanked.all() or absThresh <= np.amin(yArr) or iAttempt == 999:
                 descendBy -= .5                             # Try reducing the selectivity
                 if descendBy >= descendMin:
-                    logger.debug('Reducing required descent to', descendBy)
+                    logger.debug('Reducing required descent to ' + str(descendBy))
                     continue
                 else:
                     # plot a debug view of the spectrum that throws an error when exited
-                    logger.warning('Found ' + str(iPk) + ' of ' + str(expectedCnt) + ' peaks. Look at the plot.')
+                    logger.warning('Found {} of {} peaks.'.format(iPk, expectedCnt) + \
+                        'Look at the plot.')
                     plt.plot(yArr)
                     plt.plot(yArrOrig)
                     plt.show(block=True)
@@ -991,7 +991,7 @@ class MeasuredSurface(object):
     def simplePlot(self, *args, **kwargs):
         import matplotlib.cm as cm
         if 'cmap' not in kwargs.keys():
-            kwargs['cmap'] = cm.inferno
+            kwargs['cmap'] = cm.inferno  # pylint: disable=no-member
         if 'shading' not in kwargs.keys():
             kwargs['shading'] = 'flat'
         YY, XX = np.meshgrid(self.absc[0], self.absc[1])
@@ -1296,6 +1296,20 @@ class FunctionBundle(object):
             histFun.addPoint((thisAbsc, thisOrdi))
         return histFun
 
+    def weightedAddition(self, weiVec):
+        ''' Calculates the weighted addition of the basis signals
+
+            Args:
+                weiVec (array): weights to be applied to the basis functions
+
+            Returns:
+                (MeasuredFunction): weighted addition of basis signals
+        '''
+        assert(len(weiVec) == self.nDims)
+        weiVec = np.reshape(weiVec, (1, self.nDims))
+        outOrdi = np.dot(weiVec, self.ordiMat)
+        return self.memberType(self.absc, outOrdi.A1)
+
     def moment(self, order=2, allDims=True, relativeGauss=False):
         ''' The order'th moment of all the points in the bundle.
 
@@ -1442,20 +1456,6 @@ class FunctionalBasis(FunctionBundle):
             outBasis.addDim(weightedDim)
         return outBasis
 
-    def weightedAddition(self, weiVec):
-        ''' Calculates the weighted addition of the basis signals
-
-            Args:
-                weiVec (array): weights to be applied to the basis functions
-
-            Returns:
-                (MeasuredFunction): weighted addition of basis signals
-        '''
-        assert(len(weiVec) == self.nDims)
-        weiVec = np.reshape(weiVec, (1, self.nDims))
-        outOrdi = np.dot(weiVec, self.ordiMat)
-        return self.memberType(self.absc, outOrdi.A1)
-
     def getMoment(self, weiVecs=None, order=2, relativeGauss=False):
         ''' This is actually the projected moment. Named for compatibility with bss package
 
@@ -1536,19 +1536,3 @@ def minmax(arr):
     ''' Returns a list of [min and max] of the array '''
     return np.array([np.min(arr), np.max(arr)])
 
-''' Testing '''
-if __name__ == '__main__':
-    import time
-    import plotUtils as dplt
-
-    print('running tests')
-    x = np.linspace(0,20,400)
-    sfig = dplt.DynamicFigure('r', [(100,100), (6,5)])
-    cfig = dplt.DynamicFigure('b', [(400,100), (6,5)])
-    plt.get_current_fig_manager().window.wm_geometry('+700+100')
-    for freq in np.linspace(1,3,5):
-        sfun = MeasuredFunction(x, np.sin(freq*x))
-        cfun = MeasuredFunction(x, np.cos(freq*x)).lowPass()
-        sfig.refresh(*sfun())
-        cfig.refresh(*cfun())
-        time.sleep(.5)

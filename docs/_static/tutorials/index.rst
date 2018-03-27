@@ -4,12 +4,11 @@ Tutorials
 .. toctree::
    :maxdepth: 2
 
-   sweeps/sweeps
-   siggen/siggen
-   drivers/drivers
    measfun/measfun
-   stateswap/stateswap
+   drivers/drivers
+   sweeps/sweeps
    chize/chize
+   virtualization/virtualization
 
 * :ref:`genindex`
 * :ref:`modindex`

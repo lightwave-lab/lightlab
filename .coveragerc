@@ -1,2 +1,5 @@
 [run]
 omit = lightlab/equipment/lab_instruments/*
+
+[report]
+omit = lightlab/equipment/lab_instruments/*

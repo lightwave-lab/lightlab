@@ -43,7 +43,7 @@ A major problem here is that the important information is distributed all throug
 
 .. toctree::
 
-    /ipynbs/SimpleSweep.ipynb
+    /ipynbs/Tests/SimpleSweep.ipynb
 
 
 **Challenges of more advanced sweeps**
@@ -78,7 +78,7 @@ Peak search and binary search can be done interactively with a peaked or monoton
 .. toctree::
     :maxdepth: 2
 
-    /ipynbs/TestPeakAndBinarySearch.ipynb
+    /ipynbs/Tests/TestPeakAndBinarySearch.ipynb
 
 .. todo:: Currently peak search is like a n-point 1-D Nelder Meade search. That could be extended to multiple dimensional optimization.
 

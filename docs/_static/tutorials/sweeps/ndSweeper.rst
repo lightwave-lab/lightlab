@@ -31,7 +31,7 @@ Usage
 .. toctree::
     :caption: Demo
 
-    /ipynbs/GenericNdSweep.ipynb
+    /ipynbs/Tests/GenericNdSweep.ipynb
 
 ``NdSweeper`` also supports a :py:meth:`~lightlab.util.sweep.NdSweeper.subsume` method which combines a N-dimensional sweep with a M-dimensional sweep into a (N+M)-dimensional sweep.
 
