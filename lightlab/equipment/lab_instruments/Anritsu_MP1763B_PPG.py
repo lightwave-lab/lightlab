@@ -1,7 +1,7 @@
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import PulsePatternGenerator
-
+import warnings
 import numpy as np
 
 class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
@@ -153,7 +153,7 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
         ChNum = len(chpulses)
         totalTime = np.mean(np.diff(delays))*ChNum*(1+ext)
 
-        bitLength = int(np.round(timeWindow*clockfreq))
+        # bitLength = int(np.round(timeWindow*clockfreq))
         totalBitLength = int(np.round(totalTime*clockfreq))
 
         pattern = np.zeros(totalBitLength, dtype=int)
