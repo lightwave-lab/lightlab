@@ -149,7 +149,7 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
         '''
             
         delays = sorted(chpulses.keys())
-        timeWindow = min(np.diff(delays))
+        # timeWindow = min(np.diff(delays))
         ChNum = len(chpulses)
         totalTime = np.mean(np.diff(delays))*ChNum*(1+ext)
 
