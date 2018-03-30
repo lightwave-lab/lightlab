@@ -28,12 +28,12 @@ It is recommended that you use SSHFS to mirror your work to your local computer,
 
 Linux::
 
-    alias mntlight='sshfs <server>:/home/hermione/Documents /path/to/local/dir -C -o allow_other'
+    alias mntlight='sshfs <server>:/home/lancelot/Documents /path/to/local/dir -C -o allow_other'
     alias umntlight='fusermount -u /path/to/local/dir'
 
 MacOS::
 
-    alias mntlight='sshfs <server>:/home/hermione/Documents /path/to/local/dir -C -o allow_other,auto_cache,reconnect,defer_permissions,noappledouble'
+    alias mntlight='sshfs <server>:/home/lancelot/Documents /path/to/local/dir -C -o allow_other,auto_cache,reconnect,defer_permissions,noappledouble'
     alias umntlight='umount /path/to/local/dir'
 
 4. Now you can mount and unmount your remote calibration-instrumentation folder with::
@@ -45,7 +45,7 @@ Example directory structure, environment, and usage
 ---------------------------------------------------
 If you are developing lightlab, you will likely have some other notebooks to test. Those should go in a different directory with a different virtual environment. It can be git tracked in a different repo. Here is an example directory structure::
 
-    > hermione/Documents
+    > lancelot/Documents
     | > lightlab
     | | > .git
     | | Makefile
@@ -90,7 +90,7 @@ The highlighted line will dynamically link the environment to your version of li
 
 The contents of ``.pathtolightlab`` are::
 
-    /home/hermione/Documents/lightlab
+    /home/lancelot/Documents/lightlab
 
 If this is a repo, your ``.gitignore`` should include::
 
