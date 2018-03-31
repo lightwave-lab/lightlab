@@ -343,7 +343,7 @@ class JSONpickleable(Hashable):
             notPickled (set): names of attributes that will be guaranteed to exist in instances.
                 They will not go into the pickled
                 Good for references to things like hardware instruments that you should re-init when reloading.
-
+            is_npArray (set): *need to fill out*
 
         See the test_JSONpickleable for much more detail
     '''
@@ -386,6 +386,10 @@ class JSONpickleable(Hashable):
                 state[key] = None
             elif isinstance(val, SerializedNumpy):
                 state[key] = SerializedNumpy.deserialize(val.encoded)
+            elif callable(val):
+                logger.warning(str(key) + ' is a function.'
+                    'That is not supported by JSONpickleable yet')
+                state[key] = None
 
         for a in self.notPickled:
             state[a] = None
@@ -432,7 +436,7 @@ class JSONpickleable(Hashable):
         return self._fromJSONcheck(self._toJSON())
 
     def save(self, filename):
-        if filename[-4:] != '.json':
+        if filename[-5:] != '.json':
             filename += '.json'
         with open(filename, 'w') as f:
             f.write(self._toJSON())
