@@ -17,6 +17,7 @@ from lightlab.equipment.visa_bases import VISAObject
 import numpy as np
 from lightlab.util.data import Spectrum
 import os
+from lightlab import logger
 
 INSTANTIATION_COUNTER = 0
 filename = 'testJson.json'
@@ -39,11 +40,11 @@ class SomeVirtualizedExperiment(JSONpickleable):
         Later, we will also use dynamic assignment to add an undeclared attribute
     '''
     hwRef = None
-    __hidden = 'set within object'
     notPickled = ['hwRef']
 
     def __init__(self, name=None):
         self.name = name
+        self.__hidden = 'set within object'
 
         # This is an example of a side effect
         global INSTANTIATION_COUNTER
@@ -57,26 +58,33 @@ class SomeVirtualizedExperiment(JSONpickleable):
     def hidden(self, newVal):
         self.__hidden = newVal
 
+def test_Simple():
+    original = SomeVirtualizedExperiment('myName')
+    copied = original.copy()
+    assert original.name == copied.name
 
-# Make exp, the global example of a JSONpickleable object
-portA = Port()
-portB = Port()
-portA.connectedTo = portB
-portB.connectedTo = portA
 
-subExp = SomeVirtualizedExperiment('Cousin IT')
-# assert INSTANTIATION_COUNTER == 1
-subExp.hwRef = 10
-subExp.port = portB
-subExp.sneakyHwRef = SomeInstrument()
+def genExp():
+    # Make exp, the global example of a JSONpickleable object
+    portA = Port()
+    portB = Port()
+    portA.connectedTo = portB
+    portB.connectedTo = portA
 
-exp = SomeVirtualizedExperiment('Uncle Tommy')
-# assert INSTANTIATION_COUNTER == 2
-exp.hwRef = 20
-exp.sneakyHwRef = VISAObject()
-exp.port = portA
-exp.memberExp = subExp
-exp.hidden = 'Now it has been set'
+    subExp = SomeVirtualizedExperiment('Cousin IT')
+    # assert INSTANTIATION_COUNTER == 1
+    subExp.hwRef = 10
+    subExp.port = portB
+    subExp.sneakyHwRef = SomeInstrument()
+
+    exp = SomeVirtualizedExperiment('Uncle Tommy')
+    # assert INSTANTIATION_COUNTER == 2
+    exp.hwRef = 20
+    exp.sneakyHwRef = VISAObject()
+    exp.port = portA
+    exp.memberExp = subExp
+    exp.hidden = 'Now it has been set'
+    return exp
 
 
 def validate(loaded):
@@ -84,12 +92,13 @@ def validate(loaded):
 
         Checks that behavior of pickling is correct
     '''
-    assert loaded is not exp
-    assert loaded.name == exp.name
+    oldExp = genExp()
+    assert loaded is not oldExp
+    assert loaded.name == oldExp.name
 
     # Complicated linkages within members are maintained
     newA = loaded.port
-    assert newA is not portA
+    assert newA is not oldExp.port
     newB = loaded.memberExp.port
     assert newA is newB.connectedTo
 
@@ -105,25 +114,27 @@ def validate(loaded):
 
 
 def test_JSONpickleableWithCopy():
-    loadedExp = exp.copy() # does the same thing as save/load
+    global INSTANTIATION_COUNTER
+    INSTANTIATION_COUNTER = 0
+    loadedExp = genExp().copy() # does the same thing as save/load
+    assert INSTANTIATION_COUNTER == 2
     validate(loadedExp)
     # __init__ is not called again
-    assert INSTANTIATION_COUNTER == 2
 
 
 @pytest.fixture(scope='module')
-def expJSONed():
-    exp.save(filename)
+def expJSONfile():
+    genExp().save(filename)
     yield filename
     os.remove(filename)
 
 
-def test_JSONpickleableWithFile(expJSONed):
-    import pdb; pdb.set_trace()
-    loadedExp = SomeVirtualizedExperiment.load(filename)
+def test_JSONpickleableWithFile(expJSONfile):
+    global INSTANTIATION_COUNTER
+    INSTANTIATION_COUNTER = 0
+    loadedExp = SomeVirtualizedExperiment.load(expJSONfile)
+    assert INSTANTIATION_COUNTER == 0  # __init__ is not called again
     validate(loadedExp)
-    # __init__ is not called again
-    assert INSTANTIATION_COUNTER == 2
 
 
 '''
@@ -135,33 +146,51 @@ def test_JSONpickleableWithFile(expJSONed):
 def bar(s):
     return s + 42
 
-bar2 = lambda s: s + 42
+bar2 = lambda s: s + 43
 
 
 class SomethingWithHardStuff(JSONpickleable):
     def __init__(self):
+        self.name = 'myName'
         self.wArr = np.array([])           # empty
         self.xArr = np.array(1)            # scalar
         self.yArr = np.linspace(0, 1, 10)  # 1D
-        self.zArr = np.random.rand(5,5)    # 2D
-        self.someFuncs = (bar, bar2, self.bar3)
+        self.zArr = np.zeros((5,5))    # 2D
+
+        self.vFun = bar              # regular
+        self.wFun = bar2             # lambda
+        self.xFun = self.bar3        # bound method
+        self.yFun = type(self).bar3  # unbound method
+        self.zFun = np.ones      # out of scope
+
         self.aSpectrum = Spectrum([1,2], [3,4])
 
-    def bar3(self):
-        return True
+    def bar3(self, s):
+        return s + 44
 
 
-def terrst_JSONpickleableHard():
-    ##### Pickling tough stuff
-    foo = SomethingWithHardStuff()
-    loadedFoo = foo.copy()
+@pytest.fixture(scope='module')
+def hardFile():
+    filename = 'hardJSON.json'
+    SomethingWithHardStuff().save(filename)
+    yield filename
+    os.remove(filename)
 
-    for attr in ['wArr', 'xArr', 'yArr', 'zArr']:
-        if not np.all(getattr(foo, attr) == getattr(loadedFoo, attr)):
-            print(attr)
+
+def test_JSONpickleableHard(hardFile):
+    import pdb; pdb.set_trace()
+    loaded = SomethingWithHardStuff.load(hardFile)
+    original = SomethingWithHardStuff()
+
+    for arrAttr in ['wArr', 'xArr', 'yArr', 'zArr']:
+        if not np.all(getattr(original, arrAttr) == getattr(loaded, arrAttr)):
+            logger.error(arrAttr)
             assert False
-    for iFun in range(len(foo.someFuncs)):
-        assert loadedFoo.someFunc[iFun](2) == foo.someFunc[iFun](2) # this is a problem
-    assert loadedFoo.aSpectrum == foo.aSpectrum
+    for funAttr in ['vFun', 'wFun', 'xFun']:
+        assert getattr(original, funAttr)(10) == getattr(loaded, funAttr)(10)
+    logger.warning(original.yFun(original, 10))
+    assert original.yFun(original, 10) == loaded.yFun(loaded, 10)
+    assert np.all(original.zFun(10) == loaded.zFun(10))
+    assert loaded.aSpectrum == loaded.aSpectrum
 
 

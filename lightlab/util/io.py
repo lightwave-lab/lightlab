@@ -39,10 +39,10 @@ import jsonpickle
 from lightlab.laboratory import Hashable
 import socket
 
-# for serializing np.ndarrays
-import msgpack
-import msgpack_numpy
-msgpack_numpy.patch()
+# for serializing
+import dill
+import jsonpickle.ext.numpy as jsonpickle_numpy
+jsonpickle_numpy.register_handlers()
 
 try:
     projectDir = Path(gitpath.root())
@@ -320,19 +320,15 @@ def loadPickle(filename):
 
 
 class HardwareReference(object):
-
+    ''' Spoofs an instrument
+    '''
     def __init__(self, klassname):
         self.klassname = klassname
 
-
-class SerializedNumpy(object):
-
-    def __init__(self, arrayVersion):
-        self.encoded = msgpack.packb(arrayVersion, default=msgpack_numpy.encode)
-
-    @classmethod
-    def deserialize(self, bytesVersion):
-        return msgpack.unpackb(bytesVersion, object_hook=msgpack_numpy.decode)
+    def open(self):
+        raise TypeError('This object is placeholder a real '
+            + '{}. '.format(self.klassname)
+            + 'You probably loaded this via JSON.')
 
 
 class JSONpickleable(Hashable):
@@ -341,14 +337,21 @@ class JSONpickleable(Hashable):
 
         Attributes:
             notPickled (set): names of attributes that will be guaranteed to exist in instances.
-                They will not go into the pickled
-                Good for references to things like hardware instruments that you should re-init when reloading.
-            is_npArray (set): *need to fill out*
+            They will not go into the pickled string.
+            Good for references to things like hardware instruments that you should re-init when reloading.
 
         See the test_JSONpickleable for much more detail
+
+        What is not pickled?
+            #. attributes with names in ``notPickled``
+            #. attributes starting with _
+            #. VISAObjects: they are replaced with a placeholder HardwareReference
+            #. functions that are NOT currently in scope
+
+            Args:
+                filepath (str/Path): path string to file to save to
     '''
     notPickled = set()
-    is_npArray = set()
 
     def __getstate__(self):
         '''
@@ -356,10 +359,10 @@ class JSONpickleable(Hashable):
         serialization.
         '''
         state = super().__getstate__()
-        allNotPickled = self.__class__.notPickled
-        for base in self.__class__.__bases__:
+        allNotPickled = self.notPickled
+        for base in type(self).mro():
             try:
-                theirNotPickled = getattr(base, 'notPickled')
+                theirNotPickled = base.notPickled
                 allNotPickled = allNotPickled.union(theirNotPickled)
             except AttributeError:
                 pass
@@ -367,15 +370,22 @@ class JSONpickleable(Hashable):
         keys_to_delete = set()
         for key, val in state.items():
             if isinstance(key, str):
+
+                # 1. explicit removals
                 if key in allNotPickled:
                     keys_to_delete.add(key)
+
+                # 2. hardware placeholders
                 elif (val.__class__.__name__ == 'VISAObject' or
-                      any(base.__name__ == 'VISAObject' for base in val.__class__.__bases__)):
+                      any(base.__name__ == 'VISAObject' for base in val.__class__.mro())):
                     klassname = val.__class__.__name__
                     logger.warning('Not pickling {} = {}.'.format(key, klassname))
                     state[key] = HardwareReference('Reference to a ' + klassname)
-                elif isinstance(val, np.ndarray):
-                    state[key] = SerializedNumpy(val)
+
+                # 3. functions that are not available in modules - saves the code text
+                elif jsonpickle.util.is_function(val) and not jsonpickle.util.is_module_function(val):
+                    state[key + '_dilled'] = dill.dumps(val)
+                    keys_to_delete.add(key)
         for key in keys_to_delete:
             del state[key]
         return state
@@ -383,12 +393,6 @@ class JSONpickleable(Hashable):
     def __setstate__(self, state):
         for key, val in state.items():
             if isinstance(val, HardwareReference):
-                state[key] = None
-            elif isinstance(val, SerializedNumpy):
-                state[key] = SerializedNumpy.deserialize(val.encoded)
-            elif callable(val):
-                logger.warning(str(key) + ' is a function.'
-                    'That is not supported by JSONpickleable yet')
                 state[key] = None
 
         for a in self.notPickled:
@@ -406,7 +410,7 @@ class JSONpickleable(Hashable):
         context = jsonpickle.unpickler.Unpickler(backend=jsonpickle.json, safe=True, keys=True)
         try:
             restored_object = context.restore(json_state, reset=True)
-        except AttributeError as err:
+        except (TypeError, AttributeError) as err:
             newm = err.args[
                 0] + '\n' + 'This is that strange jsonpickle error trying to get aDict.__name__. You might be trying to pickle a function.'
             err.args = (newm,) + err.args[1:]
@@ -423,8 +427,8 @@ class JSONpickleable(Hashable):
         for key, val in restored_object.__dict__.items():
             if isinstance(val, HardwareReference):
                 setattr(restored_object, key, None)
-            elif isinstance(val, SerializedNumpy):
-                setattr(restored_object, key, SerializedNumpy.deserialize(val.encoded))
+            elif key[-7:] == '_dilled':
+                state[key] = dill.loads(val)
 
         return restored_object
 
@@ -443,7 +447,7 @@ class JSONpickleable(Hashable):
 
     @classmethod
     def load(cls, filename):
-        if filename[-4:] != '.json':
+        if filename[-5:] != '.json':
             filename += '.json'
         with open(filename, 'r') as f:
             frozen = f.read()
