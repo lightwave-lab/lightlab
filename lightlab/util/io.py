@@ -344,9 +344,16 @@ class JSONpickleable(Hashable):
 
         What is not pickled?
             #. attributes with names in ``notPickled``
-            #. attributes starting with _
+            #. attributes starting with __
             #. VISAObjects: they are replaced with a placeholder HardwareReference
-            #. functions that are NOT currently in scope
+            #. bound methods (not checked, will error if you try)
+
+        What functions can be pickled
+            #. module-level, such as np.linspace
+            #. lambdas
+
+        Todo:
+            This should support unbound methods
 
             Args:
                 filepath (str/Path): path string to file to save to
@@ -368,7 +375,7 @@ class JSONpickleable(Hashable):
                 pass
 
         keys_to_delete = set()
-        for key, val in state.items():
+        for key, val in state.copy().items():
             if isinstance(key, str):
 
                 # 1. explicit removals
@@ -386,14 +393,19 @@ class JSONpickleable(Hashable):
                 elif jsonpickle.util.is_function(val) and not jsonpickle.util.is_module_function(val):
                     state[key + '_dilled'] = dill.dumps(val)
                     keys_to_delete.add(key)
+
+                # 4. double underscore attributes have already been removed
         for key in keys_to_delete:
             del state[key]
         return state
 
     def __setstate__(self, state):
-        for key, val in state.items():
+        for key, val in state.copy().items():
             if isinstance(val, HardwareReference):
                 state[key] = None
+            elif key[-7:] == '_dilled':
+                state[key[:-7]] = dill.loads(val)
+                del state[key]
 
         for a in self.notPickled:
             state[a] = None
@@ -424,11 +436,12 @@ class JSONpickleable(Hashable):
         for a in cls.notPickled:
             setattr(restored_object, a, None)
 
-        for key, val in restored_object.__dict__.items():
+        for key, val in restored_object.__dict__.copy().items():
             if isinstance(val, HardwareReference):
                 setattr(restored_object, key, None)
             elif key[-7:] == '_dilled':
-                state[key] = dill.loads(val)
+                setattr(restored_object, key[:-7], dill.loads(val))
+                delattr(restored_object, key)
 
         return restored_object
 
@@ -528,4 +541,7 @@ class ChannelError(Exception):
 
 
 class RangeError(Exception):
+    ''' It is useful to put the type of error 'high' or 'low' in the second
+        argument of this class' initializer
+    '''
     pass

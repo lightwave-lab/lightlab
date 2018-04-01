@@ -135,6 +135,7 @@ def main():
             'PyVISA',
             'scipy',
             'sklearn',
+            'dill',
         ],
         cmdclass={
             "server_permissions": PermissionCheckCommand,

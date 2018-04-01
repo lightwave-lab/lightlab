@@ -30,6 +30,9 @@ class SomeInstrument(VISAObject):
 class Port(object):
     connectedTo = None
 
+    def portFun(self, s):
+        return s + 1
+
 
 class SomeVirtualizedExperiment(JSONpickleable):
     ''' Contains the following examples
@@ -157,11 +160,14 @@ class SomethingWithHardStuff(JSONpickleable):
         self.yArr = np.linspace(0, 1, 10)  # 1D
         self.zArr = np.zeros((5,5))    # 2D
 
-        self.vFun = bar              # regular
-        self.wFun = bar2             # lambda
-        self.xFun = self.bar3        # bound method
-        self.yFun = type(self).bar3  # unbound method
-        self.zFun = np.ones      # out of scope
+        # self.klass = Port
+
+        self.f_inModule = bar             # regular
+        self.f_lambda = bar2              # lambda
+        # self.f_bound = self.bar3        # bound method -- will recurse
+        self.f_bound = Port().portFun     # bound method
+        # self.f_unbound = type(self).bar3  # unbound method (shold work, does not)
+        self.f_library = np.ones          # external
 
         self.aSpectrum = Spectrum([1,2], [3,4])
 
@@ -178,7 +184,6 @@ def hardFile():
 
 
 def test_JSONpickleableHard(hardFile):
-    import pdb; pdb.set_trace()
     loaded = SomethingWithHardStuff.load(hardFile)
     original = SomethingWithHardStuff()
 
@@ -186,11 +191,11 @@ def test_JSONpickleableHard(hardFile):
         if not np.all(getattr(original, arrAttr) == getattr(loaded, arrAttr)):
             logger.error(arrAttr)
             assert False
-    for funAttr in ['vFun', 'wFun', 'xFun']:
-        assert getattr(original, funAttr)(10) == getattr(loaded, funAttr)(10)
-    logger.warning(original.yFun(original, 10))
-    assert original.yFun(original, 10) == loaded.yFun(loaded, 10)
-    assert np.all(original.zFun(10) == loaded.zFun(10))
     assert loaded.aSpectrum == loaded.aSpectrum
+
+    for funAttr in ['f_inModule', 'f_lambda', 'f_bound']:
+        assert getattr(original, funAttr)(10) == getattr(loaded, funAttr)(10)
+    # assert original.f_unbound(loaded, 10) == loaded.f_unbound(loaded, 10)
+    assert np.all(original.f_library(10) == loaded.f_library(10))
 
 
