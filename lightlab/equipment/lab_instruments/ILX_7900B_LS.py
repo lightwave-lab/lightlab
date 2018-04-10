@@ -122,6 +122,10 @@ class ILX_7900B_LS(VISAInstrumentDriver):
     def getChannelEnable(self):
         return dict((ch, self.enableState[self.dfbChans.index(ch)]) for ch in self.dfbChans)
 
+    def getChannels(self):
+        ''' Returns the blocked out channels as a list '''
+        return list(self.stateDict.keys())
+
     @property
     def wls(self):
         ''' wls is in nanometers '''

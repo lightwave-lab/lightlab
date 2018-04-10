@@ -73,6 +73,7 @@ class CurrentSource(Instrument):
     essentialMethods = Instrument.essentialMethods + \
         ['setChannelTuning',
          'getChannelTuning',
+         'getChannels',
          'off']
 
 
@@ -93,6 +94,7 @@ class LaserSource(Instrument):
          'getChannelWls',
          'setChannelPowers',
          'getChannelPowers',
+         'getChannels',
          'getAsSpectrum',
          'allOnOff']
     essentialProperties = Instrument.essentialProperties + \
