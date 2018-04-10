@@ -43,7 +43,7 @@ venvinfo/testreqs~: $(REINSTALL_DEPS) test-requirements.txt
 test-unit: testbuild
 	( \
 		source venv/bin/activate; \
-		py.test $(TESTARGS) $(TESTARGSNB) tests notebooks/Tests; \
+		py.test $(TESTARGS) tests; \
 	)
 
 test-lint: testbuild

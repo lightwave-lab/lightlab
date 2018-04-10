@@ -273,7 +273,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         print('    Instead, call query like this <this>.bankInstruments.query(queryStr)')
 
     def instrID(self):
-        return 'LaserSources:\n   ' + self.bankInstruments.instrID()
+        return self.bankInstruments.instrID()
 
     def close(self):
         # for b in self.bankInstruments:
