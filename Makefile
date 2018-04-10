@@ -129,7 +129,10 @@ docs: docbuild
 	source venv/bin/activate; $(MAKE) -C docs $(DOCTYPE_DEFAULT)
 
 docs-ci: docbuild
-	source venv/bin/activate; $(MAKE) -C docs html
+	( \
+		source venv/bin/activate; \
+		$(MAKE) -C docs html; \
+	)
 
 
 dochost: docs
