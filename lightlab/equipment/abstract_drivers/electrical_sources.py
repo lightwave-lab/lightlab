@@ -130,6 +130,7 @@ class ElectricalSource(object):
         super().__init__(**kwargs)
 
     def getChannels(self):
+        ''' Returns the blocked out channels as a list '''
         return list(self.stateDict.keys())
 
     def setChannelTuning(self, chanValDict, *args, **kwargs):

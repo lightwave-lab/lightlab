@@ -161,6 +161,9 @@ class CurrentSources(VISAInstrumentDriver):
                 tempState[iCh] = chanValDict[chan]
         self.tuneState = tempState
 
+    def getChannels(self):
+        return list(self.getChannelTuning().keys())
+
     def wake(self):
         ''' Don't change the value but make sure it doesn't go to sleep after inactivity.
 
