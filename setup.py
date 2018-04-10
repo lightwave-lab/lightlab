@@ -135,7 +135,7 @@ def main():
             'PyVISA',
             'scipy',
             'sklearn',
-            'msgpack-numpy',
+            'dill',
         ],
         cmdclass={
             "server_permissions": PermissionCheckCommand,
