@@ -11,7 +11,6 @@ test:
   - python --version
   - make test-unit
   - make test-lint-errors
-  - make docs-ci
 
 test-master:
   image: python:3.6
