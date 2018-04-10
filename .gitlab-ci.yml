@@ -36,6 +36,7 @@ deploy-dev:
   script:
   - source $VIRTUALENVWRAPPER_HOOK_DIR/development/bin/activate
   - pip install -U -r dev-requirements.txt
+  - pip install .
   - pip install --upgrade --no-deps --force-reinstall .
 
 deploy-dev-docs:
@@ -61,4 +62,5 @@ deploy-master:
   script:
   - source $VIRTUALENVWRAPPER_HOOK_DIR/master/bin/activate
   - pip install -U -r dev-requirements.txt
+  - pip install .
   - pip install --upgrade --no-deps --force-reinstall .
