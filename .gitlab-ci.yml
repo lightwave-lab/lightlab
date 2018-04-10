@@ -9,7 +9,7 @@ test:
   script:
   - pip install -U virtualenv pip
   - python --version
-  - make test-unit
+  - make test-unit-all
   - make test-lint-errors
 
 test-master:
@@ -23,7 +23,7 @@ test-master:
   script:
   - pip install -U virtualenv pip
   - python --version
-  - make test-unit
+  - make test-unit-all
   - make test-lint
 
 deploy-dev:
@@ -36,6 +36,7 @@ deploy-dev:
   script:
   - source $VIRTUALENVWRAPPER_HOOK_DIR/development/bin/activate
   - pip install -U -r dev-requirements.txt
+  - pip install .
   - pip install --upgrade --no-deps --force-reinstall .
 
 deploy-dev-docs:
@@ -61,4 +62,5 @@ deploy-master:
   script:
   - source $VIRTUALENVWRAPPER_HOOK_DIR/master/bin/activate
   - pip install -U -r dev-requirements.txt
+  - pip install .
   - pip install --upgrade --no-deps --force-reinstall .
