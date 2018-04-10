@@ -44,12 +44,12 @@ class ILX_7900B_LS(VISAInstrumentDriver):
 
     def __init__(self, name='The laser source', address=None, dfbChans=[1], **kwargs):
         kwargs['tempSess'] = kwargs.pop('tempSess', False)
-        super().__init__(name=name, address=address, **kwargs)
-        self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
-
         # just for backwards compatibility
         if 'useChans' in kwargs.keys():
             dfbChans = kwargs.pop('useChans')
+        super().__init__(name=name, address=address, **kwargs)
+        self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
+
 
         dfbChans, stateDict = dfbChans, kwargs.pop("stateDict", None)
         if dfbChans is None and stateDict is None:
