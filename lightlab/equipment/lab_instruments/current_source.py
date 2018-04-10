@@ -267,7 +267,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
         kwargs['tempSess'] = kwargs.get('tempSess', True)
         # for backwards compatibility
         if 'useChans' in kwargs.keys():
-            elChans = kwargs.pop(useChans)
+            elChans = kwargs.pop('useChans')
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         ElectricalSource.__init__(self, elChans=elChans)
 

@@ -115,7 +115,7 @@ class ElectricalSource(object):
     def __init__(self, elChans=None, **kwargs):
         # for backwards compatibility
         if 'useChans' in kwargs.keys():
-            elChans = kwargs.pop(useChans)
+            elChans = kwargs.pop('useChans')
 
         if elChans is None:
             elChans = list()
