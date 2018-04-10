@@ -112,11 +112,15 @@ class ElectricalSource(object):
     """
     maxChannel = None  # number of dimensions that the current sources are expecting
 
-    def __init__(self, useChans=None, **kwargs):
-        if useChans is None:
-            useChans = list()
-            logger.warning('No useChans specified for ElectricalSource')
-        self.stateDict = dict([ch, 0] for ch in useChans)
+    def __init__(self, elChans=None, **kwargs):
+        # for backwards compatibility
+        if 'useChans' in kwargs.keys():
+            elChans = kwargs.pop(useChans)
+
+        if elChans is None:
+            elChans = list()
+            logger.warning('No elChans specified for ElectricalSource')
+        self.stateDict = dict([ch, 0] for ch in elChans)
 
         # Check that the requested channels are available to be blocked out
         if self.maxChannel is not None:
@@ -179,11 +183,11 @@ class ElectricalSource(object):
 #         ''' In this one, current is in amps
 
 #             Args:
-#                 resistiveDict (dict): keys are useChans, values are objects that provide
+#                 resistiveDict (dict): keys are elChans, values are objects that provide
 #                 voltQueryMethod is unbound method with one argument: current
 
 #         '''
-#         super().__init__(useChans=list(resistiveDict.keys()), **kwargs)
+#         super().__init__(elChans=list(resistiveDict.keys()), **kwargs)
 #         self.resistors = resistiveDict
 #         resType = type(resistors.values()[0])
 #         if voltQueryMethod is None:

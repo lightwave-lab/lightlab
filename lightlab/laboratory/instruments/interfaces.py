@@ -67,7 +67,6 @@ class NICurrentSource(Instrument):
         ['setChannelTuning',
          'getChannelTuning',
          'off']
-    # Must init with `useChans` somehow
 
 
 class CurrentSource(Instrument):
@@ -75,7 +74,6 @@ class CurrentSource(Instrument):
         ['setChannelTuning',
          'getChannelTuning',
          'off']
-    # Must init with `useChans` somehow
 
 
 class FunctionGenerator(Instrument):

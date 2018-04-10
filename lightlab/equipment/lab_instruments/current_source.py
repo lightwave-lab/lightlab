@@ -33,7 +33,6 @@ class CurrentSources(VISAInstrumentDriver):
     targetPort = 16022  # TCPIP server port; charge of an electron (Coulombs)
     waitMsOnWrite = 500 # Time to settle after tuning
     __tuneState = None
-    # def __init__(self, useChans=None, stateDict=None, sourceMode='volt', hostname='andromeda'): # Add hostname
     ''' Initialize a client connection over TCPIP
 
             You must specify either useChans or stateDict, but not both.
@@ -261,10 +260,13 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
     waitMsOnWrite = 500 # Time to settle after tuning
 
 
-    def __init__(self, name='The current source', address=None, useChans=None, **kwargs):
+    def __init__(self, name='The current source', address=None, elChans=None, **kwargs):
         kwargs['tempSess'] = kwargs.get('tempSess', True)
+        # for backwards compatibility
+        if 'useChans' in kwargs.keys():
+            elChans = kwargs.pop(useChans)
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-        ElectricalSource.__init__(self, useChans=useChans)
+        ElectricalSource.__init__(self, elChans=elChans)
 
     def startup(self):
         self.off()

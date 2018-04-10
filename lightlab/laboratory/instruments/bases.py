@@ -325,7 +325,7 @@ class Instrument(Node):
                 kwargs = self.driver_kwargs
             except AttributeError:  # Fall back to the jank version where we try to guess what is important
                 kwargs = dict()
-                for kwarg in ["useChans", "stateDict", "sourceMode"]:
+                for kwarg in ["useChans", "elChans", "dfbChans", "stateDict", "sourceMode"]:
                     try:
                         kwargs[kwarg] = getattr(self, kwarg)
                     except AttributeError:
@@ -484,13 +484,13 @@ class Clock(Instrument):
 
 class CurrentSource(Instrument):
     essentialMethods = ['setChannelTuning', 'getChannelTuning', 'off']
-    # Must init with `useChans` somehow
+    # Must init with `elChans` somehow
 
 
 from lightlab.equipment.abstract_drivers import ElectricalSource, MultiModalSource
 class NICurrentSource(CurrentSource, ElectricalSource, MultiModalSource):
-    def __init__(self, *args, useChans, **kwargs):
-        super().__init__(*args, useChans=useChans, **kwargs)
+    def __init__(self, *args, elChans, **kwargs):
+        super().__init__(*args, elChans=elChans, **kwargs)
 
 
 class FunctionGenerator(Instrument):
