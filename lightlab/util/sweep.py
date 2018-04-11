@@ -1267,7 +1267,8 @@ def binarySearch(evalPointFun, targetY, startBounds, hardConstrain=False, xTol=0
         The final call to evalPointFun will be of this value,
         so no need to call it again, if your goal is to set to the target.
 
-        xTol and yTol are OR-ed conditions. If one is satisfied, it will terminate successfully.
+        xTol and yTol are OR-ed conditions.
+        If one is satisfied, it will terminate successfully.
         You must specify at least one.
 
         Assumes that the function is monotonic in any direction
@@ -1308,11 +1309,13 @@ def binarySearch(evalPointFun, targetY, startBounds, hardConstrain=False, xTol=0
 
     outOfRangeDirection = doesMFbracket(targetY, tracker)
     if outOfRangeDirection != 'in-range':
+        # Case 1: we won't tolerate it
         if hardConstrain:
             raise io.RangeError('binarySearch function value ' +
                                 'outside of hard constraints! ' +
                                 'Results invalid.'
                                 outOfRangeDirection)
+        # Case 2: try to get it in range
         else:
             newStartBounds = bracketSearch(evalPointFun=evalPointFun,
                                            targetY=targetY,
@@ -1330,42 +1333,21 @@ def binarySearch(evalPointFun, targetY, startBounds, hardConstrain=False, xTol=0
                 raise io.RangeError('It was in range and then not, ' +
                                     'so probably noise.', err.argv[1])
 
-    y = evalPointFun(startBounds[0])
-    lastErr = y - targetY
+    # By now we are certain that the target is bounded by the start points
     thisX = np.mean(startBounds)
-    step = np.diff(startBounds)[0]
-
+    absStep = np.diff(startBounds)[0] / 4
     for iIter in range(30):
-        # Do measurement and check if within tolerance
-        thisY = evalPointFun(thisX)
-        tracker.addPoint((thisX, thisY))
-        err = thisY - targetY
-        if abs(err) < yTol or step < xTol:
-            # logger.debug('binarySweep: Converged!')
-            break
+        newErr = measureError(thisX)
+        # Case 1: converged within tolerance
+        if abs(newErr) < yTol or absStep < xTol:
 
-        # Calculate binary search update
-        if not bracketedTarget:
-            if np.sign(lastErr*err) < 0:
-                # logger.debug('binarySweep: bracketed it')
-                bracketedTarget = True
-            elif iIter > 0:
-                if abs(err) > abs(lastErr):
-                    logger.debug('binarySweep: function changed direction. Likely overdid a peak')
-                    thisX = tracker.absc[np.argmin(tracker.ordi)]
-                    break
-            elif iIter > 4:
-                logger.debug('binarySweep: Target value out of range. Results invalid.')
-                thisX = tracker.absc[np.argmin(tracker.ordi)]
-                break
-        lastErr = err
-        if bracketedTarget:
-            step /= 2
+            return thisX
+
+        # Case 2: guess new point and reduce step by factor of 2
         if isIncreasing:
-            thisX -= np.sign(err) * step
+            thisX -= np.sign(newErr) * absStep
         else:
-            thisX += np.sign(err) * step
-
-
-    return thisX
-
+            thisX += np.sign(newErr) * absStep
+        absStep /= 2
+    else:
+        raise Exception('Binary search did 30 iterations and still did not converge')
