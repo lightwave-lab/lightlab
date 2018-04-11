@@ -1095,12 +1095,18 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=F
         Returns:
             (float, float): best (x,y) point of the peak
     '''
+    nSwarm += (nSwarm + 1) % 2
+    tracker = dUtil.MeasuredFunction([], [])
+
+    def plotAfterPoint():
+        display.clear_output(wait=True)
+        plt.cla()
+        tracker.simplePlot('.-')
+        display.display(plt.gcf())
+
     def shrinkAround(arr, bestInd, shrinkage=.6):
         fulcrumVal = 2 * arr[bestInd] - np.mean(arr)
         return fulcrumVal + (arr - fulcrumVal) * shrinkage
-
-    nSwarm += (nSwarm + 1) % 2
-    tracker = dUtil.MeasuredFunction([], [])
 
     offsToMeasure = np.linspace(*startBounds, nSwarm)
     for iIter in range(20):
@@ -1110,12 +1116,8 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=F
             meas = evalPointFun(offs)
             measuredVals[iPt] = meas
             tracker.addPoint((offs, meas))
-
-        if livePlot:
-            display.clear_output(wait=True)
-            plt.cla()
-            tracker.simplePlot('.-')
-            display.display(plt.gcf())
+            if livePlot:
+                plotAfterPoint()
 
         # Move the lowest point closer
         bestInd = np.argmax(measuredVals)
@@ -1123,7 +1125,7 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=F
         worstInd = np.argmin(measuredVals)
         if measuredVals[bestInd] - measuredVals[worstInd] < yTol \
             or offsToMeasure[-1] - offsToMeasure[0] < xTol:
-            logger.debug('Converged on peak')
+            # logger.debug('Converged on peak')
             break
         if worstInd == float(nSwarm - 1)/2:
             logger.debug('Detected positive curvature')
@@ -1146,35 +1148,99 @@ def binarySearch(evalPointFun, targetY, startBounds, xTol=0, yTol=0, hardConstra
     '''
     startBounds = sorted(startBounds)
     tracker = dUtil.MeasuredFunction([], [])
+
+    def plotAfterPoint():
+        display.clear_output(wait=True)
+        plt.cla()
+        tracker.simplePlot('.-')
+        targLineSpan = plt.xlim()
+        plt.plot(targLineSpan, 2*[targetY], '--k', lw=.5)
+        display.display(plt.gcf())
+
+    def measureError(xVal):
+        yVal = evalPointFun(xVal)
+        tracker.addPoint((xVal, yVal))
+        err = yVal - targetY
+        if visualize:
+            plotAfterPoint()
+        return err
+
+    # First check out what happens at the edges
+    for x in startBounds:
+        measureError(x)
+    isIncreasing = tracker.ordi[1] > tracker.ordi[0]
+
+    # Did it start bracketed?
     bracketedTarget = False
+    yRange = tracker.getRange()
+    if targetY < yRange[0]:
+        outOfRangeDirection = 'low'
+    elif targetY > yRange[1]:
+        outOfRangeDirection = 'high'
+    else:
+        bracketedTarget = True
+
+    if not bracketedTarget and hardConstrain:
+        raise io.RangeError('binarySearch function value ' +
+                            'outside of hard constraints!',
+                            outOfRangeDirection)
+    # If soft constrain, start by getting it is bracketed
+    if not bracketedTarget:
+        # Which way to go?
+        if ((isIncreasing and outOfRangeDirection == 'high')
+                or (not isIncreasing and outOfRangeDirection == 'low'):
+            searchDirection = 1
+        else:
+            searchDirection = 0
+        lastX = tracker.absc[searchDirection]
+        lastErr = tracker.ordi[searchDirection] - targetY
+        absStep = np.diff(startBounds)[0]  # this is tricky
+        signedStep = absStep * (1 if (searchDirection == 1) else -1)
+        for iIter in range(30):
+            newX = lastX + signedStep
+            newErr = measureError(newX)
+            if np.sign(lastErr * newErr) < 0:
+                # logger.debug('binarySweep: bracketed it')
+                bracketedTarget = True
+                startBounds = sorted([lastX, newX])
+                break
+            elif iIter > 0:
+                if abs(newErr) > abs(lastErr):
+                    # Error changed direction: keep same lastX, reduce step
+                    logger.debug('binarySweep: function changed direction. Likely overdid a peak')
+                    thisX = tracker.absc[np.argmin(tracker.ordi)]
+                    signedStep /= 2
+                    continue
+            elif iIter > 4:
+                logger.debug('binarySweep: Target value out of range. Results invalid.')
+                thisX = tracker.absc[np.argmin(tracker.ordi)]
+                break
+            lastX = newX
+            lastErr = newErr
+
+
 
     y = evalPointFun(startBounds[0])
-    tracker.addPoint((startBounds[0], y))
     lastErr = y - targetY
-    thisX = startBounds[1]
+    thisX = np.mean(startBounds)
     step = np.diff(startBounds)[0]
 
     for iIter in range(30):
-        # Do measurement
+        # Do measurement and check if within tolerance
         thisY = evalPointFun(thisX)
         tracker.addPoint((thisX, thisY))
-        if iIter == 0:
-            isIncreasing = tracker.ordi[1] > tracker.ordi[0]
         err = thisY - targetY
-        # print('iIter =', iIter, 'shift =', thisX, ', error =', err)
         if abs(err) < yTol or step < xTol:
             # logger.debug('binarySweep: Converged!')
             break
+
         # Calculate binary search update
         if not bracketedTarget:
             if np.sign(lastErr*err) < 0:
                 # logger.debug('binarySweep: bracketed it')
                 bracketedTarget = True
             elif iIter > 0:
-                if hardConstrain:
-                    outOfRangeDirection = 'high' if err < 0 else 'low'
-                    raise io.RangeError('binarySearch function value outside of hard constraints!', outOfRangeDirection)
-                elif abs(err) > abs(lastErr):
+                if abs(err) > abs(lastErr):
                     logger.debug('binarySweep: function changed direction. Likely overdid a peak')
                     thisX = tracker.absc[np.argmin(tracker.ordi)]
                     break
@@ -1190,12 +1256,6 @@ def binarySearch(evalPointFun, targetY, startBounds, xTol=0, yTol=0, hardConstra
         else:
             thisX += np.sign(err) * step
 
-        if livePlot:
-            display.clear_output(wait=True)
-            plt.cla()
-            tracker.simplePlot('.-')
-            targLineSpan = plt.xlim()
-            plt.plot(targLineSpan, 2*[targetY], '--k', lw=.5)
-            display.display(plt.gcf())
+
     return thisX
 
