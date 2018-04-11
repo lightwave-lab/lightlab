@@ -180,7 +180,7 @@ class NdSweeper(Sweeper):
                         pass
         try:
             if soakTime is not None:
-                logger.debug('Soaking for {} seconds.'.format(soakTime))
+                # logger.debug('Soaking for {} seconds.'.format(soakTime))
                 for actu in self.actuate.values():
                     f = actu[0]
                     x = actu[1][0]
@@ -1144,7 +1144,7 @@ def binarySearch(evalPointFun, targetY, startBounds, xTol=0, yTol=0, hardConstra
             xTol (float): if *domain* shifts become less than this, terminates successfully
             yTol (float): if *range* shifts become less than this, terminates successfully
     '''
-    startBounds.sort()
+    startBounds = sorted(startBounds)
     tracker = dUtil.MeasuredFunction([], [])
     bracketedTarget = False
 
@@ -1172,8 +1172,8 @@ def binarySearch(evalPointFun, targetY, startBounds, xTol=0, yTol=0, hardConstra
                 bracketedTarget = True
             elif iIter > 0:
                 if hardConstrain:
-                    outOfRangeSide = 'high' if err < 0 else 'low'
-                    raise io.RangeError('binarySearch function value outside of hard constraints!', outOfRangeSide)
+                    outOfRangeDirection = 'high' if err < 0 else 'low'
+                    raise io.RangeError('binarySearch function value outside of hard constraints!', outOfRangeDirection)
                 elif abs(err) > abs(lastErr):
                     logger.debug('binarySweep: function changed direction. Likely overdid a peak')
                     thisX = tracker.absc[np.argmin(tracker.ordi)]
