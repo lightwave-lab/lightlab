@@ -1089,7 +1089,21 @@ def assertValidPlotType(plType, dims=None, swpClass=None):
 ################# Non-sweep stuff for sense actuate going here for now ###################
 
 
-# Peak search
+def plotAfterPointMeasurement(trackerMF, yTarget=None):
+    ''' This mutates trackerMF
+
+        Args:
+            trackerMF (MeasuredFunction): function that will be plotted
+            yTarget (float): plotted as dashed line if not None
+    '''
+    display.clear_output(wait=True)
+    plt.cla()
+    tracker.simplePlot('.-')
+    if yTarget is not None:
+        targLineSpan = plt.xlim()
+        plt.plot(targLineSpan, 2*[targetY], '--k', lw=.5)
+    display.display(plt.gcf())
+
 
 def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=False):
     ''' Returns the optimal input that gives you the peak, and the peak value
@@ -1119,12 +1133,6 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=F
     nSwarm += (nSwarm + 1) % 2
     tracker = dUtil.MeasuredFunction([], [])
 
-    def plotAfterPoint():
-        display.clear_output(wait=True)
-        plt.cla()
-        tracker.simplePlot('.-')
-        display.display(plt.gcf())
-
     def shrinkAround(arr, bestInd, shrinkage=.6):
         fulcrumVal = 2 * arr[bestInd] - np.mean(arr)
         return fulcrumVal + (arr - fulcrumVal) * shrinkage
@@ -1138,7 +1146,7 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=F
             measuredVals[iPt] = meas
             tracker.addPoint((offs, meas))
             if livePlot:
-                plotAfterPoint()
+                plotAfterPointMeasurement(tracker)
 
         # Move the lowest point closer
         bestInd = np.argmax(measuredVals)
@@ -1170,20 +1178,12 @@ def binarySearch(evalPointFun, targetY, startBounds, xTol=0, yTol=0, hardConstra
     startBounds = sorted(startBounds)
     tracker = dUtil.MeasuredFunction([], [])
 
-    def plotAfterPoint():
-        display.clear_output(wait=True)
-        plt.cla()
-        tracker.simplePlot('.-')
-        targLineSpan = plt.xlim()
-        plt.plot(targLineSpan, 2*[targetY], '--k', lw=.5)
-        display.display(plt.gcf())
-
     def measureError(xVal):
         yVal = evalPointFun(xVal)
         tracker.addPoint((xVal, yVal))
         err = yVal - targetY
         if visualize:
-            plotAfterPoint()
+            plotAfterPointMeasurement(tracker, targetY)
         return err
 
     # First check out what happens at the edges
@@ -1203,13 +1203,15 @@ def binarySearch(evalPointFun, targetY, startBounds, xTol=0, yTol=0, hardConstra
 
     if not bracketedTarget and hardConstrain:
         raise io.RangeError('binarySearch function value ' +
-                            'outside of hard constraints!',
+                            'outside of hard constraints! ' +
+                            'Results invalid.'
                             outOfRangeDirection)
-    # If soft constrain, start by getting it is bracketed
+
+    # If soft constrain, start by getting it bracketed
     if not bracketedTarget:
-        # Which way to go?
+        # Which way to go? We know that tracker has 2 points in it
         if ((isIncreasing and outOfRangeDirection == 'high')
-                or (not isIncreasing and outOfRangeDirection == 'low'):
+                or (not isIncreasing and outOfRangeDirection == 'low')):
             searchDirection = 1
         else:
             searchDirection = 0
