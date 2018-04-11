@@ -1163,12 +1163,12 @@ def binarySearch(evalPointFun, targetY, startBounds, xTol=0, yTol=0, hardConstra
         err = thisY - targetY
         # print('iIter =', iIter, 'shift =', thisX, ', error =', err)
         if abs(err) < yTol or step < xTol:
-            logger.debug('binarySweep: Converged!')
+            # logger.debug('binarySweep: Converged!')
             break
         # Calculate binary search update
         if not bracketedTarget:
             if np.sign(lastErr*err) < 0:
-                logger.debug('binarySweep: bracketed it')
+                # logger.debug('binarySweep: bracketed it')
                 bracketedTarget = True
             elif iIter > 0:
                 if hardConstrain:
@@ -1179,7 +1179,7 @@ def binarySearch(evalPointFun, targetY, startBounds, xTol=0, yTol=0, hardConstra
                     thisX = tracker.absc[np.argmin(tracker.ordi)]
                     break
             elif iIter > 4:
-                print('binarySweep: Target value out of range. Results invalid.')
+                logger.debug('binarySweep: Target value out of range. Results invalid.')
                 thisX = tracker.absc[np.argmin(tracker.ordi)]
                 break
         lastErr = err
