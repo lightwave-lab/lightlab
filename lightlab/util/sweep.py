@@ -8,11 +8,9 @@ from IPython import display
 import matplotlib.cm
 from collections import OrderedDict
 
-from ..util import data as dUtil
-from ..util import plot as pUtil
-from ..util import io
-from lightlab.util.io import RangeError
-
+from lightlab.util.data import argFlatten, rms
+from lightlab.util.plot import plotCovEllipse
+import lightlab.util.io as io
 from lightlab import logger
 
 class Sweeper(object):
@@ -335,7 +333,7 @@ class NdSweeper(Sweeper):
         if parseKeys is None:
             parseKeys = tuple(self.parse.keys())
         else:
-            parseKeys = dUtil.argFlatten(parseKeys, typs=tuple)
+            parseKeys = argFlatten(parseKeys, typs=tuple)
 
         for pk, pFun in self.parse.items():  # We're indexing this way to make sure parsing is done in the order of parse attribute, not the order of parseKeys
             if pk not in parseKeys:
@@ -485,16 +483,16 @@ class NdSweeper(Sweeper):
         if slicer is None:
             slicer = (slice(None),) * plotDims
         else:
-            slicer = dUtil.argFlatten(slicer, typs=tuple)
+            slicer = argFlatten(slicer, typs=tuple)
 
         # First figure out what the keys of data are
-        xKeys = dUtil.argFlatten(self.plotOptions['xKey'], typs=tuple)
+        xKeys = argFlatten(self.plotOptions['xKey'], typs=tuple)
         if len(xKeys) is 0:  # default is the minor sweep domain
             if not autoLabelingMaster:
                 raise Exception('No axis key specified explicitly or found in self.actuate')
             xKeys = (actKeyList[-1], )
 
-        yKeys = dUtil.argFlatten(self.plotOptions['yKey'], typs=tuple)
+        yKeys = argFlatten(self.plotOptions['yKey'], typs=tuple)
         if len(yKeys) is 0:  # default is all scalar non-domains
             if not autoLabelingMaster:
                 raise Exception('No axis key specified explicitly or found in self.actuate')
@@ -730,9 +728,9 @@ class CommandControlSweeper(Sweeper):
         self.defaultArg = np.array(defaultArg, dtype=float)
         self.allDims = len(self.defaultArg)
 
-        self.swpInds = dUtil.argFlatten(swpInds, typs=tuple)
+        self.swpInds = argFlatten(swpInds, typs=tuple)
         self.swpDims = len(self.swpInds)
-        self.domain = dUtil.argFlatten(domain, typs=tuple)
+        self.domain = argFlatten(domain, typs=tuple)
         self.swpShape = tuple(len(dom) for dom in self.domain)
         if len(self.domain) != self.swpDims:
             raise ValueError('domain and swpInds must have the same dimension.' +
@@ -898,18 +896,18 @@ class CommandControlSweeper(Sweeper):
         measWeights = self.data[..., np.array(self.swpInds)]
 
         # Statistics of every dimension at every grid point (so we're norming over trials) --
-        # errRmsVsWeight = dUtil.rms(measWeights - cmdWeights, axis=0) # Total error
+        # errRmsVsWeight = rms(measWeights - cmdWeights, axis=0) # Total error
         meanVsWeight = np.mean(measWeights, axis=0)
         errMeanVsWeight = meanVsWeight - cmdWeights
-        errStddevVsWeight = dUtil.rms(measWeights - meanVsWeight, axis=0)
+        errStddevVsWeight = rms(measWeights - meanVsWeight, axis=0)
 
         # Statistics normed over channels at every grid point
-        # netErrRmsVsWeight = dUtil.rms(errRmsVsWeight, axis=-1)
-        netErrMeanVsWeight = dUtil.rms(errMeanVsWeight, axis=-1)
-        netErrStddevVsWeight = dUtil.rms(errStddevVsWeight, axis=-1)
+        # netErrRmsVsWeight = rms(errRmsVsWeight, axis=-1)
+        netErrMeanVsWeight = rms(errMeanVsWeight, axis=-1)
+        netErrStddevVsWeight = rms(errStddevVsWeight, axis=-1)
 
         # Take the worst case grid point
-        consolidateErrorVsWeight = lambda x: np.max(np.abs(x)) if worstCase else dUtil.rms(x, axis=None)
+        consolidateErrorVsWeight = lambda x: np.max(np.abs(x)) if worstCase else rms(x, axis=None)
         accuracy = consolidateErrorVsWeight(netErrMeanVsWeight) # This gives accuracy
         precision = consolidateErrorVsWeight(netErrStddevVsWeight) # Precision
 
@@ -1038,7 +1036,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
             # plot variance ellipse
             if index[0] > 0:
                 cov = np.cov(valsAtThisGridPt, rowvar=False)
-                elli = pUtil.plotCovEllipse(cov, mean, volume=0.5, ax=interAx, ec='b', fc='none')
+                elli = plotCovEllipse(cov, mean, volume=0.5, ax=interAx, ec='b', fc='none')
             else:
                 elli = None
 
@@ -1085,285 +1083,3 @@ def assertValidPlotType(plType, dims=None, swpClass=None):
             print(plType, 'is not a valid plot type for this kind of sweep.')
         print('Available plots are:', ', '.join(availablePlots(dims, swpClass)))
         raise KeyError('Invalid plot type')
-
-
-################# Non-sweep stuff for sense actuate going here for now ###################
-
-class SearchRangeError(RangeError):
-    ''' The first argument is direction, the second is a best guess
-    '''
-    pass
-
-def plotAfterPointMeasurement(trackerMF, yTarget=None):
-    ''' This mutates trackerMF
-
-        Args:
-            trackerMF (MeasuredFunction): function that will be plotted
-            yTarget (float): plotted as dashed line if not None
-    '''
-    display.clear_output(wait=True)
-    plt.cla()
-    trackerMF.simplePlot('.-')
-    if yTarget is not None:
-        targLineSpan = plt.xlim()
-        plt.plot(targLineSpan, 2*[yTarget], '--k', lw=.5)
-    display.display(plt.gcf())
-
-
-def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=False):
-    ''' Returns the optimal input that gives you the peak, and the peak value
-
-        You must set either xTol or yTol.
-        Be careful with yTol! It is best used with a big swarm.
-        It does not guarantee that you are that close to peak, just that the swarm is that flat
-
-        This algorithm is a modified swarm that is robust to outliers, sometimes.
-            Each iteration, it takes <nSwarm> measurements and looks at the best (highest).
-            The update is calculated by shrinking the swarm around the index of the best value.
-            It does not compare between iterations: that makes it robust to one-time outliers.
-            It attributes weight only by order of y values in an iteration, not the value between iterations or the magnitude of differences between y's within an iteration
-
-        Not designed to differentiate global vs. local maxima
-
-        Args:
-            evalPointFun (function): y=f(x) one argument, one return. The function that we want to find the peak of
-            startBounds (list, ndarray): minimum and maximum x values that bracket the peak of interest
-            nSwarm (int): number of evaluations per iteration. Use more if it's a narrow peak in a big bounding area
-            xTol (float): if the swarm x's fall within this range, search returns successfully
-            yTol (float): if the swarm y's fall within this range, search returns successfully
-            livePlot (bool): for notebook plotting
-
-        Returns:
-            (float, float): best (x,y) point of the peak
-    '''
-    # Argument checking
-    if xTol is None and yTol is None:
-        raise ValueError('Must specify either xTol or yTol, ' +
-                         'or peak search will never converge.')
-
-    nSwarm += (nSwarm + 1) % 2
-    tracker = dUtil.MeasuredFunction([], [])
-
-    def shrinkAround(arr, bestInd, shrinkage=.6):
-        fulcrumVal = 2 * arr[bestInd] - np.mean(arr)
-        return fulcrumVal + (arr - fulcrumVal) * shrinkage
-
-    offsToMeasure = np.linspace(*startBounds, nSwarm)
-    for iIter in range(20):
-        # Take measurements of the points
-        measuredVals = np.zeros(nSwarm)
-        for iPt, offs in enumerate(offsToMeasure):
-            meas = evalPointFun(offs)
-            measuredVals[iPt] = meas
-            tracker.addPoint((offs, meas))
-            if livePlot:
-                plotAfterPointMeasurement(tracker)
-
-        # Move the lowest point closer
-        bestInd = np.argmax(measuredVals)
-        # print('iter =', iIter, '; offArr =', offsToMeasure, '; best =', np.max(measuredVals))
-        worstInd = np.argmin(measuredVals)
-        if measuredVals[bestInd] - measuredVals[worstInd] < yTol \
-            or offsToMeasure[-1] - offsToMeasure[0] < xTol:
-            # logger.debug('Converged on peak')
-            break
-        if worstInd == float(nSwarm - 1)/2:
-            logger.debug('Detected positive curvature')
-            # break
-        offsToMeasure = shrinkAround(offsToMeasure, bestInd)
-    return (offsToMeasure[bestInd], measuredVals[bestInd])
-
-
-def doesMFbracket(targetY, twoPointMF):
-    yRange = twoPointMF.getRange()
-    if targetY < yRange[0]:
-        outOfRangeDirection = 'low'
-    elif targetY > yRange[1]:
-        outOfRangeDirection = 'high'
-    else:
-        outOfRangeDirection = 'in-range'
-    return outOfRangeDirection
-
-
-def bracketSearch(evalPointFun, targetY, startBounds, xTol, livePlot=False):
-    '''
-        Searches outwards until it finds two X values
-        whose Y values are above and below the targetY.
-
-        Stop conditions
-            * brackets it: returns new bracketing x values
-            * step decreases until below xTol: raises RangeError
-            * 30 iterations: raises RangeError
-
-        Args:
-            evalPointFun (function): y=f(x) one argument, one return. The function that we want to find the target Y value of
-            startBounds (list, ndarray): x values that usually do not bracket the value of interest
-            xTol (float): if *domain* shifts become less than this, raises RangeError
-            livePlot (bool): for notebook plotting
-
-        Returns:
-            ([float, float]): the bracketing range
-    '''
-    startBounds = sorted(startBounds)
-    tracker = dUtil.MeasuredFunction([], [])
-
-    def measureError(xVal):
-        yVal = evalPointFun(xVal)
-        tracker.addPoint((xVal, yVal))
-        err = yVal - targetY
-        if livePlot:
-            plotAfterPointMeasurement(tracker, targetY)
-        return err
-
-    # First check out what happens at the edges
-    for x in startBounds:
-        measureError(x)
-    isIncreasing = tracker.ordi[1] > tracker.ordi[0]
-
-    # Did it start bracketed?
-    outOfRangeDirection = doesMFbracket(targetY, tracker)
-    if outOfRangeDirection == 'in-range':
-        return startBounds
-
-    # Which way to go? We know that tracker has 2 points in it right now
-    if ((isIncreasing and outOfRangeDirection == 'high')
-            or (not isIncreasing and outOfRangeDirection == 'low')):
-        searchDirection = 1
-    else:
-        searchDirection = 0
-    lastX = tracker.absc[searchDirection]
-    twoAgoX = lastX
-    lastErr = tracker.ordi[searchDirection] - targetY
-    twoAgoErr = lastErr
-    absStep = np.diff(startBounds)[0]  # this is tricky
-    signedStep = absStep * (1 if (searchDirection == 1) else -1)
-    newX = lastX + signedStep
-
-    # Feel out in that direction
-    for iIter in range(100):
-        # Case -1: step is too small
-        if abs(signedStep) < xTol:
-            raise SearchRangeError('Target value out of range! ' +
-                                   'This is the best guess.',
-                                   outOfRangeDirection, newX)
-        newErr = measureError(newX)
-        # Case 0: definitely bracketed it
-        if np.sign(lastErr * newErr) < 0:
-
-            return [twoAgoX, newX]
-
-        # Case 1: climbing up a peak
-        # Case 2: skipped over a peak, didn't bracket it,
-        #   but it looks like still going up
-        elif abs(newErr) < abs(lastErr):
-            # Shift everything back into the past
-            twoAgoX = lastX
-            twoAgoErr = lastErr
-            lastX = newX
-            lastErr = newErr
-        # Case 3: skipped over a peak and started going down
-        else:
-            # Drop back to the past and reduce the step
-            lastX = twoAgoX
-            lastErr = twoAgoErr
-            signedStep /= 2
-        newX = lastX + signedStep
-    else:
-        raise Exception('Bracket search did 100 iterations and still did not converge')
-
-
-def binarySearch(evalPointFun, targetY, startBounds, hardConstrain=False, xTol=0, yTol=0, livePlot=False):
-    '''
-        Gives the x where ``evalPointFun(x) == targetY``, approximately.
-        The final call to evalPointFun will be of this value,
-        so no need to call it again, if your goal is to set to the target.
-
-        xTol and yTol are OR-ed conditions.
-        If one is satisfied, it will terminate successfully.
-        You must specify at least one.
-
-        Assumes that the function is monotonic in any direction
-        It often works when there is a peak inside the ``startBounds``,
-        although not always.
-
-        Args:
-            evalPointFun (function): y=f(x) one argument, one return. The function that we want to find the target Y value of
-            startBounds (list, ndarray): minimum and maximum x values that bracket the peak of interest
-            hardConstrain (bool): if False, will do a bracketSearch
-            xTol (float): if *domain* shifts become less than this, terminates successfully
-            yTol (float): if *range* shifts become less than this, terminates successfully
-            livePlot (bool): for notebook plotting
-
-        Returns:
-            (float): the optimal X value
-    '''
-    # Argument checking
-    if xTol is None and yTol is None:
-        raise ValueError('Must specify either xTol or yTol, ' +
-                         'or binary search will never converge.')
-
-    startBounds = sorted(startBounds)
-    tracker = dUtil.MeasuredFunction([], [])
-
-    def measureError(xVal):
-        yVal = evalPointFun(xVal)
-        tracker.addPoint((xVal, yVal))
-        err = yVal - targetY
-        if livePlot:
-            plotAfterPointMeasurement(tracker, targetY)
-        return err
-
-    # First check out what happens at the edges
-    for x in startBounds:
-        measureError(x)
-    isIncreasing = tracker.ordi[1] > tracker.ordi[0]
-
-    outOfRangeDirection = doesMFbracket(targetY, tracker)
-    if outOfRangeDirection != 'in-range':
-        # Case 1: we won't tolerate it
-        if hardConstrain:
-            raise SearchRangeError('binarySearch function value ' +
-                                   'outside of hard constraints! ' +
-                                   'Results invalid.',
-                                   outOfRangeDirection, None)
-        # Case 2: try to get it in range
-        else:
-            try:
-                newStartBounds = bracketSearch(evalPointFun=evalPointFun,
-                                               targetY=targetY,
-                                               startBounds=startBounds,
-                                               xTol=xTol,
-                                               livePlot=livePlot)
-            except SearchRangeError as err:
-                logger.warning('Failed to bracket targetY={}. Returning best guess'.format(targetY))
-                return err.args[2]
-            try:
-                return binarySearch(evalPointFun=evalPointFun,
-                                    targetY=targetY,
-                                    startBounds=newStartBounds,  # key change
-                                    xTol=xTol, yTol=yTol,
-                                    hardConstrain=True,  # key change
-                                    livePlot=livePlot)
-            except SearchRangeError as err:
-                raise SearchRangeError('It was in range and then not, ' +
-                                       'so probably noise.',
-                                       err.args[1], None)
-
-    # By now we are certain that the target is bounded by the start points
-    thisX = np.mean(startBounds)
-    absStep = np.diff(startBounds)[0] / 4
-    for iIter in range(30):
-        newErr = measureError(thisX)
-        # Case 1: converged within tolerance
-        if abs(newErr) < yTol or absStep < xTol:
-
-            return thisX
-
-        # Case 2: guess new point and reduce step by factor of 2
-        if isIncreasing:
-            thisX -= np.sign(newErr) * absStep
-        else:
-            thisX += np.sign(newErr) * absStep
-        absStep /= 2
-    else:
-        raise Exception('Binary search did 30 iterations and still did not converge')
