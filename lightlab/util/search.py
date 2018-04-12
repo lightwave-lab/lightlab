@@ -106,7 +106,7 @@ def doesMFbracket(targetY, twoPointMF):
     return outOfRangeDirection
 
 
-def bracketSearch(evalPointFun, targetY, startBounds, xTol, livePlot=False):
+def bracketSearch(evalPointFun, targetY, startBounds, xTol, hardConstrain=False, livePlot=False):
     '''
         Searches outwards until it finds two X values
         whose Y values are above and below the targetY.
@@ -120,12 +120,20 @@ def bracketSearch(evalPointFun, targetY, startBounds, xTol, livePlot=False):
             evalPointFun (function): y=f(x) one argument, one return. The function that we want to find the target Y value of
             startBounds (list, ndarray): x values that usually do not bracket the value of interest
             xTol (float): if *domain* shifts become less than this, raises RangeError
+            hardConstrain (bool, list): If list, will stay within those
             livePlot (bool): for notebook plotting
 
         Returns:
             ([float, float]): the bracketing range
     '''
     startBounds = sorted(startBounds)
+    if hardConstrain == True:
+        constrainBounds = startBounds
+    elif hardConstrain == False:
+        constrainBounds = [-np.infty, np.infty]
+    else:
+        constrainBounds = hardConstrain
+
     tracker = MeasuredFunction([], [])
 
     def measureError(xVal):
@@ -152,21 +160,32 @@ def bracketSearch(evalPointFun, targetY, startBounds, xTol, livePlot=False):
         searchDirection = 1
     else:
         searchDirection = 0
-    lastX = tracker.absc[searchDirection]
+    lastX = tracker.absc[-searchDirection-1]
     twoAgoX = lastX
-    lastErr = tracker.ordi[searchDirection] - targetY
+    lastErr = tracker.ordi[-searchDirection-1] - targetY
     twoAgoErr = lastErr
-    absStep = np.diff(startBounds)[0]  # this is tricky
+    absStep = np.diff(startBounds)[0] / 2  # this is tricky
     signedStep = absStep * (1 if (searchDirection == 1) else -1)
     newX = lastX + signedStep
 
     # Feel out in that direction
+    constraintViolation = None
     for iIter in range(100):
-        # Case -1: step is too small
+        # Case -2: went outside of constraints, fail
+        if newX < constrainBounds[0]:
+            constraintViolation = 'low' if isIncreasing else 'high'
+        elif newX > constrainBounds[1]:
+            constraintViolation = 'high' if isIncreasing else 'low'
+        if constraintViolation is not None:
+            raise SearchRangeError('Violated domain constraints',
+                                   constraintViolation, lastX)
+        # Case -1: step is too small, fail
         if abs(signedStep) < xTol:
             raise SearchRangeError('Target value out of range! ' +
                                    'This is the best guess.',
                                    outOfRangeDirection, newX)
+
+        #### Do the actual measurement ####
         newErr = measureError(newX)
         # Case 0: definitely bracketed it
         if np.sign(lastErr * newErr) < 0:
@@ -210,7 +229,7 @@ def binarySearch(evalPointFun, targetY, startBounds, hardConstrain=False, xTol=0
         Args:
             evalPointFun (function): y=f(x) one argument, one return. The function that we want to find the target Y value of
             startBounds (list, ndarray): minimum and maximum x values that bracket the peak of interest
-            hardConstrain (bool): if False, will do a bracketSearch
+            hardConstrain (bool, list): if not True, will do a bracketSearch. If list, will stay within those
             xTol (float): if *domain* shifts become less than this, terminates successfully
             yTol (float): if *range* shifts become less than this, terminates successfully
             livePlot (bool): for notebook plotting
@@ -222,6 +241,7 @@ def binarySearch(evalPointFun, targetY, startBounds, hardConstrain=False, xTol=0
     if xTol is None and yTol is None:
         raise ValueError('Must specify either xTol or yTol, ' +
                          'or binary search will never converge.')
+
 
     startBounds = sorted(startBounds)
     tracker = MeasuredFunction([], [])
@@ -242,11 +262,15 @@ def binarySearch(evalPointFun, targetY, startBounds, hardConstrain=False, xTol=0
     outOfRangeDirection = doesMFbracket(targetY, tracker)
     if outOfRangeDirection != 'in-range':
         # Case 1: we won't tolerate it
-        if hardConstrain:
+        if hardConstrain == True:
+            if outOfRangeDirection == 'high':
+                bestGuess = tracker.absc[np.argmax(tracker.ordi)]
+            else:
+                bestGuess = tracker.absc[np.argmin(tracker.ordi)]
             raise SearchRangeError('binarySearch function value ' +
                                    'outside of hard constraints! ' +
                                    'Results invalid.',
-                                   outOfRangeDirection, None)
+                                   outOfRangeDirection, bestGuess)
         # Case 2: try to get it in range
         else:
             try:
@@ -254,21 +278,22 @@ def binarySearch(evalPointFun, targetY, startBounds, hardConstrain=False, xTol=0
                                                targetY=targetY,
                                                startBounds=startBounds,
                                                xTol=xTol,
+                                               hardConstrain=hardConstrain,
                                                livePlot=livePlot)
             except SearchRangeError as err:
-                logger.warning('Failed to bracket targetY={}. Returning best guess'.format(targetY))
+                logger.debug('Failed to bracket targetY={}. Returning best guess'.format(targetY))
                 return err.args[2]
             try:
                 return binarySearch(evalPointFun=evalPointFun,
                                     targetY=targetY,
-                                    startBounds=newStartBounds,  # key change
+                                    startBounds=newStartBounds,  # important change
                                     xTol=xTol, yTol=yTol,
-                                    hardConstrain=True,  # key change
+                                    hardConstrain=True,  # important change
                                     livePlot=livePlot)
             except SearchRangeError as err:
                 raise SearchRangeError('It was in range and then not, ' +
                                        'so probably noise.',
-                                       err.args[1], None)
+                                       err.args[1], err.args[2])
 
     # By now we are certain that the target is bounded by the start points
     thisX = np.mean(startBounds)
