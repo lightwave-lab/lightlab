@@ -152,17 +152,17 @@ class Virtualizable(object):
     @contextmanager
     def asVirtual(self):
         old_value = self._virtual
-        self.virtual = True
+        self._virtual = True
         old_subvalues = list()
         for iSub, sub in enumerate(self.synced):
             old_subvalues.append(sub._virtual)
-            sub.virtual = True
+            sub._virtual = True
         try:
             yield self
         finally:
-            self.virtual = old_value
+            self._virtual = old_value
             for iSub, sub in enumerate(self.synced):
-                sub.virtual = old_subvalues[iSub]
+                sub._virtual = old_subvalues[iSub]
 
     @contextmanager
     def asReal(self):
@@ -178,17 +178,17 @@ class Virtualizable(object):
                 return
 
         old_value = self._virtual
-        self.virtual = False
+        self._virtual = False
         old_subvalues = list()
         for iSub, sub in enumerate(self.synced):
             old_subvalues.append(sub._virtual)
-            sub.virtual = False
+            sub._virtual = False
         try:
             yield self
         finally:
-            self.virtual = old_value
+            self._virtual = old_value
             for iSub, sub in enumerate(self.synced):
-                sub.virtual = old_subvalues[iSub]
+                sub._virtual = old_subvalues[iSub]
 
 
 class VirtualInstrument(object):
