@@ -64,7 +64,13 @@ test-nb: testbuild
 		py.test $(TESTARGS) $(TESTARGSNB) notebooks/Tests; \
 	)
 
-test: testbuild test-unit test-lint ;
+test-unit-all: testbuild
+	( \
+		source venv/bin/activate; \
+		py.test $(TESTARGS) $(TESTARGSNB) tests notebooks/Tests; \
+	)
+
+test: testbuild test-unit-all test-lint ;
 
 
 clean:
@@ -129,7 +135,10 @@ docs: docbuild
 	source venv/bin/activate; $(MAKE) -C docs $(DOCTYPE_DEFAULT)
 
 docs-ci: docbuild
-	source venv/bin/activate; $(MAKE) -C docs html
+	( \
+		source venv/bin/activate; \
+		$(MAKE) -C docs html; \
+	)
 
 
 dochost: docs
@@ -151,11 +160,12 @@ help:
 	@echo "  devbuild          install dev dependencies, build lightlab, and install inside venv"
 	@echo "--- testing ---"
 	@echo "  testbuild         install test dependencies, build lightlab, and install inside venv"
-	@echo "  test-unit         perform unit tests"
-	@echo "  test-nb           perform unit tests devined with ipynbs (subset)"
+	@echo "  test-unit         perform basic unit tests"
+	@echo "  test-nb           perform unit tests defined with ipynbs"
+	@echo "  test-unit-all     perform basic unit tests + ipynbs"
 	@echo "  test-lint         perform linting tests (warnings and errors), recommended"
 	@echo "  test-lint-errors  perform linting tests (just errors)"
-	@echo "  test              perform unit tests and linting tests"
+	@echo "  test              perform all unit tests and linting tests"
 	@echo "--- documentation ---"
 	@echo "  docbuild          prepare venv for documentation build"
 	@echo "  docs              build documentation"
@@ -169,4 +179,4 @@ help:
 	@echo "  monitorhost       undocumented"
 
 
-.PHONY: help default test docs test-nb test-unit test-lint test-lint-errors clean purge dochost monitorhost pip-freeze pip-update jupyter-password getjpass
+.PHONY: help default test docs test-nb test-unit test-unit-all test-lint test-lint-errors clean purge dochost monitorhost pip-freeze pip-update jupyter-password getjpass
