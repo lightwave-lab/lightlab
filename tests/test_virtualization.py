@@ -7,14 +7,17 @@
     It catches many errors at compile-time, instead of run-time.
 
     We strongly recommend learning and using these features,
-    but they can get complicated.
+    but they are complicated, necessarily.
 
-    This test is documentation by example for all these features.
+    This test is documentation by example.
     It covers
-        * writing Instrument interfaces and implementations.
+        * writing ``Instrument`` abstract interfaces
+        * writing concrete implementations and abstract implementations
         * explanation of what is meant by "reality" vs. "virtual reality"
-        * simple simulation and virtualization.
-        * complex procedure dualization
+        * simple simulation, virtualization, and dual-ization
+        * unit-testing a complex experimental procedure
+
+    Along with commentary about the rationale for setting it up this way.
 '''
 
 import pytest
@@ -23,28 +26,31 @@ from contextlib import contextmanager
 from lightlab.laboratory.instruments import Instrument
 from lightlab.equipment.visa_bases import IncompleteClass, VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import AbstractDriver
-from lightlab.laboratory.virtualization import VirtualInstrument, DualInstrument, Virtualizable
+from lightlab.laboratory.virtualization import VirtualInstrument, DualInstrument, Virtualizable, VirtualizationError
 
 
 ''' TESTING FRAMEWORK
 
-    These module variables are "real life" outside of the library.
+    These module variables are, for the sake of this test,
+    an emulation of "reality" outside of the library.
+
     They can be seen only by the testing framework
     and modified only by the low-level drivers.
 '''
 NAIL = 0
 
-''' Some condition that must be active when actually recording,
+''' Some condition that must be active when acting,
     but we would like it to be on as little as possible.
 
-    For example, a Keithley enable switch: Leaving the current
-    on indefinitely can wear out devices.
+    A real example is a Keithley enable switch:
+    Leaving the current on indefinitely can wear out devices.
 
     In this case, we should put hammers down unless actively hammering.
     They are heavy.
 '''
 IN_HAND = False
 
+# Testing framework
 @contextmanager
 def checkHits(N=1):
     ''' Put "reality" in a consistent beginning state.
@@ -89,14 +95,10 @@ def test_badDriver():
     Copied code is very difficult to maintain,
     so we use 1. abstraction and/or 2. inheritance.
 
-    HammerImplementation is just shared code
+    ``HammerImplementation`` is really just shared code
     and should never be instantiated on its own.
 '''
 class HammerImplementation(AbstractDriver):
-    # def __init__(self, **kwargs):
-    #     assert hasattr(self, 'open')
-    #     super().__init__(**kwargs)
-
     def hit(self):
         global NAIL
         if IN_HAND:
@@ -114,6 +116,8 @@ class HammerImplementation(AbstractDriver):
 ''' DRIVERS
 
     They are the only things that get to touch the module variables.
+    When you instantiate a driver, you get the abstract Instrument class.
+    This greatly eases lab state management
 '''
 class Picard_0811(VISAInstrumentDriver, HammerImplementation):
     instrument_category = Hammer
@@ -133,28 +137,38 @@ class Stanley_51_624(VISAInstrumentDriver, HammerImplementation):
 ''' This is almost the same thing, so it is conceptually ok to inherit from the other driver '''
 class Picard_0812(Picard_0811): pass
 
+def test_specialInitialization():
+    hammer = Picard_0811(address='Hand')
+    assert type(hammer) is Hammer
+
 def test_realLife():
     ''' This is a straightforward way to hit a nail
     '''
-    inst = Stanley_51_624(address='Hand')
+    hammer = Picard_0811(address='Hand')
     with checkHits(1):
-        inst.pickUp()
-        inst.hit()
-        inst.putDown()
+        hammer.pickUp()
+        hammer.hit()
+        hammer.putDown()
     # Same thing but with context management
     with checkHits(1):
-        with inst.warmedUp():
-            inst.hit()
+        with hammer.warmedUp():
+            hammer.hit()
 
 
 ''' SIMULATION
 
     VirtualNail is just a simulator. VirtualHammer is special
-    because it is meant to appear to other code as an actual Hammer (same interface, same behavior)
+    because it is meant to appear to other code as an actual Hammer (same interface, same behavior).
+    This is not enforced, but there are warnings if it does not.
 
     In this case, state is held in the simulator because the system is hysteretic.
     It is often instead possible to keep state in the virtual instrument.
     Avoid maintaining extraneous/redundant state like the plague.
+
+    The VirtualInstrument is allowed to know what goes on inside the simulator,
+    i.e. by calling viReference.state. A user procedure should not be directly
+    accessing a simulation because that does not correspond to real life.
+    This is not enforced.
 '''
 class VirtualNail(object):
     state = 0
@@ -164,13 +178,12 @@ class VirtualHammer(VirtualInstrument):
         self.viReference = viReference
 
     def hit(self):
-        ''' The virtual instrument is allowed to know what goes on inside the simulator.
-        '''
         self.viReference.state += 1
 
     def pull(self):
         self.viReference.state -= 1
 
+# Testing framework
 @contextmanager
 def checkVirtualHits(virtualNail, N=1):
     ''' Put "virtual reality" in a consistent beginning state.
@@ -180,7 +193,6 @@ def checkVirtualHits(virtualNail, N=1):
     virtualNail.state = 0
     yield  # user code runs
     assert virtualNail.state == N
-
 
 def test_simulator():
     viDevice = VirtualNail()
@@ -208,9 +220,16 @@ def test_dualized():
             dual.hit()  # Notice how the user code is exactly the same
 
 
-''' SYNCHRONIZATION
+''' PROCEDURES and SYNCHRONIZATION
 
-    Real experiments involve multiple instruments and complex sequences of actions
+    Real experiments involve multiple instruments - they must be synced up -
+    and complex sequences of actions. Those procedures can now be unit-tested.
+
+    What this means is that every procedure can be tested so changes don't
+    break them. This is an alternative to setting up/striking a bunch of different
+    experiments to make sure it still works every time a number gets changed.
+
+    It is of course only as good as your simulator can correspond to reality.
 '''
 def complicatedProcedure_resultingIn3hits(hammer1, hammer2):
     hammer1.hit()
@@ -239,4 +258,7 @@ def test_dualWeilding():
     with checkHits(3):
         with master.asReal():
             complicatedProcedure_resultingIn3hits(dual1, dual2)
+
+    with pytest.raises(VirtualizationError):
+        complicatedProcedure_resultingIn3hits(dual1, dual2)
 
