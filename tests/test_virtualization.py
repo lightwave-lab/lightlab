@@ -1,4 +1,20 @@
-''' Works with DualInstrument and context setting
+''' What's the deal with Drivers, AbstractDrivers, Instruments,
+    VirtualInstruments, and DualInstruments? ``lightlab`` has a lot
+    of power in virtualization. It is not just a bag of drivers.
+
+    Virtualization allows as-rigorous-as-possible and as-true-to-life-as-possible
+    dev/debug of complex experimental procedures. It allows for unit-testing.
+    It catches many errors at compile-time, instead of run-time.
+
+    We strongly recommend learning and using these features,
+    but they can get complicated.
+
+    This test is documentation by example for all these features.
+    It covers
+        * writing Instrument interfaces and implementations.
+        * explanation of what is meant by "reality" vs. "virtual reality"
+        * simple simulation and virtualization.
+        * complex procedure dualization
 '''
 
 import pytest

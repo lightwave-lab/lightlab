@@ -258,12 +258,10 @@ class DualInstrument(Virtualizable):
                         and '__' not in attr:
                     violated.append(attr)
             if len(violated) > 0:
-                logger.warning('Virtual instrument ({}) violates the ' +
-                               'interface of the real one ({})'.format(
-                                    type(virt_obj).__name__,
-                                    type(real_obj).__name__))
+                logger.warning('Virtual instrument ({}) violates '.format(type(virt_obj).__name__) +
+                               'interface of the real one ({})'.format(type(real_obj).__name__))
                 logger.warning('Got: ' + ', '.join(violated))
-                logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
+                # logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
         self.synced = []
 
     @Virtualizable.virtual.setter  # pylint: disable=no-member
