@@ -335,7 +335,7 @@ class MeasuredFunction(object):
             Returns:
                 MeasuredFunction: new object
         '''
-        nonNullInds = self.absc < min(segment) or self.absc > max(segment)
+        nonNullInds = np.logical_or(self.absc < min(segment), self.absc > max(segment))
         newAbsc = self.absc[nonNullInds]
         return self.__newOfSameSubclass(newAbsc, self(newAbsc))
 
