@@ -113,6 +113,14 @@ class Virtualizable(object):
             super().__init__()
         self.synced = list()
 
+    @property
+    def virtual(self):
+        if self._virtual is None:
+            raise VirtualizationError('Virtual context unknown.'
+                                      'Please refer to method asVirtual().')
+        else:
+            return self._virtual
+
     def synchronize(self, *newVirtualizables):
         ''' Adds another object that this one will put in the same virtual
             state as itself.
@@ -130,65 +138,76 @@ class Virtualizable(object):
                                 + ' is not a Virtualizable subclass')
             self.synced.append(virtualObject)
 
-    @property
-    def virtual(self):
-        if self._virtual is None:
-            raise VirtualizationError('Virtual context unknown.'
-                                      'Please refer to method asVirtual().')
-        else:
-            return self._virtual
+    def __setAll(self, toVirtual):
+        ''' Iterates over all synchronized members
+
+            Returns:
+                (list): the previous virtual states
+        '''
+        old_values = list()
+        for iSub, sub in enumerate([self] + self.synced):
+            old_values.append(sub._virtual)
+            sub._virtual = toVirtual
+        return old_values
+
+    def __restoreAll(self, old_values):
+        ''' Iterates over all synchronized members
+
+            Args:
+                old_values (list): the previous virtual states
+        '''
+        for iSub, sub in enumerate([self] + self.synced):
+            sub._virtual = old_values[iSub]
 
     @virtual.setter
     def virtual(self, toVirtual):
-        ''' An alternative to context managing.
+        ''' An alternative to context managing. Does not record old states
         '''
-        global virtualOnly
         if virtualOnly and not toVirtual:
             toVirtual = None
-        self._virtual = toVirtual
-        for sub in self.synced:
-            sub.virtual = toVirtual
+        self.__setAll(toVirtual)
 
     @contextmanager
     def asVirtual(self):
-        old_value = self._virtual
-        self.virtual = True
-        old_subvalues = list()
-        for iSub, sub in enumerate(self.synced):
-            old_subvalues.append(sub._virtual)
-            sub.virtual = True
+        old_values = self.__setAll(True)
         try:
             yield self
         finally:
-            self.virtual = old_value
-            for iSub, sub in enumerate(self.synced):
-                sub.virtual = old_subvalues[iSub]
+            self.__restoreAll(old_values)
 
     @contextmanager
     def asReal(self):
         ''' If virtualOnly is True, it will skip the block without error
         '''
-        global virtualOnly
         if virtualOnly:
             try:
                 yield self
             except VirtualizationError:
                 pass
-            finally:
-                return
 
-        old_value = self._virtual
-        self.virtual = False
-        old_subvalues = list()
-        for iSub, sub in enumerate(self.synced):
-            old_subvalues.append(sub._virtual)
-            sub.virtual = False
+        # Set the virtual states
+        old_values = self.__setAll(False)
+
+        # Try to call hardware warmup if present
+        for iSub, sub in enumerate([self] + self.synced):
+            try:
+                sub.hardware_warmup()
+            except AttributeError:
+                pass
+
         try:
             yield self
+
         finally:
-            self.virtual = old_value
-            for iSub, sub in enumerate(self.synced):
-                sub.virtual = old_subvalues[iSub]
+            # Try to call hardware cooldown if present
+            for iSub, sub in enumerate([self] + self.synced):
+                try:
+                    sub.hardware_cooldown()
+                except AttributeError:
+                    pass
+
+            # Restore virtual states
+            self.__restoreAll(old_values)
 
 
 class VirtualInstrument(object):
@@ -239,12 +258,10 @@ class DualInstrument(Virtualizable):
                         and '__' not in attr:
                     violated.append(attr)
             if len(violated) > 0:
-                logger.warning('Virtual instrument ({}) violates the \
-                                interface of the real one ({})'.format(
-                                    type(virt_obj).__name__,
-                                    type(real_obj).__name__))
+                logger.warning('Virtual instrument ({}) violates '.format(type(virt_obj).__name__) +
+                               'interface of the real one ({})'.format(type(real_obj).__name__))
                 logger.warning('Got: ' + ', '.join(violated))
-                logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
+                # logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
         self.synced = []
 
     @Virtualizable.virtual.setter  # pylint: disable=no-member
@@ -253,7 +270,6 @@ class DualInstrument(Virtualizable):
             Note that hardware_warmup will not be called,
             so it is not recommended to be called directly.
         '''
-        global virtualOnly
         if virtualOnly and not toVirtual:
             toVirtual = None
         if toVirtual == True and self.virt_obj is None:
@@ -265,31 +281,6 @@ class DualInstrument(Virtualizable):
         self._virtual = toVirtual
         for sub in self.synced:
             sub.virtual = toVirtual
-
-    @contextmanager
-    def asReal(self):
-        ''' Wraps making self.virtual to False.
-            Also does hardware warmup and cooldown
-        '''
-        global virtualOnly
-        if virtualOnly:
-            try:
-                yield self
-            except VirtualizationError:
-                pass
-            finally:
-                return
-
-        with super().asReal():
-            try:
-                self.hardware_warmup()
-                for sub in self.synced:
-                    sub.hardware_warmup()
-                yield self
-            finally:
-                self.hardware_cooldown()
-                for sub in self.synced:
-                    sub.hardware_cooldown()
 
     def __getattribute__(self, att):
         if att in (list(DualInstrument.__dict__.keys()) +

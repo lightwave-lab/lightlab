@@ -66,6 +66,7 @@ def test_configurable():
     assert alice.getConfigParam('spam') \
            == bob.getConfigParam('spam')
 
+
 from lightlab.equipment.visa_bases import VISAInstrumentDriver, IncompleteClass
 from lightlab.equipment.lab_instruments import HP_8152A_PM
 from lightlab.laboratory.instruments import PowerMeter
@@ -98,6 +99,7 @@ def test_driver_init():
     with pytest.raises(AttributeError):
         pm.driver_object.extra
 
+
 from lightlab.laboratory.instruments import Oscilloscope
 def test_optionals():
     class Driver1(VISAInstrumentDriver):
@@ -120,6 +122,7 @@ def test_optionals():
     d1.driver.notInInterface()
     assert 'histogramStats' not in dir(d1)
     assert 'histogramStats' in dir(d2)
+
 
 from lightlab import logger, log_to_screen, DEBUG
 
