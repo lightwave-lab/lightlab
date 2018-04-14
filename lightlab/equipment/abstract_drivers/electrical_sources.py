@@ -129,9 +129,16 @@ class ElectricalSource(object):
                     'Requested channel is more than there are available')
         super().__init__(**kwargs)
 
-    def getChannels(self):
+    @property
+    def elChans(self):
         ''' Returns the blocked out channels as a list '''
         return list(self.stateDict.keys())
+
+    @property
+    def useChans(self):
+        ''' Backwards compatibility '''
+        logger.warning('Deprecation warning. Use "elChans" instead of "useChans"')
+        return self.elChans
 
     def setChannelTuning(self, chanValDict, *args, **kwargs):
         ''' Sets a number of channel values and updates hardware

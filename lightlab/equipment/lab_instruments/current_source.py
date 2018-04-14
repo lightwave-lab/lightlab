@@ -161,8 +161,15 @@ class CurrentSources(VISAInstrumentDriver):
                 tempState[iCh] = chanValDict[chan]
         self.tuneState = tempState
 
-    def getChannels(self):
+    @property
+    def elChans(self):
         return list(self.getChannelTuning().keys())
+
+    @property
+    def useChans(self):
+        ''' Backwards compatibility '''
+        logger.warning('Deprecation warning. Use "elChans" instead of "useChans"')
+        return self.elChans
 
     def wake(self):
         ''' Don't change the value but make sure it doesn't go to sleep after inactivity.

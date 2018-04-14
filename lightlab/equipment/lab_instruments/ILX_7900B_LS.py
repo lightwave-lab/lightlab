@@ -122,9 +122,16 @@ class ILX_7900B_LS(VISAInstrumentDriver):
     def getChannelEnable(self):
         return dict((ch, self.enableState[self.dfbChans.index(ch)]) for ch in self.dfbChans)
 
-    def getChannels(self):
+    @property
+    def dfbChans(self):
         ''' Returns the blocked out channels as a list '''
         return list(self.stateDict.keys())
+
+    @property
+    def useChans(self):
+        ''' Backwards compatibility '''
+        logger.warning('Deprecation warning. Use "dfbChans" instead of "useChans"')
+        return self.dfbChans
 
     @property
     def wls(self):
