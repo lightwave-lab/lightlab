@@ -27,8 +27,11 @@ def test_instantiate_instrum(instrum):
     with pytest.raises((RuntimeError, AttributeError)):
         obj.open()
 
-from lightlab.equipment.lab_instruments import NI_PCI_6723
-from lightlab.equipment.abstract_drivers import ElectricalSource
+
+from lightlab.equipment.lab_instruments import NI_PCI_6723, ILX_7900B_LS
+from lightlab.equipment.abstract_drivers import MultiChannelSource
 def test_instrums_withChannels():
-    cs = NI_PCI_6723(name='a CS', address='NULL', elChans=[0, 1])
+    cs = NI_PCI_6723(name='a CS', address='NULL', elChans=[1, 2])
     assert cs.elChans == [1, 2]
+    ls = ILX_7900B_LS(name='a LS', address='NULL', dfbChans=[1, 2])
+    assert ls.dfbChans == [1, 2]

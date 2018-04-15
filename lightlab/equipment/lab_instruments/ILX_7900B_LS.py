@@ -254,7 +254,6 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         else:
             isQuerying = True
             virtualRetVals = np.zeros(len(self.dfbChans))
-        # for iBank in range(len(self.ordering)): # iterate over banks
         for iModule in range(len(self.ordering)):  # iterate over modules
             orderedChan = self.ordering[iModule] - 1  # get rid of 1-indexing
             if orderedChan in self.dfbChans:  # only enter for modules that have been reserved

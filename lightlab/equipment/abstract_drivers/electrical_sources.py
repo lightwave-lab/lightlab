@@ -109,7 +109,7 @@ class MultiModalSource(object):
             return value[-1]
 
 
-class ElectricalSource(object):
+class MultiChannelSource(object):
     """ This thing basically holds a dict state and provides some critical methods
 
         There is no mode
@@ -125,7 +125,7 @@ class ElectricalSource(object):
 
         if elChans is None:
             elChans = list()
-            logger.warning('No elChans specified for ElectricalSource')
+            logger.warning('No elChans specified for MultichannelSource')
         self.stateDict = dict([ch, 0] for ch in elChans)
 
         # Check that the requested channels are available to be blocked out
@@ -187,7 +187,7 @@ class ElectricalSource(object):
         self.setChannelTuning(dict([ch, 0] for ch in self.stateDict.keys()), *setArgs)
 
 
-# class ElectricalSenseSource(ElectricalSource):
+# class ElectricalSenseSource(MultiChannelSource):
 #     ''' Also provides measureVoltage
 
 #         Todo:

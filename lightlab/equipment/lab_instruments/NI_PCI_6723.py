@@ -1,5 +1,5 @@
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import MultiModalSource, ElectricalSource
+from lightlab.equipment.abstract_drivers import MultiModalSource, MultiChannelSource
 from lightlab.laboratory.instruments import CurrentSource
 
 import numpy as np
@@ -9,7 +9,7 @@ from lightlab.util.io import RangeError
 from lightlab import visalogger as logger
 
 
-class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
+class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
     ''' Uses abstract classes. Roughly speaking
 
             :py:class:`~lightlab.equipment.lab_instruments.VISAInstrumentDriver`
@@ -18,7 +18,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
             :py:class:`~lightlab.equipment.abstract_drivers.MultiModalSource`
             provides unit support and range checking
 
-            :py:class:`~lightlab.equipment.abstract_drivers.ElectricalSource`
+            :py:class:`~lightlab.equipment.abstract_drivers.MultiChannelSource`
             provides *notion of state* (stateDict) and channel support
     '''
     instrument_category = CurrentSource
@@ -41,7 +41,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, ElectricalSource):
         if 'useChans' in kwargs.keys():
             elChans = kwargs.pop('useChans')
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-        ElectricalSource.__init__(self, elChans=elChans)
+        MultiChannelSource.__init__(self, elChans=elChans)
 
     def startup(self):
         self.off()
