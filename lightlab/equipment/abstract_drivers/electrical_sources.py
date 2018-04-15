@@ -28,7 +28,13 @@ class MultiModalSource(object):
                            'Requested ' + str(val) +
                            '. Allowed range is' + str(bnds) + ' in ' + mode + 's.')
             if cls.exceptOnRangeError:
-                raise RangeError('Current sources requested out of range.')
+                if val < min(bnds):
+                    violation_direction = 'low'
+                elif val > max(bnds):
+                    violation_direction = 'high'
+                else:
+                    violation_direction = None
+                raise RangeError('Current sources requested out of range.', violation_direction)
         return enforcedValue
 
     @classmethod
