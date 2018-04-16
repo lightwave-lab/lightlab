@@ -28,7 +28,13 @@ class MultiModalSource(object):
                            'Requested ' + str(val) +
                            '. Allowed range is' + str(bnds) + ' in ' + mode + 's.')
             if cls.exceptOnRangeError:
-                raise RangeError('Current sources requested out of range.')
+                if val < min(bnds):
+                    violation_direction = 'low'
+                elif val > max(bnds):
+                    violation_direction = 'high'
+                else:
+                    violation_direction = None
+                raise RangeError('Current sources requested out of range.', violation_direction)
         return enforcedValue
 
     @classmethod
@@ -103,7 +109,7 @@ class MultiModalSource(object):
             return value[-1]
 
 
-class ElectricalSource(object):
+class MultiChannelSource(object):
     """ This thing basically holds a dict state and provides some critical methods
 
         There is no mode
@@ -112,26 +118,26 @@ class ElectricalSource(object):
     """
     maxChannel = None  # number of dimensions that the current sources are expecting
 
-    def __init__(self, elChans=None, **kwargs):
-        # for backwards compatibility
-        if 'useChans' in kwargs.keys():
-            elChans = kwargs.pop('useChans')
-
-        if elChans is None:
-            elChans = list()
-            logger.warning('No elChans specified for ElectricalSource')
-        self.stateDict = dict([ch, 0] for ch in elChans)
+    def __init__(self, useChans=None, **kwargs):
+        if 'elChans' in kwargs.keys():
+            useChans = kwargs.pop('elChans')
+        if useChans is None:
+            logger.warning('No useChans specified for MultichannelSource')
+            useChans = list()
+        self.useChans = useChans
+        self.stateDict = dict([ch, 0] for ch in self.useChans)
 
         # Check that the requested channels are available to be blocked out
         if self.maxChannel is not None:
-            if any(ch > type(self).maxChannel - 1 for ch in self.getChannels()):
-                raise Exception(
+            if any(ch > self.maxChannel - 1 for ch in self.useChans):
+                raise ChannelError(
                     'Requested channel is more than there are available')
         super().__init__(**kwargs)
 
-    def getChannels(self):
+    @property
+    def elChans(self):
         ''' Returns the blocked out channels as a list '''
-        return list(self.stateDict.keys())
+        return self.useChans
 
     def setChannelTuning(self, chanValDict, *args, **kwargs):
         ''' Sets a number of channel values and updates hardware
@@ -174,7 +180,7 @@ class ElectricalSource(object):
         self.setChannelTuning(dict([ch, 0] for ch in self.stateDict.keys()), *setArgs)
 
 
-# class ElectricalSenseSource(ElectricalSource):
+# class ElectricalSenseSource(MultiChannelSource):
 #     ''' Also provides measureVoltage
 
 #         Todo:
@@ -184,11 +190,11 @@ class ElectricalSource(object):
 #         ''' In this one, current is in amps
 
 #             Args:
-#                 resistiveDict (dict): keys are elChans, values are objects that provide
+#                 resistiveDict (dict): keys are useChans, values are objects that provide
 #                 voltQueryMethod is unbound method with one argument: current
 
 #         '''
-#         super().__init__(elChans=list(resistiveDict.keys()), **kwargs)
+#         super().__init__(useChans=list(resistiveDict.keys()), **kwargs)
 #         self.resistors = resistiveDict
 #         resType = type(resistors.values()[0])
 #         if voltQueryMethod is None:

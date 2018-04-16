@@ -42,30 +42,29 @@ class ILX_7900B_LS(VISAInstrumentDriver):
 
     powerRange = np.array([-20, 13])
 
-    def __init__(self, name='The laser source', address=None, dfbChans=[1], **kwargs):
+    def __init__(self, name='The laser source', address=None, useChans=[1], **kwargs):
         kwargs['tempSess'] = kwargs.pop('tempSess', False)
-        # just for backwards compatibility
-        if 'useChans' in kwargs.keys():
-            dfbChans = kwargs.pop('useChans')
+        if 'dfbChans' in kwargs.keys():
+            useChans = kwargs.pop('dfbChans')
         super().__init__(name=name, address=address, **kwargs)
         self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
 
 
-        dfbChans, stateDict = dfbChans, kwargs.pop("stateDict", None)
-        if dfbChans is None and stateDict is None:
+        useChans, stateDict = useChans, kwargs.pop("stateDict", None)
+        if useChans is None and stateDict is None:
             raise Exception(
-                'Must specify either dfbChans or stateDict when initializing laser sources')
+                'Must specify either useChans or stateDict when initializing laser sources')
         if stateDict is None:
-            self.dfbChans = list(dfbChans)
-            self.stateDict = dict([ch, -1] for ch in self.dfbChans)
+            self.useChans = list(useChans)
+            self.stateDict = dict([ch, -1] for ch in self.useChans)
         else:
-            self.dfbChans = list(stateDict.keys())
+            self.useChans = list(stateDict.keys())
             self.stateDict = stateDict
-        # if any(ch > self.fullChannelNums - 1 for ch in self.dfbChans):
+        # if any(ch > self.fullChannelNums - 1 for ch in self.useChans):
         #     raise Exception('Requested channel is more than there are available')
-        if not set(self.ordering_left).isdisjoint(self.dfbChans):
+        if not set(self.ordering_left).isdisjoint(self.useChans):
             self.ordering = self.ordering_left
-        elif not set(self.ordering_left).isdisjoint(self.dfbChans):
+        elif not set(self.ordering_left).isdisjoint(self.useChans):
             self.ordering = self.ordering_right
 
     def startup(self):
@@ -86,10 +85,10 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         ''' Updates lasers to newState
         '''
         newState = np.array(newState)
-        if len(newState) != len(self.dfbChans):
+        if len(newState) != len(self.useChans):
             raise ChannelError('Wrong number of channels. ' +
                                   'Requested ' + str(len(newState)) +
-                                  ', Expecting ' + str(len(self.dfbChans)))
+                                  ', Expecting ' + str(len(self.useChans)))
         # enforce valueBounds
         enforcedState = newState
         enforcedState = [1 if s != 0 else 0 for s in enforcedState]
@@ -97,7 +96,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
             logger.warning('Unexpected enable state value. ' +
                            'Requested = {}. '.format(newState) +
                            'Expected values = 0 or 1.')
-        self.stateDict = dict(zip(self.dfbChans, enforcedState))
+        self.stateDict = dict(zip(self.useChans, enforcedState))
 
         # Refresh and sleep only if different
         oldState = self.moduleIterate('OUT')  # Get from hardware: takes some time
@@ -120,11 +119,12 @@ class ILX_7900B_LS(VISAInstrumentDriver):
             self.enableState = self.parseDictionary(chanEnableDict, setArrayType='enableState')
 
     def getChannelEnable(self):
-        return dict((ch, self.enableState[self.dfbChans.index(ch)]) for ch in self.dfbChans)
+        return dict((ch, self.enableState[self.useChans.index(ch)]) for ch in self.useChans)
 
-    def getChannels(self):
+    @property
+    def dfbChans(self):
         ''' Returns the blocked out channels as a list '''
-        return list(self.stateDict.keys())
+        return self.useChans
 
     @property
     def wls(self):
@@ -148,7 +148,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         self.wls = self.parseDictionary(chanWavelengthDict, setArrayType='wls')
 
     def getChannelWls(self):
-        return dict((ch, self.wls[self.dfbChans.index(ch)]) for ch in self.dfbChans)
+        return dict((ch, self.wls[self.useChans.index(ch)]) for ch in self.useChans)
 
     @property
     def powers(self):
@@ -172,7 +172,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         self.powers = self.parseDictionary(chanPowerDict, setArrayType='powers')
 
     def getChannelPowers(self):
-        return dict((ch, self.powers[self.dfbChans.index(ch)]) for ch in self.dfbChans)
+        return dict((ch, self.powers[self.useChans.index(ch)]) for ch in self.useChans)
 
     def getAsSpectrum(self):
         ''' Gives a spectrum of power vs. wavelength which just has the wavelengths present
@@ -224,11 +224,11 @@ class ILX_7900B_LS(VISAInstrumentDriver):
             raise TypeError('Not a valid setArrayType. Got ' + str(setArrayType) +
                             '. Need enableState, wls, or powers')
         for chan in chanValDict.keys():
-            if chan not in self.dfbChans:
+            if chan not in self.useChans:
                 raise ChannelError('Channel index not blocked out. ' +
                                       'Requested ' + str(chan) +
-                                      ', Available ' + str(self.dfbChans))
-        for iCh, chan in enumerate(self.dfbChans):
+                                      ', Available ' + str(self.useChans))
+        for iCh, chan in enumerate(self.useChans):
             if chan in chanValDict.keys():
                 setArrayBuilder[iCh] = chanValDict[chan]
         return setArrayBuilder
@@ -241,17 +241,16 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         if virtualSetVals is not None:
             isQuerying = False
             virtualRetVals = None
-            if len(virtualSetVals) != len(self.dfbChans):
+            if len(virtualSetVals) != len(self.useChans):
                 raise Exception(
                     'moduleIterate does not yet support subset-module indexing. Use the full array... or you could implement that')
         else:
             isQuerying = True
-            virtualRetVals = np.zeros(len(self.dfbChans))
-        # for iBank in range(len(self.ordering)): # iterate over banks
+            virtualRetVals = np.zeros(len(self.useChans))
         for iModule in range(len(self.ordering)):  # iterate over modules
             orderedChan = self.ordering[iModule] - 1  # get rid of 1-indexing
-            if orderedChan in self.dfbChans:  # only enter for modules that have been reserved
-                virtualChan = self.dfbChans.index(orderedChan)
+            if orderedChan in self.useChans:  # only enter for modules that have been reserved
+                virtualChan = self.useChans.index(orderedChan)
                 self.bankInstruments.write('CH ' + str(iModule + 1))
                 if isQuerying:
                     retStr = self.bankInstruments.query(attrStr + '?')
@@ -263,13 +262,13 @@ class ILX_7900B_LS(VISAInstrumentDriver):
     def off(self):
         """Turn all voltages to zero, but maintain the session
         """
-        self.enableState = np.zeros(len(self.dfbChans))
+        self.enableState = np.zeros(len(self.useChans))
 
     def allOnOff(self, allOn=False):
         if allOn:
-            self.enableState = np.ones(len(self.dfbChans))
+            self.enableState = np.ones(len(self.useChans))
         else:
-            self.enableState = np.zeros(len(self.dfbChans))
+            self.enableState = np.zeros(len(self.useChans))
 
     # Override some messaging methods to account for the fact that there's two GPIB laser banks
     def write(self, writeStr):

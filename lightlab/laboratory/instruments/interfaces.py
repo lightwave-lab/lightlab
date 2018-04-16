@@ -1,5 +1,4 @@
 ''' This module defines the essential interfaces for each kind of instrument
-bla
 '''
 
 from .bases import Instrument
@@ -73,7 +72,6 @@ class CurrentSource(Instrument):
     essentialMethods = Instrument.essentialMethods + \
         ['setChannelTuning',
          'getChannelTuning',
-         'getChannels',
          'off']
 
 
@@ -94,7 +92,6 @@ class LaserSource(Instrument):
          'getChannelWls',
          'setChannelPowers',
          'getChannelPowers',
-         'getChannels',
          'getAsSpectrum',
          'allOnOff']
     essentialProperties = Instrument.essentialProperties + \
@@ -102,6 +99,7 @@ class LaserSource(Instrument):
          'wls',
          'powers',
          'off']
+    optionalAttributes = ['wlRanges']
 
 
 class OpticalSpectrumAnalyzer(Instrument):

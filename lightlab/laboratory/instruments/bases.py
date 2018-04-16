@@ -267,9 +267,9 @@ class Instrument(Node):
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
         errorText = str(self) + ' has no attribute ' + attrName
-        if attrName in self.essentialProperties + self.essentialMethods:
-            return getattr(self.driver, attrName)
-        elif attrName in self.implementedOptionals:
+        if attrName in self.essentialProperties \
+                + self.essentialMethods \
+                + self.implementedOptionals:
             return getattr(self.driver, attrName)
         # Time to fail
         if attrName in self.optionalAttributes:
@@ -435,133 +435,5 @@ class Instrument(Node):
 class NotFoundError(RuntimeError):
     pass
 
-# Aliases
-# TODO VERIFY CODE BELOW
-
-class PowerMeter(Instrument):
-    essentialMethods = ['powerDbm', 'powerLin']
-
-
-class SourceMeter(Instrument):
-    essentialMethods = [
-        'setCurrent',
-        'getCurrent',
-        'measVoltage',
-        'setProtectionVoltage',
-        'setProtectionCurrent',
-        'enable']
-
-
-class Keithley(SourceMeter):
-    essentialMethods = SourceMeter.essentialMethods + \
-        ['setPort',
-        'setCurrentMode',
-        'setVoltageMode',
-        'getCurrent',
-        'getVoltage',
-        'setVoltage',
-        'measCurrent']
-
-
-class VectorGenerator(Instrument):
-    essentialMethods = ['amplitude',
-        'frequency',
-        'enable',
-        'modulationEnable',
-        'addNoise',
-        'setPattern',
-        'digiMod',
-        'carrierMod',
-        'listEnable',
-        'sweepSetup',
-        'sweepEnable']
-
-
-class Clock(Instrument):
-    essentialMethods = ['on']
-    essentialProperties = ['frequency']
-
-
-class CurrentSource(Instrument):
-    essentialMethods = ['setChannelTuning', 'getChannelTuning', 'off']
-    # Must init with `elChans` somehow
-
-
-from lightlab.equipment.abstract_drivers import ElectricalSource, MultiModalSource
-class NICurrentSource(CurrentSource, ElectricalSource, MultiModalSource):
-    def __init__(self, *args, elChans, **kwargs):
-        super().__init__(*args, elChans=elChans, **kwargs)
-
-
-class FunctionGenerator(Instrument):
-    essentialMethods = ['frequency', 'waveform', 'amplAndOffs', 'duty']
-
-
-class LaserSource(Instrument):
-    essentialMethods = ['setChannelEnable',
-        'getChannelEnable',
-        'setChannelWls',
-        'getChannelWls',
-        'setChannelPowers',
-        'getChannelPowers',
-        'getAsSpectrum',
-        'off']
-    essentialProperties = ['enableState', 'wls', 'powers']
-
-
-class OpticalSpectrumAnalyzer(Instrument):
-    essentialMethods = ['spectrum']
-    essentialProperties = ['wlRange']
-
-
-class Oscilloscope(Instrument):
-    essentialMethods = ['acquire', 'wfmDb', 'run']
-
-class CommunicationAnalyzerScope(Oscilloscope):
-    pass
-
-class DigitalPhosphorScope(Oscilloscope):
-    pass
-
-
-class PulsePatternGenerator(Instrument):
-    essentialMethods = ['setPrbs',
-        'setPattern',
-        'getPattern',
-        'on',
-        'syncSource',
-        'amplAndOffs',
-        'bitseq']
-
-
-class RFSpectrumAnalyzer(Instrument):
-    essentialMethods = ['getMeasurements',
-        'setMeasurement',
-        'run',
-        'sgramInit',
-        'sgramTransfer',
-        'spectrum']
-
-
-class VariableAttenuator(Instrument):
-    essentialMethods = ['on', 'off']
-    essentialProperties = ['attenDB', 'attenLin']
-
-
-class NetworkAnalyzer(Instrument):
-    essentialMethods = ['amplitude',
-        'frequency',
-        'enable',
-        'run',
-        'sweepSetup',
-        'sweepEnable',
-        'triggerSetup',
-        'getSwpDuration',
-        'measurementSetup',
-        'spectrum',
-        'multiSpectra']
-
-class ArduinoInstrument(Instrument):
-    essentialMethods = ['write', 'query']
 
 
