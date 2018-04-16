@@ -29,6 +29,7 @@ class ILX_Module(Configurable):
         return self.bank.query(queryStr)
 
 
+
 class ILX_7900B_LS(VISAInstrumentDriver):
     '''
         Class for the laser banks (ILX 7900B laser source). This provides the illusion that all 16 lasers are one system.
@@ -71,16 +72,19 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         if 'dfbChans' in kwargs.keys():
             useChans = kwargs.pop('dfbChans')
         if useChans is None:
-            logger.warning('No useChans specified for MultichannelSource')
+            logger.warning('No useChans specified for ILX_7900B_LS')
             useChans = list()
+        # MultiChannelConfigurable.__init__(self, useChans=useChans)
         self.useChans = useChans
         # Check that the requested channels are available to be blocked out
-        if any(ch > self.maxChannel - 1 for ch in self.useChans):
-            raise ChannelError('Requested channel is more than there are available')
+        if self.maxChannel is not None:
+            if any(ch > self.maxChannel - 1 for ch in self.useChans):
+                raise ChannelError('Requested channel is more than there are available')
 
         self.ilxModules = []
         for chan in self.useChans:
             self.ilxModules.append(ILX_Module(channel=chan+1, bank=self))
+
 
     def startup(self):
         self.close()  # For temporary serial access
@@ -90,26 +94,27 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         ''' Returns the blocked out channels as a list '''
         return self.useChans
 
-    def setConfigArray(self, tokenStr, newValues):
+    def setConfigArray(self, tokenStr, newValArr):
         ''' Compares old values to new. If there is a change, iterate over modules
 
             This does not touch the lasers that have not been reserved during initialization
 
             Args:
                 tokenStr (str): 'OUT', 'WAVE', 'LEVEL'
-                newValues (array): values
+                newValArr (array): values
         '''
-        if len(newValues) != len(self.ilxModules):
+        if len(newValArr) != len(self.ilxModules):
             raise ChannelError('Wrong number of channels in array. ' +
-                               'Got {}, '.format(len(newValues)) +
+                               'Got {}, '.format(len(newValArr)) +
                                'Expected {}.'.format(len(self.useChans)))
         wroteToHardware = False
-        for module, val in zip(self.ilxModules, newValues):
+        for module, val in zip(self.ilxModules, newValArr):
             wroteToHardware = module.setConfigParam(tokenStr, val) or wroteToHardware
         if wroteToHardware:
             print('DFB settling for', self.sleepOn[tokenStr], 'seconds.')
             time.sleep(self.sleepOn[tokenStr])
             print('done.')
+        return wroteToHardware
 
     def getConfigArray(self, tokenStr):
         '''
@@ -121,6 +126,30 @@ class ILX_7900B_LS(VISAInstrumentDriver):
             retVals.append(module.getConfigParam(tokenStr))
         retArr = np.array(retVals)
         return retArr
+
+    def getDict(self, tokenStr):
+        stateArr = self.getConfigArr(tokenStr)
+        dictOfStates = dict()
+        for ch in self.useChans:
+            virtualIndex = self.useChans.index(ch)
+            dictOfStates[ch] = stateArr[virtualIndex]
+        return dictOfStates
+
+    def setDict(self, tokenStr, newValDict):
+        ''' Takes a dictionary corresponding to 'wls', 'powers', or 'enableState' and turns
+            it into an array that is stored in the order of blocked out channels. Unspecified
+            values are taken from the current setting
+        '''
+        for chan in newValDict.keys():
+            if chan not in self.useChans:
+                raise ChannelError('Channel index not blocked out. ' +
+                                    'Requested {}, '.format(chan) +
+                                    'Available {}.'.format(self.useChans))
+        setArrayBuilder = self.getConfigArray(tokenStr)
+        for iCh, chan in enumerate(self.useChans):
+            if chan in newValDict.keys():
+                setArrayBuilder[iCh] = newValDict[chan]
+        return self.setConfigArray(tokenStr, setArrayBuilder)
 
     # Module-level parameter setters and getters.
     @property
@@ -137,10 +166,10 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         """Sets a number of channel values and updates hardware
         param: chanEnableDict: A dictionary specifying some {channel: enabled}
         """
-        self.enableState = self.parseDictionary(chanEnableDict, setArrayType='enableState')
+        self.setDict('OUT', chanEnableDict)
 
     def getChannelEnable(self):
-        return dict((ch, self.enableState[self.useChans.index(ch)]) for ch in self.useChans)
+        return self.getDict('OUT')
 
     @property
     def wls(self):
@@ -155,10 +184,10 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         """Sets a number of channel wavelengths and updates hardware
         param: chanEnableDict: A dictionary specifying some {channel: wavelength}
         """
-        self.wls = self.parseDictionary(chanWavelengthDict, setArrayType='wls')
+        self.setDict('WAVE')
 
     def getChannelWls(self):
-        return dict((ch, self.wls[self.useChans.index(ch)]) for ch in self.useChans)
+        return self.getDict('WAVE')
 
     @property
     def powers(self):
@@ -173,10 +202,10 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         ''' Sets a number of channel power powers (in dBm) and updates hardware
         param: chanPowerDict: A dictionary specifying some {channel: wavelength}
         '''
-        self.powers = self.parseDictionary(chanPowerDict, setArrayType='powers')
+        self.setDict('LEVEL')
 
     def getChannelPowers(self):
-        return dict((ch, self.powers[self.useChans.index(ch)]) for ch in self.useChans)
+        return self.getDict('LEVEL')
 
     def getAsSpectrum(self):
         ''' Gives a spectrum of power vs. wavelength which just has the wavelengths present
@@ -200,27 +229,6 @@ class ILX_7900B_LS(VISAInstrumentDriver):
     def moduleIds(self):
         ''' list of module ID strings '''
         return list(self.getConfigArray('*IDN'))
-
-    def parseDictionary(self, chanValDict, setArrayType=None):
-        ''' Takes a dictionary corresponding to 'wls', 'powers', or 'enableState' and turns
-            it into an array that is stored in the order of blocked out channels. Unspecified
-            values are taken from the current setting
-        '''
-        # Checks
-        for chan in chanValDict.keys():
-            if chan not in self.useChans:
-                raise ChannelError('Channel index not blocked out. ' +
-                                      'Requested ' + str(chan) +
-                                      ', Available ' + str(self.useChans))
-        if setArrayType not in ['enableState', 'wls', 'powers']:
-            raise TypeError('Not a valid setArrayType. Got ' + str(setArrayType) +
-                            '. Need enableState, wls, or powers')
-        # Actions
-        setArrayBuilder = getattr(self, setArrayType)
-        for iCh, chan in enumerate(self.useChans):
-            if chan in chanValDict.keys():
-                setArrayBuilder[iCh] = chanValDict[chan]
-        return setArrayBuilder
 
     def off(self):
         self.allOnOff(False)
