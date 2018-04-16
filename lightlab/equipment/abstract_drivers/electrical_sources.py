@@ -119,14 +119,13 @@ class MultiChannelSource(object):
     maxChannel = None  # number of dimensions that the current sources are expecting
 
     def __init__(self, useChans=None, **kwargs):
-        # for backwards compatibility
         if 'elChans' in kwargs.keys():
             useChans = kwargs.pop('elChans')
 
         if useChans is None:
-            useChans = list()
+            self.useChans = list()
             logger.warning('No useChans specified for MultichannelSource')
-        self.stateDict = dict([ch, 0] for ch in useChans)
+        self.stateDict = dict([ch, 0] for ch in self.useChans)
 
         # Check that the requested channels are available to be blocked out
         if self.maxChannel is not None:
@@ -138,13 +137,7 @@ class MultiChannelSource(object):
     @property
     def elChans(self):
         ''' Returns the blocked out channels as a list '''
-        return list(self.stateDict.keys())
-
-    @property
-    def useChans(self):
-        ''' Backwards compatibility '''
-        logger.warning('Deprecation warning. Use "elChans" instead of "useChans"')
-        return self.elChans
+        return self.useChans
 
     def setChannelTuning(self, chanValDict, *args, **kwargs):
         ''' Sets a number of channel values and updates hardware

@@ -161,16 +161,6 @@ class CurrentSources(VISAInstrumentDriver):
                 tempState[iCh] = chanValDict[chan]
         self.tuneState = tempState
 
-    @property
-    def elChans(self):
-        return list(self.getChannelTuning().keys())
-
-    @property
-    def useChans(self):
-        ''' Backwards compatibility '''
-        logger.warning('Deprecation warning. Use "elChans" instead of "useChans"')
-        return self.elChans
-
     def wake(self):
         ''' Don't change the value but make sure it doesn't go to sleep after inactivity.
 
@@ -272,7 +262,6 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
 
     def __init__(self, name='The current source', address=None, useChans=None, **kwargs):
         kwargs['tempSess'] = kwargs.get('tempSess', True)
-        # for backwards compatibility
         if 'elChans' in kwargs.keys():
             useChans = kwargs.pop('elChans')
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
