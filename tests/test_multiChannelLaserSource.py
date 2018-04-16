@@ -18,6 +18,7 @@ from lightlab.util.io import ChannelError
 
 class LS_MessageSender(ILX_7900B_LS):
     writeBuffer = None
+    sleepOn = dict(OUT=0, WAVE=0, LEVEL=0)
 
     def __init__(self, **kwargs):
         self.writeBuffer = []

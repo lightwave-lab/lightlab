@@ -35,13 +35,7 @@ class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
     maxChannel = 8
 
     # Time it takes to equilibrate on different changes, in seconds
-    sleepOn = {}
-    # sleepOn['enable'] = 3
-    # sleepOn['wavelength'] = 30
-    # sleepOn['level'] = 5
-    sleepOn['OUT'] = 0  # remember to change back
-    sleepOn['WAVE'] = 0  # remember to change back
-    sleepOn['LEVEL'] = 0  # remember to change back
+    sleepOn = dict(OUT=3, WAVE=30, LEVEL=5)
 
     powerRange = np.array([-20, 13])
 
