@@ -44,8 +44,11 @@ class ILX_7900B_LS(VISAInstrumentDriver):
 
     def __init__(self, name='The laser source', address=None, useChans=[1], **kwargs):
         kwargs['tempSess'] = kwargs.pop('tempSess', False)
+        if 'dfbChans' in kwargs.keys():
+            useChans = kwargs.pop('dfbChans')
         super().__init__(name=name, address=address, **kwargs)
         self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
+
 
         useChans, stateDict = useChans, kwargs.pop("stateDict", None)
         if useChans is None and stateDict is None:
@@ -117,6 +120,11 @@ class ILX_7900B_LS(VISAInstrumentDriver):
 
     def getChannelEnable(self):
         return dict((ch, self.enableState[self.useChans.index(ch)]) for ch in self.useChans)
+
+    @property
+    def dfbChans(self):
+        ''' Returns the blocked out channels as a list '''
+        return self.useChans
 
     @property
     def wls(self):
@@ -239,7 +247,6 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         else:
             isQuerying = True
             virtualRetVals = np.zeros(len(self.useChans))
-        # for iBank in range(len(self.ordering)): # iterate over banks
         for iModule in range(len(self.ordering)):  # iterate over modules
             orderedChan = self.ordering[iModule] - 1  # get rid of 1-indexing
             if orderedChan in self.useChans:  # only enter for modules that have been reserved

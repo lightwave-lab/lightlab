@@ -1,5 +1,4 @@
 ''' This module defines the essential interfaces for each kind of instrument
-bla
 '''
 
 from .bases import Instrument
@@ -67,7 +66,6 @@ class NICurrentSource(Instrument):
         ['setChannelTuning',
          'getChannelTuning',
          'off']
-    # Must init with `useChans` somehow
 
 
 class CurrentSource(Instrument):
@@ -75,7 +73,6 @@ class CurrentSource(Instrument):
         ['setChannelTuning',
          'getChannelTuning',
          'off']
-    # Must init with `useChans` somehow
 
 
 class FunctionGenerator(Instrument):
@@ -102,6 +99,7 @@ class LaserSource(Instrument):
          'wls',
          'powers',
          'off']
+    optionalAttributes = ['wlRanges']
 
 
 class OpticalSpectrumAnalyzer(Instrument):

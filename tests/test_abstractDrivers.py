@@ -85,7 +85,7 @@ def test_driver_init():
     assert pm.extra == 'foolio'
     # Still fails to initialize the driver with correct options
     with pytest.raises(AssertionError):
-        assert pm.driver_object.tempSess == False
+        assert pm.driver.tempSess == False
 
     # New style
     pm = HP_8152A_PM(name='a PM', address='NULL', extra='foolio', tempSess=False)
@@ -93,11 +93,11 @@ def test_driver_init():
     assert pm.driver_class == HP_8152A_PM
     assert pm.extra == 'foolio'
     # These arguments went to the driver
-    assert pm.driver_object.tempSess == False
+    assert pm.driver.tempSess == False
     with pytest.raises(AttributeError):
         pm.tempSess
     with pytest.raises(AttributeError):
-        pm.driver_object.extra
+        pm.driver.extra
 
 
 from lightlab.laboratory.instruments import Oscilloscope
