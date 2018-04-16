@@ -256,15 +256,6 @@ class Configurable(AbstractDriver):
             self._hardwareinit = True
         return self._hardwareinit
 
-    # Configration methods
-    def getDefaultFilename(self):
-        # Typically: manufacturer, model#, serial#, <other stuff with strange
-        # chars>
-        info = self.instrID().split(',')
-        global defaultFileDir
-        deffile = defaultFileDir / '-'.join(info[:3]) + '.json'
-        return deffile
-
     # Simple, individual getter and setter
     def setConfigParam(self, cStr, val=None, forceHardware=False):
         ''' Sets an individual configuration parameter
@@ -308,8 +299,17 @@ class Configurable(AbstractDriver):
         finally:
             self.setConfigParam(cStr, oldVal)
 
+
     # More specialized access methods that handle command subgroups, files,
     # and tokens
+    def getDefaultFilename(self):
+        # Typically: manufacturer, model#, serial#, <other stuff with strange
+        # chars>
+        info = self.instrID().split(',')
+        global defaultFileDir
+        deffile = defaultFileDir / '-'.join(info[:3]) + '.json'
+        return deffile
+
     def saveConfig(self, dest='+user', subgroup='', overwrite=False):
         '''
 
