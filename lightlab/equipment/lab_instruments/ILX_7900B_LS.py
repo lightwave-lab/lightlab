@@ -8,6 +8,23 @@ from lightlab.util.io import ChannelError
 from lightlab.util.data import Spectrum
 from lightlab import visalogger as logger
 
+
+class ILX_module(Configurable):
+    def __init__(self, channel, **kwargs):
+        kwargs['interveningSpace'] = kwargs.pop('interveningSpace', True)
+        kwargs['precedingColon'] = kwargs.pop('precedingColon', False)
+        super().__init__(**kwargs)
+        self._hardwareInit = True
+
+    def write(self, writeStr):
+        self.write('CH ' + str(self.channel))
+        super().write(writeStr)
+
+    def query(self, queryStr):
+        self.write('CH ' + str(self.channel))
+        super().query(writeStr)
+
+
 class ILX_7900B_LS(VISAInstrumentDriver):
     '''
         Class for the laser banks (ILX 7900B laser source). This provides the illusion that all 16 lasers are one system.
@@ -53,12 +70,9 @@ class ILX_7900B_LS(VISAInstrumentDriver):
             logger.warning('No useChans specified for MultichannelSource')
             useChans = list()
         self.useChans = useChans
-        self.enableDict = dict([ch, 0] for ch in self.useChans)
         # Check that the requested channels are available to be blocked out
-        if self.maxChannel is not None:
-            if any(ch > self.maxChannel - 1 for ch in self.useChans):
-                raise ChannelError(
-                    'Requested channel is more than there are available')
+        if any(ch > self.maxChannel - 1 for ch in self.useChans):
+            raise ChannelError('Requested channel is more than there are available')
 
     def startup(self):
         self.close()  # For temporary serial access
