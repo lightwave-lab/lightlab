@@ -3,26 +3,30 @@ from lightlab.laboratory.instruments import LaserSource
 
 import numpy as np
 import time
-from functools import wraps
+
 from lightlab.util.io import ChannelError
 from lightlab.util.data import Spectrum
+from lightlab.equipment.abstract_drivers import Configurable
 from lightlab import visalogger as logger
 
 
-class ILX_module(Configurable):
-    def __init__(self, channel, **kwargs):
+class ILX_Module(Configurable):
+    def __init__(self, channel, bank, **kwargs):
         kwargs['interveningSpace'] = kwargs.pop('interveningSpace', True)
         kwargs['precedingColon'] = kwargs.pop('precedingColon', False)
+        kwargs['headerIsOptional'] = kwargs.pop('headerIsOptional', True)
         super().__init__(**kwargs)
-        self._hardwareInit = True
+        self._hardwareinit = True
+        self.channel = channel
+        self.bank = bank
 
     def write(self, writeStr):
-        self.write('CH ' + str(self.channel))
-        super().write(writeStr)
+        self.bank.write('CH ' + str(self.channel))
+        self.bank.write(writeStr)
 
     def query(self, queryStr):
-        self.write('CH ' + str(self.channel))
-        super().query(writeStr)
+        self.bank.write('CH ' + str(self.channel))
+        return self.bank.query(queryStr)
 
 
 class ILX_7900B_LS(VISAInstrumentDriver):
@@ -74,6 +78,10 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         if any(ch > self.maxChannel - 1 for ch in self.useChans):
             raise ChannelError('Requested channel is more than there are available')
 
+        self.ilxModules = []
+        for chan in self.useChans:
+            self.ilxModules.append(ILX_Module(channel=chan+1, bank=self))
+
     def startup(self):
         self.close()  # For temporary serial access
 
@@ -82,7 +90,7 @@ class ILX_7900B_LS(VISAInstrumentDriver):
         ''' Returns the blocked out channels as a list '''
         return self.useChans
 
-    def __setConfigArray(self, tokenStr, newValues):
+    def setConfigArray(self, tokenStr, newValues):
         ''' Compares old values to new. If there is a change, iterate over modules
 
             This does not touch the lasers that have not been reserved during initialization
@@ -91,39 +99,39 @@ class ILX_7900B_LS(VISAInstrumentDriver):
                 tokenStr (str): 'OUT', 'WAVE', 'LEVEL'
                 newValues (array): values
         '''
-        if len(newValues) != len(self.useChans):
-            raise ChannelError(
-                'moduleIterate does not yet support subset-module indexing. Use the full array... or you could implement that')
-        oldValues = self.__getConfigArray(tokenStr)  # Get from hardware: takes some time
-        if np.any(oldValues != newValues):
-            for iCh, ch in enumerate(self.useChans):
-                self.write('CH ' + str(ch + 1))
-                self.write(tokenStr + ' ' + str(newValues[iCh]))
+        if len(newValues) != len(self.ilxModules):
+            raise ChannelError('Wrong number of channels in array. ' +
+                               'Got {}, '.format(len(newValues)) +
+                               'Expected {}.'.format(len(self.useChans)))
+        wroteToHardware = False
+        for module, val in zip(self.ilxModules, newValues):
+            wroteToHardware = module.setConfigParam(tokenStr, val) or wroteToHardware
+        if wroteToHardware:
             print('DFB settling for', self.sleepOn[tokenStr], 'seconds.')
             time.sleep(self.sleepOn[tokenStr])
             print('done.')
 
-    def __getConfigArray(self, tokenStr):
+    def getConfigArray(self, tokenStr):
         '''
             Args:
                 tokenStr (str): 'OUT', 'WAVE', 'LEVEL'
         '''
-        retVals = np.zeros(len(self.useChans))
-        for iCh, ch in enumerate(self.useChans):
-            self.write('CH ' + str(ch + 1))
-            retVals[iCh] = float(self.query(tokenStr + '?'))
-        return retVals
+        retVals = []
+        for module in self.ilxModules:
+            retVals.append(module.getConfigParam(tokenStr))
+        retArr = np.array(retVals)
+        return retArr
 
     # Module-level parameter setters and getters.
     @property
     def enableState(self):
-        return self.__getConfigArray('OUT')
+        return self.getConfigArray('OUT')
 
     @enableState.setter
     def enableState(self, newState):
         ''' Updates lasers to newState
         '''
-        self.__setConfigArray('OUT', newState)
+        self.setConfigArray('OUT', newState)
 
     def setChannelEnable(self, chanEnableDict):
         """Sets a number of channel values and updates hardware
@@ -137,11 +145,11 @@ class ILX_7900B_LS(VISAInstrumentDriver):
     @property
     def wls(self):
         ''' wls is in nanometers '''
-        return self.__getConfigArray('WAVE')
+        return self.getConfigArray('WAVE')
 
     @wls.setter
     def wls(self, newWls):
-        self.__setConfigArray('WAVE', newWls)
+        self.setConfigArray('WAVE', newWls)
 
     def setChannelWls(self, chanWavelengthDict):
         """Sets a number of channel wavelengths and updates hardware
@@ -155,11 +163,11 @@ class ILX_7900B_LS(VISAInstrumentDriver):
     @property
     def powers(self):
         ''' powers is in dBm '''
-        return self.__getConfigArray('LEVEL')
+        return self.getConfigArray('LEVEL')
 
     @powers.setter
     def powers(self, newPowers):
-        self.__setConfigArray('LEVEL', newPowers)
+        self.setConfigArray('LEVEL', newPowers)
 
     def setChannelPowers(self, chanPowerDict):
         ''' Sets a number of channel power powers (in dBm) and updates hardware
@@ -184,14 +192,14 @@ class ILX_7900B_LS(VISAInstrumentDriver):
     @property
     def wlRanges(self):
         ''' wavelength tuples in (nm, nm) '''
-        minArr = self.__getConfigArray('WAVEMIN')
-        maxArr = self.__getConfigArray('WAVEMAX')
+        minArr = self.getConfigArray('WAVEMIN')
+        maxArr = self.getConfigArray('WAVEMAX')
         return tuple(zip(minArr, maxArr))
 
     @property
     def moduleIds(self):
         ''' list of module ID strings '''
-        return list(self.__getConfigArray('*IDN'))
+        return list(self.getConfigArray('*IDN'))
 
     def parseDictionary(self, chanValDict, setArrayType=None):
         ''' Takes a dictionary corresponding to 'wls', 'powers', or 'enableState' and turns

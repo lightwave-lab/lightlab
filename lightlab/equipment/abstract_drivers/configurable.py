@@ -1,4 +1,4 @@
-from lightlab import logger
+from lightlab import visalogger as logger
 from pyvisa import VisaIOError
 from contextlib import contextmanager
 import dpath
@@ -262,6 +262,9 @@ class Configurable(AbstractDriver):
 
             forceHardware means it will always send to hardware,
                 in case it is critical and tends to be changed by pesky lab users
+
+            Returns:
+                (bool): Did it requre a write to hardware?
         '''
         if val is None:
             val = ''
@@ -273,6 +276,9 @@ class Configurable(AbstractDriver):
         if refresh or forceHardware:
             self.config['live'].set(cStr, val)
             self._setHardwareConfig(cStr)  # send only the one that changed
+            return True
+        else:
+            return False
 
     def getConfigParam(self, cStr, forceHardware=False):
         ''' This assumes that nobody in lab touched anything and is much faster than getting from hardware.
@@ -408,7 +414,6 @@ class Configurable(AbstractDriver):
         for cStr in cStrList:
             if cStr[-1] == '&':  # handle the sibling subdir token
                 cStr = cStr[:-2]
-            logger.debug('Querying {} from configurable hardware'.format(cStr))
 
             try:
                 ret = self.query(cStr + '?')
@@ -416,6 +421,7 @@ class Configurable(AbstractDriver):
                 logger.error('Problematic parameter was {}.\n'.format(cStr) +
                              'Likely it does not exist in this instrument command structure.')
                 raise
+            logger.debug('Queried {}, got {}'.format(cStr, ret))
 
             if self.header:
                 val = ret.split(' ')[-1]

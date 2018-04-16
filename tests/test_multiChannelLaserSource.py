@@ -31,28 +31,36 @@ class LS_MessageSender(ILX_7900B_LS):
 
     def query(self, string):
         ''' Argument "string" is ignored '''
-        return '0'
+        return '1550'
         # raise NotImplementedError('Sender has no query')
 
 
 def test_laser():
     LS = LS_MessageSender(name='foo', address='NULL', useChans=[0, 2, 1], directInit=True)
-    LS.setChannelEnable({2: 1})
+    assert LS.writeBuffer == []
+
+    # Channel mischief
     with pytest.raises(ChannelError):
         LS.setChannelEnable({3: 1})
-    # with pytest.raises(ChannelError):
-    #     LS.moduleIterate('enableState', [0])
-    # with pytest.raises(ChannelError):
-    #     LS.moduleIterate('enableState', [0, 0, 0, 0])
+    with pytest.raises(ChannelError):
+        LS.enableState = [0]
+    with pytest.raises(ChannelError):
+        LS.enableState = [0, 0, 0, 0]
 
-    print(LS.writeBuffer)
+    # Writes only if values changed
+    LS.wls
+    sentLen = len(LS.writeBuffer)
+    LS.wls = [1549, 1550, 1550]  # It already thinks that ch 1, 2 are 1550
+    assert len(LS.writeBuffer) == sentLen + 2
+    LS.wls = [1549, 1550, 1550]
+    assert len(LS.writeBuffer) == sentLen + 2
 
 
-from lightlab import logger, log_to_screen, DEBUG
+from lightlab import log_visa_to_screen, DEBUG
 
 if __name__ == '__main__':
     ''' Call with python or ipython instead of py.test to see output
     '''
-    log_to_screen(DEBUG)
+    log_visa_to_screen(DEBUG)
     test_laser()
 
