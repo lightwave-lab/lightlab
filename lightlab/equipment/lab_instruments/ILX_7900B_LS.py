@@ -17,7 +17,7 @@ class ILX_Module(ConfigModule):
         super().__init__(channel=channel + 1, **kwargs)
 
 
-class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
+class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
     '''
         Class for the laser banks (ILX 7900B laser source).
 
@@ -56,10 +56,10 @@ class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
         ''' Returns the blocked out channels as a list '''
         return self.useChans
 
-    def setConfigArray(self, cStr, newValArr):
+    def setConfigArray(self, cStr, newValArr, forceHardware=False):
         ''' Adds sleep functionality when there is a change
         '''
-        wroteToHardware = super().setConfigArray(cStr, newValArr)
+        wroteToHardware = super().setConfigArray(cStr, newValArr, forceHardware=forceHardware)
         if wroteToHardware:
             print('DFB settling for', self.sleepOn[cStr], 'seconds.')
             time.sleep(self.sleepOn[cStr])

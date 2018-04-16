@@ -93,12 +93,12 @@ class LaserSource(Instrument):
          'setChannelPowers',
          'getChannelPowers',
          'getAsSpectrum',
+         'off',
          'allOnOff']
     essentialProperties = Instrument.essentialProperties + \
         ['enableState',
          'wls',
-         'powers',
-         'off']
+         'powers']
     optionalAttributes = ['wlRanges']
 
 
