@@ -15,7 +15,7 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
     doReadDoubleCheck = False
 
     def __init__(self, name='The HP power meter', address=None, **kwargs):
-        super().__init__(name=name, address=address, **kwargs)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
 
     def startup(self):
         self.close()

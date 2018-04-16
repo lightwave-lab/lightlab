@@ -1,5 +1,5 @@
 from lightlab.util.io import ChannelError
-
+from lightlab import visalogger as logger
 import numpy as np
 
 from . import AbstractDriver
@@ -51,7 +51,10 @@ class MultiModuleConfigurable(AbstractDriver):
     '''
     maxChannel = None
 
-    def __init__(self, useChans, configurableKlass=Configurable, **kwargs):
+    def __init__(self, useChans=None, configurableKlass=Configurable, **kwargs):
+        if useChans is None:
+            logger.warning('No useChans specified for MultiModuleConfigurable')
+            useChans = list()
         self.useChans = useChans
         # Check that the requested channels are available to be blocked out
         if self.maxChannel is not None:

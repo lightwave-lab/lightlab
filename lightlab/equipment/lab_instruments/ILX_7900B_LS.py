@@ -17,7 +17,7 @@ class ILX_Module(ConfigModule):
         super().__init__(channel=channel + 1, **kwargs)
 
 
-class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
+class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
     '''
         Class for the laser banks (ILX 7900B laser source).
 

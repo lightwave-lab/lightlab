@@ -24,7 +24,8 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
     instrument_category = VectorGenerator
 
     def __init__(self, name='The Rohde and Schwartz', address=None, **kwargs):
-        super().__init__(name=name, address=address, **kwargs)
+        VISAInstrumentDriver.__init__(name=name, address=address, **kwargs)
+        Configurable.__init__(self)
 
     def amplitude(self, amp=None):
         ''' Amplitude is in dBm
