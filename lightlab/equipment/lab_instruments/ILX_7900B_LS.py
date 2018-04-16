@@ -4,33 +4,10 @@ from lightlab.laboratory.instruments import LaserSource
 import numpy as np
 import time
 
-from lightlab.util.io import ChannelError
+# from lightlab.util.io import ChannelError
 from lightlab.util.data import Spectrum
-from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.equipment.abstract_drivers import ConfigModule, MultiModuleConfigurable
 from lightlab import visalogger as logger
-
-
-class ConfigModule(Configurable):
-    selectPrefix = 'CH'
-
-    def __init__(self, channel, bank, **kwargs):
-        kwargs['interveningSpace'] = kwargs.pop('interveningSpace', True)
-        kwargs['headerIsOptional'] = kwargs.pop('headerIsOptional', True)
-        self.channel = channel
-        self.bank = bank
-        super().__init__(**kwargs)
-        self._hardwareinit = True  # prevent Configurable from trying to write headers
-
-    def __selectSelf(self):
-        self.bank.write('{} {}'.format(self.selectPrefix, self.channel))
-
-    def write(self, writeStr):
-        self.__selectSelf()
-        self.bank.write(writeStr)
-
-    def query(self, queryStr):
-        self.__selectSelf()
-        return self.bank.query(queryStr)
 
 
 class ILX_Module(ConfigModule):
@@ -41,89 +18,11 @@ class ILX_Module(ConfigModule):
         super().__init__(channel=channel + 1, **kwargs)
 
 
-class MultiChannelConfigurable(object):
-    maxChannel = None
-
-    def __init__(self, useChans, configurableKlass=Configurable, **kwargs):
-        self.useChans = useChans
-        # Check that the requested channels are available to be blocked out
-        if self.maxChannel is not None:
-            if any(ch > self.maxChannel - 1 for ch in self.useChans):
-                raise ChannelError('Requested channel is more than there are available')
-
-        self.modules = []
-        for chan in self.useChans:
-            self.modules.append(configurableKlass(channel=chan, bank=self))
-        super().__init__(**kwargs)
-
-    def getConfigArray(self, cStr):
-        '''
-            Args:
-                cStr (str): parameter name
-        '''
-        retVals = []
-        for module in self.modules:
-            retVals.append(module.getConfigParam(cStr))
-        retArr = np.array(retVals)
-        return retArr
-
-    def setConfigArray(self, cStr, newValArr):
-        ''' Compares old values to new. If there is a change, iterate over modules
-
-            Args:
-                cStr (str): parameter name
-                newValArr (array): values
-        '''
-        if len(newValArr) != len(self.modules):
-            raise ChannelError('Wrong number of channels in array. ' +
-                               'Got {}, '.format(len(newValArr)) +
-                               'Expected {}.'.format(len(self.useChans)))
-        wroteToHardware = False
-        for module, val in zip(self.modules, newValArr):
-            wroteToHardware = module.setConfigParam(cStr, val) or wroteToHardware
-        if wroteToHardware:
-            print('DFB settling for', self.sleepOn[cStr], 'seconds.')
-            time.sleep(self.sleepOn[cStr])
-            print('done.')
-        return wroteToHardware
-
-    def getConfigDict(self, cStr):
-        stateArr = self.getConfigArr(cStr)
-        dictOfStates = dict()
-        for ch in self.useChans:
-            virtualIndex = self.useChans.index(ch)
-            dictOfStates[ch] = stateArr[virtualIndex]
-        return dictOfStates
-
-    def setConfigDict(self, cStr, newValDict):
-        ''' Takes a dictionary corresponding to 'wls', 'powers', or 'enableState' and turns
-            it into an array that is stored in the order of blocked out channels. Unspecified
-            values are taken from the current setting
-        '''
-        for chan in newValDict.keys():
-            if chan not in self.useChans:
-                raise ChannelError('Channel index not blocked out. ' +
-                                    'Requested {}, '.format(chan) +
-                                    'Available {}.'.format(self.useChans))
-        setArrayBuilder = self.getConfigArray(cStr)
-        for iCh, chan in enumerate(self.useChans):
-            if chan in newValDict.keys():
-                setArrayBuilder[iCh] = newValDict[chan]
-        return self.setConfigArray(cStr, setArrayBuilder)
-
-
-class ILX_7900B_LS(MultiChannelConfigurable, VISAInstrumentDriver):
+class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
     '''
-        Class for the laser banks (ILX 7900B laser source). This provides the illusion that all 16 lasers are one system.
-        Channels are zero-indexed (i.e. 0,1,2...15) based on wavelength order
-        NOTE: 'modules' are used to refer to the index of DFB module within a given bank
-
+        Class for the laser banks (ILX 7900B laser source).
 
         TODO:
-            Deprecate stateDict, as in NI_PCI_6723 vs. CurrentSources
-
-            Use Configurable so it doesn't have to be getting from hardware all the time
-
             The overarching problem is that multiple users are likely
             to be using this one at the same time, different channels of course.
             Currently only one user can be using it at a time.
@@ -156,7 +55,7 @@ class ILX_7900B_LS(MultiChannelConfigurable, VISAInstrumentDriver):
         if useChans is None:
             logger.warning('No useChans specified for ILX_7900B_LS')
             useChans = list()
-        MultiChannelConfigurable.__init__(self, useChans=useChans, configurableKlass=ILX_Module)
+        MultiModuleConfigurable.__init__(self, useChans=useChans, configurableKlass=ILX_Module)
 
     def startup(self):
         self.close()  # For temporary serial access
@@ -165,6 +64,13 @@ class ILX_7900B_LS(MultiChannelConfigurable, VISAInstrumentDriver):
     def dfbChans(self):
         ''' Returns the blocked out channels as a list '''
         return self.useChans
+
+    def setConfigArray(self, cStr, newValArr):
+        wroteToHardware = super().setConfigArray(cStr, newValArr)
+        if wroteToHardware:
+            print('DFB settling for', self.sleepOn[cStr], 'seconds.')
+            time.sleep(self.sleepOn[cStr])
+            print('done.')
 
     # Module-level parameter setters and getters.
     @property
