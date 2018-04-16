@@ -255,7 +255,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
     v2maCoef = 4  # current (milliamps) = v2maCoef * voltage (volts)
 
     exceptOnRangeError = True # If False, it will constrain it and print a warning
-    fullChannelNums = 32  # number of dimensions that the current sources are expecting
+    maxChannel = 32  # number of dimensions that the current sources are expecting
     targetPort = 16022  # TCPIP server port; charge of an electron (Coulombs)
     waitMsOnWrite = 500 # Time to settle after tuning
 

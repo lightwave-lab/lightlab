@@ -121,16 +121,16 @@ class MultiChannelSource(object):
     def __init__(self, useChans=None, **kwargs):
         if 'elChans' in kwargs.keys():
             useChans = kwargs.pop('elChans')
-
         if useChans is None:
-            self.useChans = list()
             logger.warning('No useChans specified for MultichannelSource')
+            useChans = list()
+        self.useChans = useChans
         self.stateDict = dict([ch, 0] for ch in self.useChans)
 
         # Check that the requested channels are available to be blocked out
         if self.maxChannel is not None:
-            if any(ch > type(self).maxChannel - 1 for ch in self.getChannels()):
-                raise Exception(
+            if any(ch > self.maxChannel - 1 for ch in self.useChans):
+                raise ChannelError(
                     'Requested channel is more than there are available')
         super().__init__(**kwargs)
 
