@@ -12,7 +12,6 @@
 import pytest
 from lightlab.equipment.abstract_drivers import Configurable, AbstractDriver
 from lightlab.equipment.lab_instruments import ILX_7900B_LS
-import lightlab
 from lightlab.util.io import ChannelError
 
 
@@ -56,12 +55,4 @@ def test_laser():
     LS.wls = [1549, 1550, 1550]
     assert len(LS.writeBuffer) == sentLen + 2
 
-
-from lightlab import log_visa_to_screen, DEBUG
-
-if __name__ == '__main__':
-    ''' Call with python or ipython instead of py.test to see output
-    '''
-    log_visa_to_screen(DEBUG)
-    test_laser()
 

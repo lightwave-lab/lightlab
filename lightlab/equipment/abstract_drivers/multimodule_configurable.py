@@ -1,4 +1,3 @@
-from lightlab import visalogger as logger
 from lightlab.util.io import ChannelError
 
 import numpy as np
@@ -101,7 +100,7 @@ class MultiModuleConfigurable(AbstractDriver):
             Args:
                 cStr (str): parameter name
         '''
-        stateArr = self.getConfigArr(cStr)
+        stateArr = self.getConfigArray(cStr)
         dictOfStates = dict()
         for ch in self.useChans:
             virtualIndex = self.useChans.index(ch)
@@ -128,3 +127,10 @@ class MultiModuleConfigurable(AbstractDriver):
             if chan in newValDict.keys():
                 setArrayBuilder[iCh] = newValDict[chan]
         return self.setConfigArray(cStr, setArrayBuilder, forceHardware)
+
+
+    @property
+    def moduleIds(self):
+        ''' list of module ID strings '''
+        return list(self.getConfigArray('*IDN'))
+

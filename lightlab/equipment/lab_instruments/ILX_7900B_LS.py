@@ -6,6 +6,7 @@ import time
 
 # from lightlab.util.io import ChannelError
 from lightlab.util.data import Spectrum
+from lightlab.util.io import ChannelError
 from lightlab.equipment.abstract_drivers import ConfigModule, MultiModuleConfigurable
 from lightlab import visalogger as logger
 
@@ -41,14 +42,12 @@ class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
 
     def __init__(self, name='The laser source', address=None, useChans=None, **kwargs):
         kwargs['tempSess'] = kwargs.pop('tempSess', False)
-        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-
-        # Handle channels
         if 'dfbChans' in kwargs.keys():
             useChans = kwargs.pop('dfbChans')
         if useChans is None:
             logger.warning('No useChans specified for ILX_7900B_LS')
             useChans = list()
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         MultiModuleConfigurable.__init__(self, useChans=useChans, configurableKlass=ILX_Module)
 
     def startup(self):
@@ -60,6 +59,8 @@ class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
         return self.useChans
 
     def setConfigArray(self, cStr, newValArr):
+        ''' Adds sleep functionality when there is a change
+        '''
         wroteToHardware = super().setConfigArray(cStr, newValArr)
         if wroteToHardware:
             print('DFB settling for', self.sleepOn[cStr], 'seconds.')
@@ -78,9 +79,11 @@ class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
         self.setConfigArray('OUT', newState)
 
     def setChannelEnable(self, chanEnableDict):
-        """Sets a number of channel values and updates hardware
-        param: chanEnableDict: A dictionary specifying some {channel: enabled}
-        """
+        ''' Sets a number of channel values and updates hardware
+
+            Args:
+                chanEnableDict (dict): A dictionary specifying some {channel: enabled}
+        '''
         self.setConfigDict('OUT', chanEnableDict)
 
     def getChannelEnable(self):
@@ -96,10 +99,7 @@ class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
         self.setConfigArray('WAVE', newWls)
 
     def setChannelWls(self, chanWavelengthDict):
-        """Sets a number of channel wavelengths and updates hardware
-        param: chanEnableDict: A dictionary specifying some {channel: wavelength}
-        """
-        self.setConfigDict('WAVE')
+        self.setConfigDict('WAVE', chanWavelengthDict)
 
     def getChannelWls(self):
         return self.getConfigDict('WAVE')
@@ -114,17 +114,15 @@ class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
         self.setConfigArray('LEVEL', newPowers)
 
     def setChannelPowers(self, chanPowerDict):
-        ''' Sets a number of channel power powers (in dBm) and updates hardware
-        param: chanPowerDict: A dictionary specifying some {channel: wavelength}
-        '''
-        self.setConfigDict('LEVEL')
+        self.setConfigDict('LEVEL', chanPowerDict)
 
     def getChannelPowers(self):
         return self.getConfigDict('LEVEL')
 
     def getAsSpectrum(self):
         ''' Gives a spectrum of power vs. wavelength which just has the wavelengths present
-            and blocked out by this bank
+            and blocked out by this bank. It starts in dBm, but you can change
+            to linear with the Spectrum.lin method
 
             Returns:
                 (Spectrum)
@@ -135,15 +133,14 @@ class ILX_7900B_LS(MultiModuleConfigurable, VISAInstrumentDriver):
 
     @property
     def wlRanges(self):
-        ''' wavelength tuples in (nm, nm) '''
+        ''' wavelength tuples in (nm, nm)
+
+            Returns:
+                (list(tuple)): maximum ranges starting from lower wavelength
+        '''
         minArr = self.getConfigArray('WAVEMIN')
         maxArr = self.getConfigArray('WAVEMAX')
         return tuple(zip(minArr, maxArr))
-
-    @property
-    def moduleIds(self):
-        ''' list of module ID strings '''
-        return list(self.getConfigArray('*IDN'))
 
     def off(self):
         self.allOnOff(False)
