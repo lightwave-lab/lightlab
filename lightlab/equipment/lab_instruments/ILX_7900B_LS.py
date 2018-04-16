@@ -4,9 +4,7 @@ from lightlab.laboratory.instruments import LaserSource
 import numpy as np
 import time
 
-# from lightlab.util.io import ChannelError
 from lightlab.util.data import Spectrum
-from lightlab.util.io import ChannelError
 from lightlab.equipment.abstract_drivers import ConfigModule, MultiModuleConfigurable
 from lightlab import visalogger as logger
 
