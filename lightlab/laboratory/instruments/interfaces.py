@@ -73,8 +73,6 @@ class CurrentSource(Instrument):
         ['setChannelTuning',
          'getChannelTuning',
          'off']
-    essentialProperties = Instrument.essentialProperties + \
-        ['elChans']
 
 
 class FunctionGenerator(Instrument):
@@ -100,8 +98,7 @@ class LaserSource(Instrument):
         ['enableState',
          'wls',
          'powers',
-         'off',
-         'dfbChans']
+         'off']
     optionalAttributes = ['wlRanges']
 
 

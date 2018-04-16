@@ -29,9 +29,14 @@ def test_instantiate_instrum(instrum):
 
 
 from lightlab.equipment.lab_instruments import NI_PCI_6723, ILX_7900B_LS
-from lightlab.equipment.abstract_drivers import MultiChannelSource
+from lightlab.util.io import ChannelError
 def test_instrums_withChannels():
     cs = NI_PCI_6723(name='a CS', address='NULL', elChans=[1, 2])
     assert cs.elChans == [1, 2]
+    assert cs.useChans == [1, 2]
+    with pytest.raises(ChannelError):
+        cs = NI_PCI_6723(name='a CS', address='NULL', elChans=[50])
+
     ls = ILX_7900B_LS(name='a LS', address='NULL', dfbChans=[1, 2])
     assert ls.dfbChans == [1, 2]
+    assert ls.useChans == [1, 2]

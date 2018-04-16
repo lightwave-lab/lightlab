@@ -42,30 +42,30 @@ class ILX_7900B_LS(VISAInstrumentDriver):
 
     powerRange = np.array([-20, 13])
 
-    def __init__(self, name='The laser source', address=None, dfbChans=[1], **kwargs):
+    def __init__(self, name='The laser source', address=None, useChans=[1], **kwargs):
         kwargs['tempSess'] = kwargs.pop('tempSess', False)
         # just for backwards compatibility
-        if 'useChans' in kwargs.keys():
-            dfbChans = kwargs.pop('useChans')
+        if 'dfbChans' in kwargs.keys():
+            useChans = kwargs.pop('dfbChans')
         super().__init__(name=name, address=address, **kwargs)
         self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
 
 
-        dfbChans, stateDict = dfbChans, kwargs.pop("stateDict", None)
-        if dfbChans is None and stateDict is None:
+        useChans, stateDict = useChans, kwargs.pop("stateDict", None)
+        if useChans is None and stateDict is None:
             raise Exception(
-                'Must specify either dfbChans or stateDict when initializing laser sources')
+                'Must specify either useChans or stateDict when initializing laser sources')
         if stateDict is None:
-            self.dfbChans = list(dfbChans)
-            self.stateDict = dict([ch, -1] for ch in self.dfbChans)
+            self.useChans = list(useChans)
+            self.stateDict = dict([ch, -1] for ch in self.useChans)
         else:
-            self.dfbChans = list(stateDict.keys())
+            self.useChans = list(stateDict.keys())
             self.stateDict = stateDict
-        # if any(ch > self.fullChannelNums - 1 for ch in self.dfbChans):
+        # if any(ch > self.fullChannelNums - 1 for ch in self.useChans):
         #     raise Exception('Requested channel is more than there are available')
-        if not set(self.ordering_left).isdisjoint(self.dfbChans):
+        if not set(self.ordering_left).isdisjoint(self.useChans):
             self.ordering = self.ordering_left
-        elif not set(self.ordering_left).isdisjoint(self.dfbChans):
+        elif not set(self.ordering_left).isdisjoint(self.useChans):
             self.ordering = self.ordering_right
 
     def startup(self):
