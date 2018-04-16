@@ -94,7 +94,7 @@ class MultiModuleConfigurable(AbstractDriver):
                                'Expected {}.'.format(len(self.useChans)))
         bankWroteToHardware = False
         for module, val in zip(self.modules, newValArr):
-            moduleWroteToHardware = module.setConfigParam(cStr, val, forceHardware)
+            moduleWroteToHardware = module.setConfigParam(cStr, val, forceHardware=forceHardware)
             bankWroteToHardware = bankWroteToHardware or moduleWroteToHardware
         return bankWroteToHardware
 
@@ -129,7 +129,7 @@ class MultiModuleConfigurable(AbstractDriver):
         for iCh, chan in enumerate(self.useChans):
             if chan in newValDict.keys():
                 setArrayBuilder[iCh] = newValDict[chan]
-        return self.setConfigArray(cStr, setArrayBuilder, forceHardware)
+        return self.setConfigArray(cStr, setArrayBuilder, forceHardware=forceHardware)
 
 
     @property
