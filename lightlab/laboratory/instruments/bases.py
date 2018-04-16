@@ -267,9 +267,9 @@ class Instrument(Node):
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
         errorText = str(self) + ' has no attribute ' + attrName
-        if attrName in self.essentialProperties + self.essentialMethods:
-            return getattr(self.driver, attrName)
-        elif attrName in self.implementedOptionals:
+        if attrName in self.essentialProperties \
+                + self.essentialMethods \
+                + self.implementedOptionals:
             return getattr(self.driver, attrName)
         # Time to fail
         if attrName in self.optionalAttributes:
