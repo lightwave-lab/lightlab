@@ -20,17 +20,25 @@ class ILX_Module(ConfigModule):
 class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
     '''
         The laser banks (ILX 7900B laser source).
+        Provides array-based and dict-based setters/getters for
+            * whether laser is on or off (``enableState``)
+            * tunable wavelength output (``wls``)
+            * otuput power in dBm (``powers``)
+
+        Setting/getting logic is implemented in ``MultiModuleConfigurable``,
+        which treats the channels as independent ``Configurable``s. This means
+        that hardware communication is lazy -- parameter values are cached,
+        and messages are only sent when they are unknown or when they change.
 
         `Manual <http://assets.newport.com/webDocuments-EN/images/70032605_FOM-79800F_IX.PDF>`_
 
-        TODO:
-            The overarching problem is that multiple users are likely
-            to be using this one at the same time, different channels of course.
-            Currently only one user can be using it at a time.
-
-                * This class could be singleton, so that only one exists, and/or...
-
-                * It could have a special property in that lockouts occur on a channel basis
+        Todo:
+            Multiple users at the same time is desirable. We are close.
+            Non blocked-out channels are never touched, but there are still
+            two issues
+                * Fundamental: VISA access with two sessions could collide
+                * Have to create two different instruments with different ``useChans``
+                for what is actually one instrument -- maybe a slice method?
     '''
     instrument_category = LaserSource
     maxChannel = 8
@@ -48,18 +56,30 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
             logger.warning('No useChans specified for ILX_7900B_LS')
             useChans = list()
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-        MultiModuleConfigurable.__init__(self, useChans=useChans, configurableKlass=ILX_Module)
+        MultiModuleConfigurable.__init__(self, useChans=useChans, configModule_klass=ILX_Module)
 
     def startup(self):
         self.close()  # For temporary serial access
 
     @property
     def dfbChans(self):
-        ''' Returns the blocked out channels as a list '''
+        ''' Returns the blocked out channels as a list
+
+            Currently, this is not an essentialProperty, so you
+            have to access like::
+
+                ch = LS.driver.dfbChans
+
+            Returns:
+                (list): channel numbers, 0-indexed
+        '''
         return self.useChans
 
     def setConfigArray(self, cStr, newValArr, forceHardware=False):
-        ''' Adds sleep functionality when there is a change
+        ''' When any configuration is set, there is an equilibration time.
+
+            Adds sleep functionality when there is a change, for an
+            amount determined by the ``sleepOn`` class attribute.
         '''
         wroteToHardware = super().setConfigArray(cStr, newValArr, forceHardware=forceHardware)
         if wroteToHardware:
@@ -74,8 +94,6 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
 
     @enableState.setter
     def enableState(self, newState):
-        ''' Updates lasers to newState
-        '''
         for ena in newState:
             if ena not in [0, 1]:
                 raise ValueError('Laser states can only be 0 or 1. ' +

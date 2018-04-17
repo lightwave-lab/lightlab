@@ -29,29 +29,53 @@ class ConfigModule(Configurable):
         self._hardwareinit = True  # prevent Configurable from trying to write headers
 
     def __selectSelf(self):
+        ''' Writes a selector message that contains
+            its prefix and its channel number
+        '''
         self.bank.write('{} {}'.format(self.selectPrefix, self.channel))
 
     def write(self, writeStr):
+        ''' Regular write in the enclosing bank, except preceded by select self
+        '''
         self.__selectSelf()
         self.bank.write(writeStr)
 
     def query(self, queryStr):
+        ''' Regular query in the enclosing bank, except preceded by select self
+        '''
         self.__selectSelf()
         return self.bank.query(queryStr)
 
 
 class MultiModuleConfigurable(AbstractDriver):
-    ''' Keeps track of multiple channels within an instrument
-        when those channels are somewhat independent.
+    ''' Keeps track of a list of ``Configurable`` objects,
+        each associated with a channel number.
+        Provides array and dict setting/getting.
 
-        It provides array and dict setting/getting.
+        Parameter values are cached just like in ``Configurable``.
+        That means hardware access is lazy: No write/queries are performed
+        unless a parameter is not yet known, or if the value changes.
 
-        Primary advantage is that no write/queries are performed
-        if there is no change in the value.
+        When the module classes are ``ConfigModule``, then
+        this supports multi-channel instruments where channels
+        are selectable. This is used in cases where,
+        for example, querying the wavelength
+        of channel 2 would take these messages::
+
+            self.write('CH 2')
+            wl = self.query('WAVE')
     '''
     maxChannel = None
 
-    def __init__(self, useChans=None, configurableKlass=Configurable, **kwargs):
+    def __init__(self, useChans=None, configModule_klass=Configurable, **kwargs):
+        '''
+            Args:
+                useChans (list(int)): integers that indicate channel number.
+                Used to key dictionaries and write select messages.
+                configModule_klass (type): class that members will be initialized as.
+                When ``Configurable``, this object is basically a container; however,
+                when ``ConfigModule``, there is special behavior for multi-channel instruments.
+        '''
         if useChans is None:
             logger.warning('No useChans specified for MultiModuleConfigurable')
             useChans = list()
@@ -63,13 +87,18 @@ class MultiModuleConfigurable(AbstractDriver):
 
         self.modules = []
         for chan in self.useChans:
-            self.modules.append(configurableKlass(channel=chan, bank=self))
+            self.modules.append(configModule_klass(channel=chan, bank=self))
         super().__init__(**kwargs)
 
     def getConfigArray(self, cStr):
-        '''
+        ''' Iterate over modules getting the parameter at each
+
             Args:
                 cStr (str): parameter name
+
+            Returns:
+                (np.ndarray): values for all modules,
+                ordered based on the ordering of ``useChans``
         '''
         retVals = []
         for module in self.modules:
@@ -78,11 +107,15 @@ class MultiModuleConfigurable(AbstractDriver):
         return retArr
 
     def setConfigArray(self, cStr, newValArr, forceHardware=False):
-        ''' Iterate over modules setting the parameter to the corresponding array value
+        ''' Iterate over modules setting the parameter to
+            the corresponding array value.
+
+            Values for *ALL* channels must be specified. To only change some,
+            use the dictionary-based setter: ``setConfigDict``
 
             Args:
                 cStr (str): parameter name
-                newValArr (array): values
+                newValArr (np.ndarray, list): values in same ordering as useChans
                 forceHardware (bool): guarantees sending to hardware
 
             Returns:
@@ -102,6 +135,9 @@ class MultiModuleConfigurable(AbstractDriver):
         '''
             Args:
                 cStr (str): parameter name
+
+            Returns:
+                (dict): parameter on all the channels, keyed by channel number
         '''
         stateArr = self.getConfigArray(cStr)
         dictOfStates = dict()
@@ -114,7 +150,7 @@ class MultiModuleConfigurable(AbstractDriver):
         '''
             Args:
                 cStr (str): parameter name
-                newValDict (array): dict keyed by channel
+                newValDict (array): dict keyed by channel number
                 forceHardware (bool): guarantees sending to hardware
 
             Returns:
@@ -130,7 +166,6 @@ class MultiModuleConfigurable(AbstractDriver):
             if chan in newValDict.keys():
                 setArrayBuilder[iCh] = newValDict[chan]
         return self.setConfigArray(cStr, setArrayBuilder, forceHardware=forceHardware)
-
 
     @property
     def moduleIds(self):
