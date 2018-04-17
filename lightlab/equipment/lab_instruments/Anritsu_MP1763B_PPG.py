@@ -24,7 +24,6 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
     def setPrbs(self, length):
         ''' Generates a PRBS '''
         bits = np.random.randint(0, 2, length)
-        print(bits)
         self.setPattern(bits)
 
     def setPattern(self, bitArray):
@@ -65,7 +64,7 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
         # self.write(pStr)
 
         self.storedPattern = bitArray
-        print(bitArray)
+        # print(bitArray)
 
     def getPattern(self):
         ''' Inverts the setPattern method, so you can swap several patterns around on the fly.
@@ -129,25 +128,25 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
         bitseq: Takes in dictionary 'chpulses', clock freq 'clockfreq', and opt.
         parameter 'ext.' Also includes plotting parameters (see below).
         chdelays: a dictionary in which keys are channel delays, and values
-        contain a list of tuple pairs. Each pair contains pulse times (rising 
+        contain a list of tuple pairs. Each pair contains pulse times (rising
         edges) and their duration (in ns).
         clockfreq: set the current clock frequency, in GHz
-        ext: a continuous value from 0 to 1 which extends the pattern length, 
+        ext: a continuous value from 0 to 1 which extends the pattern length,
         resulting in different synchronization between adjacent time windows.
-        0 -- will result in maximum similarity between time  windows, plus or 
-        minus variabilities resulting from delay lines. This is ideal when 
-        only approximate timings are required, since channels IDs can be 
+        0 -- will result in maximum similarity between time  windows, plus or
+        minus variabilities resulting from delay lines. This is ideal when
+        only approximate timings are required, since channels IDs can be
         shuffled by time scrolling through the same PPG pattern.
         1 -- will result in minimum similarity between adjacent time windows,
         at the cost of a larger total PPG pattern length. Anything beyond this
-        value is not useful. Values between 0 and 1 will trade-off pattern length 
+        value is not useful. Values between 0 and 1 will trade-off pattern length
         with window similarity.
         addplot: Adds a plot to visualize the output of the PPG along all channels.
         mult: graphing parameter - how many multiples of pattern length to display in time
         res: graphing parameter - how many sampling points per pattern bit
         Author: Mitchell A. Nahmias, Feb. 2018
         '''
-            
+
         delays = sorted(chpulses.keys())
         # timeWindow = min(np.diff(delays))
         ChNum = len(chpulses)
@@ -180,11 +179,11 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
                 '''
                 pIndex = int(np.round((max(chpulses.keys()) - delay + pulsePos)*clockfreq))
                 pattern[pIndex:pIndex+int(np.round(pulseWidth*clockfreq))] = 1 # add pulse to pattern at correct delay
-        
+
         # optional plotting function
         # if addplot:
         #     T = np.linspace(0,mult*len(pattern)/clockfreq,mult*res*len(pattern))
-            
+
         #     # allows cyclical access to pattern array via any input index
         #     def circ_time(T,pattern) :
         #         pattern_ind = (np.round(T*clockfreq) % len(pattern)).astype(int)
@@ -196,5 +195,5 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
         #     plt.ylabel('a.u.')
         #     plt.title('Expected Output')
         #     plt.legend()
-            
+
         return pattern
