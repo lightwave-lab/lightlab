@@ -21,6 +21,10 @@ class Tektronix_DSA8300_Oscope(VISAInstrumentDriver, TekScopeAbstract):
     _runModeSingleShot = 'CONDITION'
     _yScaleParam = 'YSCALE'
 
+    def __init__(self, name='The DSA scope', address=None, **kwargs):
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        TekScopeAbstract.__init__(self)
+
     def _setupSingleShot(self, isSampling, forcing=False):
         ''' Additional DSA things needed to put it in the right mode.
             If it is not sampling, the trigger source should always be external

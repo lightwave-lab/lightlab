@@ -18,5 +18,9 @@ class Tektronix_DPO4034_Oscope(VISAInstrumentDriver, TekScopeAbstract):
     _runModeSingleShot = 'SEQUENCE'
     _yScaleParam = 'YMULT'
 
+    def __init__(self, name='The DPO scope', address=None, **kwargs):
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        TekScopeAbstract.__init__(self)
+
     def wfmDb(self, *args, **kwargs):
         print('wfmDb is not working yet with DPOs')

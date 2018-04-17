@@ -19,6 +19,10 @@ class Tektronix_TDS6154C_Oscope(VISAInstrumentDriver, TekScopeAbstract):
     _runModeSingleShot = 'CONDITION'
     _yScaleParam = 'YMULT'                    # this is different from DSA
 
+    def __init__(self, name='The TDS scope', address=None, **kwargs):
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        TekScopeAbstract.__init__(self)
+
     def __setupSingleShot(self, isSampling, forcing=False):
         ''' Additional DSA things needed to put it in the right mode.
             If it is not sampling, the trigger source should always be external
