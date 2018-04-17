@@ -65,6 +65,17 @@ class SpectrumMeasurementAssistant(object):
         lamSort = np.argsort([r.lam for r in res])
         return res[lamSort]
 
+    def killResonances(self, spect=None, avgCnt=1, fwhmsAround=3.):
+        '''
+        '''
+        if spect is None:
+            spect = self.fgSpect(avgCnt=avgCnt)
+        processed = spect.copy()
+        for i,r in enumerate(self.resonances(spect)):
+            segmentAroundPeak = r.lam + r.fwhm * fwhmsAround/2 * np.array([-1, 1])
+            processed = processed.deleteSegment(segmentAroundPeak)
+        return processed
+
     def fgResPlot(self, spect=None, axis=None, avgCnt=1):
         ''' Takes a foreground spectrum, plots it and its peaks.
         Currently the axis input is unused.
