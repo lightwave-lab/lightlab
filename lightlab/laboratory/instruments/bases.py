@@ -392,6 +392,12 @@ class Instrument(Node):
             lines.extend(["   {}".format(str(port)) for port in self.ports])
         else:
             lines.append("   No ports.")
+        if hasattr(self, 'driver_kwargs'):
+            lines.append("=====")
+            lines.append("Driver kwargs")
+            lines.append("=====")
+            for k, v in self.driver_kwargs.items():
+                lines.append("   {} = {}".format(str(k), str(v)))
         lines.append("***")
         print("\n".join(lines))
 

@@ -119,8 +119,6 @@ class MultiChannelSource(object):
     maxChannel = None  # number of dimensions that the current sources are expecting
 
     def __init__(self, useChans=None, **kwargs):
-        if 'elChans' in kwargs.keys():
-            useChans = kwargs.pop('elChans')
         if useChans is None:
             logger.warning('No useChans specified for MultichannelSource')
             useChans = list()
