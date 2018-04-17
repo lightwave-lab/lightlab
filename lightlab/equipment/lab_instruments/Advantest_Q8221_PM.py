@@ -11,7 +11,7 @@ class Advantest_Q8221_PM(VISAInstrumentDriver, PowerMeterAbstract):
     channelDescriptions = {1: 'A', 2: 'B', 3: 'A/B'}
 
     def __init__(self, name='The Advantest power meter', address=None, **kwargs):
-        super().__init__(name=name, address=address, **kwargs)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
 
     def startup(self):
         '''

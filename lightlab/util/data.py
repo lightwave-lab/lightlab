@@ -892,16 +892,16 @@ def descend(yArr, invalidIndeces, startIndex, direction, threshVal):
 
         if i+sideSgn <= -1 or i+sideSgn > len(yArr):
             tooCloseToEdge = True
-            logger.debug('Too close to edge of available range')
+            logger.debug('Descend: too close to edge of available range')
         if invalidIndeces[i]:
             tooCloseToOtherPeak = True
-            logger.debug('Too close to another peak')
+            logger.debug('Descend: too close to another peak')
         validPeak = not tooCloseToEdge and not tooCloseToOtherPeak
 
         if yArr[i] <= threshVal:
             break
 
-        logger.debug('Index {}: blanked={}, yArr={}'.format(i, invalidIndeces[i], yArr[i]))
+        # logger.debug('Index {}: blanked={}, yArr={}'.format(i, invalidIndeces[i], yArr[i]))
         i += sideSgn
     else:
         validPeak = False
