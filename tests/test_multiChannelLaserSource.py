@@ -34,6 +34,10 @@ class LS_MessageSender(ILX_7900B_LS):
         return '1550'
         # raise NotImplementedError('Sender has no query')
 
+    @property
+    def wlRanges(self):
+        return [(1545, 1555)] * len(self.useChans)
+
 
 def test_laser():
     LS = LS_MessageSender(name='foo', address='NULL', useChans=[0, 2, 1], directInit=True)

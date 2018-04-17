@@ -94,12 +94,12 @@ class LaserSource(Instrument):
          'getChannelPowers',
          'getAsSpectrum',
          'off',
-         'allOnOff']
+         'allOn']
     essentialProperties = Instrument.essentialProperties + \
         ['enableState',
          'wls',
          'powers']
-    optionalAttributes = ['wlRanges']
+    optionalAttributes = ['wlRanges', 'allOff']
 
 
 class OpticalSpectrumAnalyzer(Instrument):

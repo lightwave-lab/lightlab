@@ -96,7 +96,7 @@ class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
         self.__started = False
 
     def startup(self):
-        logger.debug("{}startup method empty".format(self.__class__.__name__))
+        logger.debug("{}.startup method empty".format(self.__class__.__name__))
 
     def open(self):
         super().open()
