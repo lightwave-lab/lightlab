@@ -4,7 +4,6 @@ from lightlab.laboratory.instruments import LaserSource
 import numpy as np
 import time
 
-from lightlab.util.data import Spectrum
 from lightlab.equipment.abstract_drivers import ConfigModule, MultiModuleConfigurable
 from lightlab import visalogger as logger
 
@@ -19,7 +18,9 @@ class ILX_Module(ConfigModule):
 
 class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
     '''
-        Class for the laser banks (ILX 7900B laser source).
+        The laser banks (ILX 7900B laser source).
+
+        `Manual <http://assets.newport.com/webDocuments-EN/images/70032605_FOM-79800F_IX.PDF>`_
 
         TODO:
             The overarching problem is that multiple users are likely
@@ -117,18 +118,6 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
     def getChannelPowers(self):
         return self.getConfigDict('LEVEL')
 
-    def getAsSpectrum(self):
-        ''' Gives a spectrum of power vs. wavelength which just has the wavelengths present
-            and blocked out by this bank. It starts in dBm, but you can change
-            to linear with the Spectrum.lin method
-
-            Returns:
-                (Spectrum)
-        '''
-        absc = self.wls
-        ordi = np.array(self.enableState, dtype=float) * self.powers
-        return Spectrum(absc, ordi, inDbm=True)
-
     @property
     def wlRanges(self):
         ''' wavelength tuples in (nm, nm)
@@ -140,11 +129,11 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
         maxArr = self.getConfigArray('WAVEMAX')
         return tuple(zip(minArr, maxArr))
 
-    def off(self):
-        self.allOnOff(False)
+    def allOff(self):
+        self.off()
 
-    def allOnOff(self, allOn=False):
-        if allOn:
-            self.enableState = np.ones(len(self.useChans))
-        else:
-            self.enableState = np.zeros(len(self.useChans))
+    def allOn(self):
+        self.enableState = np.ones(len(self.useChans))
+
+    def off(self):
+        self.enableState = np.zeros(len(self.useChans))
