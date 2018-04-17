@@ -125,7 +125,6 @@ class SpectrumMeasurementAssistant(object):
                 newBg = newBg.splice(nulledPiece)
             self.__backgrounds['nulled'] = self.getBgSpect(bgType='tuned') - newBg
 
-
     def getBgSpect(self, bgType=None):
         preferredOrder = self.useBgs
         if bgType is None:
@@ -135,7 +134,7 @@ class SpectrumMeasurementAssistant(object):
                 except KeyError as e:
                     pass
             else:
-                return 0
+                return 0.
                 # raise Exception('No background spectrum has been taken')
         elif bgType in preferredOrder:
             try:
