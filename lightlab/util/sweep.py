@@ -344,13 +344,13 @@ class NdSweeper(Sweeper):
                 dataOfPt = OrderedDict()
                 for datKey, datVal in self.data.items():
                     if np.any(datVal.shape != self.swpShape):
-                        logger.debug('Data member {} is wrong size for reparsing {}. Skipping.'.format(datKey, pk))
+                        logger.warning('Data member {} is wrong size for reparsing {}. Skipping.'.format(datKey, pk))
                     else:
                         dataOfPt[datKey] = datVal[index]
                 try:
                     tempDataMat[index] = pFun(dataOfPt)
                 except KeyError:
-                    logger.debug('Parser {} depends on unpresent data. Skipping.'.format(pk))
+                    logger.warning('Parser {} depends on unpresent data. Skipping.'.format(pk))
                     break
             else:
                 self.data[pk] = tempDataMat
