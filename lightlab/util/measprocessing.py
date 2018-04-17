@@ -13,7 +13,7 @@ class SpectrumMeasurementAssistant(object):
     Also handles resonance finding (This could move to a separate manager or external function)
     Interfaces directly with OSA. It DOES NOT set tuning states.
     '''
-    useBgs = ['tracked', 'smoothed', 'const'] # The order matters
+    useBgs = ['tuned', 'smoothed', 'const'] # The order matters
     bgSmoothDefault = 2.0 # in nm
 
     def __init__(self, nChan=1, arePeaks=False, osaRef=None):
@@ -42,10 +42,11 @@ class SpectrumMeasurementAssistant(object):
             If raw is specified, does not sweep, just removes background
         '''
         if raw is None:
-            raw = self.rawSpect(avgCnt)
-        if 'smoothed' not in self.__backgrounds.keys():
+            raw = self.rawSpect(avgCnt=avgCnt)
+        bg = self.getBgSpect(bgType)
+        if bgType is None and type(bg) is float and bg == 0:
             self.setBgSmoothed(raw)
-        unbiased = raw - self.getBgSpect(bgType)
+        unbiased = raw - bg
         return unbiased
 
     def resonances(self, spect=None, avgCnt=1):
@@ -64,6 +65,17 @@ class SpectrumMeasurementAssistant(object):
         lamSort = np.argsort([r.lam for r in res])
         return res[lamSort]
 
+    def killResonances(self, spect=None, avgCnt=1, fwhmsAround=3.):
+        '''
+        '''
+        if spect is None:
+            spect = self.fgSpect(avgCnt=avgCnt)
+        processed = spect.copy()
+        for i,r in enumerate(self.resonances(spect)):
+            segmentAroundPeak = r.lam + r.fwhm * fwhmsAround/2 * np.array([-1, 1])
+            processed = processed.deleteSegment(segmentAroundPeak)
+        return processed
+
     def fgResPlot(self, spect=None, axis=None, avgCnt=1):
         ''' Takes a foreground spectrum, plots it and its peaks.
         Currently the axis input is unused.
@@ -74,8 +86,11 @@ class SpectrumMeasurementAssistant(object):
         spect.simplePlot()
         [r.simplePlot() for r in res]
 
-    def setBgConst(self, raw):
+    def setBgConst(self, raw=None):
         ''' Makes a background the maximum transmission observed '''
+        if raw is None:
+            raw = self.rawSpect()
+        self.__backgrounds['const'] = max(raw.ordi)
         self.__backgrounds['smoothed'] = max(raw.ordi)
 
     def setBgSmoothed(self, raw=None, smoothNm=None):

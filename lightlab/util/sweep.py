@@ -634,22 +634,43 @@ class NdSweeper(Sweeper):
         self.data.pop('actuation-keys')
 
     @classmethod
-    def loadObj(cls, savefile):
-        ''' savefile must have been saved with saveObj
+    def loadObj(cls, savefile, functionSource=None):
+        ''' savefile must have been saved with saveObj.
+            It restores actuation names and domains to help with plotting.
+
+            Functions referring to equipment cannot be saved.
+            If you give it a functionSource, then those can be restored.
+            This is very useful if you have a parser such as live plot spectra,
+            or move stuff here or there. Also useful if you want to re-gather
+            for some reason.
         '''
         newObj = cls.fromFile(savefile)
+        # Restore actuations
         try:
             actKeyList = newObj.data.pop('actuation-keys')
         except KeyError:
             pass
         else:
             for iAct, actName in enumerate(actKeyList):
+                # Full data, which is N-dimensional
                 actData = newObj.data[actName]
+                # Extract one vector along the right direction to serve as domain
                 sliceOneDim = [0] * len(actKeyList)
                 sliceOneDim[iAct] = slice(None)
                 domain = actData[sliceOneDim]
-                newObj.addActuation(actName, None, domain)
+                # Try to extract the actuation function
+                if functionSource is not None:
+                    actFun, _, doEvery = functionSource.actuate[actName]
+                else:
+                    # no function was stored, so gathering won't work
+                    actFun, doEvery = None, None
+                # Do the full add
+                newObj.addActuation(actName, actFun, domain, doEvery)
         newObj._recalcSwpShape()
+
+        # Restore parsers. Do not reparse them
+        if functionSource is not None:
+            newObj.parse = functionSource.parse
         return newObj
 
     def load(self, savefile=None):
