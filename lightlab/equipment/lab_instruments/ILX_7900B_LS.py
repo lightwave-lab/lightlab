@@ -6,7 +6,7 @@ import time
 
 from lightlab.equipment.abstract_drivers import ConfigModule, MultiModuleConfigurable
 from lightlab.util.data import Spectrum
-from lightlab import visalogger as logger
+from lightlab import logger
 
 
 class ILX_Module(ConfigModule):
@@ -76,6 +76,10 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
     def enableState(self, newState):
         ''' Updates lasers to newState
         '''
+        for ena in newState:
+            if ena not in [0, 1]:
+                raise ValueError('Laser states can only be 0 or 1. ' +
+                                 'Got {}'.format(newState))
         self.setConfigArray('OUT', newState)
 
     def setChannelEnable(self, chanEnableDict):
@@ -96,6 +100,18 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
 
     @wls.setter
     def wls(self, newWls):
+        for iCh, wl in enumerate(newWls):
+            wlRanges = self.wlRanges[iCh]
+            if wl < wlRanges[0]:
+                logger.warning('Wavelength out of range was constrained:\n' +
+                               'Requested: {:.2f}nm '.format(wl) +
+                               'Minimum: {:.2f}nm.'.format(wlRanges[0]))
+                newWls[iCh] = wlRanges[0]
+            if wl > wlRanges[1]:
+                logger.warning('Wavelength out of range was constrained:\n' +
+                               'Requested: {:.2f}nm '.format(wl) +
+                               'Maximum: {:.2f}nm.'.format(wlRanges[1]))
+                newWls[iCh] = wlRanges[1]
         self.setConfigArray('WAVE', newWls)
 
     def setChannelWls(self, chanWavelengthDict):
@@ -111,6 +127,17 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
 
     @powers.setter
     def powers(self, newPowers):
+        for iCh, level in enumerate(newPowers):
+            if level < self.powerRange[0]:
+                logger.warning('Power out of range was constrained:\n' +
+                               'Requested: {:.2f}dBm '.format(level) +
+                               'Minimum: {:.2f}dBm.'.format(self.powerRange[0]))
+                newPowers[iCh] = self.powerRange[0]
+            if level > self.powerRange[1]:
+                logger.warning('Power out of range was constrained:\n' +
+                               'Requested: {:.2f}dBm '.format(level) +
+                               'Maximum: {:.2f}dBm.'.format(self.powerRange[1]))
+                newPowers[iCh] = self.powerRange[1]
         self.setConfigArray('LEVEL', newPowers)
 
     def setChannelPowers(self, chanPowerDict):
