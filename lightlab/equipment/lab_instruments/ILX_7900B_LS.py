@@ -3,287 +3,253 @@ from lightlab.laboratory.instruments import LaserSource
 
 import numpy as np
 import time
-from lightlab.util.io import ChannelError
+
+from lightlab.equipment.abstract_drivers import ConfigModule, MultiModuleConfigurable
 from lightlab.util.data import Spectrum
-from lightlab import visalogger as logger
+from lightlab import logger
 
 
-class ILX_7900B_LS(VISAInstrumentDriver):
+class ILX_Module(ConfigModule):
+    ''' Handles 0 to 1 indexing
     '''
-        Class for the laser banks (ILX 7900B laser source). This provides the illusion that all 16 lasers are one system.
-        Channels are zero-indexed (i.e. 0,1,2...15) based on wavelength order
-        NOTE: 'modules' are used to refer to the index of DFB module within a given bank
+    def __init__(self, channel, **kwargs):
+        kwargs['precedingColon'] = kwargs.pop('precedingColon', False)
+        super().__init__(channel=channel + 1, **kwargs)
 
 
-        TODO:
-            Deprecate stateDict, as in NI_PCI_6723 vs. CurrentSources
+class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
+    '''
+        The laser banks (ILX 7900B laser source).
+        Provides array-based and dict-based setters/getters for
+            * whether laser is on or off (``enableState``)
+            * tunable wavelength output (``wls``)
+            * otuput power in dBm (``powers``)
 
-            Use Configurable so it doesn't have to be getting from hardware all the time
+        Setting/getting logic is implemented in ``MultiModuleConfigurable``,
+        which treats the channels as independent ``ConfigModules``s. This means
+        that hardware communication is lazy -- parameter values are cached,
+        and messages are only sent when they are unknown or when they change.
 
-            The overarching problem is that multiple users are likely
-            to be using this one at the same time, different channels of course.
-            Currently only one user can be using it at a time.
+        `Manual <http://assets.newport.com/webDocuments-EN/images/70032605_FOM-79800F_IX.PDF>`_
 
-                * This class could be singleton, so that only one exists, and/or...
-
-                * It could have a special property in that lockouts occur on a channel basis
+        Todo:
+            Multiple users at the same time is desirable. We are close.
+            Non blocked-out channels are never touched, but there are still two issues
+                * Fundamental: VISA access with two python processes could collide
+                * Inconvenience: Have to create two different instruments with different ``useChans``
+                for what is actually one instrument -- maybe a slice method?
     '''
     instrument_category = LaserSource
-    ordering_left = [1, 2, 3, 4, 5, 6, 7, 8]  # left bank
-    ordering_right = [10, 9, 11, 12, 13, 14, 15, 16]  # right bank
-    fullChannelNums = np.size(ordering_left)
-    # numModulesPerBank = [len(m) for m in ordering] # indexed by which bank. There are 2 banks
+    maxChannel = 8
 
     # Time it takes to equilibrate on different changes, in seconds
-    sleepOn = {}
-    sleepOn['enable'] = 3
-    sleepOn['wavelength'] = 30
-    sleepOn['level'] = 5
+    sleepOn = dict(OUT=3, WAVE=30, LEVEL=5)
 
     powerRange = np.array([-20, 13])
 
-    def __init__(self, name='The laser source', address=None, dfbChans=[1], **kwargs):
+    def __init__(self, name='The laser source', address=None, useChans=None, **kwargs):
         kwargs['tempSess'] = kwargs.pop('tempSess', False)
-        # just for backwards compatibility
-        if 'useChans' in kwargs.keys():
-            dfbChans = kwargs.pop('useChans')
-        super().__init__(name=name, address=address, **kwargs)
-        self.bankInstruments = VISAInstrumentDriver('DFB bank', address)
-
-
-        dfbChans, stateDict = dfbChans, kwargs.pop("stateDict", None)
-        if dfbChans is None and stateDict is None:
-            raise Exception(
-                'Must specify either dfbChans or stateDict when initializing laser sources')
-        if stateDict is None:
-            self.dfbChans = list(dfbChans)
-            self.stateDict = dict([ch, -1] for ch in self.dfbChans)
-        else:
-            self.dfbChans = list(stateDict.keys())
-            self.stateDict = stateDict
-        # if any(ch > self.fullChannelNums - 1 for ch in self.dfbChans):
-        #     raise Exception('Requested channel is more than there are available')
-        if not set(self.ordering_left).isdisjoint(self.dfbChans):
-            self.ordering = self.ordering_left
-        elif not set(self.ordering_left).isdisjoint(self.dfbChans):
-            self.ordering = self.ordering_right
+        if 'dfbChans' in kwargs.keys():
+            useChans = kwargs.pop('dfbChans')
+        if useChans is None:
+            logger.warning('No useChans specified for ILX_7900B_LS')
+            useChans = list()
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        MultiModuleConfigurable.__init__(self, useChans=useChans, configModule_klass=ILX_Module)
 
     def startup(self):
         self.close()  # For temporary serial access
 
-    # Module-level parameter setters and getters.
-    # TODO: generalize this into parameter structures using a dictionary-based parameter names and communication tokens.
-    # I.e. setChanParameter(self, token, chanValDict) --> returns None
-    # getChanParameter(self, token, chanValSet) --> returns dict  [chanValSet
-    # as in set([1,3,4])]
+    @property
+    def dfbChans(self):
+        ''' Returns the blocked out channels as a list
 
+            Currently, this is not an essentialProperty, so you
+            have to access like::
+
+                ch = LS.driver.dfbChans
+
+            Returns:
+                (list): channel numbers, 0-indexed
+        '''
+        return self.useChans
+
+    def setConfigArray(self, cStr, newValArr, forceHardware=False):
+        ''' When any configuration is set, there is an equilibration time.
+
+            This adds sleep functionality, only when there is a change,
+            for an amount determined by the ``sleepOn`` class attribute.
+        '''
+        wroteToHardware = super().setConfigArray(cStr, newValArr, forceHardware=forceHardware)
+        if wroteToHardware:
+            print('DFB settling for', self.sleepOn[cStr], 'seconds.')
+            time.sleep(self.sleepOn[cStr])
+            print('done.')
+
+    # Module-level parameter setters and getters.
     @property
     def enableState(self):
-        return self.moduleIterate('OUT')
+        '''
+            Returns:
+                (np.ndarray): enable states ordered like useChans
+        '''
+        return self.getConfigArray('OUT')
 
     @enableState.setter
     def enableState(self, newState):
-        ''' Updates lasers to newState
-        '''
-        newState = np.array(newState)
-        if len(newState) != len(self.dfbChans):
-            raise ChannelError('Wrong number of channels. ' +
-                                  'Requested ' + str(len(newState)) +
-                                  ', Expecting ' + str(len(self.dfbChans)))
-        # enforce valueBounds
-        enforcedState = newState
-        enforcedState = [1 if s != 0 else 0 for s in enforcedState]
-        if np.any(newState != enforcedState):
-            logger.warning('Unexpected enable state value. ' +
-                           'Requested = {}. '.format(newState) +
-                           'Expected values = 0 or 1.')
-        self.stateDict = dict(zip(self.dfbChans, enforcedState))
+        ''' Are lasers on or off? Provides range check.
 
-        # Refresh and sleep only if different
-        oldState = self.moduleIterate('OUT')  # Get from hardware: takes some time
-        if np.any(oldState != newState):
-            self.moduleIterate('OUT', enforcedState)
-            print('DFB settling for', self.sleepOn['enable'], 'seconds.')
-            time.sleep(self.sleepOn['enable'])
-            print('done.')
+            Args:
+                newState (list, np.ndarray): enable values which must be 0 or 1
+        '''
+        for ena in newState:
+            if ena not in [0, 1]:
+                raise ValueError('Laser states can only be 0 or 1. ' +
+                                 'Got {}'.format(newState))
+        self.setConfigArray('OUT', newState)
 
     def setChannelEnable(self, chanEnableDict):
-        """Sets a number of channel values and updates hardware
-        param: chanEnableDict: A dictionary specifying some {channel: enabled}
-        """
-        # check to see if this is different
-        doUpdate = False
-        for k, v in chanEnableDict.items():
-            if self.stateDict[k] != v:
-                doUpdate = True
-        if doUpdate:
-            self.enableState = self.parseDictionary(chanEnableDict, setArrayType='enableState')
+        ''' Sets only some channel values with dict keyed by useChans,
+            e.g. ``chanEnableDict={0: 1, 2: 0}``
+
+            Args:
+                chanEnableDict (dict): A dictionary keyed by channel with values 0 or 1
+        '''
+        self.setConfigDict('OUT', chanEnableDict)
 
     def getChannelEnable(self):
-        return dict((ch, self.enableState[self.dfbChans.index(ch)]) for ch in self.dfbChans)
-
-    def getChannels(self):
-        ''' Returns the blocked out channels as a list '''
-        return list(self.stateDict.keys())
+        '''
+            Returns:
+                (dict): all channel enable states, keyed by useChans
+        '''
+        return self.getConfigDict('OUT')
 
     @property
     def wls(self):
-        ''' wls is in nanometers '''
-        return self.moduleIterate('WAVE')
+        '''
+            Returns:
+                (np.ndarray): laser wavelengths in nanometers ordered like useChans
+        '''
+        return self.getConfigArray('WAVE')
 
     @wls.setter
     def wls(self, newWls):
-        # Refresh and sleep only if different
-        oldWls = self.moduleIterate('WAVE')  # Get from hardware: takes some time
-        if np.any(oldWls != newWls):
-            self.moduleIterate('WAVE', newWls)
-            print('DFB settling for', self.sleepOn['wavelength'], 'seconds.')
-            time.sleep(self.sleepOn['wavelength'])
-            print('done.')
+        ''' Laser wavelengths. Provides range check.
+
+            Args:
+                newWls (list, np.ndarray): wavelengths in nanometers
+        '''
+        for iCh, wl in enumerate(newWls):
+            wlRanges = self.wlRanges[iCh]
+            if wl < wlRanges[0]:
+                logger.warning('Wavelength out of range was constrained:\n' +
+                               'Requested: {:.2f}nm '.format(wl) +
+                               'Minimum: {:.2f}nm.'.format(wlRanges[0]))
+                newWls[iCh] = wlRanges[0]
+            if wl > wlRanges[1]:
+                logger.warning('Wavelength out of range was constrained:\n' +
+                               'Requested: {:.2f}nm '.format(wl) +
+                               'Maximum: {:.2f}nm.'.format(wlRanges[1]))
+                newWls[iCh] = wlRanges[1]
+        self.setConfigArray('WAVE', newWls)
 
     def setChannelWls(self, chanWavelengthDict):
-        """Sets a number of channel wavelengths and updates hardware
-        param: chanEnableDict: A dictionary specifying some {channel: wavelength}
-        """
-        self.wls = self.parseDictionary(chanWavelengthDict, setArrayType='wls')
+        ''' Sets only some channel values with dict keyed by useChans,
+            e.g. ``chanWavelengthDict={0: 1550.5, 2: 1551}``
+
+            Args:
+                chanWavelengthDict (dict): A dictionary keyed by channel with nanometer values
+        '''
+        self.setConfigDict('WAVE', chanWavelengthDict)
 
     def getChannelWls(self):
-        return dict((ch, self.wls[self.dfbChans.index(ch)]) for ch in self.dfbChans)
+        '''
+            Returns:
+                (dict): all channel wavelengths, keyed by useChans
+        '''
+        return self.getConfigDict('WAVE')
 
     @property
     def powers(self):
-        ''' powers is in dBm '''
-        return self.moduleIterate('LEVEL')
+        ''' Laser powers
+
+            Returns:
+                (np.ndarray): laser output powers in dBm, ordered like useChans
+        '''
+        return self.getConfigArray('LEVEL')
 
     @powers.setter
     def powers(self, newPowers):
-        # Refresh and sleep only if different
-        oldPowers = self.moduleIterate('LEVEL')  # Get from hardware: takes some time
-        if np.any(oldPowers != newPowers):
-            self.moduleIterate('LEVEL', newPowers)
-            print('DFB settling for', self.sleepOn['level'], 'seconds.')
-            time.sleep(self.sleepOn['level'])
-            print('done.')
+        ''' Laser powers. Provides range check.
+
+            Args:
+                newPowers (list, np.ndarray): power in dBm
+        '''
+        for iCh, level in enumerate(newPowers):
+            if level < self.powerRange[0]:
+                logger.warning('Power out of range was constrained:\n' +
+                               'Requested: {:.2f}dBm '.format(level) +
+                               'Minimum: {:.2f}dBm.'.format(self.powerRange[0]))
+                newPowers[iCh] = self.powerRange[0]
+            if level > self.powerRange[1]:
+                logger.warning('Power out of range was constrained:\n' +
+                               'Requested: {:.2f}dBm '.format(level) +
+                               'Maximum: {:.2f}dBm.'.format(self.powerRange[1]))
+                newPowers[iCh] = self.powerRange[1]
+        self.setConfigArray('LEVEL', newPowers)
 
     def setChannelPowers(self, chanPowerDict):
-        ''' Sets a number of channel power powers (in dBm) and updates hardware
-        param: chanPowerDict: A dictionary specifying some {channel: wavelength}
+        ''' Sets only some channel values with dict keyed by useChans,
+            e.g. ``chanPowerDict={0: 13, 2: -10}``
+
+            Args:
+                chanPowerDict (dict): A dictionary keyed by channel with dBm values
         '''
-        self.powers = self.parseDictionary(chanPowerDict, setArrayType='powers')
+        self.setConfigDict('LEVEL', chanPowerDict)
 
     def getChannelPowers(self):
-        return dict((ch, self.powers[self.dfbChans.index(ch)]) for ch in self.dfbChans)
-
-    def getAsSpectrum(self):
-        ''' Gives a spectrum of power vs. wavelength which just has the wavelengths present
-            and blocked out by this bank
-
-            Returns:
-                (Spectrum)
         '''
-        absc = self.wls
-        ordi = np.array(self.enableState, dtype=float) * self.powers
-        return Spectrum(absc, ordi, inDbm=True)
+            Returns:
+                (dict): all channel powers, keyed by useChans
+        '''
+        return self.getConfigDict('LEVEL')
 
     @property
     def wlRanges(self):
-        ''' wavelength tuples in (nm, nm) '''
-        minArr = self.moduleIterate('WAVEMIN')
-        maxArr = self.moduleIterate('WAVEMAX')
+        '''
+            Min/max wavelengths than can be covered by each channl.
+            Wavelengths in nm.
+
+            Returns:
+                (list(tuple)): maximum ranges starting from lower wavelength
+        '''
+        minArr = self.getConfigArray('WAVEMIN')
+        maxArr = self.getConfigArray('WAVEMAX')
         return tuple(zip(minArr, maxArr))
 
-    @wlRanges.setter
-    def wlRanges(self, *args):
-        print('Warning. wlRanges of the DFB modules is not settable. Ignoring this command')
+    def getAsSpectrum(self):
+        ''' Gives a spectrum of power vs. wavelength,
+            which has the wavelengths present as an abscissa,
+            and their powers as ordinate (-120dBm if disabled)
 
-    @property
-    def moduleIds(self):
-        ''' list of module ID strings '''
-        return list(self.moduleIterate('*IDN'))
+            It starts in dBm, but you can change
+            to linear with the Spectrum.lin method
 
-    @moduleIds.setter
-    def moduleIds(self, *args):
-        print('Warning. moduleIds of the DFB modules is not settable. Ignoring this command')
-
-    def parseDictionary(self, chanValDict, setArrayType=None):
-        ''' Takes a dictionary corresponding to 'wls', 'powers', or 'enableState' and turns
-            it into an array that is stored in the order of blocked out channels. Unspecified
-            values are taken from the current setting
+            Returns:
+                (Spectrum): The WDM spectrum of the present outputs
         '''
-        if type(chanValDict) is not dict:
-            raise TypeError('The argument must be a dictionary')
-        if setArrayType is None:
-            setArrayType = 'wls'
-        if setArrayType == 'enableState':
-            setArrayBuilder = self.enableState
-        elif setArrayType == 'wls':
-            setArrayBuilder = self.wls
-        elif setArrayType == 'powers':
-            setArrayBuilder = self.powers
-        else:
-            raise TypeError('Not a valid setArrayType. Got ' + str(setArrayType) +
-                            '. Need enableState, wls, or powers')
-        for chan in chanValDict.keys():
-            if chan not in self.dfbChans:
-                raise ChannelError('Channel index not blocked out. ' +
-                                      'Requested ' + str(chan) +
-                                      ', Available ' + str(self.dfbChans))
-        for iCh, chan in enumerate(self.dfbChans):
-            if chan in chanValDict.keys():
-                setArrayBuilder[iCh] = chanValDict[chan]
-        return setArrayBuilder
+        absc = self.wls
+        ordi = self.powers
+        for iCh, ena in enumerate(self.enableState):
+            if ena == 0:
+                ordi[iCh] = -120
+        return Spectrum(absc, ordi, inDbm=True)
 
-    def moduleIterate(self, attrStr, virtualSetVals=None):
-        ''' Iterates over modules in a virtual way sending the attribute
-        If virtualSetVals=None, it performs a query by appending '?' and returns this in a virtual array
-        This does not touch the lasers that have not been reserved during initialization
-        '''
-        if virtualSetVals is not None:
-            isQuerying = False
-            virtualRetVals = None
-            if len(virtualSetVals) != len(self.dfbChans):
-                raise Exception(
-                    'moduleIterate does not yet support subset-module indexing. Use the full array... or you could implement that')
-        else:
-            isQuerying = True
-            virtualRetVals = np.zeros(len(self.dfbChans))
-        # for iBank in range(len(self.ordering)): # iterate over banks
-        for iModule in range(len(self.ordering)):  # iterate over modules
-            orderedChan = self.ordering[iModule] - 1  # get rid of 1-indexing
-            if orderedChan in self.dfbChans:  # only enter for modules that have been reserved
-                virtualChan = self.dfbChans.index(orderedChan)
-                self.bankInstruments.write('CH ' + str(iModule + 1))
-                if isQuerying:
-                    retStr = self.bankInstruments.query(attrStr + '?')
-                    virtualRetVals[virtualChan] = float(retStr)
-                else:
-                    self.bankInstruments.write(attrStr + ' ' + str(virtualSetVals[virtualChan]))
-        return virtualRetVals
+    def allOff(self):
+        self.off()
+
+    def allOn(self):
+        self.enableState = np.ones(len(self.useChans))
 
     def off(self):
-        """Turn all voltages to zero, but maintain the session
-        """
-        self.enableState = np.zeros(len(self.dfbChans))
-
-    def allOnOff(self, allOn=False):
-        if allOn:
-            self.enableState = np.ones(len(self.dfbChans))
-        else:
-            self.enableState = np.zeros(len(self.dfbChans))
-
-    # Override some messaging methods to account for the fact that there's two GPIB laser banks
-    def write(self, writeStr):
-        print('Warning: Write not performed because bank was not specified.')
-        print('    Instead, call write like this <this>.bankInstruments.write(writeStr)')
-
-    def query(self, queryStr):
-        print('Warning: Query not performed because bank was not specified.')
-        print('    Instead, call query like this <this>.bankInstruments.query(queryStr)')
-
-    def instrID(self):
-        return self.bankInstruments.instrID()
-
-    def close(self):
-        # for b in self.bankInstruments:
-        #     b.close()
-        self.bankInstruments.close()
+        self.enableState = np.zeros(len(self.useChans))

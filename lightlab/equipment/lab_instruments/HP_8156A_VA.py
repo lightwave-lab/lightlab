@@ -13,7 +13,7 @@ class HP_8156A_VA(VISAInstrumentDriver):
     __attenDB = None
 
     def __init__(self, name='The VOA on the GC bench', address=None, **kwargs):
-        super().__init__(name=name, address=address, **kwargs)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
 
     def startup(self):
         self.on()

@@ -80,6 +80,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         self._latestCurrentVal = currAmps
 
     def _configVoltage(self, voltVolts):
+        voltVolts = float(voltVolts)
         if voltVolts != 0:
             needRange = 10 ** np.ceil(np.log10(np.abs(voltVolts)))
             self.setConfigParam('SOURCE:VOLT:RANGE', needRange)
