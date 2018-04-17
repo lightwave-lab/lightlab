@@ -26,7 +26,7 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
             * otuput power in dBm (``powers``)
 
         Setting/getting logic is implemented in ``MultiModuleConfigurable``,
-        which treats the channels as independent ``Configurable``s. This means
+        which treats the channels as independent ``ConfigModules``s. This means
         that hardware communication is lazy -- parameter values are cached,
         and messages are only sent when they are unknown or when they change.
 
@@ -34,10 +34,9 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
 
         Todo:
             Multiple users at the same time is desirable. We are close.
-            Non blocked-out channels are never touched, but there are still
-            two issues
-                * Fundamental: VISA access with two sessions could collide
-                * Have to create two different instruments with different ``useChans``
+            Non blocked-out channels are never touched, but there are still two issues
+                * Fundamental: VISA access with two python processes could collide
+                * Inconvenience: Have to create two different instruments with different ``useChans``
                 for what is actually one instrument -- maybe a slice method?
     '''
     instrument_category = LaserSource
@@ -78,8 +77,8 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
     def setConfigArray(self, cStr, newValArr, forceHardware=False):
         ''' When any configuration is set, there is an equilibration time.
 
-            Adds sleep functionality when there is a change, for an
-            amount determined by the ``sleepOn`` class attribute.
+            This adds sleep functionality, only when there is a change,
+            for an amount determined by the ``sleepOn`` class attribute.
         '''
         wroteToHardware = super().setConfigArray(cStr, newValArr, forceHardware=forceHardware)
         if wroteToHardware:
@@ -90,10 +89,19 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
     # Module-level parameter setters and getters.
     @property
     def enableState(self):
+        '''
+            Returns:
+                (np.ndarray): enable states ordered like useChans
+        '''
         return self.getConfigArray('OUT')
 
     @enableState.setter
     def enableState(self, newState):
+        ''' Are lasers on or off? Provides range check.
+
+            Args:
+                newState (list, np.ndarray): enable values which must be 0 or 1
+        '''
         for ena in newState:
             if ena not in [0, 1]:
                 raise ValueError('Laser states can only be 0 or 1. ' +
@@ -101,23 +109,36 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
         self.setConfigArray('OUT', newState)
 
     def setChannelEnable(self, chanEnableDict):
-        ''' Sets a number of channel values and updates hardware
+        ''' Sets only some channel values with dict keyed by useChans,
+            e.g. ``chanEnableDict={0: 1, 2: 0}``
 
             Args:
-                chanEnableDict (dict): A dictionary specifying some {channel: enabled}
+                chanEnableDict (dict): A dictionary keyed by channel with values 0 or 1
         '''
         self.setConfigDict('OUT', chanEnableDict)
 
     def getChannelEnable(self):
+        '''
+            Returns:
+                (dict): all channel enable states, keyed by useChans
+        '''
         return self.getConfigDict('OUT')
 
     @property
     def wls(self):
-        ''' wls is in nanometers '''
+        '''
+            Returns:
+                (np.ndarray): laser wavelengths in nanometers ordered like useChans
+        '''
         return self.getConfigArray('WAVE')
 
     @wls.setter
     def wls(self, newWls):
+        ''' Laser wavelengths. Provides range check.
+
+            Args:
+                newWls (list, np.ndarray): wavelengths in nanometers
+        '''
         for iCh, wl in enumerate(newWls):
             wlRanges = self.wlRanges[iCh]
             if wl < wlRanges[0]:
@@ -133,18 +154,37 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
         self.setConfigArray('WAVE', newWls)
 
     def setChannelWls(self, chanWavelengthDict):
+        ''' Sets only some channel values with dict keyed by useChans,
+            e.g. ``chanWavelengthDict={0: 1550.5, 2: 1551}``
+
+            Args:
+                chanWavelengthDict (dict): A dictionary keyed by channel with nanometer values
+        '''
         self.setConfigDict('WAVE', chanWavelengthDict)
 
     def getChannelWls(self):
+        '''
+            Returns:
+                (dict): all channel wavelengths, keyed by useChans
+        '''
         return self.getConfigDict('WAVE')
 
     @property
     def powers(self):
-        ''' powers is in dBm '''
+        ''' Laser powers
+
+            Returns:
+                (np.ndarray): laser output powers in dBm, ordered like useChans
+        '''
         return self.getConfigArray('LEVEL')
 
     @powers.setter
     def powers(self, newPowers):
+        ''' Laser powers. Provides range check.
+
+            Args:
+                newPowers (list, np.ndarray): power in dBm
+        '''
         for iCh, level in enumerate(newPowers):
             if level < self.powerRange[0]:
                 logger.warning('Power out of range was constrained:\n' +
@@ -159,14 +199,26 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
         self.setConfigArray('LEVEL', newPowers)
 
     def setChannelPowers(self, chanPowerDict):
+        ''' Sets only some channel values with dict keyed by useChans,
+            e.g. ``chanPowerDict={0: 13, 2: -10}``
+
+            Args:
+                chanPowerDict (dict): A dictionary keyed by channel with dBm values
+        '''
         self.setConfigDict('LEVEL', chanPowerDict)
 
     def getChannelPowers(self):
+        '''
+            Returns:
+                (dict): all channel powers, keyed by useChans
+        '''
         return self.getConfigDict('LEVEL')
 
     @property
     def wlRanges(self):
-        ''' wavelength tuples in (nm, nm)
+        '''
+            Min/max wavelengths than can be covered by each channl.
+            Wavelengths in nm.
 
             Returns:
                 (list(tuple)): maximum ranges starting from lower wavelength
