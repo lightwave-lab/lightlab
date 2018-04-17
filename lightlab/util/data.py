@@ -5,6 +5,7 @@ findPeaks obviously is important.
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import interpolate
+from IPython import display
 import lightlab.util.io as io
 from lightlab import logger
 
@@ -120,7 +121,7 @@ class MeasuredFunction(object):
         absc, ordi = dataDict['absc'], dataDict['ordi']
         return cls(absc, ordi)
 
-    def simplePlot(self, *args, **kwargs):
+    def simplePlot(self, *args, livePlot=False, **kwargs):
         ''' Plots on the current axis
 
         Args:
@@ -130,7 +131,13 @@ class MeasuredFunction(object):
         Returns:
             Whatever is returned by ``pyplot.plot``
         '''
-        return plt.plot(*(self.getData()+args), **kwargs)
+        curve = plt.plot(*(self.getData() + args), **kwargs)
+        if 'label' in kwargs.keys():
+            plt.legend()
+        if livePlot:
+            display.clear_output(wait=True)
+            display.display(plt.gcf())
+        return curve
 
     ''' Simple data handling operations '''
     def __newOfSameSubclass(self, newAbsc, newOrdi):
