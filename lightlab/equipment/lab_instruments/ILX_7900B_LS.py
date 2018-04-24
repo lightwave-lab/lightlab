@@ -239,7 +239,7 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
                 (Spectrum): The WDM spectrum of the present outputs
         '''
         absc = self.wls
-        ordi = self.powers
+        ordi = self.powers.copy()
         for iCh, ena in enumerate(self.enableState):
             if ena == 0:
                 ordi[iCh] = -120
