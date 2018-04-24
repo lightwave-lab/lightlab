@@ -8,10 +8,9 @@ from IPython import display
 import matplotlib.cm
 from collections import OrderedDict
 
-from ..util import data as dUtil
-from ..util import plot as pUtil
-from ..util import io
-
+from lightlab.util.data import argFlatten, rms
+from lightlab.util.plot import plotCovEllipse
+import lightlab.util.io as io
 from lightlab import logger
 
 class Sweeper(object):
@@ -180,7 +179,7 @@ class NdSweeper(Sweeper):
                         pass
         try:
             if soakTime is not None:
-                logger.debug('Soaking for {} seconds.'.format(soakTime))
+                # logger.debug('Soaking for {} seconds.'.format(soakTime))
                 for actu in self.actuate.values():
                     f = actu[0]
                     x = actu[1][0]
@@ -334,7 +333,7 @@ class NdSweeper(Sweeper):
         if parseKeys is None:
             parseKeys = tuple(self.parse.keys())
         else:
-            parseKeys = dUtil.argFlatten(parseKeys, typs=tuple)
+            parseKeys = argFlatten(parseKeys, typs=tuple)
 
         for pk, pFun in self.parse.items():  # We're indexing this way to make sure parsing is done in the order of parse attribute, not the order of parseKeys
             if pk not in parseKeys:
@@ -484,16 +483,16 @@ class NdSweeper(Sweeper):
         if slicer is None:
             slicer = (slice(None),) * plotDims
         else:
-            slicer = dUtil.argFlatten(slicer, typs=tuple)
+            slicer = argFlatten(slicer, typs=tuple)
 
         # First figure out what the keys of data are
-        xKeys = dUtil.argFlatten(self.plotOptions['xKey'], typs=tuple)
+        xKeys = argFlatten(self.plotOptions['xKey'], typs=tuple)
         if len(xKeys) is 0:  # default is the minor sweep domain
             if not autoLabelingMaster:
                 raise Exception('No axis key specified explicitly or found in self.actuate')
             xKeys = (actKeyList[-1], )
 
-        yKeys = dUtil.argFlatten(self.plotOptions['yKey'], typs=tuple)
+        yKeys = argFlatten(self.plotOptions['yKey'], typs=tuple)
         if len(yKeys) is 0:  # default is all scalar non-domains
             if not autoLabelingMaster:
                 raise Exception('No axis key specified explicitly or found in self.actuate')
@@ -729,9 +728,9 @@ class CommandControlSweeper(Sweeper):
         self.defaultArg = np.array(defaultArg, dtype=float)
         self.allDims = len(self.defaultArg)
 
-        self.swpInds = dUtil.argFlatten(swpInds, typs=tuple)
+        self.swpInds = argFlatten(swpInds, typs=tuple)
         self.swpDims = len(self.swpInds)
-        self.domain = dUtil.argFlatten(domain, typs=tuple)
+        self.domain = argFlatten(domain, typs=tuple)
         self.swpShape = tuple(len(dom) for dom in self.domain)
         if len(self.domain) != self.swpDims:
             raise ValueError('domain and swpInds must have the same dimension.' +
@@ -897,18 +896,18 @@ class CommandControlSweeper(Sweeper):
         measWeights = self.data[..., np.array(self.swpInds)]
 
         # Statistics of every dimension at every grid point (so we're norming over trials) --
-        # errRmsVsWeight = dUtil.rms(measWeights - cmdWeights, axis=0) # Total error
+        # errRmsVsWeight = rms(measWeights - cmdWeights, axis=0) # Total error
         meanVsWeight = np.mean(measWeights, axis=0)
         errMeanVsWeight = meanVsWeight - cmdWeights
-        errStddevVsWeight = dUtil.rms(measWeights - meanVsWeight, axis=0)
+        errStddevVsWeight = rms(measWeights - meanVsWeight, axis=0)
 
         # Statistics normed over channels at every grid point
-        # netErrRmsVsWeight = dUtil.rms(errRmsVsWeight, axis=-1)
-        netErrMeanVsWeight = dUtil.rms(errMeanVsWeight, axis=-1)
-        netErrStddevVsWeight = dUtil.rms(errStddevVsWeight, axis=-1)
+        # netErrRmsVsWeight = rms(errRmsVsWeight, axis=-1)
+        netErrMeanVsWeight = rms(errMeanVsWeight, axis=-1)
+        netErrStddevVsWeight = rms(errStddevVsWeight, axis=-1)
 
         # Take the worst case grid point
-        consolidateErrorVsWeight = lambda x: np.max(np.abs(x)) if worstCase else dUtil.rms(x, axis=None)
+        consolidateErrorVsWeight = lambda x: np.max(np.abs(x)) if worstCase else rms(x, axis=None)
         accuracy = consolidateErrorVsWeight(netErrMeanVsWeight) # This gives accuracy
         precision = consolidateErrorVsWeight(netErrStddevVsWeight) # Precision
 
@@ -1037,7 +1036,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
             # plot variance ellipse
             if index[0] > 0:
                 cov = np.cov(valsAtThisGridPt, rowvar=False)
-                elli = pUtil.plotCovEllipse(cov, mean, volume=0.5, ax=interAx, ec='b', fc='none')
+                elli = plotCovEllipse(cov, mean, volume=0.5, ax=interAx, ec='b', fc='none')
             else:
                 elli = None
 
@@ -1084,139 +1083,3 @@ def assertValidPlotType(plType, dims=None, swpClass=None):
             print(plType, 'is not a valid plot type for this kind of sweep.')
         print('Available plots are:', ', '.join(availablePlots(dims, swpClass)))
         raise KeyError('Invalid plot type')
-
-
-################# Non-sweep stuff for sense actuate going here for now ###################
-
-
-# Peak search
-
-def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=False):
-    ''' Returns the optimal input that gives you the peak, and the peak value
-
-        You must set either xTol or yTol, or it will go forever.
-            Forever means 20 iterations for now
-
-        This algorithm is a modified swarm that is robust to outliers, sometimes.
-            Each iteration, it takes <nSwarm> measurements and looks at the best (highest).
-            The update is calculated by shrinking the swarm around the index of the best value.
-            It does not compare between iterations: that makes it robust to one-time outliers.
-            It attributes weight only by order of y values in an iteration, not the value between iterations or the magnitude of differences between y's within an iteration
-
-        Not designed to differentiate global vs. local maxima
-
-        Args:
-            evalPointFun (function): y=f(x) one argument, one return. The function that we want to find the peak of
-            startBounds (list, ndarray): minimum and maximum x values that bracket the peak of interest
-            nSwarm (int): number of evaluations per iteration. Use more if it's a narrow peak in a big bounding area
-            xTol (float): if the swarm x's fall within this range, search returns successfully
-            xTol (float): if the swarm y's fall within this range, search returns successfully
-            livePlot (bool): for notebook plotting
-
-        Returns:
-            (float, float): best (x,y) point of the peak
-    '''
-    def shrinkAround(arr, bestInd, shrinkage=.6):
-        fulcrumVal = 2 * arr[bestInd] - np.mean(arr)
-        return fulcrumVal + (arr - fulcrumVal) * shrinkage
-
-    nSwarm += (nSwarm + 1) % 2
-    tracker = dUtil.MeasuredFunction([], [])
-
-    offsToMeasure = np.linspace(*startBounds, nSwarm)
-    for iIter in range(20):
-        # Take measurements of the points
-        measuredVals = np.zeros(nSwarm)
-        for iPt, offs in enumerate(offsToMeasure):
-            meas = evalPointFun(offs)
-            measuredVals[iPt] = meas
-            tracker.addPoint((offs, meas))
-
-        if livePlot:
-            display.clear_output(wait=True)
-            plt.cla()
-            tracker.simplePlot('.-')
-            display.display(plt.gcf())
-
-        # Move the lowest point closer
-        bestInd = np.argmax(measuredVals)
-        # print('iter =', iIter, '; offArr =', offsToMeasure, '; best =', np.max(measuredVals))
-        worstInd = np.argmin(measuredVals)
-        if measuredVals[bestInd] - measuredVals[worstInd] < yTol \
-            or offsToMeasure[-1] - offsToMeasure[0] < xTol:
-            logger.debug('Converged on peak')
-            break
-        if worstInd == float(nSwarm - 1)/2:
-            logger.debug('Detected positive curvature')
-            # break
-        offsToMeasure = shrinkAround(offsToMeasure, bestInd)
-    return (offsToMeasure[bestInd], measuredVals[bestInd])
-
-
-def binarySearch(evalPointFun, targetY, startBounds, xTol=0, yTol=0, hardConstrain=False, livePlot=False):
-    ''' Returns the optimal X value.
-
-        The final call to evalPointFun will be of this value, so no need to call it again, if your goal is to set to the target.
-
-        xTol and yTol are ORed conditions. If one is satisfied, it will terminate successfully.
-            You must specify at least one, or this search will always terminate as failure after 30 iterations
-
-        Args:
-            xTol (float): if *domain* shifts become less than this, terminates successfully
-            yTol (float): if *range* shifts become less than this, terminates successfully
-    '''
-    startBounds.sort()
-    tracker = dUtil.MeasuredFunction([], [])
-    bracketedTarget = False
-
-    y = evalPointFun(startBounds[0])
-    tracker.addPoint((startBounds[0], y))
-    lastErr = y - targetY
-    thisX = startBounds[1]
-    step = np.diff(startBounds)[0]
-
-    for iIter in range(30):
-        # Do measurement
-        thisY = evalPointFun(thisX)
-        tracker.addPoint((thisX, thisY))
-        if iIter == 0:
-            isIncreasing = tracker.ordi[1] > tracker.ordi[0]
-        err = thisY - targetY
-        # print('iIter =', iIter, 'shift =', thisX, ', error =', err)
-        if abs(err) < yTol or step < xTol:
-            # logger.debug('binarySweep: Converged!')
-            break
-        # Calculate binary search update
-        if not bracketedTarget:
-            if np.sign(lastErr*err) < 0:
-                # logger.debug('binarySweep: bracketed it')
-                bracketedTarget = True
-            elif iIter > 0:
-                if hardConstrain:
-                    outOfRangeSide = 'high' if err < 0 else 'low'
-                    raise io.RangeError('binarySearch function value outside of hard constraints!', outOfRangeSide)
-                elif abs(err) > abs(lastErr):
-                    logger.debug('binarySweep: function changed direction. Likely overdid a peak')
-                    thisX = tracker.absc[np.argmin(tracker.ordi)]
-                    break
-            elif iIter > 4:
-                logger.debug('binarySweep: Target value out of range. Results invalid.')
-                thisX = tracker.absc[np.argmin(tracker.ordi)]
-                break
-        lastErr = err
-        if bracketedTarget:
-            step /= 2
-        if isIncreasing:
-            thisX -= np.sign(err) * step
-        else:
-            thisX += np.sign(err) * step
-
-        if livePlot:
-            display.clear_output(wait=True)
-            plt.cla()
-            tracker.simplePlot('.-')
-            targLineSpan = plt.xlim()
-            plt.plot(targLineSpan, 2*[targetY], '--k', lw=.5)
-            display.display(plt.gcf())
-    return thisX
-
