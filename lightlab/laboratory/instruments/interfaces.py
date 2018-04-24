@@ -52,6 +52,9 @@ class VectorGenerator(Instrument):
 
 
 class Clock(Instrument):
+    '''
+        See usage example at :any:`/ipynbs/Hardware/Clock.ipynb`
+    '''
     essentialMethods = Instrument.essentialMethods + \
         ['enable',
          'frequency']
