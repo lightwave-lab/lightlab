@@ -32,6 +32,8 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
 
         `Manual <http://assets.newport.com/webDocuments-EN/images/70032605_FOM-79800F_IX.PDF>`_
 
+        Usage: :any:`/ipynbs/Hardware/LaserSources-ILX.ipynb`
+
         Todo:
             Multiple users at the same time is desirable. We are close.
             Non blocked-out channels are never touched, but there are still two issues

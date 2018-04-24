@@ -25,10 +25,12 @@ def check_socket(host, port):
 class Apex_AP2440A_OSA(VISAInstrumentDriver):
     """Class for the OSA
 
-    Basic functionality includes setting/getting wavelength range and sweeping
-    Other functionality is for controlling TLS: on/off, wavelength (not implemented)
+        Basic functionality includes setting/getting wavelength range and sweeping
+        Other functionality is for controlling TLS: on/off, wavelength (not implemented)
 
-    The primary function is spectrum, which returns a Spectrum object
+        The primary function is spectrum, which returns a Spectrum object
+
+        Usage: :any:`/ipynbs/Hardware/OpticalSpectrumAnalyzer.ipynb`
     """
     instrument_category = OpticalSpectrumAnalyzer
     __wlRange = None

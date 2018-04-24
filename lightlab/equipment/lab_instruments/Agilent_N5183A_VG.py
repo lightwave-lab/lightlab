@@ -9,6 +9,8 @@ class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
 
         `Manual <http://www.manualsbase.com/manual/608672/portable_generator/agilent_technologies/n5183a_mxg/>`__
 
+        Usage: :any:`/ipynbs/Hardware/Clock.ipynb`
+
         Todo:
             Clock interface does not see sweepSetup and sweepEnable
     '''

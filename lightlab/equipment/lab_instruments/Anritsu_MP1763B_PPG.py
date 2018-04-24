@@ -7,6 +7,8 @@ import numpy as np
 class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
     ''' ANRITSU MP1761A PulsePatternGenerator
         The PPG MP1763B at Alex's bench, which also support MP1761A (by Hsuan-Tung 07/27/2017)
+
+        Usage: :any:`/ipynbs/Hardware/PulsePatternGenerator.ipynb`
     '''
     instrument_category = PulsePatternGenerator
     storedPattern = None

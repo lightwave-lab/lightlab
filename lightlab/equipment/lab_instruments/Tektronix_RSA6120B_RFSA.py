@@ -11,6 +11,8 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
 
         `Manual <http://www.giakova.com/siti/GIAKOVA/img/upload/Prodotti/file_1/RSA5000_MANUALE.pdf>`_
 
+        Usage: TODO
+
         Fairly simple class for getting RF spectra.
         The RSA6120 has a lot of advanced functionality, like spectrograms, which could be implemented later.
     '''

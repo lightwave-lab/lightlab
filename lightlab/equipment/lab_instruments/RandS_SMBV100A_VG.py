@@ -9,6 +9,8 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
 
         `Manual <https://cdn.rohde-schwarz.com/pws/dl_downloads/dl_common_library/dl_manuals/gb_1/s/smbv/SMBV100A_OperatingManual_en_16.pdf>`_
 
+        Usage: TODO
+
         This is a complicated class even though it is implementing about 1 percent of what the R&S can do.
         The philosophy is that there are several blocks that work independently.
 

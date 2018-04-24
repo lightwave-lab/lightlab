@@ -6,6 +6,8 @@ class Advantest_Q8221_PM(VISAInstrumentDriver, PowerMeterAbstract):
     ''' Q8221 Optical Multi-power Meter
 
         `Manual <https://www.advantest.com/documents/11348/146687/pdf_mn_EQ7761_PROGRAMMING_GUIDE.pdf>`__
+
+        Usage: :any:`/ipynbs/Hardware/PowerMeter.ipynb`
     '''
     instrument_category = PowerMeter
     channelDescriptions = {1: 'A', 2: 'B', 3: 'A/B'}

@@ -20,6 +20,8 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
 
             :py:class:`~lightlab.equipment.abstract_drivers.MultiChannelSource`
             provides *notion of state* (stateDict) and channel support
+
+            Usage: :any:`/ipynbs/Hardware/CurrentSources-NI.ipynb`
     '''
     instrument_category = CurrentSource
 
