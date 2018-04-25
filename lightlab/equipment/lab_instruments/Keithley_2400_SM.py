@@ -11,6 +11,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
 
         `Manual: <http://research.physics.illinois.edu/bezryadin/labprotocol/Keithley2400Manual.pdf>`__
 
+        Usage: :any:`/ipynbs/Hardware/Keithley.ipynb`
+
         Capable of sourcing current and measuring voltage, such as a Keithley
 
         Also provides interface methods for measuring resistance and measuring power

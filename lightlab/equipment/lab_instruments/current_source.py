@@ -9,7 +9,11 @@ from lightlab import visalogger as logger
 
 
 class CurrentSources(VISAInstrumentDriver):
-    """Class for controlling NI-DAQ PCI board, wrapped by Labview, wrapped by TCPIP
+    """
+        This class has been deprecated for a long time and will be
+        removed soon. Use NI_PCI_6723.
+
+        Class for controlling NI-DAQ PCI board, wrapped by Labview, wrapped by TCPIP
         This uses a Labview listener working with TCPIP on the GC bench computer (andromeda)
         Interface to this module is meant to look like a TCPIP server
 

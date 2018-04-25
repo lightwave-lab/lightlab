@@ -7,6 +7,9 @@ class Tektronix_DPO4034_Oscope(VISAInstrumentDriver, TekScopeAbstract):
         See abstract driver for description
 
         `Manual <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`__
+
+        Usage: :any:`/ipynbs/Hardware/Oscilloscope.ipynb`
+
     '''
     instrument_category = Oscilloscope
 

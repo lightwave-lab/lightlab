@@ -5,6 +5,8 @@ from lightlab.laboratory.instruments import Clock
 class Agilent_83712B_clock(VISAInstrumentDriver, Configurable):
     '''
         Where is manual?
+
+        Usage: :any:`/ipynbs/Hardware/Clock.ipynb`
     '''
     instrument_category = Clock
 
