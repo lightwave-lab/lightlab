@@ -14,7 +14,7 @@
     .. toctree::
        :maxdepth: 1
 {% for item in submodules %}
-       {{ fullname }}.{{ item }}
+       {{ item }} <{{ fullname }}.{{ item }}>
        {%- endfor %}
     {%- endif -%}
 
@@ -24,7 +24,7 @@
     .. toctree::
        :maxdepth: 1
 {% for item in subpackages %}
-       {{ fullname }}.{{ item }}
+       {{ item }} <{{ fullname }}.{{ item }}>
        {%- endfor %}
     {%- endif %}
 
