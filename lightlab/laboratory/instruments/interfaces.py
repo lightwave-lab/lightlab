@@ -42,6 +42,7 @@ class Keithley(SourceMeter):
 
 
 class VectorGenerator(Instrument):
+    ''' Usage: TODO '''
     essentialMethods = Instrument.essentialMethods + \
         ['amplitude',
          'frequency',
@@ -66,7 +67,7 @@ class Clock(Instrument):
 
 
 class NICurrentSource(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/CurrentSource-NI.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/CurrentSources-NI.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['setChannelTuning',
          'getChannelTuning',
@@ -74,6 +75,7 @@ class NICurrentSource(Instrument):
 
 
 class CurrentSource(Instrument):
+    ''' Deprecated/Future '''
     essentialMethods = Instrument.essentialMethods + \
         ['setChannelTuning',
          'getChannelTuning',
@@ -91,7 +93,7 @@ class FunctionGenerator(Instrument):
 
 
 class LaserSource(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/LaserSource-ILX.ipynb` '''
+    ''' Usage: :any:`/ipynbs/Hardware/LaserSources-ILX.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['setChannelEnable',
          'getChannelEnable',
@@ -186,6 +188,7 @@ class NetworkAnalyzer(Instrument):
 
 
 class ArduinoInstrument(Instrument):
+    ''' Usage: TODO '''
     essentialMethods = Instrument.essentialMethods + \
         ['write',
          'query']
