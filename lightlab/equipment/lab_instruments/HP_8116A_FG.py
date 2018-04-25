@@ -13,6 +13,7 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
         Manual?
 
         Usage: :any:`/ipynbs/Hardware/FunctionGenerator.ipynb`
+
     '''
     instrument_category = FunctionGenerator
 

@@ -30,7 +30,8 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
 
         The primary function is spectrum, which returns a Spectrum object
 
-        Usage: :any:`/ipynbs/Hardware/OpticalSpectrumAnalyzer.ipynb`
+        Usage: :ref:`/ipynbs/Hardware/OpticalSpectrumAnalyzer.ipynb`
+
     """
     instrument_category = OpticalSpectrumAnalyzer
     __wlRange = None

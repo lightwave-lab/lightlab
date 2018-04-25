@@ -9,6 +9,7 @@ class Tektronix_TDS6154C_Oscope(VISAInstrumentDriver, TekScopeAbstract):
         `Manual <http://www.tek.com/sites/tek.com/files/media/media/resources/55W_14873_9.pdf>`__
 
         Usage: :any:`/ipynbs/Hardware/Oscilloscope.ipynb`
+
     '''
     instrument_category = Oscilloscope
 

@@ -10,6 +10,7 @@ class HP_8156A_VA(VISAInstrumentDriver):
         `Manual <https://www.artisantg.com/info/ATGt6b5s.pdf>`__
 
         Usage: :any:`/ipynbs/Hardware/VariableAttenuator.ipynb`
+
     '''
     instrument_category = VariableAttenuator
     safeSleepTime = 1  # Time it takes to settle

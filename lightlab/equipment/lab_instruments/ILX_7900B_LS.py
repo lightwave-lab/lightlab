@@ -23,7 +23,7 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
         Provides array-based and dict-based setters/getters for
             * whether laser is on or off (``enableState``)
             * tunable wavelength output (``wls``)
-            * otuput power in dBm (``powers``)
+            * output power in dBm (``powers``)
 
         Setting/getting logic is implemented in ``MultiModuleConfigurable``,
         which treats the channels as independent ``ConfigModules``s. This means
@@ -32,7 +32,7 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
 
         `Manual <http://assets.newport.com/webDocuments-EN/images/70032605_FOM-79800F_IX.PDF>`_
 
-        Usage: :any:`/ipynbs/Hardware/LaserSources-ILX.ipynb`
+        Usage: :ref:`/ipynbs/Hardware/LaserSources-ILX.ipynb`
 
         Todo:
             Multiple users at the same time is desirable. We are close.
