@@ -152,6 +152,7 @@ class PulsePatternGenerator(Instrument):
 
 
 class RFSpectrumAnalyzer(Instrument):
+    ''' Usage: TODO '''
     essentialMethods = Instrument.essentialMethods + \
         ['getMeasurements',
          'setMeasurement',
