@@ -3,7 +3,7 @@
     These can be overridden after import if desired.
 
         1. projectDir
-            The git repo of the current project
+            The git repo of the file that first imported io
 
         2. dataHome = projectDir/data
             Where all your data is saved.
@@ -32,9 +32,21 @@ except IOError as e:
     # git repo not found, logging that.
     logger.warning(e)
     projectDir = Path(os.getcwd())
-    logger.warning("Default projectDir='{}'".format(projectDir))
+    logger.warning("io.projectDir is typically set to the root of the"
+                   " git repository containing this file. Because none"
+                   " was found, projectDir was set to "
+                   f"'{projectDir}'. To remove this"
+                   f" warning, please create a git repository in '{projectDir}'"
+                   " or any of its parent directories.\n"
+                   "------------------------------\n"
+                   "To create a git repository in a folder, run the following commands:\n\n"
+                   "$ cd folder/\n"
+                   "$ git init .")
 if not os.access(projectDir, 7):
-    logger.warning("Cannot write to this projectDir({}).".format(projectDir))
+    logger.warning("You do not have permission to save or overwrite "
+                   f"files in '{projectDir}'. If you need to save files, contact "
+                   f"'{projectDir.owner()}' or an administrator.")
+
 
 # Data files
 dataHome = projectDir / 'data'

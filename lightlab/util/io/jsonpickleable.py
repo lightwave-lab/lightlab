@@ -10,11 +10,15 @@ from lightlab.laboratory import Hashable
 class HardwareReference(object):
     ''' Spoofs an instrument
     '''
+
     def __init__(self, klassname):
         self.klassname = klassname
 
     def open(self):
-        raise TypeError('This object is placeholder a real '
+        raise TypeError(f'This object is placeholder for a real '
+                        f'{self.klassname}. '
+                        'You probably loaded this via JSON.')
+
             + '{}. '.format(self.klassname)
             + 'You probably loaded this via JSON.')
 
