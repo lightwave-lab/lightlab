@@ -404,10 +404,11 @@ class Instrument(Node):
     def isLive(self):
         try:
             driver = self.driver_object
+            query_id = driver.instrID()
+            logger.info("Found %s in %s.", self.name, self.address)
             if self.id_string is not None:
-                query_id = driver.instrID()
                 if self.id_string == query_id:
-                    logger.info("Found %s in %s.", self.name, self.address)
+                    logger.info("id_string of %s is accurate", self.name)
                     return True
                 else:
                     logger.warn("%s: %s, expected %s", self.address,
