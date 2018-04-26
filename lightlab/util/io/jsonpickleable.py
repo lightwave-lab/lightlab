@@ -19,9 +19,6 @@ class HardwareReference(object):
                         f'{self.klassname}. '
                         'You probably loaded this via JSON.')
 
-            + '{}. '.format(self.klassname)
-            + 'You probably loaded this via JSON.')
-
 
 class JSONpickleable(Hashable):
     ''' Produces human readable json files. Inherits _toJSON from Hashable
