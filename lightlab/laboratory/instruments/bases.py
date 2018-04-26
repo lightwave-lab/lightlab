@@ -373,6 +373,12 @@ class Instrument(Node):
 
     @property
     def id_string(self):
+        """
+        The id_string should match the value returned by
+        self.driver.instrID(), and is checked by the command
+        self.isLive() in order to authenticate that the intrument
+        in that address is the intended one.
+        """
         return self._id_string
 
     def __str__(self):
@@ -384,6 +390,12 @@ class Instrument(Node):
         lines.append("Bench: {}".format(self.bench))
         lines.append("Host: {}".format(self.host))
         lines.append("address: {}".format(self.address))
+        lines.append("id_string: {}".format(self.id_string))
+        if not self.id_string:
+            lines.append("The id_string should match the value returned by"
+                " self.driver.instrID(), and is checked by the command"
+                " self.isLive() in order to authenticate that the intrument"
+                " in that address is the intended one.")
         lines.append("driver_class: {}".format(self.driver_class))
         lines.append("=====")
         lines.append("Ports")
@@ -402,6 +414,7 @@ class Instrument(Node):
         print("\n".join(lines))
 
     def isLive(self):
+        """Authenticates the instrument based on the id_string."""
         try:
             driver = self.driver_object
             if self.id_string is not None:
