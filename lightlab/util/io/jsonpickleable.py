@@ -148,7 +148,7 @@ class JSONpickleable(Hashable):
 
     def save(self, filename):
         rp = _makeFileExist(_endingWith(filename, '.json'))
-        with open(filename, 'w') as f:
+        with open(rp, 'w') as f:
             f.write(self._toJSON())
 
     @classmethod
