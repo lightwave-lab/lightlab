@@ -1,4 +1,4 @@
-Developer: getting started
+Developer Guide
 ================================================
 This section covers topics that have great documentation online. The main differences in this workflow stem from the hardware aspect of lightlab. That means almost all development should occur on the machine in lab that is going to be accessing the instruments. First, follow the instructions for connecting to the instrumentation server for users.
 
@@ -155,7 +155,7 @@ They do not play nice. Here are some :doc:`strategies </_static/misc/mergeWithNo
 
 Running monitor server from your ``myWork`` environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-``lightlab`` offers tools for monitoring progress of long sweeps. See :py:class:`~lightlab.util.io.ProgressWriter`. These servers are launched from your own environment, not lightlab's. So far, this is just for long sweeps that simply tell you how far along they are, and when they will complete.
+``lightlab`` offers tools for monitoring progress of long sweeps. See :py:class:`~lightlab.util.io.progress.ProgressWriter`. These servers are launched from your own environment, not lightlab's. So far, this is just for long sweeps that simply tell you how far along they are, and when they will complete.
 
 First, you must get another port allocated to you, different from the one you used for Jupyter. Put that in a file called ``.monitorhostport`` in ``myWork`` (where the Makefile is). Let's say that port is 8000::
 
@@ -227,9 +227,24 @@ Documenting
 ^^^^^^^^^^^^^^
 Documenting as you go is helpful for other developers and code reviewers.  So useful that we made a whole :doc:`tutorial <docYourCode>` on it. We use auto-API so that docstrings in code make it into the official documentation.
 
+For non-hardware features, a good strategy is to use tests that are both functional and documentation by example. In cases where visualization is helpful, use notebook-based, which can be linked from this documentation or in-library docstrings :ref:`like this </ipynbs/Tests/TestPeakAssistant.ipynb>`. Otherwise, you can make `pytest <https://docs.pytest.org/en/latest/>`_ unittests in the tests directory, which can be linked like this: :py:mod:`~tests.test_virtualization`.
+
+For new hardware drivers, as a general rule, document its basic behavior in ``lightlab/notebooks/BasicHardwareTests``. Make sure to save with outputs. Finally, link it in the docstring like this::
+
+    class Tektronix_DPO4034_Oscope(VISAInstrumentDriver, TekScopeAbstract):
+    ''' Slow DPO scope. See abstract driver for description
+
+        `Manual <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`__
+
+        Usage: :any:`/ipynbs/Hardware/Oscilloscope.ipynb`
+
+    '''
+    instrument_category = Oscilloscope
+    ...
+
 Linting
 ^^^^^^^
-As of now, we don't require strict `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance, but we might in the future. However, we try to follow as many of their guidelines as possible. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-flake8>`_ is a good linter. It visually shows what is going on while you code, saving lots of headaches:
+As of now, we don't require strict `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance, but we might in the future. However, we try to follow as many of their guidelines as possible:
 
 .. figure:: images/sublimelinter_example_bad.png
     :alt: bad pep8 example
@@ -249,6 +264,16 @@ Sometimes the linter is wrong. You can tell it to ignore lines by adding comment
     from badPractice import *  # noqa
 
 ``# noqa`` is going to ignore pyflakes linting, whereas ``# pylint`` configures `pylint` behavior.
+
+If you use Sublime editor
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Everyone has their favorite editor. We like `Sublime Text <https://www.sublimetext.com>`_. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-flake8>`_ is a good linter. It visually shows what is going on while you code, saving lots of headaches
+
+Sublime also helps you organize your files, autocomplete, and manage whitespace. This is :doc:`sublime-lightlab`. Put it in the ``lightlab/`` directory and call it something like ``sublime-lightlab.sublime-project``.
+
+By the way, you can make a command-line Sublime by doing this in Terminal (for MacOS)::
+
+    ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/subl
 
 Adding a new package
 ^^^^^^^^^^^^^^^^^^^^^
