@@ -284,6 +284,9 @@ class Instrument(Node):
         if attrName in self.essentialProperties + self.essentialMethods:  # or methods
             return setattr(self.driver, attrName, newVal)
         else:
+            if attrName == 'address':  # Reinitialize the driver
+                del self.__driver_object
+                self.__driver_object = None
             return super().__setattr__(attrName, newVal)
 
     def __delattr__(self, attrName):
