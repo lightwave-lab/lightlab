@@ -67,8 +67,38 @@ class LabState(Hashable):
         super().__init__()
 
     def updateHost(self, *hosts):
-        for host in hosts:
+        ''' Checks the number of instrumentation_servers.
+            There should be exactly one.
+        '''
+        instrumentation_server = None
+        old_hostnames = []
+        for old_host in self.hosts.values():
+            old_hostnames.append(old_host.name)
+            if old_host.is_instrumentation_server:
+                instrumentation_server = old_host.name
+        for new_host in hosts:
+            # Updating instrumentation_server
+            if (new_host.is_instrumentation_server
+                    and instrumentation_server is not None):
+                # Check for instrumentation_server clash
+                if new_host.name != instrumentation_server:
+                    logger.warning('Instrumentation server is already present: ' +
+                                   f'{instrumentation_server}\n' +
+                                   f'Not updating host {new_host.name}!')
+                    continue
+                else:
+                    instrumentation_server_present = True
+            # Will an update happen?
+            if new_host.name in old_hostnames:
+                logger.info(f'Overwriting host: {host.name}')
+                # Will it end up removing the instrumentation_server?
+                if (host.name == instrumentation_server
+                        and not host.is_instrumentation_server):
+                    instrumentation_server = None
+
             self.hosts[host.name] = host
+        if instrumentation_server_present == False:
+            logger.warning('Instrumentation server not yet present')
 
     def updateBench(self, *benches):
         for bench in benches:
