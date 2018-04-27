@@ -1,7 +1,8 @@
 '''
 This module contains classes responsible to maintain a record of the current state of the lab.
 '''
-from lightlab.laboratory import Hashable
+from lightlab.laboratory import Hashable, NamedList, TypedList
+from lightlab.laboratory.instruments import Host, Bench, Instrument, Device
 import hashlib
 import jsonpickle
 import sys
@@ -34,7 +35,7 @@ def hash_sha256(string):
 
 
 class LabState(Hashable):
-    __version__ = 1
+    __version__ = 2
     __sha256__ = None
     __user__ = None
     __datetime__ = None
@@ -42,27 +43,20 @@ class LabState(Hashable):
     hosts = None
     benches = None
     connections = None
-
-    @property
-    def instruments(self):
-        instruments = list()
-        for _, bench in self.benches.items():
-            instruments.extend(bench.instruments)
-        for _, host in self.hosts.items():
-            instruments.extend(host.instruments)
-        return list(set(instruments))  # unique elements
+    instruments = None
 
     @property
     def instruments_dict(self):
-        instruments_dict = dict()
-        for instrument in self.instruments:
-            instruments_dict[instrument.name] = instrument
-        return instruments_dict
+        return self.instruments.dict
 
-    def __init__(self, filename=_filename):
-        self.hosts = dict()
-        self.benches = dict()
+    def __init__(self, filename=None):
+        self.hosts = TypedList(Host)
+        self.benches = TypedList(Bench)
         self.connections = list()
+        self.devices = TypedList(Device)
+        self.instruments = TypedList(Instrument)
+        if filename is None:
+            filename = _filename
         self.filename = filename
         super().__init__()
 
@@ -74,44 +68,26 @@ class LabState(Hashable):
         for bench in benches:
             self.benches[bench.name] = bench
 
-    def deleteInstrumentFromName(self, name, force=False):
+    def deleteInstrumentFromName(self, name):
         matching_instruments = list(filter(lambda x: x.name == name,
                                            self.instruments))
-        delete = False
-        if len(matching_instruments) == 1:
-            delete = True
-        elif len(matching_instruments) > 1:
-            if not force:
-                logger.error("Found multiple instruments named {}.\n Doing nothing.".format(name))
-            else:
-                logger.warning("Found multiple instruments named {}.\n Deleting all.".format(name))
-                delete = True
-        else:
-            logger.info("No instrument named {} found".format(name))
-        if delete:
-            for instr_obj in matching_instruments:
-                instr_obj.bench = None
-                instr_obj.host = None
-                del instr_obj
+        assert len(matching_instruments) == 1
+        del self.instruments[name]
 
     def insertInstrument(self, instrument):
-        # TODO test if bench and/or host are in lab
-        inserted = False
-        if instrument.bench is not None:
-            instrument.bench.addInstrument(instrument)
-            inserted = True
-        if instrument.host is not None:
-            instrument.host.addInstrument(instrument)
-            inserted = True
-        if not inserted:
-            logger.error("host or bench variables must be assigned.")
+        self.instruments.append(instrument)
+        if instrument.bench and instrument.bench not in self.benches:
+            logger.warning(f"Insterting *new* bench {instrument.bench.name}")
+            self.benches.append(instrument.bench)
+        if instrument.host and instrument.host not in self.hosts:
+            logger.warning(f"Inserting *new* host {instrument.host.name}")
+            self.hosts.append(instrument.host)
 
     def insertDevice(self, device):
-        # TODO test if bench is in lab
-        if device.bench is not None:
-            device.bench.addDevice(device)
-        else:
-            logger.error("bench variable must be assigned.")
+        self.devices.append(device)
+        if device.bench and device.bench not in self.benches:
+            logger.warning(f"Insterting *new* bench {device.bench.name}")
+            self.benches.append(device.bench)
 
     def updateConnections(self, *connections):
         # Verify if ports are valid, otherwise do nothing.
@@ -142,40 +118,32 @@ class LabState(Hashable):
                 logger.warning("Connection already exists: %s", connection)
         return True
 
-    @property
-    def devices(self):
-        devices = list()
-        for bench in self.benches.values():
-            devices.extend(bench.devices)
-        return devices
 
     @property
     def devices_dict(self):
-        return {device.name: device for device in self.devices}
+        return self.devices.dict
 
+
+    # TODO Deprecate
     def findBenchFromInstrument(self, instrument):
-        for benchname, bench in self.benches.items():
-            if instrument in bench.instruments:
-                return bench
-        return None
+        return instrument.bench
 
     def findBenchFromDevice(self, device):
-        for benchname, bench in self.benches.items():
-            if device in bench.devices:
-                return bench
-        return None
+        return device.bench
 
     def findHostFromInstrument(self, instrument):
-        for hostname, host in self.hosts.items():
-            if instrument in host.instruments:
-                return host
-        return None
+        return instrument.host
 
     @classmethod
-    def loadState(cls, filename=_filename, validateHash=True):
+    def loadState(cls, filename=None, validateHash=True):
+        if filename is None:
+            filename = _filename
+
         with open(filename, 'r') as file:
             frozen_json = file.read()
         json_state = json.decode(frozen_json)
+        import sys
+        print(json_state, file=sys.stderr)
 
         user = json_state.pop("__user__")
         datetime = json_state.pop("__datetime__")
@@ -302,6 +270,20 @@ def __init__(module):
         module.lab = module.LabState()
 
 
+# class _Sneaky(object):
+
+#     def __init__(self, name):
+#         self.module = sys.modules[name]
+#         sys.modules[name] = self
+#         self.initializing = True
+
+#     def __getattr__(self, name):
+#         # call module.__init__ after import introspection is done
+#         if self.initializing and not name[:2] == '__' == name[-2:]:
+#             self.initializing = False
+#             __init__(self.module)
+#         return getattr(self.module, name)
+
 class _Sneaky(object):
 
     def __init__(self, name):
@@ -309,12 +291,22 @@ class _Sneaky(object):
         sys.modules[name] = self
         self.initializing = True
 
-    def __getattr__(self, name):
-        # call module.__init__ after import introspection is done
-        if self.initializing and not name[:2] == '__' == name[-2:]:
+    def __getattribute__(self, name):
+        if name in ["initializing", "module"]:
+            return super().__getattribute__(name)
+
+        # call module.__init__ only after import introspection is done
+        # e.g. if we need module.lab
+        if self.initializing and name == "lab":
             self.initializing = False
             __init__(self.module)
         return getattr(self.module, name)
+
+    def __setattr__(self, name, value):
+        if name in ["initializing", "module"]:
+            return super().__setattr__(name, value)
+        return setattr(self.module, name, value)
+
 
 
 _Sneaky(__name__)

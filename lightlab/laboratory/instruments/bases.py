@@ -1,9 +1,7 @@
 '''
 This module provides an interface for instruments in the lab and virtual ones.
 '''
-from lightlab.laboratory import Node
-from lightlab.laboratory.devices import Device
-import lightlab.laboratory.state as labstate
+from lightlab.laboratory import Node, typed_property, TypedList
 from lightlab.equipment.visa_bases import VISAObject, DefaultDriver
 
 from lightlab import logger
@@ -19,16 +17,17 @@ class Host(Node):
     mac_address = None
     hostname = None
     os = "linux-ubuntu"  # linux-ubuntu, linux-centos, windows, mac etc.
-    instruments = None
 
     __cached_list_resources_info = None
     __cached_gpib_instrument_list = None
 
-    def __init__(self, instruments=None, *args, **kwargs):
-        if instruments is None:
-            instruments = list()
-        self.instruments = instruments
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    @property
+    def instruments(self):
+        from lightlab.laboratory.state import lab
+        return TypedList(Instrument, *list(filter(lambda x: x.host == self, lab.instruments)))
 
     def __contains__(self, item):
         instrument_search = item in self.instruments
@@ -125,8 +124,6 @@ class Bench(Node):
     """ Class storing information about benches, for the purpose of
     facilitating location in lab. """
     name = None
-    devices = None
-    instruments = None
 
     def __contains__(self, item):
 
@@ -144,43 +141,50 @@ class Bench(Node):
             logger.debug("{} is neither an Instrument nor a Device".format(item))
             return False
 
-    def __init__(self, name, devices=None,
-                 instruments=None, *args, **kwargs):
+    def __init__(self, name, *args, **kwargs):
 
         self.name = name
-        if devices is None:
-            devices = list()
-        self.devices = devices
-        if instruments is None:
-            instruments = list()
-        self.instruments = instruments
         super().__init__(*args, **kwargs)
 
+    @property
+    def instruments(self):
+        from lightlab.laboratory.state import lab
+        return TypedList(Instrument, *list(filter(lambda x: x.bench == self, lab.instruments)))
+
+    @property
+    def devices(self):
+        from lightlab.laboratory.state import lab
+        return TypedList(Device, *list(filter(lambda x: x.bench == self, lab.devices)))
+
     def addInstrument(self, *instruments):
+        from lightlab.laboratory.state import lab
         for instrument in instruments:
             if instrument not in self.instruments:
-                self.instruments.append(instrument)
+                lab.instruments.append(instrument)
 
     def removeInstrument(self, *instruments):
+        from lightlab.laboratory.state import lab
         # TODO Remove all connections
         for instrument in instruments:
             if type(instrument) is str:
                 logger.warn('Cannot remove by name string. Use the object')
             try:
-                self.instruments.remove(instrument)
+                lab.instruments.remove(instrument)
             except ValueError as err:
                 logger.warn("%s not currently placed in %s", instrument, self)
 
     def addDevice(self, *devices):
+        from lightlab.laboratory.state import lab
         for device in devices:
             if device not in self.devices:
-                self.devices.append(device)
+                lab.devices.append(device)
 
     def removeDevice(self, *devices):
         # TODO Remove all connections
+        from lightlab.laboratory.state import lab
         for device in devices:
             try:
-                self.devices.remove(device)
+                lab.devices.remove(device)
             except ValueError as err:
                 logger.warn("%s not currently placed in %s", device, self)
 
@@ -224,8 +228,8 @@ class Instrument(Node):
 
     _id_string = None
     _name = None
-    __bench = None
-    __host = None
+    _bench = None
+    _host = None
     ports = None
 
     essentialMethods = ['startup']
@@ -233,8 +237,8 @@ class Instrument(Node):
     optionalAttributes = []
 
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
-        self.__bench = kwargs.pop("bench", None)
-        self.__host = kwargs.pop("host", None)
+        self.bench = kwargs.pop("bench", None)
+        self.host = kwargs.pop("host", None)
         self.ports = kwargs.pop("ports", dict())
 
         self.__driver_object = kwargs.pop("driver_object", None)
@@ -342,33 +346,10 @@ class Instrument(Node):
     def driver(self):
         return self.driver_object
 
-    @property
-    def bench(self):
-        if self.__bench is None:
-            self.__bench = labstate.lab.findBenchFromInstrument(self)
-        return self.__bench
 
-    @bench.setter
-    def bench(self, new_bench):
-        if self.bench is not None:
-            self.bench.removeInstrument(self)
-        if new_bench is not None:
-            new_bench.addInstrument(self)
-        self.__bench = new_bench
+    bench = typed_property(Bench, "_bench")
+    host = typed_property(Host, "_host")
 
-    @property
-    def host(self):
-        if self.__host is None:
-            self.__host = labstate.lab.findHostFromInstrument(self)
-        return self.__host
-
-    @host.setter
-    def host(self, new_host):
-        if self.host is not None:
-            self.host.removeInstrument(self)
-        if new_host is not None:
-            new_host.addInstrument(self)
-        self.__host = new_host
 
     @property
     def name(self):
@@ -442,8 +423,37 @@ class Instrument(Node):
     #     return cls(id_string, gpib_address=gpib_address)
 
 
+#TODO add device equality function
+class Device(Node):
+    name = None
+    ports = None
+    _bench = None
+
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.ports = kwargs.pop("ports", dict())
+        self.bench = kwargs.pop("bench", None)
+        super().__init__(**kwargs)
+
+    bench = typed_property(Bench, '_bench')
+
+    def __str__(self):
+        return "Device {}".format(self.name)
+
+    def display(self):
+        # Print benches table
+        lines = ["{}".format(self)]
+        lines.append("Bench: {}".format(self.bench))
+        lines.append("=====")
+        lines.append("Ports")
+        lines.append("=====")
+        if len(self.ports) > 0:
+            lines.extend(["   {}".format(str(port)) for port in self.ports])
+        else:
+            lines.append("   No ports.")
+        lines.append("***")
+        print("\n".join(lines))
+
+
 class NotFoundError(RuntimeError):
     pass
-
-
-

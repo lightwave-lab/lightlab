@@ -1,4 +1,5 @@
 import jsonpickle
+from collections import MutableSequence
 
 __all__ = ["Node"]
 
@@ -73,3 +74,104 @@ class Hashable(object):
 class Node(Hashable):
     def placeBench(self, new_bench):
         self.bench = new_bench
+
+
+def typed_property(type_obj, name):
+    def fget(self):
+        return getattr(self, name)
+
+    def fset(self, value):
+        if value is None or isinstance(value, type_obj):
+            return setattr(self, name, value)
+        else:
+            raise TypeError(f"{value} is not instance of {type_obj}")
+
+    def fdel(self):
+        return setattr(self, name, None)
+
+    doc = f"Property that only accepts {type_obj} values"
+
+    return property(fget, fset, fdel, doc)
+
+
+# https://stackoverflow.com/questions/3487434/overriding-append-method-after-inheriting-from-a-python-list
+class NamedList(MutableSequence, Hashable):
+    """
+    Instrument list that enforces that there are only one instrument name in the list.
+
+    """
+
+    def __init__(self, *args):
+        self.list = list()
+        self.extend(list(args))
+
+    @property
+    def dict(self):
+        return {i.name: i for i in self}
+
+    @property
+    def values(self):
+        return lambda: iter(self.list)
+
+    @property
+    def keys(self):
+        return lambda: iter([i.name for i in self])
+
+    def check(self, v):
+        if not hasattr(v, 'name'):
+            raise TypeError(f"{type(v)} does not have name.")
+
+    def __len__(self): return len(self.list)
+
+    def __getitem__(self, i):
+        if isinstance(i, str):
+            return self.dict[i]
+        return self.list[i]
+
+    def __delitem__(self, i):
+        if isinstance(i, str):
+            for idx in [idx for idx, elem in enumerate(self) if elem.name == i]:
+                del self.list[idx]
+        else:
+            del self.list[i]
+
+    def __setitem__(self, i, v):
+        self.check(v)
+        if isinstance(i, str):
+            if i in self.dict.keys():
+                self.dict[i] = v
+            else:
+                if i != v.name:
+                    # Renaming instrument to conform to the dict's key
+                    # named_list['name1'] = Instrument('name2')
+                    # Instrument will be renamed to name1 prior to insertion
+                    v.name = i
+                self.list.append(v)
+        else:
+            self.list[i] = v
+
+    def insert(self, i, v):
+        self.check(v)
+        name_list = [i.name for i in self]
+        if v.name in name_list:
+            raise RuntimeError(f"{v.name} already exists in list {name_list}.")
+        if isinstance(i, str):
+            del self[i]
+            self[i] = v
+        self.list.insert(i, v)
+
+    def __str__(self):
+        return str(self.list)
+
+class TypedList(NamedList):
+
+    def __init__(self, obj_type, *args):
+        self.obj_type = obj_type
+        super().__init__(*args)
+
+    def check(self, v):
+        if not isinstance(v, self.obj_type):
+            raise TypeError(f"{v} is not an instance of {self.obj_type}")
+        return super().check(v)
+
+
