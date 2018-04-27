@@ -50,7 +50,22 @@ if not os.access(projectDir, 7):
 
 # Data files
 dataHome = projectDir / 'data'
-fileDir = dataHome  # Set this in your experiment
+# fileDir = dataHome  # Set this in your experiment
+
+# class FileDirHelper(object):
+#     def __init__(self):
+#         self.__fileDir = dataHome
+
+#     def __get__(self, instance, owner):
+#         return self.__fileDir
+
+#     def __set__(self, instance, newDir):
+#         self.__fileDir = newDir
+
+#     def __delete__(self, instance):
+#         del self.__fileDir
+
+# fileDir = FileDirHelper()
 
 # Monitor files
 monitorDir = projectDir / 'progress-monitor'

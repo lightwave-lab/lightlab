@@ -6,8 +6,9 @@ import pickle
 import gzip
 import numpy as np
 
-from .paths import fileDir
+from . import _getFileDir
 from lightlab import logger
+
 
 # File functions. You must set the fileDir first
 def _makeFileExist(filename):
@@ -16,12 +17,24 @@ def _makeFileExist(filename):
         Returns:
             (Path): the fully resolved path to file
     '''
-    p = fileDir / filename
-    os.makedirs(fileDir, mode=0o775, exist_ok=True)
-    p.touch()
-    rp = p.resolve()
+    rp = _getFileDir(filename)
+    os.makedirs(_getFileDir(), mode=0o775, exist_ok=True)
+    rp.touch()
     logger.debug("Saving to file: {}".format(rp))
     return rp
+
+
+def printAvailableFiles():
+    maxStrLen = 0
+    for child in _getFileDir().iterdir():
+        maxStrLen = max(maxStrLen, len(child.name))
+    for child in _getFileDir().iterdir():
+        if child.name in ['.', '..', '.DS_Store']:
+            continue
+        elif child.is_file():
+            print(child.name)
+        elif child.is_dir():
+            print(child.name.ljust(maxStrLen+2, '.'), '(directory)')
 
 
 def savePickle(filename, dataTuple):
@@ -36,8 +49,7 @@ def savePickle(filename, dataTuple):
 
 def loadPickle(filename):
     ''' Uses pickle '''
-    p = fileDir / filename
-    rp = p.resolve()
+    rp = _getFileDir(filename)
     with rp.open('rb') as fx:
         return pickle.load(fx)
 
