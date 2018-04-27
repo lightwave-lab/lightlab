@@ -7,7 +7,6 @@ import gzip
 import numpy as np
 
 from . import _getFileDir
-from lightlab import logger
 
 
 # File functions. You must set the fileDir first
