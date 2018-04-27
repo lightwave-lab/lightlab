@@ -23,17 +23,34 @@ def _makeFileExist(filename):
     return rp
 
 
-def printAvailableFiles():
+def pprintFileDir():
+    ''' Prints the contents of io.fileDir.
+        If the file can be loaded by this module,
+        it gives the command to do so.
+    '''
     maxStrLen = 0
     for child in _getFileDir().iterdir():
         maxStrLen = max(maxStrLen, len(child.name))
+    # Print directories
     for child in _getFileDir().iterdir():
         if child.name in ['.', '..', '.DS_Store']:
             continue
+        if child.is_dir():
+            print(child.name.rjust(maxStrLen), '** directory')
+    # Print files
+    for child in _getFileDir().iterdir():
+        justified = child.name.rjust(maxStrLen) + '   '
+        if child.name in ['.', '..', '.DS_Store']:
+            continue
         elif child.is_file():
-            print(child.name)
-        elif child.is_dir():
-            print(child.name.ljust(maxStrLen+2, '.'), '(directory)')
+            if child.name.endswith('.pkl'):
+                print(justified, f'loadPickle({child.stem})')
+            elif child.name.endswith('.gz'):
+                print(justified, f'loadPickleGzip({child.stem})')
+            elif child.name.endswith('.mat'):
+                print(justified, f'loadMat({child.stem})')
+            else:
+                print(justified)
 
 
 def _endingWith(filerootname, suffix):

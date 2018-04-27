@@ -17,7 +17,7 @@ def _getFileDir(childFile=None):
     else:
         return (fileDir / childFile).resolve()
 
-from .saveload import (printAvailableFiles,  # noqa
+from .saveload import (pprintFileDir,  # noqa
                        savePickle,  # noqa
                        loadPickle,  # noqa
                        loadPickleGzip,  # noqa
