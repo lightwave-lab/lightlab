@@ -75,7 +75,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         presentSettings['nPts'] = self.getConfigParam(self._recLenParam)
         return presentSettings
 
-    def acquire(self, chans=None, **kwargs):
+    def acquire(self, chans=None, timeout=None, **kwargs):
         ''' Get waveforms from the scope.
 
             If chans is None, it won't actually trigger, but it will configure.
@@ -85,6 +85,13 @@ class TekScopeAbstract(Configurable, AbstractDriver):
 
             Args:
                 chans (list): which channels to record at the same time and return
+                avgCnt (int): number of averages. special behavior when it is 1
+                duration (float): window width in seconds
+                position (float): trigger delay
+                nPts (int): number of sample points
+                timeout (float): time to wait for averaging to complete in seconds
+                    If it is more than a minute, it will do a test first
+
 
             Returns:
                 list[Waveform]: recorded signals
@@ -105,7 +112,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
 
         isSampling = kwargs.get('avgCnt', 0) == 1
         self._setupSingleShot(isSampling)
-        self._triggerAcquire()
+        self._triggerAcquire(timeout=timeout)
         wfms = [None] * len(chans)
         for i, c in enumerate(chans):
             vRaw = self.__transferData(c)
@@ -136,14 +143,21 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                             'SAMPLE' if isSampling else 'AVERAGE',
                             forceHardware=forcing)
 
-    def _triggerAcquire(self):
-        ''' Sends a signal to the scope to wait for a trigger event. Waits until acquisition completes
+    def _triggerAcquire(self, timeout=None):
+        ''' Sends a signal to the scope to wait for a trigger event.
+            Waits until acquisition completes or timeout (in seconds).
+
+            If timeout is very long, it will try a test first
         '''
+        if timeout is None:
+            timeout = self.timeout
+        if timeout > 60:
+            self._triggerAcquire(timeout=10)
         if self._clearBeforeAcquire:
             self.write('ACQUIRE:DATA:CLEAR')  # clear out average history
         self.write('ACQUIRE:STATE 1')  # activate the trigger listener
         # Bus and entire program stall until acquisition completes. Maximum of 30 seconds
-        self.wait(30000)
+        self.wait(timeout * 1e3)
 
     def __transferData(self, chan):
         ''' Returns the raw data pulled from the scope as time (seconds) and voltage (Volts)
