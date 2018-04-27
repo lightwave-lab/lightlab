@@ -71,7 +71,11 @@ def test_instantiate(lab):
     '''Initializing LabState with two instruments, devices, and interconnections,
     asserts if connections are properly made'''
     assert Bench1 in lab.benches.values()
+    assert Bench2 in lab.benches.values()
+    assert len(lab.benches) == 2
     assert Host1 in lab.hosts.values()
+    assert Host2 in lab.hosts.values()
+    assert len(lab.hosts) == 2
     assert instrument1 in Bench1.instruments
     assert instrument1.bench == Bench1
     assert instrument1 in Host1.instruments
@@ -246,18 +250,18 @@ def test_remove_instrument_by_name(lab):
 def test_overwriting(lab):
     ''' Special cases when there are instrumentation_servers '''
     old_remote = Host2
-    updated_remote = Host("Host2", foo=1)
+    updated_remote = Host(name="Host2", foo=1)
     lab.updateHost(updated_remote)
-    assert lab.hosts["Host2"] == updated_remote
     assert lab.hosts["Host2"] != old_remote
+    assert lab.hosts["Host2"] == updated_remote
 
     old_server = Host1
-    updated_server = Host("Host1", is_instrumentation_server=True, foo=1)
+    updated_server = Host(name="Host1", is_instrumentation_server=True, foo=1)
     lab.updateHost(updated_server)
-    assert lab.hosts["Host1"] == updated_server
     assert lab.hosts["Host1"] != old_server
+    assert lab.hosts["Host1"] == updated_server
 
-    second_server = Host("Another Host", is_instrumentation_server=True)
+    second_server = Host(name="Another Host", is_instrumentation_server=True)
     lab.updateHost(second_server)
     assert lab.hosts["Host1"] == updated_server
     with pytest.raises(KeyError):

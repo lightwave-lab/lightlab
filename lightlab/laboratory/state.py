@@ -87,17 +87,17 @@ class LabState(Hashable):
                                    f'Not updating host {new_host.name}!')
                     continue
                 else:
-                    instrumentation_server_present = True
+                    instrumentation_server = new_host.name
             # Will an update happen?
             if new_host.name in old_hostnames:
-                logger.info(f'Overwriting host: {host.name}')
+                logger.info(f'Overwriting host: {new_host.name}')
                 # Will it end up removing the instrumentation_server?
-                if (host.name == instrumentation_server
-                        and not host.is_instrumentation_server):
+                if (new_host.name == instrumentation_server
+                        and not new_host.is_instrumentation_server):
                     instrumentation_server = None
 
-            self.hosts[host.name] = host
-        if instrumentation_server_present == False:
+            self.hosts[new_host.name] = new_host
+        if instrumentation_server is None:
             logger.warning('Instrumentation server not yet present')
 
     def updateBench(self, *benches):
