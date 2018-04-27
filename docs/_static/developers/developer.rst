@@ -80,7 +80,7 @@ Where the Makefile has targets for making a virtual environment and launching ju
         touch venv/bin/activate
         source venv/bin/activate; venv/bin/pip install -e $(shell cat $(PATH2LIGHTLABFILE))
 
-    jupyter: devbuild
+    jupyter:
         source venv/bin/activate; jupyter notebook; \
 
     getjpass: venv
@@ -92,7 +92,7 @@ The contents of ``.pathtolightlab`` are::
 
     /home/lancelot/Documents/lightlab
 
-If this is a repo, your ``.gitignore`` should include::
+If myWork is a git repo, your ``.gitignore`` should include::
 
     .pathtolightlab
 
@@ -146,11 +146,7 @@ To launch the server from ``myWork``, just run::
 
 You can now acces your notebooks anywhere with your password at: ``https://<server name>.school.edu:<port>``.
 
-If for some reason you want to reconnect to this process, you can use ``tmux attach-process -t myNotebookServer`` or ``tmux ls`` followed by picking the right name. If you really want to kill it, you can::
-
-    $ ps aux | grep <username> | grep myNotebookServer
-
-Find the PID, and send a ``kill -9`` at it.
+If for some reason you want to reconnect to this process, you can use ``tmux attach-process -t myNotebookServer`` or ``tmux ls`` followed by picking the right name.
 
 Git and jupyter
 ***************
@@ -194,8 +190,8 @@ To then launch the server from a tmux::
 
     How will this work for non-developers?
 
-Testing
-^^^^^^^
+Testing ``myWork``
+^^^^^^^^^^^^^^^^^^
 It's not really necessary in this example where there is just a notebook. If you are developing your own library-like functions, it is generally good practice, but
 
 **Never put hardware accessing methods in a unittest**
@@ -206,21 +202,21 @@ Contributing to ``lightlab``
 ------------------------------
 We follow this `Git branching workflow <http://nvie.com/posts/a-successful-git-branching-model/>`_. Feature branches should base off of development; when they are done, they must pass tests and test-nb's; finally they are merged to development.
 
-Testing
-^^^^^^^
+Testing ``lightlab``
+^^^^^^^^^^^^^^^^^^^^
 First off, your change should not break existing code. You can run automated tests like this::
 
-    make test
+    make test-unit
     make test-nb
 
-The test-nb target runs the **notebooks** in notebooks/Tests. This is a cool feature because it allows you to go in with jupyter and see what's happening if it fails.
-
-**Make tests for your features!** It helps a lot. Again, **Never put hardware accessing methods in a unittest**. We recommend using the `nbval <https://github.com/computationalmodelling/nbval>`_ approach. It checks for no-exceptions, not accuracy of results. If you want to check for accuracy of results, do something like::
+The test-nb target runs the **notebooks** in notebooks/Tests. This is a cool feature because it allows you to go in with jupyter and see what's happening if it fails. We recommend using the `nbval <https://github.com/computationalmodelling/nbval>`_ approach. It checks for no-exceptions, not accuracy of results. If you want to check for accuracy of results, do something like::
 
     x = 1 + 1
     assert x == 2
 
 in the cell.
+
+**Make tests for your features!** It helps a lot. Again, **Never put hardware accessing methods in a unittest**.
 
 To run just one test, use a command like::
 
