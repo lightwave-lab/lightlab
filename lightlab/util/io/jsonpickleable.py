@@ -1,4 +1,7 @@
-# for serializing json
+''' Objects that can be serialized in a (sort of) human readable json format
+
+    Tested in :py:mod:`tests.test_JSONpickleable`.
+'''
 import dill
 import jsonpickle
 import jsonpickle.ext.numpy as jsonpickle_numpy
@@ -6,6 +9,8 @@ jsonpickle_numpy.register_handlers()
 
 from lightlab import logger
 from lightlab.laboratory import Hashable
+from .saveload import _endingWith, _makeFileExist
+from . import _getFileDir
 
 class HardwareReference(object):
     ''' Spoofs an instrument
@@ -26,8 +31,8 @@ class JSONpickleable(Hashable):
 
         Attributes:
             notPickled (set): names of attributes that will be guaranteed to exist in instances.
-            They will not go into the pickled string.
-            Good for references to things like hardware instruments that you should re-init when reloading.
+                They will not go into the pickled string.
+                Good for references to things like hardware instruments that you should re-init when reloading.
 
         See the test_JSONpickleable for much more detail
 
@@ -142,16 +147,14 @@ class JSONpickleable(Hashable):
         return self._fromJSONcheck(self._toJSON())
 
     def save(self, filename):
-        if filename[-5:] != '.json':
-            filename += '.json'
+        rp = _makeFileExist(_endingWith(filename, '.json'))
         with open(filename, 'w') as f:
             f.write(self._toJSON())
 
     @classmethod
     def load(cls, filename):
-        if filename[-5:] != '.json':
-            filename += '.json'
-        with open(filename, 'r') as f:
+        rp = _getFileDir(_endingWith(filename, '.json'))
+        with open(rp, 'r') as f:
             frozen = f.read()
         return cls._fromJSONcheck(frozen)
 

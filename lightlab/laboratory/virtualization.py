@@ -5,13 +5,13 @@
     Dualization is a way of tying together a real instrument with
     its virtual counterpart. This is a powerful way to test procedures
     in a virtual environment before flipping the switch to reality.
+    This is documented in :py:mod:`tests.test_virtualization`.
 
-    Module-wide variable: ``virtualOnly``
-        If virtualOnly is True, any "``with``" statements using asReal
-        will just skip the block
-
-        When not using a context manager (i.e. ``exp.virtual = False``),
-        it will eventually produce a ``VirtualizationError``
+    Attributes:
+        virtualOnly (bool): If virtualOnly is True, any "``with``" statements using asReal
+            will just skip the block.
+            When not using a context manager (i.e. ``exp.virtual = False``),
+            it will eventually produce a ``VirtualizationError``.
 '''
 from lightlab import logger
 from contextlib import contextmanager
@@ -180,6 +180,8 @@ class DualInstrument(Virtualizable):
         stored in the JSON labstate,
         and would then like to virtualize it in your notebook.
         In that case, it does not reinitialize the driver.
+
+        This is documented in :py:mod:`tests.test_virtualization`.
 
 
         isinstance() and __class__ will tell you the underlying instrument type
