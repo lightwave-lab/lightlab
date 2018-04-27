@@ -6,14 +6,18 @@ import time
 
 class HP_8156A_VA(VISAInstrumentDriver):
     ''' HP8156A variable attenuator
+
         `Manual <https://www.artisantg.com/info/ATGt6b5s.pdf>`__
+
+        Usage: :any:`/ipynbs/Hardware/VariableAttenuator.ipynb`
+
     '''
     instrument_category = VariableAttenuator
     safeSleepTime = 1  # Time it takes to settle
     __attenDB = None
 
     def __init__(self, name='The VOA on the GC bench', address=None, **kwargs):
-        super().__init__(name=name, address=address, **kwargs)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
 
     def startup(self):
         self.on()

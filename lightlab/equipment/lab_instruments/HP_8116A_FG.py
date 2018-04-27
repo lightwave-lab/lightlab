@@ -4,12 +4,16 @@ from lightlab.laboratory.instruments import FunctionGenerator
 
 import numpy as np
 import time
+from lightlab import visalogger as logger
 
 class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     '''
         Function Generator
 
         Manual?
+
+        Usage: :any:`/ipynbs/Hardware/FunctionGenerator.ipynb`
+
     '''
     instrument_category = FunctionGenerator
 
@@ -23,10 +27,10 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
         self.write('D0')  # enable output
 
     def instrID(self):
+        logger.warning('Function generator GPIB is broken, so cannot ensure if live')
         return 'Function generator, HP 8116A'
 
     def _getHardwareConfig(self, cStrList):
-        print('Function generator GPIB is broken so values can\'t be read from hardware')
         raise Exception(
             'Function generator GPIB is broken so values can\'t be read from hardware')
 
@@ -42,9 +46,9 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
 
         if newFreq is not None:
             sciOrder = int(np.ceil(np.log10(newFreq) / 3))
-            print('sciOrder =', sciOrder)
+            logger.debug('sciOrder = {}'.format(sciOrder))
             sciUnit = sciUnits[sciOrder]
-            print('sciUnit =', sciUnit)
+            logger.debug('sciUnit = {}'.format(sciUnit))
             sciFreq = newFreq / toMultiplier(sciOrder)
             self.setConfigParam('FRQ', '{} {}'.format(sciFreq, sciUnit))
 

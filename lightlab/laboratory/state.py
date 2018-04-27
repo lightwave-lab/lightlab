@@ -362,7 +362,7 @@ class LabState(Hashable):
         # Compare versions of file vs. class
         version = json_state.pop("__version__")
         if version < cls.__version__:
-            raise RuntimeWarning("Loading older version of Labstate.")
+            logger.warning("Loading older version of Labstate.")
         elif version > cls.__version__:
             raise RuntimeError(
                 "Stored Labstate version is newer than current software. Update package lightlab.")

@@ -10,6 +10,9 @@ class Tektronix_DSA8300_Oscope(VISAInstrumentDriver, TekScopeAbstract):
         See abstract driver for description
 
         `Manual <http://www.tek.com/download?n=975655&f=190886&u=http%3A%2F%2Fdownload.tek.com%2Fsecure%2FDifferential-Channel-Alignment-Application-Online-Help.pdf%3Fnvb%3D20170404035703%26amp%3Bnva%3D20170404041203%26amp%3Btoken%3D0ccdfecc3859114d89c36>`__
+
+        Usage: :any:`/ipynbs/Hardware/Oscilloscope.ipynb`
+
     '''
     instrument_category = Oscilloscope
 
@@ -20,6 +23,10 @@ class Tektronix_DSA8300_Oscope(VISAInstrumentDriver, TekScopeAbstract):
     _runModeParam = 'ACQUIRE:STOPAFTER:MODE'
     _runModeSingleShot = 'CONDITION'
     _yScaleParam = 'YSCALE'
+
+    def __init__(self, name='The DSA scope', address=None, **kwargs):
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        TekScopeAbstract.__init__(self)
 
     def _setupSingleShot(self, isSampling, forcing=False):
         ''' Additional DSA things needed to put it in the right mode.

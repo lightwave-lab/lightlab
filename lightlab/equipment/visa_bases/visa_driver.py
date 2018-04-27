@@ -17,7 +17,9 @@ class DriverMeta(type):
         Also checks that the API is satistied at compile time
     '''
     def __init__(cls, name, bases, dct):
-        ''' Checks that it satisfies the API of its Instrument
+        ''' Checks that it satisfies the API of its Instrument.
+
+            This occurs at compile-time
         '''
         if cls.instrument_category is not None:
             inst_klass = cls.instrument_category
@@ -31,7 +33,8 @@ class DriverMeta(type):
         '''
             All \*args go to the driver.
             name and address go to both.
-            kwargs go priority to driver bases, otherwise to Instrument
+            kwargs go priority to driver bases, otherwise to Instrument.
+            This occurs at initialization time of an object
         '''
         if (cls.instrument_category is not None
                 and not kwargs.pop('directInit', False)):
@@ -93,7 +96,7 @@ class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
         self.__started = False
 
     def startup(self):
-        logger.debug("{}startup method empty".format(self.__class__.__name__))
+        logger.debug("{}.startup method empty".format(self.__class__.__name__))
 
     def open(self):
         super().open()

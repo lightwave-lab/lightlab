@@ -415,9 +415,9 @@ class Instrument(Node):
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
         errorText = str(self) + ' has no attribute ' + attrName
-        if attrName in self.essentialProperties + self.essentialMethods:
-            return getattr(self.driver, attrName)
-        elif attrName in self.implementedOptionals:
+        if attrName in self.essentialProperties \
+                + self.essentialMethods \
+                + self.implementedOptionals:
             return getattr(self.driver, attrName)
         # Time to fail
         if attrName in self.optionalAttributes:
@@ -432,6 +432,9 @@ class Instrument(Node):
         if attrName in self.essentialProperties + self.essentialMethods:  # or methods
             return setattr(self.driver, attrName, newVal)
         else:
+            if attrName == 'address':  # Reinitialize the driver
+                del self.__driver_object
+                self.__driver_object = None
             return super().__setattr__(attrName, newVal)
 
     def __delattr__(self, attrName):
@@ -499,7 +502,7 @@ class Instrument(Node):
                 kwargs = self.driver_kwargs
             except AttributeError:  # Fall back to the jank version where we try to guess what is important
                 kwargs = dict()
-                for kwarg in ["useChans", "stateDict", "sourceMode"]:
+                for kwarg in ["useChans", "elChans", "dfbChans", "stateDict", "sourceMode"]:
                     try:
                         kwargs[kwarg] = getattr(self, kwarg)
                     except AttributeError:
@@ -553,8 +556,11 @@ class Instrument(Node):
 
     @property
     def id_string(self):
-        """ (property) Instrument id string matching
-        ``self.driver.instrID()`` (can only set during initialization)
+        """
+            The id_string should match the value returned by
+            self.driver.instrID(), and is checked by the command
+            self.isLive() in order to authenticate that the intrument
+            in that address is the intended one.
         """
         return self._id_string
 
@@ -567,6 +573,12 @@ class Instrument(Node):
         lines.append("Bench: {}".format(self.bench))
         lines.append("Host: {}".format(self.host))
         lines.append("address: {}".format(self.address))
+        lines.append("id_string: {}".format(self.id_string))
+        if not self.id_string:
+            lines.append("The id_string should match the value returned by"
+                " self.driver.instrID(), and is checked by the command"
+                " self.isLive() in order to authenticate that the intrument"
+                " in that address is the intended one.")
         lines.append("driver_class: {}".format(self.driver_class))
         lines.append("=====")
         lines.append("Ports")
@@ -575,22 +587,31 @@ class Instrument(Node):
             lines.extend(["   {}".format(str(port)) for port in self.ports])
         else:
             lines.append("   No ports.")
+        if hasattr(self, 'driver_kwargs'):
+            lines.append("=====")
+            lines.append("Driver kwargs")
+            lines.append("=====")
+            for k, v in self.driver_kwargs.items():
+                lines.append("   {} = {}".format(str(k), str(v)))
         lines.append("***")
         print("\n".join(lines))
 
     def isLive(self):
         """ Attempts VISA connection to instrument, and checks whether
-        ``instrID()`` matches :py:data:`id_string`.
+            ``instrID()`` matches :py:data:`id_string`.
 
-        Returns:
-            (bool): True if "live", false otherwise.
+            Produces a warning if it is live but the id_string is wrong.
+
+            Returns:
+                (bool): True if "live", False otherwise.
         """
         try:
             driver = self.driver_object
+            query_id = driver.instrID()
+            logger.info("Found %s in %s.", self.name, self.address)
             if self.id_string is not None:
-                query_id = driver.instrID()
                 if self.id_string == query_id:
-                    logger.info("Found %s in %s.", self.name, self.address)
+                    logger.info("id_string of %s is accurate", self.name)
                     return True
                 else:
                     logger.warn("%s: %s, expected %s", self.address,
@@ -607,20 +628,14 @@ class Instrument(Node):
     def connectHost(self, new_host):
         """ Sets/changes instrument's host.
 
-        Equivalent to ``self.host = new_host``
+            Equivalent to ``self.host = new_host``
         """
-        # if gpib_address is None:
-        #     if self.gpib_address is None:
-        #         self.gpib_address = self.findAddressById(host)
-        # else:
-        #     logger.info("Manually locating %s in %s", self, gpib_address)
-        #     self.gpib_address = gpib_address
         self.host = new_host
 
     def placeBench(self, new_bench):
         """ Sets/changes instrument's bench.
 
-        Equivalent to ``self.bench = new_bench``
+            Equivalent to ``self.bench = new_bench``
         """
         self.bench = new_bench
 
@@ -636,3 +651,6 @@ class NotFoundError(RuntimeError):
     """ Error thrown when instrument is not found
     """
     pass
+
+
+

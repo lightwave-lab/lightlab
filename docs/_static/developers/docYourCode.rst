@@ -109,6 +109,13 @@ As of now, documentation notebooks are in docs/sphinx/ipynbs/. Test notebooks sh
 .. toctree::
     :maxdepth: 1
     :glob:
+    :caption: All "Hardware" IPython notebooks
+
+    /ipynbs/Hardware/*
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
     :caption: All "Others" IPython notebooks
 
     /ipynbs/Others/*
