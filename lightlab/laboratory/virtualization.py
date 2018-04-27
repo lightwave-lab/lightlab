@@ -1,98 +1,23 @@
+''' Provides a framework for making virtual instruments that present
+    the same interface and simulated behavior as the real ones. Allows
+    a similar thing with functions, methods, and experiments.
+
+    Dualization is a way of tying together a real instrument with
+    its virtual counterpart. This is a powerful way to test procedures
+    in a virtual environment before flipping the switch to reality.
+
+    Module-wide variable: ``virtualOnly``
+        If virtualOnly is True, any "``with``" statements using asReal
+        will just skip the block
+
+        When not using a context manager (i.e. ``exp.virtual = False``),
+        it will eventually produce a ``VirtualizationError``
+'''
 from lightlab import logger
 from contextlib import contextmanager
 
 
-''' Module-wide variable
-    If virtualOnly is True, any ``with`` statements using asReal
-    will just skip the block
-
-    When not using a context manager, it will
-    eventually give you VirtualizationErrors
-'''
 virtualOnly = False
-
-
-class VirtualizationError(RuntimeError):
-    pass
-
-
-class DualFunction(object):
-    """ This class implements a descriptor for a function whose behavior depends
-        on an instance's variable. This was inspired by core python's property
-        descriptor.
-
-        Example usage:
-
-        .. code-block:: python
-
-            @DualFunction
-            def measure(self, *args, **kwargs):
-                # use a model to simulate outputs based on args and kwargs and self.
-                return simulated_output
-
-            @measure.hardware
-            def measure(self, *args, **kwargs):
-                # collect data from hardware using args and kwargs and self.
-                return output
-
-
-        The "virtual" function will be called if ``self.virtual`` equals True,
-        otherwise the hardware decorated function will be called instead.
-
-    """
-    def __init__(self, virtual_function=None,
-                 hardware_function=None, doc=None):
-        self.virtual_function = virtual_function
-        self.hardware_function = hardware_function
-        if doc is None and virtual_function is not None:
-            doc = virtual_function.__doc__
-        self.__doc__ = doc
-
-    def __get__(self, experiment_obj, obj_type=None):
-        if experiment_obj is None:
-            return self
-
-        def wrapper(*args, **kwargs):
-            if experiment_obj.virtual:
-                return self.virtual_function(experiment_obj, *args, **kwargs)
-            else:
-                return self.hardware_function(experiment_obj, *args, **kwargs)
-        return wrapper
-
-    def hardware(self, func):
-        self.hardware_function = func
-        return self
-
-    def virtual(self, func):
-        self.virtual_function = func
-        return self
-
-
-class DualMethod(object):
-    ''' This differs from DualFunction because it exists outside
-        of the object instance. Instead it takes the object when initializing.
-
-        It uses __call__ instead of __get__ because it is its own object
-
-        Todo:
-
-            The naming for DualFunction and DualMethod are backwards.
-            Will break notebooks when changed.
-    '''
-    def __init__(self, dualInstrument=None, virtual_function=None,
-                 hardware_function=None, doc=None):
-        self.dualInstrument = dualInstrument
-        self.virtual_function = virtual_function
-        self.hardware_function = hardware_function
-        if doc is None and virtual_function is not None:
-            doc = virtual_function.__doc__
-        self.__doc__ = doc
-
-    def __call__(self, *args, **kwargs):
-        if self.dualInstrument.virtual:
-            return self.virtual_function(*args, **kwargs)
-        else:
-            return self.hardware_function(*args, **kwargs)
 
 
 class Virtualizable(object):
@@ -118,7 +43,6 @@ class Virtualizable(object):
             state as itself.
 
             Args:
-
                 newVirtualizables (\*args): Other virtualizable things
         '''
         for virtualObject in newVirtualizables:
@@ -140,9 +64,11 @@ class Virtualizable(object):
 
     @virtual.setter
     def virtual(self, toVirtual):
-        ''' An alternative to context managing.
+        ''' Setting the property is an alternative to context managing.
+
+            Using this can make code more concise,
+            but it does not handle warmups/cooldowns
         '''
-        global virtualOnly
         if virtualOnly and not toVirtual:
             toVirtual = None
         self._virtual = toVirtual
@@ -151,6 +77,18 @@ class Virtualizable(object):
 
     @contextmanager
     def asVirtual(self):
+        ''' Temporarily puts this and synchronized in a virtual state.
+            The state is reset at the end of the with block.
+
+            Example usage:
+
+            .. code-block:: python
+
+                exp = Virtualizable()
+                with exp.asVirtual():
+                    print(exp.virtual)  # prints True
+                print(exp.virtual)  # VirtualizationError
+        '''
         old_value = self._virtual
         self.virtual = True
         old_subvalues = list()
@@ -166,9 +104,20 @@ class Virtualizable(object):
 
     @contextmanager
     def asReal(self):
-        ''' If virtualOnly is True, it will skip the block without error
+        ''' Temporarily puts this and synchronized in a virtual state.
+            The state is reset at the end of the with block.
+
+            If ``virtualOnly`` is True, it will skip the block without error
+
+            Example usage:
+
+            .. code-block:: python
+
+                exp = Virtualizable()
+                with exp.asVirtual():
+                    print(exp.virtual)  # prints False
+                print(exp.virtual)  # VirtualizationError
         '''
-        global virtualOnly
         if virtualOnly:
             try:
                 yield self
@@ -217,6 +166,7 @@ class DualInstrument(Virtualizable):
             dual = DualInstrument(realOne, virtOne)
             with dual.asReal():
                 isinstance(dual, type(realOne))  # True
+                dual.meth is realOne.meth  # True
             isinstance(dual, type(realOne))  # False
     '''
     real_obj = None
@@ -225,7 +175,6 @@ class DualInstrument(Virtualizable):
     def __init__(self, real_obj=None, virt_obj=None):
         '''
             Args:
-
                 real_obj (Instrument): the real reference
                 virt_obj (VirtualInstrument): the virtual reference
         '''
@@ -244,7 +193,7 @@ class DualInstrument(Virtualizable):
                                     type(virt_obj).__name__,
                                     type(real_obj).__name__))
                 logger.warning('Got: ' + ', '.join(violated))
-                logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
+                # logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
         self.synced = []
 
     @Virtualizable.virtual.setter  # pylint: disable=no-member
@@ -342,3 +291,86 @@ class DualInstrument(Virtualizable):
         newObj = cls(*args, **kwargs)
         newObj.real_obj = hwOnlyInstr
         return newObj
+
+
+
+class DualFunction(object):
+    """ This class implements a descriptor for a function whose behavior depends
+        on an instance's variable. This was inspired by core python's property
+        descriptor.
+
+        Example usage:
+
+        .. code-block:: python
+
+            @DualFunction
+            def measure(self, *args, **kwargs):
+                # use a model to simulate outputs based on args and kwargs and self.
+                return simulated_output
+
+            @measure.hardware
+            def measure(self, *args, **kwargs):
+                # collect data from hardware using args and kwargs and self.
+                return output
+
+
+        The "virtual" function will be called if ``self.virtual`` equals True,
+        otherwise the hardware decorated function will be called instead.
+
+    """
+    def __init__(self, virtual_function=None,
+                 hardware_function=None, doc=None):
+        self.virtual_function = virtual_function
+        self.hardware_function = hardware_function
+        if doc is None and virtual_function is not None:
+            doc = virtual_function.__doc__
+        self.__doc__ = doc
+
+    def __get__(self, experiment_obj, obj_type=None):
+        if experiment_obj is None:
+            return self
+
+        def wrapper(*args, **kwargs):
+            if experiment_obj.virtual:
+                return self.virtual_function(experiment_obj, *args, **kwargs)
+            else:
+                return self.hardware_function(experiment_obj, *args, **kwargs)
+        return wrapper
+
+    def hardware(self, func):
+        self.hardware_function = func
+        return self
+
+    def virtual(self, func):
+        self.virtual_function = func
+        return self
+
+
+class DualMethod(object):
+    ''' This differs from DualFunction because it exists outside
+        of the object instance. Instead it takes the object when initializing.
+
+        It uses __call__ instead of __get__ because it is its own object
+
+        Todo:
+            The naming for DualFunction and DualMethod are backwards.
+            Will break notebooks when changed.
+    '''
+    def __init__(self, dualInstrument=None, virtual_function=None,
+                 hardware_function=None, doc=None):
+        self.dualInstrument = dualInstrument
+        self.virtual_function = virtual_function
+        self.hardware_function = hardware_function
+        if doc is None and virtual_function is not None:
+            doc = virtual_function.__doc__
+        self.__doc__ = doc
+
+    def __call__(self, *args, **kwargs):
+        if self.dualInstrument.virtual:
+            return self.virtual_function(*args, **kwargs)
+        else:
+            return self.hardware_function(*args, **kwargs)
+
+
+class VirtualizationError(RuntimeError):
+    pass
