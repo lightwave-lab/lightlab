@@ -18,6 +18,7 @@ class Host(Node):
     name = None
     mac_address = None
     hostname = None
+    is_instrumentation_server = False
     os = "linux-ubuntu"  # linux-ubuntu, linux-centos, windows, mac etc.
     instruments = None
 
@@ -45,29 +46,50 @@ class Host(Node):
             logger.warning("%s is not reachable via ping.", self)
         return response == 0
 
-    def list_resources_info(self, use_cached=True, is_local=False):
+    def _visa_servername(self):
+        ''' How the visa server is specified. If this is the central
+            server, then there is no visa:// prefix
+
+            Returns:
+                (str)
+        '''
+        if self.is_instrumentation_server:
+            return ''
+        else:
+            return 'visa://{}/'.format(self.hostname)
+
+    def gpib_port_to_address(self, port, board=0):
+        '''
+            Args:
+                port (int): The port on the GPIB bus of this host
+                board (int): For hosts with multiple GPIB busses
+
+            Returns:
+                (str): the address that can be used in an initializer
+        '''
+        localSerialStr = 'GPIB{}::{}::INSTR'.format(board, port)
+        return self._visa_servername() + localSerialStr
+
+    def list_resources_info(self, use_cached=True):
         if self.__cached_list_resources_info is None:
             use_cached = False
         if use_cached:
             return self.__cached_list_resources_info
         else:
-            if is_local:
-                list_query = "?*::INSTR"
-            else:
-                list_query = "visa://" + self.hostname + "/?*::INSTR"
+            list_query = self._visa_servername() + "?*::INSTR"
             rm = pyvisa.ResourceManager()
             logger.debug("Caching resource list in %s", self)
             self.__cached_list_resources_info = rm.list_resources_info(
                 query=list_query)
             return self.__cached_list_resources_info
 
-    def list_gpib_resources_info(self, use_cached=True, is_local=False):
+    def list_gpib_resources_info(self, use_cached=True):
         return {resource_name: resource
-                for resource_name, resource in self.list_resources_info(use_cached=use_cached, is_local=is_local).items()
+                for resource_name, resource in self.list_resources_info(use_cached=use_cached).items()
                 if resource.interface_type == pyvisa.constants.InterfaceType.gpib}
 
-    def get_all_gpib_id(self, use_cached=True, is_local=False):
-        gpib_resources = self.list_gpib_resources_info(use_cached=use_cached, is_local=is_local)
+    def get_all_gpib_id(self, use_cached=True):
+        gpib_resources = self.list_gpib_resources_info(use_cached=use_cached)
         if self.__cached_gpib_instrument_list is None:
             use_cached = False
         if use_cached:
