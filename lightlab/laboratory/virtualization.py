@@ -38,14 +38,6 @@ class Virtualizable(object):
             super().__init__()
         self.synced = list()
 
-    @property
-    def virtual(self):
-        if self._virtual is None:
-            raise VirtualizationError('Virtual context unknown.'
-                                      'Please refer to method asVirtual().')
-        else:
-            return self._virtual
-
     def synchronize(self, *newVirtualizables):
         ''' Adds another object that this one will put in the same virtual
             state as itself.
@@ -82,6 +74,16 @@ class Virtualizable(object):
         '''
         for iSub, sub in enumerate([self] + self.synced):
             sub._virtual = old_values[iSub]
+
+    @property
+    def virtual(self):
+        ''' Returns the virtual state of this object
+        '''
+        if self._virtual is None:
+            raise VirtualizationError('Virtual context unknown.'
+                                      'Please refer to method asVirtual().')
+        else:
+            return self._virtual
 
     @virtual.setter
     def virtual(self, toVirtual):
@@ -172,7 +174,7 @@ class VirtualInstrument(object):
 
 class DualInstrument(Virtualizable):
     ''' Holds a real instrument and a virtual instrument.
-        Feeds through __getattribute__ and __setattr__: very powerful.
+        Feeds through ``__getattribute__`` and ``__setattr__``: very powerful.
         It basically appears as one or the other instrument, as determined
         by whether it is in virtual or real mode.
 
@@ -183,9 +185,8 @@ class DualInstrument(Virtualizable):
 
         This is documented in :py:mod:`tests.test_virtualization`.
 
-
-        isinstance() and __class__ will tell you the underlying instrument type
-        type() will give you the DualInstrument subclass::
+        ``isinstance()`` and ``.__class__`` will tell you the underlying instrument type
+        ``type()`` will give you the ``DualInstrument`` subclass::
 
             dual = DualInstrument(realOne, virtOne)
             with dual.asReal():
@@ -237,6 +238,9 @@ class DualInstrument(Virtualizable):
             sub.virtual = toVirtual
 
     def __getattribute__(self, att):
+        ''' Intercepts immediately and routes to ``virt_obj`` or ``real_obj``,
+            depending on the virtual state.
+        '''
         if att in (list(DualInstrument.__dict__.keys()) +
                    list(Virtualizable.__dict__.keys())):
             return object.__getattribute__(self, att)
@@ -252,6 +256,9 @@ class DualInstrument(Virtualizable):
             return getattr(wrappedObj, att)
 
     def __setattr__(self, att, newV):
+        ''' Intercepts immediately and routes to ``virt_obj`` or ``real_obj``,
+            depending on the virtual state.
+        '''
         if att in (list(DualInstrument.__dict__.keys()) +
                    list(Virtualizable.__dict__.keys())):
             return object.__setattr__(self, att, newV)
@@ -268,6 +275,7 @@ class DualInstrument(Virtualizable):
             return setattr(wrappedObj, att, newV)
 
     def __dir__(self):
+        ''' Facilitates autocompletion in IPython '''
         return super().__dir__() + dir(self.virt_obj) + dir(self.real_obj)
 
     @classmethod
@@ -275,10 +283,18 @@ class DualInstrument(Virtualizable):
         ''' Gives a new dual instrument that has all the same
             properties and references.
 
-
             The instrument base of hwOnlyInstr must be the same instrument
             base of this class
+
+            Args:
+                hwOnlyInstr (VISAInstrumentDriver subclass): a real instrument
+                \*args, \*\*kwargs: fed to a VirtualInstrument
+
+            Todo:
+                This appears to be broken. It should not be doing ``cls(*args, **kwargs)``.
+                    It should instead be initializing a VirtualInstrument.
         '''
+        raise NotImplementedError('This method is currently broken')
         if hwOnlyInstr is not None and not isinstance(hwOnlyInstr, cls.real_klass):
             raise TypeError(
                 'The fromInstrument (' + hwOnlyInstr.__class__.__name__ + ')'
