@@ -135,6 +135,8 @@ The labstate will be automatically put and backed up in the directory ``/home/ju
 @tlima please check
 @tlima, maybe instead of group jupyter, we should call it something like "labaccess"
 
+The first time labstate is initialized, you'll want to add the hosts and benches in the lab. This is documented in :doc:`/_static/developers/labState`.
+
 
 Running a jupyter server for the regular users
 ----------------------------------------------

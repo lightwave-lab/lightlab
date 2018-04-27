@@ -579,7 +579,7 @@ class Instrument(Node):
                 " self.driver.instrID(), and is checked by the command"
                 " self.isLive() in order to authenticate that the intrument"
                 " in that address is the intended one.")
-        lines.append("driver_class: {}".format(self.driver_class))
+        lines.append("driver_class: {}".format(self.driver_class.__name__))
         lines.append("=====")
         lines.append("Ports")
         lines.append("=====")
