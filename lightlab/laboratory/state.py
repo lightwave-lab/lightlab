@@ -1,7 +1,7 @@
 '''
 This module contains classes responsible to maintain a record of the current state of the lab.
 '''
-from lightlab.laboratory import Hashable, NamedList, TypedList
+from lightlab.laboratory import Hashable, TypedList
 from lightlab.laboratory.instruments import Host, Bench, Instrument, Device
 import hashlib
 import jsonpickle
@@ -46,7 +46,7 @@ class LabState(Hashable):
     instruments = None
 
     @property
-    def instruments_dict(self):
+    def instruments_dict(self): # TODO DEPRECATE
         return self.instruments.dict
 
     def __init__(self, filename=None):
@@ -142,8 +142,6 @@ class LabState(Hashable):
         with open(filename, 'r') as file:
             frozen_json = file.read()
         json_state = json.decode(frozen_json)
-        import sys
-        print(json_state, file=sys.stderr)
 
         user = json_state.pop("__user__")
         datetime = json_state.pop("__datetime__")
