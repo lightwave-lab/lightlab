@@ -17,7 +17,8 @@ filename = 'test_{}.json'.format(int(time.time()))
 labstate.filename = filename
 
 # Shared objects
-Host1 = Host(name="Host1")
+Host1 = Host(name="Host1", is_instrumentation_server=True)
+Host2 = Host(name="Host2")
 Bench1 = Bench(name="Bench1")
 Bench2 = Bench(name="Bench2")
 
@@ -46,6 +47,7 @@ def lab(request):
 
     lab = labstate.LabState(filename=filename)
     lab.updateHost(Host1)
+    lab.updateHost(Host2)
     lab.updateBench(Bench1, Bench2)
     lab.insertInstrument(instrument1)
     lab.insertInstrument(instrument2)
@@ -239,3 +241,24 @@ def test_remove_instrument_by_name(lab):
     lab.deleteInstrumentFromName("instrument2", force=True)
     assert instrument2 not in lab.instruments
     assert instrument2bis not in lab.instruments
+
+
+def test_overwriting(lab):
+    ''' Special cases when there are instrumentation_servers '''
+    old_remote = Host2
+    updated_remote = Host("Host2", foo=1)
+    lab.updateHost(updated_remote)
+    assert lab.hosts["Host2"] == updated_remote
+    assert lab.hosts["Host2"] != old_remote
+
+    old_server = Host1
+    updated_server = Host("Host1", is_instrumentation_server=True, foo=1)
+    lab.updateHost(updated_server)
+    assert lab.hosts["Host1"] == updated_server
+    assert lab.hosts["Host1"] != old_server
+
+    second_server = Host("Another Host", is_instrumentation_server=True)
+    lab.updateHost(second_server)
+    assert lab.hosts["Host1"] == updated_server
+    with pytest.raises(KeyError):
+        lab.hosts["Another Host"]
