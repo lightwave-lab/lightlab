@@ -41,6 +41,7 @@ help:
 clean:
 	rm -rf $(BUILDDIR)
 	rm -rf API/*.rst
+	rm -rf TestAPI/*.rst
 	rm -rf _autoapi
 
 html:

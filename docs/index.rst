@@ -14,7 +14,7 @@ Welcome to Lightlab's documentation!
     Include a simple but powerful jupyter screenshot showing a plot from an experiment run.
 
 .. warning::
-    
+
     This is not a pure software package. Lightlab needs to be run in a particular configuration. Before you continue, carefully read the :ref:`pre-requisites` and the :ref:`getting-started` sections. It contains necessary information about setup steps you need to take care before starting.
 
 .. _pre-requisites:
@@ -74,6 +74,7 @@ API
    :maxdepth: 1
 
    API of the lightlab package <API/lightlab>
+   Unit tests <TestAPI/tests>
 
 .. note::
 

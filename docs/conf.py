@@ -24,16 +24,21 @@ import sys
 import lightlab
 import pyvisa
 import IPython.sphinxext.ipython_console_highlighting
+import better_apidoc
 
 # -- Generate API documentation ------------------------------------------------
 
 
 def run_apidoc(_):
     """Generage API documentation"""
-    import better_apidoc
     better_apidoc.main(
         ['better-apidoc', '-t', './_templates', '--force', '--no-toc',
          '--separate', '-o', './API', '../lightlab'])
+
+def run_testdoc(_):
+    better_apidoc.main(
+        ['better-apidoc', '-t', './_templates', '--force', '--no-toc',
+         '--separate', '-o', './TestAPI', '../tests'])
 
 
 # -- General configuration ------------------------------------------------
@@ -234,4 +239,5 @@ intersphinx_mapping = {'python': ('https://docs.python.org/', None)}
 
 def setup(app):
     app.connect('builder-inited', run_apidoc)
+    app.connect('builder-inited', run_testdoc)
 
