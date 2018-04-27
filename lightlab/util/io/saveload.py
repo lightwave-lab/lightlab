@@ -20,7 +20,7 @@ def _makeFileExist(filename):
     rp = _getFileDir(filename)
     os.makedirs(_getFileDir(), mode=0o775, exist_ok=True)
     rp.touch()
-    logger.debug("Saving to file: {}".format(rp))
+    print("Saving to file: {}".format(rp))
     return rp
 
 
@@ -37,37 +37,31 @@ def printAvailableFiles():
             print(child.name.ljust(maxStrLen+2, '.'), '(directory)')
 
 
+def _endingWith(filerootname, suffix):
+    ''' Makes sure input string ends with the suffix '''
+    froot = str(filerootname)
+    if suffix[0] != '.':
+        suffix = f'.{suffix}'
+    if froot.endswith(suffix):
+        return froot
+    else:
+        return froot + suffix
+
+
 def savePickle(filename, dataTuple):
     ''' Uses pickle
 
         Todo: timestamping would be cool
     '''
-    rp = _makeFileExist(filename)
+    rp = _makeFileExist(_endingWith(filename, suffix='.pkl'))
     with rp.open('wb') as fx:
         pickle.dump(dataTuple, fx)
 
 
 def loadPickle(filename):
     ''' Uses pickle '''
-    rp = _getFileDir(filename)
+    rp = _getFileDir(_endingWith(filename, suffix='.pkl'))
     with rp.open('rb') as fx:
-        return pickle.load(fx)
-
-
-def _gzfilename(filename):
-    ''' ensures filename ends with .gz '''
-    fname = str(filename)
-    if fname.endswith('.gz'):
-        return fname
-    else:
-        return f"{fname}.gz"
-
-
-def loadPickleGzip(filename):
-    ''' Uses pickle and then gzips the file'''
-    p = fileDir / _gzfilename(filename)
-    rp = p.resolve()
-    with gzip.open(rp, 'rb') as fx:
         return pickle.load(fx)
 
 
@@ -76,30 +70,32 @@ def savePickleGzip(filename, dataTuple):
 
         Todo: timestamping would be cool
     '''
-    rp = _makeFileExist(_gzfilename(filename))
+    rp = _makeFileExist(_endingWith(filename, suffix='.gz'))
     with gzip.open(rp, 'wb') as fx:
         pickle.dump(dataTuple, fx)
 
 
+def loadPickleGzip(filename):
+    ''' Uses pickle and then gzips the file'''
+    rp = _getFileDir(_endingWith(filename, suffix='.gz'))
+    with gzip.open(rp, 'rb') as fx:
+        return pickle.load(fx)
+
+
 def saveMat(filename, dataDict):
-    ''' dataDict has keys as names you would like to appear in matlab, values are matrices '''
-    if filename[-4:] != '.mat':
-        filename += '.mat'
-    rp = _makeFileExist(filename)
+    ''' dataDict has keys as names you would like to appear in matlab,
+        values are numpy arrays, N-D arrays, or matrices.
+    '''
+    rp = _makeFileExist(_endingWith(filename, suffix='.mat'))
     sio.savemat(str(rp), dataDict)
 
 
 def loadMat(filename):
-    ''' returns a dictionary of data. This should perfectly invert mysave.
+    ''' returns a dictionary of data. This should perfectly invert saveMat.
         Matlab files only store matrices. This auto-squeezes 1-dimensional matrices to arrays.
         Be careful if you are tyring to load a 1-d numpy matrix as an actual numpy matrix
     '''
-    if filename[-4:] != '.mat':
-        filename += '.mat'
-    p = fileDir / filename
-    rp = p.resolve()
-    if not p.exists():
-        raise FileNotFoundError(p)
+    rp = _getFileDir(_endingWith(filename, suffix='.mat'))
     data = sio.loadmat(str(rp))
     for k, v in data.items():
         data[k] = np.squeeze(v)
@@ -108,12 +104,9 @@ def loadMat(filename):
 
 def saveFigure(filename, figHandle=None):
     ''' if None, uses the gcf() '''
+    rp = _makeFileExist(_endingWith(filename, suffix='.pdf'))
     if figHandle is None:
         figHandle = plt.gcf()
-    if filename[-4:] != '.pdf':
-        filename += '.pdf'
-    rp = _makeFileExist(filename)
-    print('Full path to figure is', rp)
     figHandle.tight_layout()
     pp = PdfPages(str(rp))
     pp.savefig(figHandle)
