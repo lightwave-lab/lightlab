@@ -519,20 +519,23 @@ class ConfigProperty(object):
             print(clk.frequency)
     '''
     def __init__(hwKey, readOnly=False, typeCast=None,
-                 mapping=None, limits=None, doc=None):
+                 mapping=None, limits=None, termination=None,
+                 doc=None):
         self.hwKey = hwKey
         self.readOnly = readOnly
         self.typeCast = typeCast
         self.mapping = mapping  # dict
         self.limits = limits
+        self.termination = termination
         # __doc__?
 
     def __get__(self, instance, owner):
-        retVal = instance.getConfigParam(self.hwKey)
+        value = instance.getConfigParam(self.hwKey)
+        if self.termination is not None:
+            value = value.split(' ')[0]
         if self.typeCast is not None:
-            return self.typeCast(retVal)
-        else:
-            return retVal
+            value = self.typeCast(value)
+        return value
 
     def __set__(self, instance, value):
         if self.readOnly == True:
@@ -550,6 +553,8 @@ class ConfigProperty(object):
                                'Requested: {:.3f} '.format(value) +
                                'Maximum: {:.3f}.'.format(self.limits[1]))
                 value = self.limits[1]
+        if self.termination is not None:
+            value += ' ' + self.termination
         instance.setConfigParam(self.hwKey, value)
 
 class ConfigEnableProperty(ConfigProperty):
