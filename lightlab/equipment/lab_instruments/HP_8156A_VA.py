@@ -3,7 +3,6 @@ from lightlab.laboratory.instruments import VariableAttenuator
 from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty, ConfigEnableProperty
 
 import numpy as np
-import time
 
 class HP_8156A_VA(VISAInstrumentDriver, Configurable):
     ''' HP8156A variable attenuator

@@ -17,9 +17,9 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     '''
     instrument_category = FunctionGenerator
 
-    amplitude = ConfigProperty('AMP', typeCheck=float,
+    amplitude = ConfigProperty('AMP', typeCast=float,
                                limits=[0.01, 10], termination='V')
-    offset = ConfigProperty('OFS', typeCheck=float,
+    offset = ConfigProperty('OFS', typeCast=float,
                             limits=None, termination='V')
     duty = ConfigProperty('DTY', limits=[0, 100], termination='%')
     waveform = ConfigTokenProperty('W', tokens=['dc', 'sine', 'triangle', 'square', 'pulse'])

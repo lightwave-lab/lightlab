@@ -518,9 +518,19 @@ class ConfigProperty(object):
             clk.frequency = 1e9
             print(clk.frequency)
     '''
-    def __init__(hwKey, readOnly=False, typeCast=None,
+    def __init__(self, hwKey, readOnly=False, typeCast=None,
                  mapping=None, limits=None, termination=None,
                  doc=None):
+        '''
+            Args:
+                hwKey (str): configurable message name
+                readOnly (bool): Will raise error if written
+                typeCast (func): Parses strings returned from instrument
+                mapping (dict): Parses aruments before sending to instrument
+                limits ([float, float]): Range checking on writes
+                termination (str): Puts this string after writes and clips it off of reads
+                doc (str): Documentation
+        '''
         self.hwKey = hwKey
         self.readOnly = readOnly
         self.typeCast = typeCast
@@ -540,7 +550,7 @@ class ConfigProperty(object):
     def __set__(self, instance, value):
         if self.readOnly == True:
             raise Exception('This property is read only.')
-        if mapping is not None:
+        if self.mapping is not None:
             value = self.mapping[value]
         elif self.limits is not None:
             if value < self.limits[0]:
@@ -559,8 +569,12 @@ class ConfigProperty(object):
 
 class ConfigEnableProperty(ConfigProperty):
     ''' Special kind of property typically used for enables
+
+        Arguments and returns are booleans.
+
+        Messages are 'ON'/'OFF'
     '''
-    def __init__(hwKey, readOnly=False, doc=None):
+    def __init__(self, hwKey, readOnly=False, doc=None):
         kwargs = dict(typeCast=lambda x: x in [True, 1, '1', 'ON'],
                       mapping={True: 'ON', False: 'OFF'},
                       limits=None)
@@ -569,9 +583,13 @@ class ConfigEnableProperty(ConfigProperty):
 class ConfigTokenProperty(ConfigProperty):
     ''' Special kind of property with discrete inputs
 
-        Tokens can be a list or a bidict
+        Tokens can be a list or a bidict.
+
+        Arguments and returns are token strings
+
+        Messages are integer indeces
     '''
-    def __init__(hwKey, tokens, readOnly=False, doc=None):
+    def __init__(self, hwKey, tokens, readOnly=False, doc=None):
         self.hwKey = hwKey
         self.tokens = tokens
         self.readOnly = readOnly

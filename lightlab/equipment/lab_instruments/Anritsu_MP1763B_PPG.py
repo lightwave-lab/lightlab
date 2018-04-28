@@ -1,5 +1,5 @@
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty
+from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty, ConfigTokenProperty
 from lightlab.laboratory.instruments import PulsePatternGenerator
 import warnings
 import numpy as np
@@ -16,8 +16,8 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
     instrument_category = PulsePatternGenerator
     storedPattern = None
 
-    amplitude = ConfigProperty('DAP', typeCheck=float)
-    offset = ConfigProperty('DOS', typeCheck=float)
+    amplitude = ConfigProperty('DAP', typeCast=float)
+    offset = ConfigProperty('DOS', typeCast=float)
     syncSource = ConfigTokenProperty('SOP', tokens=['clock64', 'fixed', 'variable'],
          doc='Output synchronizer is locked to pattern or not?')
 
