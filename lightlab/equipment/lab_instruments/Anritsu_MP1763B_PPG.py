@@ -16,6 +16,9 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
     instrument_category = PulsePatternGenerator
     storedPattern = None
 
+    amplitude = ConfigProperty('DAP', typeCheck=float)
+    offset = ConfigProperty('DOS', typeCheck=float)
+
     def __init__(self, name='The PPG', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self, headerIsOptional=False, precedingColon=False)
@@ -101,30 +104,6 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
                     src + ' is not a valid sync source: ' + str(tokens))
             self.setConfigParam('SOP', iTok)
         return tokens[int(self.getConfigParam('SOP'))]
-
-    def amplAndOffs(self, amplOffs=None):
-        ''' Amplitude and offset setting/getting
-
-            Args:
-                amplOffs (tuple(float)): new amplitude and offset in volts
-                If either is None, returns but does not set
-
-            Returns:
-                (tuple(float)): amplitude and offset, read from hardware if specified as None
-        '''
-        if amplOffs is None:
-            amplOffs = (None, None)
-        if np.isscalar(amplOffs):
-            raise ValueError('amplOffs must be a tuple. ' +
-                             'You can specify one element as None if you don\'t want to set it')
-        amplitude, offset = amplOffs
-        if amplitude is not None:
-            self.setConfigParam('DAP', amplitude)
-        if offset is not None:
-            self.setConfigParam('DOS', offset)
-        ampl = float(self.getConfigParam('DAP'))
-        offs = float(self.getConfigParam('DOS'))
-        return (ampl, offs)
 
     # defining function bitsequence, that takes delays and transfer them into a sequence we want.
 

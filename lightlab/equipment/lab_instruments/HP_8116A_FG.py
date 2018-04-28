@@ -17,7 +17,11 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     '''
     instrument_category = FunctionGenerator
 
-    amplitudeRange = (.01, 10)
+    amplitude = ConfigProperty('AMP', typeCheck=float,
+                               limits=[0.01, 10], termination='V')
+    offset = ConfigProperty('OFS', typeCheck=float,
+                            limits=None, termination='V')
+    duty = ConfigProperty('DTY', limits=[0, 100], termination='%')
 
     def __init__(self, name='The slow synth (FUNCTION GENERATOR)', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
@@ -72,43 +76,3 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
             self.setConfigParam('W', iTok)
         return tokens[int(self.getConfigParam('W'))]
 
-    def amplAndOffs(self, amplOffs=None):
-        ''' Amplitude and offset setting/getting
-
-            Only uses the data-bar because the other one is broken
-
-            Args:
-                amplOffs (tuple(float)): new amplitude and offset in volts
-                If either is None, returns but does not set
-
-            Returns:
-                (tuple(float)): amplitude and offset, read from hardware if specified as None
-        '''
-        if amplOffs is None:
-            amplOffs = (None, None)
-        if np.isscalar(amplOffs):
-            raise ValueError('amplOffs must be a tuple. ' +
-                             'You can specify one element as None if you don\'t want to set it')
-        amplitude, offset = amplOffs
-        amplitude = np.clip(amplitude, *self.amplitudeRange)
-
-        if amplitude is not None:
-            self.setConfigParam('AMP', '{} V'.format(amplitude))
-        try:
-            ampl = float(self.getConfigParam('AMP').split(' ')[0])
-        except Exception:
-            ampl = None
-        if offset is not None:
-            self.setConfigParam('OFS', '{} V'.format(offset))
-        try:
-            offs = float(self.getConfigParam('OFS').split(' ')[0])
-        except Exception:
-            offs = None
-        return (ampl, offs)
-
-    def duty(self, duty=None):
-        ''' duty is in percentage '''
-        if duty is not None:
-            self.setConfigParam('DTY', '{} %'.format(duty))
-
-        return self.getConfigParam('DTY')
