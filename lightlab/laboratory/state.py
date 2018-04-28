@@ -2,7 +2,7 @@
 This module contains classes responsible to maintain a record of the current state of the lab.
 '''
 from lightlab.laboratory import Hashable, TypedList
-from lightlab.laboratory.instruments import Host, Bench, Instrument, Device
+from lightlab.laboratory.instruments import Host, LocalHost, Bench, Instrument, Device
 import hashlib
 import jsonpickle
 import sys
@@ -62,8 +62,38 @@ class LabState(Hashable):
         super().__init__()
 
     def updateHost(self, *hosts):
-        for host in hosts:
-            self.hosts[host.name] = host
+        ''' Checks the number of instrumentation_servers.
+            There should be exactly one.
+        '''
+        localhost_name = None
+        old_hostnames = []
+        for old_host in self.hosts.values():
+            old_hostnames.append(old_host.name)
+            if isinstance(old_host, LocalHost):
+                if localhost_name is not None:
+                    logger.warning('Duplicate localhost found in lab.hosts')
+                localhost_name = old_host.name
+        for new_host in hosts:
+            # Updating localhost
+            if (isinstance(new_host, LocalHost) and localhost_name is not None):
+                # Check for localhost clash
+                if new_host.name != localhost_name:
+                    logger.warning('Localhost is already present: ' +
+                                   f'{localhost_name}\n' +
+                                   f'Not updating host {new_host.name}!')
+                    continue
+                else:
+                    localhost_name = new_host.name
+            # Will an update happen?
+            if new_host.name in old_hostnames:
+                logger.info(f'Overwriting host: {new_host.name}')
+                # Will it end up removing the localhost?
+                if (new_host.name == localhost_name and
+                        not isinstance(new_host, LocalHost)):
+                    localhost_name = None
+            self.hosts[new_host.name] = new_host
+        if localhost_name is None:
+            logger.warning('Localhost not yet present')
 
     def updateBench(self, *benches):
         for bench in benches:

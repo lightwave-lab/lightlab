@@ -2,7 +2,7 @@
 
 import pytest
 import lightlab.laboratory.state as labstate
-from lightlab.laboratory.instruments import Host, Bench, Instrument, Keithley
+from lightlab.laboratory.instruments import LocalHost, Host, Bench, Instrument, Keithley
 from lightlab.laboratory.devices import Device
 from lightlab.laboratory.experiments import Experiment
 from lightlab.laboratory.virtualization import DualFunction
@@ -16,7 +16,8 @@ logging.disable(logging.CRITICAL)
 filename = 'test_{}.json'.format(int(time.time()))
 
 # Shared objects
-Host1 = Host(name="Host1")
+Host1 = LocalHost(name="Host1")
+Host2 = Host(name="Host2")
 Bench1 = Bench(name="Bench1")
 Bench2 = Bench(name="Bench2")
 
@@ -42,6 +43,7 @@ def lab(request, monkeypatch):
 
     lab = labstate.LabState(filename=filename)
     lab.updateHost(Host1)
+    lab.updateHost(Host2)
     lab.updateBench(Bench1, Bench2)
     lab.insertInstrument(instrument1)
     lab.insertInstrument(instrument2)
@@ -71,7 +73,11 @@ def test_instantiate(lab):
     '''Initializing LabState with two instruments, devices, and interconnections,
     asserts if connections are properly made'''
     assert Bench1 in lab.benches.values()
+    assert Bench2 in lab.benches.values()
+    assert len(lab.benches) == 2
     assert Host1 in lab.hosts.values()
+    assert Host2 in lab.hosts.values()
+    assert len(lab.hosts) == 2
     assert instrument1 in Bench1.instruments
     assert instrument1.bench == Bench1
     assert instrument1 in Host1.instruments
@@ -94,7 +100,7 @@ def test_delete(lab):
 
 def test_savestate(lab):
     h1 = lab.hosts["Host1"]
-    h1.mac_address = "test"
+    h1.mac_address = "test_savestate"
     lab.updateHost(h1)
     lab.saveState(filename, save_backup=False)
 
@@ -137,6 +143,25 @@ def test_corruptreload_changecontent(lab):
             file.write(refrozen_json)
     with pytest.raises(RuntimeError, message="corruption within file was not detected"):
         labstate.LabState.loadState(filename)
+
+
+def test_update(lab):
+    ''' Updates information on hosts, benches or instruments'''
+    new_host2 = Host(name="Host2", hostname='foo')
+    old_host2 = lab.hosts["Host2"]
+    lab.hosts["Host2"] = new_host2
+    assert lab.hosts["Host2"] == new_host2
+    assert lab.hosts["Host2"] != old_host2  # old_host2 got de-referenced
+
+    # WARNING! non-trivial effect true for hosts, benches and instruments:
+    lab.hosts["Host3"] = new_host2  # this will rename new_host2 to "Host3"
+    assert lab.hosts["Host3"] == new_host2
+    assert new_host2.name == "Host3"
+    assert lab.hosts["Host3"].name == "Host3"
+    assert "Host2" not in lab.hosts.keys()
+
+    del lab.hosts["Host3"]
+    assert new_host2 not in lab.hosts
 
 
 def test_update_connections(lab):
@@ -228,3 +253,25 @@ def test_remove_instrument_by_name(lab):
     assert len(lab.instruments) == 2
     lab.deleteInstrumentFromName("instrument2")
     assert instrument2 not in lab.instruments
+
+
+def test_overwriting(lab):
+    ''' Special cases when there are instrumentation_servers '''
+    old_remote = Host2
+    updated_remote = Host(name="Host2", foo=1)
+    lab.updateHost(updated_remote)
+    assert lab.hosts["Host2"] != old_remote
+    assert lab.hosts["Host2"] == updated_remote
+
+    old_server = Host1
+    updated_server = LocalHost(name="Host1")
+    updated_server.mac_address = 'test_overwriting'
+    lab.updateHost(updated_server)  # should replace entry for 'Host1'
+    assert lab.hosts["Host1"] != old_server
+    assert lab.hosts["Host1"] == updated_server
+
+    second_server = LocalHost(name="Another Host")
+    lab.updateHost(second_server)
+    assert lab.hosts["Host1"] == updated_server
+    with pytest.raises(KeyError):
+        lab.hosts["Another Host"]

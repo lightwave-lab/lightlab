@@ -1,13 +1,17 @@
 '''
 This module provides an interface for instruments in the lab and virtual ones.
 '''
+
+import os
+import platform
+from uuid import getnode as get_mac  # https://stackoverflow.com/questions/159137/getting-mac-address
+from contextlib import contextmanager
+
 from lightlab.laboratory import Node, typed_property, TypedList
 from lightlab.equipment.visa_bases import VISAObject, DefaultDriver
 
 from lightlab import logger
-import os
 import pyvisa
-from contextlib import contextmanager
 
 
 class Host(Node):
@@ -41,29 +45,48 @@ class Host(Node):
             logger.warning("%s is not reachable via ping.", self)
         return response == 0
 
-    def list_resources_info(self, use_cached=True, is_local=False):
+    def _visa_prefix(self):
+        ''' The prefix necessary for connecting to remote visa servers.
+
+        Ex. 'visa://remote-server.university.edu/'
+
+            Returns:
+                (str)
+        '''
+        return 'visa://{}/'.format(self.hostname)
+
+    def gpib_port_to_address(self, port, board=0):
+        '''
+            Args:
+                port (int): The port on the GPIB bus of this host
+                board (int): For hosts with multiple GPIB busses
+
+            Returns:
+                (str): the address that can be used in an initializer
+        '''
+        localSerialStr = 'GPIB{}::{}::INSTR'.format(board, port)
+        return self._visa_prefix() + localSerialStr
+
+    def list_resources_info(self, use_cached=True):
         if self.__cached_list_resources_info is None:
             use_cached = False
         if use_cached:
             return self.__cached_list_resources_info
         else:
-            if is_local:
-                list_query = "?*::INSTR"
-            else:
-                list_query = "visa://" + self.hostname + "/?*::INSTR"
+            list_query = self._visa_prefix() + "?*::INSTR"
             rm = pyvisa.ResourceManager()
             logger.debug("Caching resource list in %s", self)
             self.__cached_list_resources_info = rm.list_resources_info(
                 query=list_query)
             return self.__cached_list_resources_info
 
-    def list_gpib_resources_info(self, use_cached=True, is_local=False):
+    def list_gpib_resources_info(self, use_cached=True):
         return {resource_name: resource
-                for resource_name, resource in self.list_resources_info(use_cached=use_cached, is_local=is_local).items()
+                for resource_name, resource in self.list_resources_info(use_cached=use_cached).items()
                 if resource.interface_type == pyvisa.constants.InterfaceType.gpib}
 
-    def get_all_gpib_id(self, use_cached=True, is_local=False):
-        gpib_resources = self.list_gpib_resources_info(use_cached=use_cached, is_local=is_local)
+    def get_all_gpib_id(self, use_cached=True):
+        gpib_resources = self.list_gpib_resources_info(use_cached=use_cached)
         if self.__cached_gpib_instrument_list is None:
             use_cached = False
         if use_cached:
@@ -115,6 +138,31 @@ class Host(Node):
 
     def __str__(self):
         return "Host {}".format(self.name)
+
+
+class LocalHost(Host):
+
+    def __init__(self, name=None):
+        if name is None:
+            name = 'localhost'
+        self.name = name
+        self.hostname = platform.node()
+        mac = get_mac()
+        # converts 90520734586583 to 52:54:00:3A:D6:D7
+        self.mac_address = ':'.join(("%012X" % mac)[i:i + 2] for i in range(0, 12, 2))
+        self.os = platform.system()
+
+    def _visa_prefix(self):
+        ''' How the visa server is specified. If this is a local host,
+        then there is no visa:// prefix
+
+            Returns:
+                (str)
+        '''
+        return ''
+
+    def isLive(self):
+        return True
 
 
 class Bench(Node):
@@ -342,10 +390,8 @@ class Instrument(Node):
     def driver(self):
         return self.driver_object
 
-
     bench = typed_property(Bench, "_bench")
     host = typed_property(Host, "_host")
-
 
     @property
     def name(self):
@@ -373,9 +419,9 @@ class Instrument(Node):
         lines.append("id_string: {}".format(self.id_string))
         if not self.id_string:
             lines.append("The id_string should match the value returned by"
-                " self.driver.instrID(), and is checked by the command"
-                " self.isLive() in order to authenticate that the intrument"
-                " in that address is the intended one.")
+                         " self.driver.instrID(), and is checked by the command"
+                         " self.isLive() in order to authenticate that the intrument"
+                         " in that address is the intended one.")
         lines.append("driver_class: {}".format(self.driver_class))
         lines.append("=====")
         lines.append("Ports")
@@ -432,7 +478,7 @@ class Instrument(Node):
     #     return cls(id_string, gpib_address=gpib_address)
 
 
-#TODO add device equality function
+# TODO add device equality function
 class Device(Node):
     name = None
     ports = None
