@@ -34,6 +34,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
 
     """
     instrument_category = OpticalSpectrumAnalyzer
+    wlRangeBounds = [1505.765, 1572.418]
     __wlRange = None
 
     def __init__(self, name='The OSA', address=None, **kwargs):
@@ -119,7 +120,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         It can also be accessed as normal, such as
         >>> x = osaInst.wlRange
         """
-        newRangeClipped = np.clip(newRange, a_min=1505.765, a_max=1572.418)
+        newRangeClipped = np.clip(newRange, a_min=self.wlRangeBounds[0], a_max=self.wlRangeBounds[1])
         if np.any(newRange != newRangeClipped):
             print('Warning: Requested OSA wlRange out of range. Got', newRange)
         self.write('SPSTRTWL' + str(np.max(newRangeClipped)))
@@ -195,20 +196,22 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
                 dbmAvg = dbmAvg + dbm / avgCnt
         return Spectrum(nm, dbmAvg, inDbm=True)
 
-    ''' TLS access methods currently not implemented '''
-
     @property
     def tlsEnable(self):
+        raise NotImplementedError('TLS functionality is not implemented yet. '
+                                  'Don\'t know the commands.')
         retStr = self.query('TLSON?')
         # do some parsing
         return int(retStr) == 1
 
     @tlsEnable.setter
     def tlsEnable(self, newState=None):
-        """newState can be 0/1 or true/false
-        if newState is -1 or None: do nothing
-        Returns the current on/off state as boolean, read from the OSA
-        """
+        ''' newState can be 0/1 or true/false
+            if newState is -1 or None: do nothing
+            Returns the current on/off state as boolean, read from the OSA
+        '''
+        raise NotImplementedError('TLS functionality is not implemented yet. '
+                                  'Don\'t know the commands.')
         if newState != None and newState != -1:
             if type(newState) != type(True):
                 newState = (newState != 0)
@@ -217,13 +220,17 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
 
     @property
     def tlsWl(self):
+        raise NotImplementedError('TLS functionality is not implemented yet. '
+                                  'Don\'t know the commands.')
         retStr = self.query('TLSwl?')
         # do some parsing
         return float(retStr)
 
     @tlsWl.setter
     def tlsWl(self, newState=None):
-        """newState is a float in units of nm
-        """
+        ''' newState is a float in units of nm
+        '''
+        raise NotImplementedError('TLS functionality is not implemented yet. '
+                                  'Don\'t know the commands.')
         if newState != None:
             self.write('TLSwl ' + str(newState))

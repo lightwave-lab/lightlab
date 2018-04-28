@@ -248,6 +248,7 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
         return Spectrum(absc, ordi, inDbm=True)
 
     def allOff(self):
+        ''' Same as :py:meth:`off` '''
         self.off()
 
     def allOn(self):
