@@ -3,5 +3,5 @@
 All classes are imported into this namespace.
 """
 
-from .bases import Host, Bench, Instrument  # noqa
+from .bases import Host, LocalHost, Bench, Instrument, Device  # noqa
 from .interfaces import *  # noqa

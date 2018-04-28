@@ -20,7 +20,8 @@ Warning:
         bench = labstate.lab.findBenchFromInstrument(device)
 
 '''
-from lightlab.laboratory import Hashable
+from lightlab.laboratory import Hashable, TypedList
+from lightlab.laboratory.instruments import Host, LocalHost, Bench, Instrument, Device
 import hashlib
 import jsonpickle
 import sys
@@ -65,7 +66,7 @@ class LabState(Hashable):
     """ Represents the set of objects and connections present in lab,
     with the ability to safely save and load to and from a ``.json`` file.
     """
-    __version__ = 1
+    __version__ = 2
     __sha256__ = None
     __user__ = None
     __datetime__ = None
@@ -73,66 +74,86 @@ class LabState(Hashable):
     hosts = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Host`) list of hosts
     benches = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Bench`) list of benches
     connections = None  #: list(dict(str -> str)) list of connections
+    devices = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Device`) list of devices
+    instruments = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Instrument`) list of instruments
 
     @property
-    def instruments(self):
-        """ List of :py:class:`~lightlab.laboratory.instruments.bases.Instrument`,
-        concatenated from ``benches.instruments`` and ``hosts.instruments``.
-        """
-        instruments = list()
-        for _, bench in self.benches.items():
-            instruments.extend(bench.instruments)
-        for _, host in self.hosts.items():
-            instruments.extend(host.instruments)
-        unique_instruments = list(set(instruments))
-        return unique_instruments  # unique elements
+    def instruments_dict(self):  # TODO DEPRECATE
+        return self.instruments.dict
 
-    @property
-    def instruments_dict(self):
-        """ Dictionary of instruments, concatenated from ``lab.instruments``.
-
-            Access with ``instruments_dict[instr.name]``
-
-            Todo:
-
-                Logs a warning if duplicate is found.
-        """
-        instruments_dict = dict()
-        for instrument in self.instruments:
-            instruments_dict[instrument.name] = instrument
-        return instruments_dict
-
-    def __init__(self, filename=_filename):
-        self.hosts = dict()
-        self.benches = dict()
+    def __init__(self, filename=None):
+        self.hosts = TypedList(Host)
+        self.benches = TypedList(Bench)
         self.connections = list()
+        self.devices = TypedList(Device)
+        self.instruments = TypedList(Instrument)
+        if filename is None:
+            filename = _filename
         self.filename = filename
         super().__init__()
 
     def updateHost(self, *hosts):
-        """ Updates hosts in the hosts dictionary.
+        """ Updates hosts in the hosts list.
+
+        Checks the number of instrumentation_servers.
+        There should be exactly one.
 
         Args:
             *(:py:class:`~lightlab.laboratory.instruments.bases.Host`): hosts
 
+        Raises:
+            RuntimeError: Raised if duplicate names are found.
+            TypeError: Raised if host is not of type :py:class:`~lightlab.laboratory.instruments.bases.Host`
+
+
         """
-        for host in hosts:
-            self.hosts[host.name] = host
+        localhost_name = None
+        old_hostnames = []
+        for old_host in self.hosts.values():
+            old_hostnames.append(old_host.name)
+            if isinstance(old_host, LocalHost):
+                if localhost_name is not None:
+                    logger.warning('Duplicate localhost found in lab.hosts')
+                localhost_name = old_host.name
+        for new_host in hosts:
+            # Updating localhost
+            if (isinstance(new_host, LocalHost) and localhost_name is not None):
+                # Check for localhost clash
+                if new_host.name != localhost_name:
+                    logger.warning('Localhost is already present: ' +
+                                   f'{localhost_name}\n' +
+                                   f'Not updating host {new_host.name}!')
+                    continue
+                else:
+                    localhost_name = new_host.name
+            # Will an update happen?
+            if new_host.name in old_hostnames:
+                logger.info(f'Overwriting host: {new_host.name}')
+                # Will it end up removing the localhost?
+                if (new_host.name == localhost_name and
+                        not isinstance(new_host, LocalHost)):
+                    localhost_name = None
+            self.hosts[new_host.name] = new_host
+        if localhost_name is None:
+            logger.warning('Localhost not yet present')
 
     def updateBench(self, *benches):
-        """ Updates benches in the benches dictionary.
+        """ Updates benches in the benches list.
 
         Args:
             *(:py:class:`~lightlab.laboratory.instruments.bases.Bench`): benches
+
+        Raises:
+            RuntimeError: Raised if duplicate names are found.
+            TypeError: Raised if bench is not of type :py:class:`~lightlab.laboratory.instruments.bases.Bench`
+
 
         """
         for bench in benches:
             self.benches[bench.name] = bench
 
-    def deleteInstrumentFromName(self, name, force=False):
+    def deleteInstrumentFromName(self, name):
         """ Deletes an instrument by their name.
-
-        It will only delete if only one element is found.
 
         Example:
 
@@ -142,69 +163,48 @@ class LabState(Hashable):
 
         Args:
             name (str): Instrument name
-            force (bool, optional): If True, forces deletion even if
-                duplicate names are found. Default False.
 
         """
         matching_instruments = list(filter(lambda x: x.name == name,
                                            self.instruments))
-        delete = False
-        if len(matching_instruments) == 1:
-            delete = True
-        elif len(matching_instruments) > 1:
-            if not force:
-                logger.error("Found multiple instruments named {}.\n Doing nothing.".format(name))
-            else:
-                logger.warning("Found multiple instruments named {}.\n Deleting all.".format(name))
-                delete = True
-        else:
-            logger.info("No instrument named {} found".format(name))
-        if delete:
-            for instr_obj in matching_instruments:
-                instr_obj.bench = None
-                instr_obj.host = None
-                del instr_obj
+        assert len(matching_instruments) == 1
+        del self.instruments[name]
 
     def insertInstrument(self, instrument):
         """ Inserts instrument in labstate.
 
         Args:
             instrument (:py:class:`~lightlab.laboratory.instruments.bases.Instrument`): instrument
-                to insert. It must have either `bench` or `host` set.
+                to insert.
         Raises:
-            RuntimeError: Raised if neither `host` nor `bench` are set.
+            RuntimeError: Raised if duplicate names are found.
+            TypeError: Raised if instrument is not of type :py:class:`~lightlab.laboratory.instruments.bases.Instrument`
 
-        Todo:
-            test if bench and/or host are in lab
         """
-        inserted = False
-        if instrument.bench is not None:
-            instrument.bench.addInstrument(instrument)
-            inserted = True
-        if instrument.host is not None:
-            instrument.host.addInstrument(instrument)
-            inserted = True
-        if not inserted:
-            raise RuntimeError("host or bench variables must be assigned.")
+        self.instruments.append(instrument)
+        if instrument.bench and instrument.bench not in self.benches:
+            logger.warning(f"Insterting *new* bench {instrument.bench.name}")
+            self.benches.append(instrument.bench)
+        if instrument.host and instrument.host not in self.hosts:
+            logger.warning(f"Inserting *new* host {instrument.host.name}")
+            self.hosts.append(instrument.host)
 
     def insertDevice(self, device):
         """ Inserts device in labstate.
 
         Args:
             device (:py:class:`~lightlab.laboratory.devices.Device`): device
-                to insert. It must have either `bench` or `host` set.
+                to insert.
 
         Raises:
-            RuntimeError: Raised if `bench` is not set.
+            RuntimeError: Raised if duplicate names are found.
+            TypeError: Raised if device is not of type :py:class:`~lightlab.laboratory.instruments.bases.Device`
 
-        Todo:
-            test if bench is in lab
         """
-        # TODO test if bench is in lab
-        if device.bench is not None:
-            device.bench.addDevice(device)
-        else:
-            raise RuntimeError("bench variable must be assigned.")
+        self.devices.append(device)
+        if device.bench and device.bench not in self.benches:
+            logger.warning(f"Insterting *new* bench {device.bench.name}")
+            self.benches.append(device.bench)
 
     def updateConnections(self, *connections):
         """ Updates connections between instruments and devices.
@@ -258,37 +258,17 @@ class LabState(Hashable):
         return True
 
     @property
-    def devices(self):
-        """ List of :py:class:`~lightlab.laboratory.devices.Device` objects
-        present in all benches.
-        """
-        devices = list()
-        for bench in self.benches.values():
-            devices.extend(bench.devices)
-        return devices
-
-    @property
     def devices_dict(self):
-        """ Dictionary of devices, concatenated from ``lab.devices``.
+        return self.devices.dict
 
-            Access with ``devices_dict[device.name]``
-
-            Todo:
-
-                Logs a warning if duplicate is found.
-        """
-        return {device.name: device for device in self.devices}
-
+    # TODO Deprecate
     def findBenchFromInstrument(self, instrument):
         """ Returns the bench that contains the instrument.
 
         This obviously assumes that one instrument can only be present
         in one bench.
         """
-        for benchname, bench in self.benches.items():
-            if instrument in bench.instruments:
-                return bench
-        return None
+        return instrument.bench
 
     def findBenchFromDevice(self, device):
         """ Returns the bench that contains the device.
@@ -296,10 +276,7 @@ class LabState(Hashable):
         This obviously assumes that one device can only be present
         in one bench.
         """
-        for benchname, bench in self.benches.items():
-            if device in bench.devices:
-                return bench
-        return None
+        return device.bench
 
     def findHostFromInstrument(self, instrument):
         """ Returns the host that contains the instrument.
@@ -307,13 +284,10 @@ class LabState(Hashable):
         This obviously assumes that one instrument can only be present
         in one host.
         """
-        for hostname, host in self.hosts.items():
-            if instrument in host.instruments:
-                return host
-        return None
+        return instrument.host
 
     @classmethod
-    def loadState(cls, filename=_filename, validateHash=True):
+    def loadState(cls, filename=None, validateHash=True):
         """ Loads a :py:class:`LabState` object from a file.
 
         It loads and instantiates a copy of every object serialized
@@ -345,6 +319,9 @@ class LabState(Hashable):
             OSError: if there is any problem loading the file.
 
         """
+        if filename is None:
+            filename = _filename
+
         with open(filename, 'r') as file:
             frozen_json = file.read()
         json_state = json.decode(frozen_json)
@@ -371,9 +348,18 @@ class LabState(Hashable):
 
         restored_object = context.restore(json_state, reset=True)
         restored_object.__sha256__ = sha256
+        restored_object.__version__ = version
         restored_object.filename = filename
         restored_object.__user__ = user
         restored_object.__datetime__ = datetime
+
+        try:
+            for i in range(version, cls.__version__):
+                logger.warning(f"Attempting patch {i} -> {cls.__version__}")
+                restored_object = patch_labstate(i, restored_object)
+        except NotImplementedError as e:
+            logger.exception(e)
+
         return restored_object
 
     def __toJSON(self):
@@ -475,11 +461,6 @@ class LabState(Hashable):
             self.__sha256__ = json_state["__sha256__"]
             logger.debug("{}'s sha: {}".format(fname, json_state["__sha256__"]))
 
-# Lazy loading tip from https://stackoverflow.com/questions/1462986/lazy-module-variables-can-it-be-done
-# The problem is that instantiating the variable lab causes some modules
-# that depend on this variable to be imported, creating a cyclical dependence.
-# The solution is to instantiate the variable lab only when it is truly called.
-
 
 def __init__(module):
     # do something that imports this module again
@@ -499,7 +480,13 @@ def __init__(module):
         module.lab = module.LabState()
 
 
+# Lazy loading tip from https://stackoverflow.com/questions/1462986/lazy-module-variables-can-it-be-done
+# The problem is that instantiating the variable lab causes some modules
+# that depend on this module to be imported, creating a cyclical dependence.
+# The solution is to instantiate the variable lab only when it is truly called.
+
 class _Sneaky(object):
+    """ Lazy loading of state.lab. """
 
     def __init__(self, name):
         self.module = sys.modules[name]
@@ -517,6 +504,87 @@ class _Sneaky(object):
             __init__(self.module)
         return getattr(self.module, name)
 
+    def __setattr__(self, name, value):
+        if name in ["initializing", "module"]:
+            return super().__setattr__(name, value)
+        return setattr(self.module, name, value)
+
 
 _Sneaky(__name__)
 lab = None  # This actually helps with the linting and debugging. No side effect.
+
+
+def patch_labstate(from_version, old_lab):
+    """ This takes the loaded JSON version of labstate (old_lab) and
+    applies a patch to the current version of labstate. """
+    if from_version == 1:
+        assert old_lab.__version__ == from_version
+
+        # In labstate version 1, instruments are stored in lists called
+        # in lab.benches[x].instruments and/or lab.hosts[x].instruments,
+        # with potential name duplicates
+
+        # We need to transport them into a single list that will reside
+        # lab.instruments, with no name duplicates.
+
+        import lightlab.laboratory.state as labstate
+        from lightlab.laboratory import TypedList
+        from lightlab.laboratory.instruments import Instrument, Bench, Host, Device
+        old_benches = old_lab.benches
+        old_hosts = old_lab.hosts
+        old_connections = old_lab.connections
+        instruments = TypedList(Instrument)
+        benches = TypedList(Bench)
+        devices = TypedList(Device)
+        hosts = TypedList(Host)
+
+        for old_bench in old_benches.values():
+            # restarting new bench afresh (only name matters so far)
+            new_bench = Bench(name=old_bench.name)
+            benches.append(new_bench)
+
+            # bench.instruments is now a property descriptor,
+            # can't access directly. Need to use __dict__
+            # here we move bench.instruments into a global instruments
+
+            for instrument in old_bench.__dict__['instruments']:
+                instrument.bench = new_bench
+                # if there is a duplicate name, update instrument
+                if instrument.name in instruments.dict.keys():
+                    instruments[instrument.name].__dict__.update(instrument.__dict__)
+                else:
+                    instruments.append(instrument)
+
+            # same for devices
+            for device in old_bench.__dict__['devices']:
+                device.bench = new_bench
+                if device.name in devices.dict.keys():
+                    devices[device.name].__dict__.update(device.__dict__)
+                else:
+                    devices.append(device)
+
+        # Same code as above
+        for old_host in old_hosts.values():
+            new_host = Host(name=old_host.name,
+                            mac_address=old_host.mac_address,
+                            hostname=old_host.hostname,
+                            os=old_host.os)
+            hosts.append(new_host)
+            for instrument in old_host.__dict__['instruments']:
+                instrument.host = new_host
+                if instrument.name in instruments.dict.keys():
+                    instruments[instrument.name].__dict__.update(instrument.__dict__)
+                else:
+                    instruments.append(instrument)
+
+        # instantiating new labstate from scratch.
+        lab = labstate.LabState()
+        lab.instruments.extend(instruments)
+        lab.benches.extend(benches)
+        lab.devices.extend(devices)
+        lab.hosts.extend(hosts)
+        lab.hosts['cassander'] = LocalHost(name='cassander')
+        lab.connections = old_connections
+        return lab
+
+    raise NotImplementedError("Patch not found")
