@@ -1,5 +1,5 @@
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty, ConfigEnableProperty
 from lightlab.laboratory.instruments import Clock
 
 from lightlab import logger
@@ -15,6 +15,12 @@ class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
             Clock interface does not see sweepSetup and sweepEnable
     '''
     instrument_category = Clock
+
+    enable = ConfigEnableProperty('OUTP:STAT')
+    sweepEnable = ConfigProperty('FREQ:MODE',
+                                 typeCast=lambda x: x == 'LIST',
+                                 mapping={True: 'LIST', False: 'CW'},
+                                 doc='Switches between sweeping (True) and CW (False) modes')
 
     def __init__(self, name='The 40GHz clock', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
@@ -61,20 +67,6 @@ class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
             self.sweepEnable(False)               # So we need to update this object's internal state too
         return self.getConfigParam('FREQ:CW')
 
-    def enable(self, enaState=None):
-        ''' Enabler for the output
-
-            Args:
-                enaState (bool): If None, only gets
-
-            Returns:
-                (bool): is RF output enabled
-        '''
-        if enaState is not None:
-            self.setConfigParam('OUTP:STAT', 'ON' if enaState else 'OFF')
-        retStr = self.getConfigParam('OUTP:STAT')
-        return retStr in [True, 'ON', 1, '1']
-
     def sweepSetup(self, startFreq, stopFreq, nPts=100, dwell=0.1):
         ''' Configure sweep. See instrument for constraints; they are not checked here.
 
@@ -94,16 +86,3 @@ class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
         self.setConfigParam('FREQ:STOP', stopFreq)
         self.setConfigParam('SWE:POIN', nPts)
         self.setConfigParam('SWE:DWEL', dwell)
-
-    def sweepEnable(self, swpState=None):
-        ''' Switches between sweeping (True) and CW (False) modes
-
-            Args:
-                swpState (bool): If None, only gets, doesn't set.
-
-            Returns:
-                (bool): is the output sweeping
-        '''
-        if swpState is not None:
-            self.setConfigParam('FREQ:MODE', 'LIST' if swpState else 'CW')
-        return self.getConfigParam('FREQ:MODE') == 'LIST'

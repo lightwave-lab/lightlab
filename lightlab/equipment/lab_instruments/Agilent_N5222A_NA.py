@@ -1,5 +1,5 @@
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty, ConfigEnableProperty
 from lightlab.laboratory.instruments import NetworkAnalyzer
 
 import numpy as np
@@ -29,6 +29,9 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
     '''
     instrument_category = NetworkAnalyzer
 
+    amplitude = ConfigProperty('SOUR:POW', limits=[-30, 30])
+    enable = ConfigEnableProperty('OUTP:STAT')
+
     def __init__(self, name='The network analyzer', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self, headerIsOptional=False)
@@ -39,25 +42,6 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 
     def startup(self):
         self.measurementSetup('S21')
-
-    def amplitude(self, amp=None):
-        ''' Amplitude is in dBm
-
-            Args:
-                amp (float): If None, only gets
-
-            Returns:
-                (float): output power amplitude
-        '''
-        if amp is not None:
-            if amp > 30:
-                print('Warning: PNA ony goes up to +30dBm, given {}dBm.'.format(amp))
-                amp = 30
-            if amp < -30:
-                print('Warning: R&S ony goes down to -30dBm, given {}dBm.'.format(amp))
-                amp = -30
-            self.setConfigParam('SOUR:POW', amp)
-        return self.getConfigParam('SOUR:POW')
 
     def frequency(self, freq=None):
         ''' Frequency is in Hertz
@@ -83,17 +67,6 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
             self.setConfigParam('SENS:FREQ:CW', freq)  # Setting this automatically brings to CW mode
         return self.getConfigParam('SENS:FREQ:CW')
 
-    def enable(self, enaState=None):
-        ''' Enabler for the entire output
-
-            Args:
-                enaState (bool): If None, only gets
-
-            Returns:
-                (bool): is RF output enabled
-        '''
-        return self.__enaBlock('OUTP:STAT', enaState)
-
     def run(self):
         self.setConfigParam('SENS:SWE:MODE', 'CONT')
 
@@ -112,6 +85,7 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
                 None
         '''
         self.swpRange = [startFreq, stopFreq]
+        ###### Why doesn't this set the config here? Would make sweepEnable more normal
 
         if nPts is not None:
             self.setConfigParam('SENS:SWE:POIN', nPts)

@@ -1,5 +1,5 @@
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty
 from lightlab.laboratory.instruments import FunctionGenerator
 
 import numpy as np
@@ -62,7 +62,7 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     def waveform(self, newWave=None):
         ''' Available tokens are 'dc', 'sine', 'triangle', 'square', 'pulse'
         '''
-        tokens = ['dc', 'sine', 'triangle', 'square', 'pulse']
+        tokens = ['dc', 'sine', 'triangle', 'square', 'pulse']  # The order matters
         if newWave is not None:
             try:
                 iTok = tokens.index(newWave)

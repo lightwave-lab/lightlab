@@ -1,5 +1,5 @@
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty
 from lightlab.laboratory.instruments import PulsePatternGenerator
 import warnings
 import numpy as np

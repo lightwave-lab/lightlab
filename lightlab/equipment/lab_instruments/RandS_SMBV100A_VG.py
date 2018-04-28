@@ -1,5 +1,5 @@
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty, ConfigEnableProperty
 from lightlab.laboratory.instruments import VectorGenerator
 
 import numpy as np
@@ -25,54 +25,19 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
     '''
     instrument_category = VectorGenerator
 
+    amplitude = ConfigProperty('POW', limits=[-145, 30])
+    frequency = ConfigProperty('FREQ')
+    enable = ConfigEnableProperty('OUTP:STAT')
+    modulationEnable = ConfigEnableProperty('MOD:STAT',
+        doc='Enabler for all modulation: data, noise, carrier')
+    __iqMod = ConfigEnableProperty('IQ:STAT',
+        doc='Enabler for IQ modulations: data and noise (not carrier)')  # Must be force hardware!
+
     def __init__(self, name='The Rohde and Schwartz', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self)
 
-    def amplitude(self, amp=None):
-        ''' Amplitude is in dBm
-
-            Args:
-                amp (float): If None, only gets
-
-            Returns:
-                (float): output power amplitude
-        '''
-        if amp is not None:
-            if amp > 30:
-                print('Warning: R&S ony goes up to +30dBm, given {}dBm.'.format(amp))
-                amp = 15
-            if amp < -145:
-                print('Warning: R&S ony goes down to -145dBm, given {}dBm.'.format(amp))
-                amp = -145
-            self.setConfigParam('POW', amp)
-        return self.getConfigParam('POW')
-
-    def frequency(self, freq=None):
-        ''' Frequency is in Hertz. This does not take you out of list mode, if you are in it
-
-            Args:
-                freq (float): If None, only gets
-
-            Returns:
-                (float): center frequency
-        '''
-        if freq is not None:
-            self.setConfigParam('FREQ', freq)
-        return self.getConfigParam('FREQ')
-
-    def enable(self, enaState=None):
-        ''' Enabler for the entire output
-
-            Args:
-                enaState (bool): If None, only gets
-
-            Returns:
-                (bool): is RF output enabled
-        '''
-        return self.__enaBlock('OUTP:STAT', enaState)
-
-    def modulationEnable(self, enaState=None):
+    # def modulationEnable(self, enaState=None):
         ''' Enabler for all modulation: data, noise, carrier
 
             If this is False, yet device is enabled overall. Output will be a sinusoid
@@ -93,9 +58,9 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
             Returns:
                 (bool): is global modulation enabled
         '''
-        return self.__enaBlock('MOD:STAT', enaState)
+        # return self.__enaBlock('MOD:STAT', enaState)
 
-    def __iqMod(self, enaState=None):
+    # def __iqMod(self, enaState=None):
         ''' Enabler for IQ modulations: data and noise (not carrier)
 
             Args:
@@ -104,7 +69,7 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
             Returns:
                 (bool): is IQ modulation enabled
         '''
-        return self.__enaBlock('IQ:STAT', enaState, forceHardware=True)
+        # return self.__enaBlock('IQ:STAT', enaState, forceHardware=True)
 
     def addNoise(self, enaState=True, bandwidth=None, cnRatio=None):
         ''' Enabler for additive white gaussian noise modulations
