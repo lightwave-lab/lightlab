@@ -21,9 +21,6 @@ class Host(Node):
     __cached_list_resources_info = None
     __cached_gpib_instrument_list = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @property
     def instruments(self):
         from lightlab.laboratory.state import lab

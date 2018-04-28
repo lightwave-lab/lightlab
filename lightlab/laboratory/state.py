@@ -42,11 +42,12 @@ class LabState(Hashable):
     __filename__ = None
     hosts = None
     benches = None
+    devices = None
     connections = None
     instruments = None
 
     @property
-    def instruments_dict(self): # TODO DEPRECATE
+    def instruments_dict(self):  # TODO DEPRECATE
         return self.instruments.dict
 
     def __init__(self, filename=None):
@@ -118,11 +119,9 @@ class LabState(Hashable):
                 logger.warning("Connection already exists: %s", connection)
         return True
 
-
     @property
     def devices_dict(self):
         return self.devices.dict
-
 
     # TODO Deprecate
     def findBenchFromInstrument(self, instrument):
@@ -165,9 +164,18 @@ class LabState(Hashable):
 
         restored_object = context.restore(json_state, reset=True)
         restored_object.__sha256__ = sha256
+        restored_object.__version__ = version
         restored_object.filename = filename
         restored_object.__user__ = user
         restored_object.__datetime__ = datetime
+
+        try:
+            for i in range(version, cls.__version__):
+                logger.warning(f"Attempting patch {i} -> {cls.__version__}")
+                restored_object = patch_labstate(i, restored_object)
+        except NotImplementedError as e:
+            logger.exception(e)
+
         return restored_object
 
     def __toJSON(self):
@@ -306,6 +314,57 @@ class _Sneaky(object):
         return setattr(self.module, name, value)
 
 
-
 _Sneaky(__name__)
 lab = None  # This actually helps with the linting and debugging. No side effect.
+
+
+def patch_labstate(from_version, old_lab):
+    if from_version == 1:
+        assert old_lab.__version__ == from_version
+
+        import lightlab.laboratory.state as labstate
+        from lightlab.laboratory import TypedList
+        from lightlab.laboratory.instruments import Instrument, Bench, Host, Device
+        old_benches = old_lab.benches
+        old_hosts = old_lab.hosts
+        old_connections = old_lab.connections
+        instruments = TypedList(Instrument)
+        benches = TypedList(Bench)
+        devices = TypedList(Device)
+        hosts = TypedList(Host)
+
+        for old_bench in old_benches.values():
+            new_bench = Bench(name=old_bench.name)
+            benches.append(new_bench)
+            for instrument in old_bench.__dict__['instruments']:
+                instrument.bench = new_bench
+                if instrument.name in instruments.dict.keys():
+                    instruments[instrument.name].__dict__.update(instrument.__dict__)
+                else:
+                    instruments.append(instrument)
+            for device in old_bench.__dict__['devices']:
+                device.bench = new_bench
+                if device.name in devices.dict.keys():
+                    devices[device.name].__dict__.update(device.__dict__)
+                else:
+                    devices.append(device)
+
+        for old_host in old_hosts.values():
+            new_host = Host(name=old_host.name)
+            hosts.append(new_host)
+            for instrument in old_host.__dict__['instruments']:
+                instrument.host = new_host
+                if instrument.name in instruments.dict.keys():
+                    instruments[instrument.name].__dict__.update(instrument.__dict__)
+                else:
+                    instruments.append(instrument)
+
+        lab = labstate.LabState()
+        lab.instruments.extend(instruments)
+        lab.benches.extend(benches)
+        lab.devices.extend(devices)
+        lab.hosts.extend(hosts)
+        lab.connections = old_connections
+        return lab
+
+    raise NotImplementedError("Patch not found")
