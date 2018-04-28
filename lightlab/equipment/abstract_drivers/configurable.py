@@ -518,10 +518,12 @@ class ConfigProperty(object):
             clk.frequency = 1e9
             print(clk.frequency)
     '''
-    def __init__(hwKey, readOnly=False, typeCast=None, limits=None, doc=None):
+    def __init__(hwKey, readOnly=False, typeCast=None,
+                 mapping=None, limits=None, doc=None):
         self.hwKey = hwKey
         self.readOnly = readOnly
         self.typeCast = typeCast
+        self.mapping = mapping  # dict
         self.limits = limits
         # __doc__?
 
@@ -535,17 +537,29 @@ class ConfigProperty(object):
     def __set__(self, instance, value):
         if self.readOnly == True:
             raise Exception('This property is read only.')
-        if self.limits is not None and value < self.limits[0]:
-            logger.warning('Value out of range was constrained:\n' +
-                           'Requested: {:.3f} '.format(value) +
-                           'Minimum: {:.3f}.'.format(self.limits[0]))
+        if mapping is not None:
+            value = self.mapping[value]
+        elif self.limits is not None:
+            if value < self.limits[0]:
+                logger.warning('Value out of range was constrained:\n' +
+                               'Requested: {:.3f} '.format(value) +
+                               'Minimum: {:.3f}.'.format(self.limits[0]))
                 value = self.limits[0]
-        if self.limits is not None and value > self.limits[1]:
-            logger.warning('Value out of range was constrained:\n' +
-                           'Requested: {:.3f} '.format(value) +
-                           'Maximum: {:.3f}.'.format(self.limits[1]))
+            elif value > self.limits[1]:
+                logger.warning('Value out of range was constrained:\n' +
+                               'Requested: {:.3f} '.format(value) +
+                               'Maximum: {:.3f}.'.format(self.limits[1]))
                 value = self.limits[1]
         instance.setConfigParam(self.hwKey, value)
+
+class ConfigEnableProperty(ConfigProperty):
+    ''' Special kind of property typically used for enables
+    '''
+    def __init__(hwKey, readOnly=False, doc=None):
+        kwargs.update(typeCast=lambda x: x in [True, 1, '1', 'ON'],
+                      mapping={True: 'ON', False: 'OFF'},
+                      limits=None)
+        super().__init__(*args, **kwargs)
 
 
 # pylint: enable=no-member
