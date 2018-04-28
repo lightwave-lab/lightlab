@@ -25,8 +25,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     voltStep = None
     rampStepTime = 0.01 # in seconds.
 
-    protectionVoltage = ConfigProperty('VOLT:PROT', readOnly=True)
-    protectionCurrent = ConfigProperty('CURR:PROT', readOnly=True)
+    protectionVoltage = ConfigProperty('VOLT:PROT')
+    protectionCurrent = ConfigProperty('CURR:PROT')
 
     def __init__(self, name=None, address=None, **kwargs):
         '''
@@ -63,16 +63,16 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         self.setConfigParam('SENSE:{}:RANGE:AUTO'.format(meterStr), 'ON')
         self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
 
-    def setVoltageMode(self, protectionCurrent=0.05):
+    def setVoltageMode(self, protectionCurrent=50e-3):
         self.enable(False)
         self.__setSourceMode(isCurrentSource=False)
-        self.setProtectionCurrent(protectionCurrent)
+        self.protectionCurrent = protectionCurrent
         self._configVoltage(0)
 
     def setCurrentMode(self, protectionVoltage=1):
         self.enable(False)
         self.__setSourceMode(isCurrentSource=True)
-        self.setProtectionVoltage(protectionVoltage)
+        self.protectionVoltage = protectionVoltage
         self._configCurrent(0)
 
     def _configCurrent(self, currAmps):
@@ -126,10 +126,10 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         return voltGlob
 
     def setProtectionVoltage(self, protectionVoltage):
-        self.setConfigParam('VOLT:PROT', protectionVoltage)
+        self.protectionVoltage = protectionVoltage
 
     def setProtectionCurrent(self, protectionCurrent):
-        self.setConfigParam('CURR:PROT', protectionCurrent)
+        self.protectionCurrent = protectionCurrent
 
     def measVoltage(self):
         retStr = self.query('MEASURE:VOLT?')
