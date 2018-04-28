@@ -10,6 +10,8 @@ class Agilent_83712B_clock(VISAInstrumentDriver, Configurable):
     '''
     instrument_category = Clock
 
+    frequency = ConfigProperty('FREQ', type=float, range=[10e6, 20e9])
+
     def __init__(self, name='The clock on PPG', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self)
@@ -20,13 +22,5 @@ class Agilent_83712B_clock(VISAInstrumentDriver, Configurable):
     def enable(self, enaState=None):
         if enaState is not None:
             self.setConfigParam('OUTP:STATE', 'ON' if enaState else 'OFF')
-        retStr = self.getConfigParam('OUTP:STAT')
+        retStr = self.getConfigParam('OUTP:STATE')
         return retStr in [True, 'ON', 1, '1']
-
-    @property
-    def frequency(self):
-        return float(self.getConfigParam('FREQ'))
-
-    @frequency.setter
-    def frequency(self, newFreq):
-        self.setConfigParam('FREQ', newFreq)

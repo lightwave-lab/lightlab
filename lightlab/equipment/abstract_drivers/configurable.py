@@ -1,11 +1,12 @@
-from lightlab import visalogger as logger
 from pyvisa import VisaIOError
 from contextlib import contextmanager
 import dpath
 import json
 from numpy import floor
 from pathlib import Path
+import time
 
+from lightlab import visalogger as logger
 from lightlab.util.io import lightlabDevelopmentDir
 defaultFileDir = lightlabDevelopmentDir / 'savedConfigDefaults/'
 
@@ -228,17 +229,17 @@ class Configurable(AbstractDriver):
 
         This clas uses query/write methods that are not directly inherited, so the subclass or its parents must implement those functions
     '''
+    _hardwareinit = False
+    sleepOnChange = 0  # Time it takes to settle in seconds
 
     def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True, **kwargs):
         '''
             Args:
-                headerIsOptional (bool): If tru, will start with writing 'HEADER OFF'
+                headerIsOptional (bool): If true, will start with writing 'HEADER OFF'
                 verboseIsOptional (bool): If true, will start with writing 'VERBOSE ON'
                 precedingColon (bool): When writing commands will check that they start with ":"
                 interveningSpace (bool): When writing commands, should there be a space between name and value
         '''
-
-        self._hardwareinit = False
 
         self.verboseIsOptional = verboseIsOptional
         self.headerIsOptional = headerIsOptional
@@ -458,6 +459,7 @@ class Configurable(AbstractDriver):
                 ''.join(cmd.split(' '))
             logger.debug('Sending ' + str(cmd) + ' to configurable hardware')
             self.write(cmd)
+        time.sleep(self.sleepOnChange)
 
     def generateDefaults(self, filename=None, overwrite=False):
         ''' Attempts to read every configuration parameter.
