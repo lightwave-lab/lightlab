@@ -230,6 +230,13 @@ class Configurable(AbstractDriver):
     '''
 
     def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True, **kwargs):
+        '''
+            Args:
+                headerIsOptional (bool): If tru, will start with writing 'HEADER OFF'
+                verboseIsOptional (bool): If true, will start with writing 'VERBOSE ON'
+                precedingColon (bool): When writing commands will check that they start with ":"
+                interveningSpace (bool): When writing commands, should there be a space between name and value
+        '''
 
         self._hardwareinit = False
 
