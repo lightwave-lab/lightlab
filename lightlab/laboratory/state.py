@@ -261,36 +261,24 @@ class LabState(Hashable):
             self.__sha256__ = json_state["__sha256__"]
             logger.debug("{}'s sha: {}".format(fname, json_state["__sha256__"]))
 
-# Lazy loading tip from https://stackoverflow.com/questions/1462986/lazy-module-variables-can-it-be-done
-# The problem is that instantiating the variable lab causes some modules
-# that depend on this variable to be imported, creating a cyclical dependence.
-# The solution is to instantiate the variable lab only when it is truly called.
-
 
 def __init__(module):
     # do something that imports this module again
     try:
         module.lab = module.LabState.loadState()
     except JSONDecodeError as e:
-        logger.error("JSONDecodeError: {}".format(e))
+        logger.error(f"JSONDecodeError: {e}\n"
+                     "Initializing empty LabState()")
         module.lab = module.LabState()
 
 
-# class _Sneaky(object):
-
-#     def __init__(self, name):
-#         self.module = sys.modules[name]
-#         sys.modules[name] = self
-#         self.initializing = True
-
-#     def __getattr__(self, name):
-#         # call module.__init__ after import introspection is done
-#         if self.initializing and not name[:2] == '__' == name[-2:]:
-#             self.initializing = False
-#             __init__(self.module)
-#         return getattr(self.module, name)
+# Lazy loading tip from https://stackoverflow.com/questions/1462986/lazy-module-variables-can-it-be-done
+# The problem is that instantiating the variable lab causes some modules
+# that depend on this module to be imported, creating a cyclical dependence.
+# The solution is to instantiate the variable lab only when it is truly called.
 
 class _Sneaky(object):
+    """ Lazy loading of state.lab. """
 
     def __init__(self, name):
         self.module = sys.modules[name]
@@ -319,8 +307,17 @@ lab = None  # This actually helps with the linting and debugging. No side effect
 
 
 def patch_labstate(from_version, old_lab):
+    """ This takes the loaded JSON version of labstate (old_lab) and
+    applies a patch to the current version of labstate. """
     if from_version == 1:
         assert old_lab.__version__ == from_version
+
+        # In labstate version 1, instruments are stored in lists called
+        # in lab.benches[x].instruments and/or lab.hosts[x].instruments,
+        # with potential name duplicates
+
+        # We need to transport them into a single list that will reside
+        # lab.instruments, with no name duplicates.
 
         import lightlab.laboratory.state as labstate
         from lightlab.laboratory import TypedList
@@ -334,14 +331,23 @@ def patch_labstate(from_version, old_lab):
         hosts = TypedList(Host)
 
         for old_bench in old_benches.values():
+            # restarting new bench afresh (only name matters so far)
             new_bench = Bench(name=old_bench.name)
             benches.append(new_bench)
+
+            # bench.instruments is now a property descriptor,
+            # can't access directly. Need to use __dict__
+            # here we move bench.instruments into a global instruments
+
             for instrument in old_bench.__dict__['instruments']:
                 instrument.bench = new_bench
+                # if there is a duplicate name, update instrument
                 if instrument.name in instruments.dict.keys():
                     instruments[instrument.name].__dict__.update(instrument.__dict__)
                 else:
                     instruments.append(instrument)
+
+            # same for devices
             for device in old_bench.__dict__['devices']:
                 device.bench = new_bench
                 if device.name in devices.dict.keys():
@@ -349,6 +355,7 @@ def patch_labstate(from_version, old_lab):
                 else:
                     devices.append(device)
 
+        # Same code as above
         for old_host in old_hosts.values():
             new_host = Host(name=old_host.name)
             hosts.append(new_host)
@@ -359,6 +366,7 @@ def patch_labstate(from_version, old_lab):
                 else:
                     instruments.append(instrument)
 
+        # instantiating new labstate from scratch.
         lab = labstate.LabState()
         lab.instruments.extend(instruments)
         lab.benches.extend(benches)

@@ -72,11 +72,14 @@ class Hashable(object):
 
 
 class Node(Hashable):
+
     def placeBench(self, new_bench):
         self.bench = new_bench
 
 
 def typed_property(type_obj, name):
+    """ Property that only accepts instances of a class and
+    stores the contents in self.name"""
     def fget(self):
         return getattr(self, name)
 
@@ -97,7 +100,7 @@ def typed_property(type_obj, name):
 # https://stackoverflow.com/questions/3487434/overriding-append-method-after-inheriting-from-a-python-list
 class NamedList(MutableSequence, Hashable):
     """
-    Instrument list that enforces that there are only one instrument name in the list.
+    Object list that enforces that there are only one object.name in the list.
 
     """
 
@@ -163,7 +166,12 @@ class NamedList(MutableSequence, Hashable):
     def __str__(self):
         return str(self.list)
 
+
 class TypedList(NamedList):
+    """
+    Object list that enforces that there are only one object.name in
+    the list and that they belong to a certain class (obj_type).
+    """
 
     def __init__(self, obj_type, *args):
         self.obj_type = obj_type
@@ -173,5 +181,3 @@ class TypedList(NamedList):
         if not isinstance(v, self.obj_type):
             raise TypeError(f"{v} is not an instance of {self.obj_type}")
         return super().check(v)
-
-
