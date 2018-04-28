@@ -2,7 +2,7 @@
 
 import pytest
 import lightlab.laboratory.state as labstate
-from lightlab.laboratory.instruments import Host, Bench, Instrument, Keithley
+from lightlab.laboratory.instruments import LocalHost, Host, Bench, Instrument, Keithley
 from lightlab.laboratory.devices import Device
 from lightlab.laboratory.experiments import Experiment
 from lightlab.laboratory.virtualization import DualFunction
@@ -16,7 +16,7 @@ logging.disable(logging.CRITICAL)
 filename = 'test_{}.json'.format(int(time.time()))
 
 # Shared objects
-Host1 = Host(name="Host1", is_instrumentation_server=True)
+Host1 = LocalHost(name="Host1")
 Host2 = Host(name="Host2")
 Bench1 = Bench(name="Bench1")
 Bench2 = Bench(name="Bench2")
@@ -100,7 +100,7 @@ def test_delete(lab):
 
 def test_savestate(lab):
     h1 = lab.hosts["Host1"]
-    h1.mac_address = "test"
+    h1.mac_address = "test_savestate"
     lab.updateHost(h1)
     lab.saveState(filename, save_backup=False)
 
@@ -264,12 +264,13 @@ def test_overwriting(lab):
     assert lab.hosts["Host2"] == updated_remote
 
     old_server = Host1
-    updated_server = Host(name="Host1", is_instrumentation_server=True, foo=1)
-    lab.updateHost(updated_server)
+    updated_server = LocalHost(name="Host1")
+    updated_server.mac_address = 'test_overwriting'
+    lab.updateHost(updated_server)  # should replace entry for 'Host1'
     assert lab.hosts["Host1"] != old_server
     assert lab.hosts["Host1"] == updated_server
 
-    second_server = Host(name="Another Host", is_instrumentation_server=True)
+    second_server = LocalHost(name="Another Host")
     lab.updateHost(second_server)
     assert lab.hosts["Host1"] == updated_server
     with pytest.raises(KeyError):

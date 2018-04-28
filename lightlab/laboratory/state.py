@@ -2,7 +2,7 @@
 This module contains classes responsible to maintain a record of the current state of the lab.
 '''
 from lightlab.laboratory import Hashable, TypedList
-from lightlab.laboratory.instruments import Host, Bench, Instrument, Device
+from lightlab.laboratory.instruments import Host, LocalHost, Bench, Instrument, Device
 import hashlib
 import jsonpickle
 import sys
@@ -65,34 +65,35 @@ class LabState(Hashable):
         ''' Checks the number of instrumentation_servers.
             There should be exactly one.
         '''
-        instrumentation_server = None
+        localhost_name = None
         old_hostnames = []
         for old_host in self.hosts.values():
             old_hostnames.append(old_host.name)
-            if old_host.is_instrumentation_server:
-                instrumentation_server = old_host.name
+            if isinstance(old_host, LocalHost):
+                if localhost_name is not None:
+                    logger.warning('Duplicate localhost found in lab.hosts')
+                localhost_name = old_host.name
         for new_host in hosts:
-            # Updating instrumentation_server
-            if (new_host.is_instrumentation_server
-                    and instrumentation_server is not None):
-                # Check for instrumentation_server clash
-                if new_host.name != instrumentation_server:
-                    logger.warning('Instrumentation server is already present: ' +
-                                   f'{instrumentation_server}\n' +
+            # Updating localhost
+            if (isinstance(new_host, LocalHost) and localhost_name is not None):
+                # Check for localhost clash
+                if new_host.name != localhost_name:
+                    logger.warning('Localhost is already present: ' +
+                                   f'{localhost_name}\n' +
                                    f'Not updating host {new_host.name}!')
                     continue
                 else:
-                    instrumentation_server = new_host.name
+                    localhost_name = new_host.name
             # Will an update happen?
             if new_host.name in old_hostnames:
                 logger.info(f'Overwriting host: {new_host.name}')
-                # Will it end up removing the instrumentation_server?
-                if (new_host.name == instrumentation_server
-                        and not new_host.is_instrumentation_server):
-                    instrumentation_server = None
+                # Will it end up removing the localhost?
+                if (new_host.name == localhost_name and
+                        not isinstance(new_host, LocalHost)):
+                    localhost_name = None
             self.hosts[new_host.name] = new_host
-        if instrumentation_server is None:
-            logger.warning('Instrumentation server not yet present')
+        if localhost_name is None:
+            logger.warning('Localhost not yet present')
 
     def updateBench(self, *benches):
         for bench in benches:
