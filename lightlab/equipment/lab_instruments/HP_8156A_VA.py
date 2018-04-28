@@ -1,5 +1,6 @@
 from . import VISAInstrumentDriver
 from lightlab.laboratory.instruments import VariableAttenuator
+from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty
 
 import numpy as np
 import time
@@ -15,7 +16,7 @@ class HP_8156A_VA(VISAInstrumentDriver, Configurable):
     instrument_category = VariableAttenuator
     sleepOnChange = 1  # Time it takes to settle
 
-    attenDB = ConfigProperty('INP:ATT', type=float, range=[0, 60])
+    attenDB = ConfigProperty('INP:ATT', typeCast=float, limits=[0, 60])
 
     def __init__(self, name='The VOA on the GC bench', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)

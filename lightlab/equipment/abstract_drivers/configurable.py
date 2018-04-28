@@ -500,5 +500,53 @@ class Configurable(AbstractDriver):
 
         cfgBuild.save(filename)
         logger.info('New default saved to ' + str(filename))
+
+
+class ConfigProperty(object):
+    ''' Allows properties of :py:class:`Configurable` objects to be declared in advance.
+        Currently there is no way to forceHardware
+
+        Driver example::
+
+            class Agilent_83712B_clock(VISAInstrumentDriver, Configurable):
+                instrument_category = Clock
+                frequency = ConfigProperty('FREQ')
+
+        Usage example::
+
+            clk = Agilent_83712B_clock()
+            clk.frequency = 1e9
+            print(clk.frequency)
+    '''
+    def __init__(hwKey, readOnly=False, typeCast=None, limits=None, doc=None):
+        self.hwKey = hwKey
+        self.readOnly = readOnly
+        self.typeCast = typeCast
+        self.limits = limits
+        # __doc__?
+
+    def __get__(self, instance, owner):
+        retVal = instance.getConfigParam(self.hwKey)
+        if self.typeCast is not None:
+            return self.typeCast(retVal)
+        else:
+            return retVal
+
+    def __set__(self, instance, value):
+        if self.readOnly == True:
+            raise Exception('This property is read only.')
+        if self.limits is not None and value < self.limits[0]:
+            logger.warning('Value out of range was constrained:\n' +
+                           'Requested: {:.3f} '.format(value) +
+                           'Minimum: {:.3f}.'.format(self.limits[0]))
+                value = self.limits[0]
+        if self.limits is not None and value > self.limits[1]:
+            logger.warning('Value out of range was constrained:\n' +
+                           'Requested: {:.3f} '.format(value) +
+                           'Maximum: {:.3f}.'.format(self.limits[1]))
+                value = self.limits[1]
+        instance.setConfigParam(self.hwKey, value)
+
+
 # pylint: enable=no-member
 

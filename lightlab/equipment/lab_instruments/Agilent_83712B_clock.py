@@ -1,5 +1,5 @@
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable
+from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty
 from lightlab.laboratory.instruments import Clock
 
 class Agilent_83712B_clock(VISAInstrumentDriver, Configurable):
@@ -10,7 +10,7 @@ class Agilent_83712B_clock(VISAInstrumentDriver, Configurable):
     '''
     instrument_category = Clock
 
-    frequency = ConfigProperty('FREQ', type=float, range=[10e6, 20e9])
+    frequency = ConfigProperty('FREQ', typeCast=float, limits=[10e6, 20e9])
 
     def __init__(self, name='The clock on PPG', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
