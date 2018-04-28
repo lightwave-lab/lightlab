@@ -14,7 +14,6 @@ import logging
 
 logging.disable(logging.CRITICAL)
 filename = 'test_{}.json'.format(int(time.time()))
-labstate.filename = filename
 
 # Shared objects
 Host1 = Host(name="Host1", is_instrumentation_server=True)
@@ -35,15 +34,12 @@ Keithley_2400_SM.open = open_error
 instrument1 = Keithley(name="keithley1", bench=Bench1, host=Host1,
                        ports=["front_source", "rear_source"], _driver_class=Keithley_2400_SM)
 instrument2 = Instrument(name="instrument2", bench=Bench1, host=Host1, ports=["port1", "channel"])
-instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port11", "channel"])
 device1 = Device(name="device1", bench=Bench1, ports=["input", "output"])
 device2 = Device(name="device2", bench=Bench1, ports=["input", "output"])
 
 
 @pytest.fixture()
-def lab(request):
-    # The following instrument gets deleted over and over
-    instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port11", "channel"])
+def lab(request, monkeypatch):
 
     lab = labstate.LabState(filename=filename)
     lab.updateHost(Host1)
@@ -51,7 +47,6 @@ def lab(request):
     lab.updateBench(Bench1, Bench2)
     lab.insertInstrument(instrument1)
     lab.insertInstrument(instrument2)
-    lab.insertInstrument(instrument2bis)  # still allows including two instruments with the same name
     lab.insertDevice(device1)
     lab.insertDevice(device2)
 
@@ -59,12 +54,19 @@ def lab(request):
                     {device1: "output", instrument2: "port1"}]
     lab.updateConnections(*connections1)
     lab._saveState(save_backup=False)
-    labstate.lab = lab
+    monkeypatch.setattr(labstate, 'initializing', False)
+    monkeypatch.setattr(labstate, 'lab', lab)
 
     def delete_file():
         os.remove(filename)
     request.addfinalizer(delete_file)
     return lab
+
+
+def test_duplicate_insert(lab):
+    instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port11", "channel"])
+    with pytest.raises(RuntimeError, message="duplicate insertion not detected"):
+        lab.insertInstrument(instrument2bis)  # does not allow insertion of duplicate!
 
 
 def test_instantiate(lab):
@@ -82,10 +84,7 @@ def test_instantiate(lab):
     assert instrument1.host == Host1
     assert instrument1 in lab.instruments
     assert instrument2 in lab.instruments
-    assert instrument2bis in lab.instruments
-    assert instrument2bis in Bench2.instruments
-    assert instrument2bis in Host1.instruments
-    assert len(lab.instruments) == 3
+    assert len(lab.instruments) == 2
     assert device1 in lab.devices
     assert len(lab.devices) == 2
     assert {device1: "input", instrument1: "rear_source"} in lab.connections
@@ -95,13 +94,8 @@ def test_instantiate(lab):
 
 
 def test_delete(lab):
-    b = instrument2bis.bench
-    h = instrument2bis.host
-    instrument2bis.bench = None
-    instrument2bis.host = None
-    assert instrument2bis not in b
-    assert instrument2bis not in h
-    assert instrument2bis not in lab.instruments
+    lab.instruments.remove(instrument2)
+    assert instrument2 not in lab.instruments
 
 
 def test_savestate(lab):
@@ -113,7 +107,6 @@ def test_savestate(lab):
 
 def test_reloadlabstate(lab):
     ''' Saves and reloads LabState and asserts equality '''
-
     lab2 = labstate.LabState.loadState(filename=filename)
     assert lab == lab2
 
@@ -144,7 +137,7 @@ def test_corruptreload_changecontent(lab):
     with open(filename, 'r') as file:
         frozen_json = file.read()
         json_state = json.loads(frozen_json)
-        json_state["py/state"]["benches"]["Bench1"]["py/state"]["name"] = "Bench2"
+        json_state["py/state"]["benches"]["py/state"]["list"][0]["py/state"]["name"] = "Bench3"
         refrozen_json = json.dumps(json_state, sort_keys=True, indent=4)
         with open(filename, 'w') as file:
             file.write(refrozen_json)
@@ -238,13 +231,9 @@ def test_experiment_invalid_connection(lab):
 
 
 def test_remove_instrument_by_name(lab):
-    assert len(lab.instruments) == 3
+    assert len(lab.instruments) == 2
     lab.deleteInstrumentFromName("instrument2")
-    assert instrument2 in lab.instruments
-    assert instrument2bis in lab.instruments
-    lab.deleteInstrumentFromName("instrument2", force=True)
     assert instrument2 not in lab.instruments
-    assert instrument2bis not in lab.instruments
 
 
 def test_overwriting(lab):
