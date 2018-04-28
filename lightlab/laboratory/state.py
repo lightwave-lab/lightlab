@@ -405,6 +405,7 @@ def patch_labstate(from_version, old_lab):
         lab.benches.extend(benches)
         lab.devices.extend(devices)
         lab.hosts.extend(hosts)
+        lab.hosts['cassander'] = LocalHost(name='cassander')
         lab.connections = old_connections
         return lab
 
