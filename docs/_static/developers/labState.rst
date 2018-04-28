@@ -4,17 +4,13 @@ Making and changing the lab state
 One time: Hosts and benches
 ---------------------------
 
-First you need to add some hosts and benches to the lab. This usually happens only once. Suppose we have a computer called "brian" that is a host `and` the centralized instrumentation server. It is physically located on Bert's bench::
+First you need to add some hosts and benches to the lab. This usually happens only once. Suppose we have a computer called "brian" that is the localhost actually running the notebooks (note: it can be also viewed as a server). It is physically located on Bert's bench::
 
     from lightlab.laboratory.state import lab
-    from lightlab.laboratory.instruments import Host, Bench
+    from lightlab.laboratory.instruments import LocalHost, Host, Bench
 
     # Start by making a host. This is a real computer.
-    brianHost = Host(name='brian',  # This is its key that will go into labstate
-                     hostname='labdns-brian.school.edu',  # This depends on your DNS naming conventions
-                     mac_address='00:00:00:00:00:00',
-                     is_instrumentation_server=True,  # You need exactly one of these. This is where lightlab code is installed
-                     os='linux-centos')
+    brianHost = LocalHost(name='brian')  # name is optional
     assert brianHost.isLive()  # Sends a ping request
     lab.updateHost(brianHost)
     lab.saveState()
@@ -23,9 +19,9 @@ Next, let's add a remote host called "gunther". It connects to some instruments 
 
     guntherHost = Host(name='gunther',into labstate
                        hostname='labdns-gunther.school.edu',
-                       mac_address='00:00:00:00:00:01',
-                       os='windows')
-    assert guntherHost.isLive()
+                       mac_address='00:00:00:00:00:01',  # optional
+                       os='windows')  # optional
+    assert guntherHost.isLive()  # will send a ping
     lab.updateHost(guntherHost)
     lab.saveState()
 
