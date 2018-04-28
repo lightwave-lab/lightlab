@@ -124,7 +124,8 @@ class NamedList(MutableSequence, Hashable):
         if not hasattr(v, 'name'):
             raise TypeError(f"{type(v)} does not have name.")
 
-    def __len__(self): return len(self.list)
+    def __len__(self):
+        return len(self.list)
 
     def __getitem__(self, i):
         if isinstance(i, str):
@@ -133,7 +134,8 @@ class NamedList(MutableSequence, Hashable):
 
     def __delitem__(self, i):
         if isinstance(i, str):
-            for idx in [idx for idx, elem in enumerate(self) if elem.name == i]:
+            matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
+            for idx in matching_idxs:
                 del self.list[idx]
         else:
             del self.list[i]
@@ -142,14 +144,21 @@ class NamedList(MutableSequence, Hashable):
         self.check(v)
         if isinstance(i, str):
             if i in self.dict.keys():
-                self.dict[i] = v
+                matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
+                assert len(matching_idxs) == 1
+                idx = matching_idxs[0]
+                self.list[idx] = v  # update current entry
             else:
                 if i != v.name:
                     # Renaming instrument to conform to the dict's key
                     # named_list['name1'] = Instrument('name2')
                     # Instrument will be renamed to name1 prior to insertion
                     v.name = i
-                self.list.append(v)
+
+                # special case when v is already in the list, in
+                # which case one must do nothing.
+                if v not in self.list:
+                    self.list.append(v)
         else:
             self.list[i] = v
 

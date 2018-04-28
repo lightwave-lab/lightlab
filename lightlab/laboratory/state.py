@@ -90,7 +90,6 @@ class LabState(Hashable):
                 if (new_host.name == instrumentation_server
                         and not new_host.is_instrumentation_server):
                     instrumentation_server = None
-
             self.hosts[new_host.name] = new_host
         if instrumentation_server is None:
             logger.warning('Instrumentation server not yet present')

@@ -145,6 +145,25 @@ def test_corruptreload_changecontent(lab):
         labstate.LabState.loadState(filename)
 
 
+def test_update(lab):
+    ''' Updates information on hosts, benches or instruments'''
+    new_host2 = Host(name="Host2", hostname='foo')
+    old_host2 = lab.hosts["Host2"]
+    lab.hosts["Host2"] = new_host2
+    assert lab.hosts["Host2"] == new_host2
+    assert lab.hosts["Host2"] != old_host2  # old_host2 got de-referenced
+
+    # WARNING! non-trivial effect true for hosts, benches and instruments:
+    lab.hosts["Host3"] = new_host2  # this will rename new_host2 to "Host3"
+    assert lab.hosts["Host3"] == new_host2
+    assert new_host2.name == "Host3"
+    assert lab.hosts["Host3"].name == "Host3"
+    assert "Host2" not in lab.hosts.keys()
+
+    del lab.hosts["Host3"]
+    assert new_host2 not in lab.hosts
+
+
 def test_update_connections(lab):
     ''' Updates connections and test whether old connections are pruned
     '''
