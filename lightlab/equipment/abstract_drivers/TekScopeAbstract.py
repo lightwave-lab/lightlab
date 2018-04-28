@@ -150,14 +150,19 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             If timeout is very long, it will try a test first
         '''
         if timeout is None:
-            timeout = self.timeout
+            timeout = self.timeout / 1e3
         if timeout > 60:
+            logger.warning(f'Long timeout {timeout} specified, testing')
+            old_avgCnt = self.timebaseConfig()['avgCnt']
+            self.timebaseConfig(avgCnt=2)
             self._triggerAcquire(timeout=10)
+            logger.warning('Test succeeded. Doing long average now')
+            self.timebaseConfig(avgCnt=old_avgCnt)
         if self._clearBeforeAcquire:
             self.write('ACQUIRE:DATA:CLEAR')  # clear out average history
         self.write('ACQUIRE:STATE 1')  # activate the trigger listener
         # Bus and entire program stall until acquisition completes. Maximum of 30 seconds
-        self.wait(timeout * 1e3)
+        self.wait(int(timeout * 1e3))
 
     def __transferData(self, chan):
         ''' Returns the raw data pulled from the scope as time (seconds) and voltage (Volts)
