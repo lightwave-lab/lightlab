@@ -357,7 +357,10 @@ def patch_labstate(from_version, old_lab):
 
         # Same code as above
         for old_host in old_hosts.values():
-            new_host = Host(name=old_host.name)
+            new_host = Host(name=old_host.name,
+                            mac_address=old_host.mac_address,
+                            hostname=old_host.hostname,
+                            os=old_host.os)
             hosts.append(new_host)
             for instrument in old_host.__dict__['instruments']:
                 instrument.host = new_host
