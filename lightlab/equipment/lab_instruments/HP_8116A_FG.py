@@ -1,5 +1,5 @@
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty
+from lightlab.equipment.abstract_drivers import Configurable, ConfigProperty, ConfigTokenProperty
 from lightlab.laboratory.instruments import FunctionGenerator
 
 import numpy as np
@@ -22,6 +22,7 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     offset = ConfigProperty('OFS', typeCheck=float,
                             limits=None, termination='V')
     duty = ConfigProperty('DTY', limits=[0, 100], termination='%')
+    waveform = ConfigTokenProperty('W', tokens=['dc', 'sine', 'triangle', 'square', 'pulse'])
 
     def __init__(self, name='The slow synth (FUNCTION GENERATOR)', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
@@ -62,17 +63,4 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
         sciUnit = retSciElements[1]
         realFreq = sciFreq * toMultiplier(sciUnits.index(sciUnit))
         return realFreq
-
-    def waveform(self, newWave=None):
-        ''' Available tokens are 'dc', 'sine', 'triangle', 'square', 'pulse'
-        '''
-        tokens = ['dc', 'sine', 'triangle', 'square', 'pulse']  # The order matters
-        if newWave is not None:
-            try:
-                iTok = tokens.index(newWave)
-            except ValueError as e:
-                raise ValueError(
-                    newWave + ' is not a valid sync source: ' + str(tokens))
-            self.setConfigParam('W', iTok)
-        return tokens[int(self.getConfigParam('W'))]
 

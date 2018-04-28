@@ -18,6 +18,8 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
 
     amplitude = ConfigProperty('DAP', typeCheck=float)
     offset = ConfigProperty('DOS', typeCheck=float)
+    syncSource = ConfigTokenProperty('SOP', tokens=['clock64', 'fixed', 'variable'],
+         doc='Output synchronizer is locked to pattern or not?')
 
     def __init__(self, name='The PPG', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
@@ -85,25 +87,6 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
 
     def on(self, turnOn=True):
         self.setConfigParam('OON', 1 if turnOn else 0)
-
-    def syncSource(self, src=None):
-        ''' Output synchronizer is locked to pattern or not?
-
-            Args:
-                src (str): either 'fixed', 'variable' or 'clock64'. If None, leaves it
-
-            Returns:
-                (str): the set value as a string token
-        '''
-        tokens = ['clock64', 'fixed', 'variable']
-        if src is not None:
-            try:
-                iTok = tokens.index(src)
-            except ValueError as e:
-                raise ValueError(
-                    src + ' is not a valid sync source: ' + str(tokens))
-            self.setConfigParam('SOP', iTok)
-        return tokens[int(self.getConfigParam('SOP'))]
 
     # defining function bitsequence, that takes delays and transfer them into a sequence we want.
 

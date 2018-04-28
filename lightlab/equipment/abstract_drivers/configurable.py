@@ -561,11 +561,32 @@ class ConfigEnableProperty(ConfigProperty):
     ''' Special kind of property typically used for enables
     '''
     def __init__(hwKey, readOnly=False, doc=None):
-        kwargs.update(typeCast=lambda x: x in [True, 1, '1', 'ON'],
+        kwargs = dict(typeCast=lambda x: x in [True, 1, '1', 'ON'],
                       mapping={True: 'ON', False: 'OFF'},
                       limits=None)
-        super().__init__(*args, **kwargs)
+        super().__init__(hwKey, readOnly=readOnly, doc=doc, **kwargs)
 
+class ConfigTokenProperty(ConfigProperty):
+    ''' Special kind of property with discrete inputs
+
+        Tokens can be a list or a bidict
+    '''
+    def __init__(hwKey, tokens, readOnly=False, doc=None):
+        self.hwKey = hwKey
+        self.tokens = tokens
+        self.readOnly = readOnly
+
+    def __get__(self, instance, owner):
+        retStr = instance.getConfigParam(self.hwKey)
+        return self.tokens[int(retStr)]
+
+    def __set__(self, instance, value):
+        try:
+            iTok = self.tokens.index(value)
+        except ValueError as e:
+            raise ValueError(
+                value + ' is not a valid sync source: ' + str(self.tokens))
+        instance.setConfigParam(self.hwKey, iTok)
 
 # pylint: enable=no-member
 
