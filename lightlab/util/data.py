@@ -793,6 +793,7 @@ class ResonanceFeature(object):
 class PeakFinderError(RuntimeError):
     pass
 
+
 # Classless peak finding and monotonic descent functions
 def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, descendMax=3, minSep=0):
     '''Takes an array and finds a specified number of peaks
@@ -873,6 +874,7 @@ def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, desc
         pkWids[iPk] = np.diff(hmInds)[0]
     return pkInds, pkWids
 
+
 def descend(yArr, invalidIndeces, startIndex, direction, threshVal):
     ''' From the start index, descend until reaching a threshold level and return that index
     If it runs into the invalidIndeces or an edge, returns i at the edge of validity and False for validPeak
@@ -906,6 +908,7 @@ def descend(yArr, invalidIndeces, startIndex, direction, threshVal):
     else:
         validPeak = False
     return i, validPeak
+
 
 def interpInverse(xArrIn, yArrIn, startIndex, direction, threshVal):
     ''' Gives a float representing the interpolated x value that gives y=threshVal '''
@@ -1009,6 +1012,7 @@ class MeasuredSurface(object):
     #     oneDimMf = MeasuredFunction()
     #     for abOtherDim in self.absc[1-dim]:
 
+
 class MeasuredErrorField(object):
     ''' A field that hold two abscissa arrays and two ordinate matrices
 
@@ -1093,6 +1097,7 @@ class MeasuredErrorField(object):
     #     self.surfs = np.empty(2, dtype=object)
     #     for iSurf in range(2):
     #         self.surfs[iSurf] = MeasuredSurface(abscissas, ordinates[iSurf])
+
 
 class Spectrogram(MeasuredSurface):
     def __init__(self, *args):
@@ -1504,6 +1509,7 @@ def verifyListOfType(arg, checkType):
                     '. Got ' + str(type(a)))
     return arg
 
+
 def argFlatten(*argLists, typs=(list, tuple, set)):
     ''' Takes a combination of multiple arguments and flattens the ones of type typs.
         None arguments are ignored, no error.
@@ -1538,6 +1544,7 @@ def argFlatten(*argLists, typs=(list, tuple, set)):
 # Simple common array operations
 def rms(diffArr, axis=0):
     return np.sqrt(np.mean(diffArr ** 2, axis=axis))
+
 
 def minmax(arr):
     ''' Returns a list of [min and max] of the array '''

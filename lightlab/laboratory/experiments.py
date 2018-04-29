@@ -246,5 +246,8 @@ class MasterExperiment(Experiment):
 
         Required because you cannot startup an Experiment base object
     '''
+    def __init__(self, *args, **kwargs):
+        raise Exception('MasterExperiment will be deprecated for Virtualizable')
+
     def startup(self):
         pass
