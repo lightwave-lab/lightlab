@@ -79,6 +79,8 @@ class LabState(Hashable):
 
     @property
     def instruments_dict(self):  # TODO DEPRECATE
+        """ Dictionary of instruments, concatenated from ``lab.instruments``.
+        """
         return self.instruments.dict
 
     def __init__(self, filename=None):
@@ -259,6 +261,14 @@ class LabState(Hashable):
 
     @property
     def devices_dict(self):
+        """ Dictionary of devices, concatenated from ``lab.devices``.
+
+            Access with ``devices_dict[device.name]``
+
+            Todo:
+
+                Logs a warning if duplicate is found.
+        """
         return self.devices.dict
 
     # TODO Deprecate

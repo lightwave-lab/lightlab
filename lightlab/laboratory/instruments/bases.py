@@ -414,8 +414,8 @@ class Instrument(Node):
     """
     _driver_class = None
     __driver_object = None
-    #: Complete Visa address of the instrument (e.g. :literal:`visa\://hostname/GPIB0::1::INSTR`)
-    address = None
+    address = None  #: Complete Visa address of the instrument (e.g. :literal:`visa\://hostname/GPIB0::1::INSTR`)
+
 
     _id_string = None
     _name = None
