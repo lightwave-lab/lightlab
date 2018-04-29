@@ -303,14 +303,12 @@ class Configurable(AbstractDriver):
         finally:
             self.setConfigParam(cStr, oldVal)
 
-
     # More specialized access methods that handle command subgroups, files,
     # and tokens
     def getDefaultFilename(self):
         # Typically: manufacturer, model#, serial#, <other stuff with strange
         # chars>
         info = self.instrID().split(',')
-        global defaultFileDir
         deffile = defaultFileDir / '-'.join(info[:3]) + '.json'
         return deffile
 
@@ -394,8 +392,8 @@ class Configurable(AbstractDriver):
             resp = self.query('SET?')
             return TekConfig.fromSETresponse(resp, subgroup=subgroup)
         except VisaIOError as err:  # SET timed out. You are done.
-            logger.error(self.instrID(), '%s timed out on \'SET?\'. \
-                         Try resetting with \'*RST\'.')
+            logger.error('%s timed out on \'SET?\'. \
+                         Try resetting with \'*RST\'.', self.instrID())
             raise err
 
     def _getHardwareConfig(self, cStrList):
@@ -416,10 +414,10 @@ class Configurable(AbstractDriver):
             try:
                 ret = self.query(cStr + '?')
             except VisaIOError:
-                logger.error('Problematic parameter was %s.\n %s', cStr,
-                             'Likely it does not exist in this instrument command structure.')
+                logger.error('Problematic parameter was %s.\n'
+                             'Likely it does not exist in this instrument command structure.', cStr)
                 raise
-            logger.debug('Queried {}, got {}'.format(cStr, ret))
+            logger.debug('Queried %s, got %s', cStr, ret)
 
             if self.header:
                 val = ret.split(' ')[-1]
@@ -447,7 +445,7 @@ class Configurable(AbstractDriver):
                 cmd = cmd[1:]
             if not self.space:
                 ''.join(cmd.split(' '))
-            logger.debug('Sending %s %s', cmd, 'to configurable hardware')
+            logger.debug('Sending %s to configurable hardware', cmd)
             self.write(cmd)
 
     def generateDefaults(self, filename=None, overwrite=False):
@@ -466,8 +464,8 @@ class Configurable(AbstractDriver):
         if filename is None:
             filename = self.getDefaultFilename()
         if Path(filename).exists() and not overwrite:
-            logger.warning(filename, '%s already exists. \
-                           Use `overwrite` if you really want.')
+            logger.warning('%s already exists.'
+                           'Use `overwrite` if you really want.', filename)
             return
 
         allConfig = self.__getFullHardwareConfig()
@@ -490,4 +488,3 @@ class Configurable(AbstractDriver):
         cfgBuild.save(filename)
         logger.info('New default saved to %s', filename)
 # pylint: enable=no-member
-
