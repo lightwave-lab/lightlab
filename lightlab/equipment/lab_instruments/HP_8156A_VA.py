@@ -20,7 +20,7 @@ class HP_8156A_VA(VISAInstrumentDriver, Configurable):
 
     def __init__(self, name='The VOA on the GC bench', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-        Configurable.__init__(precedingColon=True, headerIsOptional=False)
+        Configurable.__init__(self, precedingColon=True, headerIsOptional=False)
 
     def startup(self):
         self.on()

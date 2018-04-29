@@ -87,11 +87,12 @@ class CurrentSource(Instrument):
 
 class FunctionGenerator(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/FunctionGenerator.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essentialProperties = Instrument.essentialProperties + \
         ['frequency',
          'waveform',
-         'amplAndOffs',
-         'amplitudeRange',  # This should be a class attribute, not a method
+         'amplitude',
+         'offset',
+         'amplitudeLimits',  # This should be a class attribute, not a property. Looks the same though
          'duty']
 
 
@@ -151,7 +152,9 @@ class PulsePatternGenerator(Instrument):
          'getPattern',
          'on',
          'syncSource',
-         'amplAndOffs']
+         'amplitude',
+         'offset',
+         ]
 
 
 class RFSpectrumAnalyzer(Instrument):

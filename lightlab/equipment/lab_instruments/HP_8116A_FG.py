@@ -17,8 +17,10 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     '''
     instrument_category = FunctionGenerator
 
+    amplitudeLimits = [0.01, 10]
+
     amplitude = ConfigProperty('AMP', typeCast=float,
-                               limits=[0.01, 10], termination='V')
+                               limits=amplitudeLimits, termination='V')
     offset = ConfigProperty('OFS', typeCast=float,
                             limits=None, termination='V')
     duty = ConfigProperty('DTY', limits=[0, 100], termination='%')
