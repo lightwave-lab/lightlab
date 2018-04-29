@@ -518,7 +518,7 @@ class NdSweeper(Sweeper):
             return
         if axArr is None:
             if self.plotOptions['axArr'] is None:
-                fi, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1], figsize=(
+                _, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1], figsize=(
                     10, plotArrShape[0] * 2.5))  # pylint: disable=unused-variable
             else:
                 axArr = self.plotOptions['axArr']
@@ -576,7 +576,8 @@ class NdSweeper(Sweeper):
                             yData = yData.T
                             if index is not None:
                                 index = index[::-1]
-                        nonDomainValue = lambda iLine: self.actuate[nonDomainKey][1][iLine]
+                        nonDomainValue = (lambda iLine:
+                                          self.actuate[nonDomainKey][1][iLine])  # pylint: disable=cell-var-from-loop
 
                     nLines = yData.shape[0]
                     # The last index dereference kills any shading
@@ -677,7 +678,7 @@ class NdSweeper(Sweeper):
                     actFun, doEvery = None, None
                 # Do the full add
                 newObj.addActuation(actName, actFun, domain, doEvery)
-        newObj._recalcSwpShape()
+        newObj._recalcSwpShape()  # pylint: disable=protected-access
 
         # Restore parsers. Do not reparse them
         if functionSource is not None:
@@ -933,6 +934,7 @@ class CommandControlSweeper(Sweeper):
             accuracyBits = np.log2(domainSpan / accuracy)
             precisionBits = np.log2(domainSpan / precision)
             return accuracyBits, precisionBits
+
 
 interAx = None
 hCurves = None

@@ -6,6 +6,7 @@ from lightlab.laboratory.instruments import RFSpectrumAnalyzer
 from lightlab.util.data import Spectrum, Spectrogram
 import numpy as np
 
+
 class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     ''' TEKTRONIX RSA6120B, RF spectrum analyzer
 
@@ -88,11 +89,12 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
             The accuracy of timing and consistency of timing between lines is not guaranteed.
         '''
         if 'SGR' not in self.getMeasurements():
-            raise Exception('Spectrogram is not being recorded. Did you forget to call sgramInit()?')
+            raise Exception(
+                'Spectrogram is not being recorded. Did you forget to call sgramInit()?')
 
-        #def qg(subParam):
-            #for Quick Get '''
-            #return float(self.getConfigParam('SGR:' + subParam, forceHardware=True))
+        # def qg(subParam):
+            # for Quick Get '''
+            # return float(self.getConfigParam('SGR:' + subParam, forceHardware=True))
 
         # Create data structure with proper size
         trialLine = self.__sgramLines([0])[0]
@@ -165,7 +167,6 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
                 raise err
         VISAInstrumentDriver.close(self)
         return container
-
 
     def spectrum(self, freqReso=None, freqRange=None, typAvg='none', nAvg=None):
         ''' Acquires and transfers a spectrum.

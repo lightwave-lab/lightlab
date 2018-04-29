@@ -178,13 +178,12 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
 
                 # for X active channels, apply a [delay(X) - delay(X-i)] time offset
 
-                '''
-                Note: Given N channels, the synchronized pulses appear at time window N. Therefore, the minimum
-                delay channel (D=0) outputs the (P=N) set of pulses, the second min. delay channel (D=1)
-                outputs the (P=N-1) set of pulses, etc.
-                As a result, each pulse receives an inverse channel delay: K - current_delay + pulsePosition, for some K.
-                We set K to max(delay) since that sets the last channel [max(delay)] at the beginning of the pattern.
-                '''
+                # Note: Given N channels, the synchronized pulses appear at time window N. Therefore, the minimum
+                # delay channel (D=0) outputs the (P=N) set of pulses, the second min. delay channel (D=1)
+                # outputs the (P=N-1) set of pulses, etc.
+                # As a result, each pulse receives an inverse channel delay: K - current_delay + pulsePosition, for some K.
+                # We set K to max(delay) since that sets the last channel [max(delay)] at the beginning of the pattern.
+
                 pIndex = int(np.round((max(chpulses.keys()) - delay + pulsePos) * clockfreq))
                 # add pulse to pattern at correct delay
                 pattern[pIndex:pIndex + int(np.round(pulseWidth * clockfreq))] = 1

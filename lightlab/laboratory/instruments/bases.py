@@ -17,8 +17,8 @@ class Host(Node):
     """ Computer host, from which GPIB/VISA commands are issued.
     """
     name = None
-    mac_address = None
     hostname = None
+    mac_address = None
     os = "linux-ubuntu"  # linux-ubuntu, linux-centos, windows, mac etc.
 
     __cached_list_resources_info = None
@@ -40,7 +40,7 @@ class Host(Node):
     def __contains__(self, item):
         instrument_search = item in self.instruments
         if not instrument_search:
-            logger.info("{} not found in {}'s instruments.".format(item, self))
+            logger.info("%s not found in %s's instruments.", item, self)
         return instrument_search
 
     def isLive(self):
@@ -167,7 +167,7 @@ class Host(Node):
             if id_string_search == id_string:
                 logger.info("Found %s in %s.", id_string_search, gpib_address)
                 return gpib_address
-        logger.warning("{} not found in {}".format(id_string_search, self))
+        logger.warning("%s not found in %s", id_string_search, self)
         raise NotFoundError(
             "{} not found in {}".format(id_string_search, self))
 
@@ -238,8 +238,7 @@ class LocalHost(Host):
     def __init__(self, name=None):
         if name is None:
             name = 'localhost'
-        self.name = name
-        self.hostname = platform.node()
+        super().__init__(name=name, hostname=platform.node())
         mac = get_mac()
         # converts 90520734586583 to 52:54:00:3A:D6:D7
         self.mac_address = ':'.join(("%012X" % mac)[i:i + 2] for i in range(0, 12, 2))
@@ -273,15 +272,15 @@ class Bench(Node):
         if isinstance(item, Instrument):
             instrument_search = item in self.instruments
             if not instrument_search:
-                logger.info("{} not found in {}'s instruments.".format(item, self))
+                logger.info("%s not found in %s's instruments.", item, self)
             return instrument_search
         elif isinstance(item, Device):
             device_search = item in self.devices
             if not device_search:
-                logger.info("{} not found in {}'s devices.".format(item, self))
+                logger.info("%s not found in %s's devices.", item, self)
             return device_search
         else:
-            logger.debug("{} is neither an Instrument nor a Device".format(item))
+            logger.debug("%s is neither an Instrument nor a Device", item)
             return False
 
     @property
@@ -619,7 +618,7 @@ class Instrument(Node):
                 logger.debug("Cannot authenticate %s in %s.",
                              self.name, self.address)
                 return True
-        except Exception as err:
+        except pyvisa.VisaIOError as err:
             logger.warning(err)
             return False
 

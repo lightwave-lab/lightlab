@@ -38,6 +38,7 @@ def signatureRepr(aMethod, verbose=False):
         sss += '(' + ', '.join(allArgs) + ')'
     return sss
 
+
 typeErrREs = [re.compile(errSt)
               for errSt in {'positional argument', 'unexpected keyword argument'}]
 
