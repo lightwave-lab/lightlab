@@ -9,6 +9,7 @@
     {%- endif %}
 
 {% if submodules %}
+
     Submodules:
 
     .. toctree::
@@ -19,6 +20,7 @@
     {%- endif -%}
 
 {% if subpackages %}
+
     Subpackages:
 
     .. toctree::

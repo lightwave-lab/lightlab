@@ -18,6 +18,9 @@
         * unit-testing a complex experimental procedure
 
     Along with commentary about the rationale for setting it up this way.
+
+    Attributes:
+        NAIL (int): global variable representing real life outside of the classes and tests
 '''
 
 import pytest
@@ -39,22 +42,20 @@ from lightlab.laboratory.virtualization import VirtualInstrument, DualInstrument
 '''
 NAIL = 0
 
-''' Some condition that must be active when acting,
-    but we would like it to be on as little as possible.
+#: Some condition that must be active when acting,
+#: but we would like it to be on as little as possible.
 
-    A real example is a Keithley enable switch:
-    Leaving the current on indefinitely can wear out devices.
+#: A real example is a Keithley enable switch:
+#: Leaving the current on indefinitely can wear out devices.
 
-    In this case, we should put hammers down unless actively hammering.
-    They are heavy.
-'''
+#: In this case, we should put hammers down unless actively hammering.
+#: They are heavy.
 IN_HAND = False
 
-# Testing framework
 @contextmanager
 def checkHits(N=1):
     ''' Put "reality" in a consistent beginning state.
-        Check at end that NAIL has hit (which involves picking up first)
+        Check at end that ``NAIL`` has hit (which involves picking up first)
         and that the hammer was put down afterwards
     '''
     global NAIL, IN_HAND
@@ -71,6 +72,8 @@ def checkHits(N=1):
     This is enforced. A driver claiming to be a Hammer must implement the essentials
 '''
 class Hammer(Instrument):
+    ''' An Instrument interface that defines essential methods
+    '''
     essentialMethods = Instrument.essentialMethods + ['hit', 'pickUp', 'putDown']
 
     def hardware_warmup(self):
@@ -99,6 +102,8 @@ def test_badDriver():
     and should never be instantiated on its own.
 '''
 class HammerImplementation(AbstractDriver):
+    ''' An abstraction of how some real Hammers are implemented
+    '''
     def hit(self):
         global NAIL
         if IN_HAND:
@@ -120,11 +125,14 @@ class HammerImplementation(AbstractDriver):
     This greatly eases lab state management
 '''
 class Picard_0811(VISAInstrumentDriver, HammerImplementation):
+    ''' One type of Hammer '''
     instrument_category = Hammer
 
 # class Stanley_51_624(Picard_0811):  # This class declaration works, but it is conceptually misleading
 class Stanley_51_624(VISAInstrumentDriver, HammerImplementation):
-    ''' Stanley_51_624 is not at all a Picard_0811, so it should not inherit it.
+    ''' Another type of hammer
+
+        Stanley_51_624 is not at all a Picard_0811, so it should not inherit it.
         That's why there are abstract drivers.
     '''
     instrument_category = ClawHammer
@@ -134,10 +142,14 @@ class Stanley_51_624(VISAInstrumentDriver, HammerImplementation):
         if IN_HAND:
             NAIL -= 1
 
-''' This is almost the same thing, so it is conceptually ok to inherit from the other driver '''
-class Picard_0812(Picard_0811): pass
+class Picard_0812(Picard_0811):
+    ''' This is almost the same thing, so it is conceptually ok to inherit from the other driver '''
+    pass
 
 def test_specialInitialization():
+    ''' When a :py:class:`~lightlab.equipment.visa_bases.VISAInstrumentDriver`
+        is initialized, it should return an :py:class:`~lightlab.laboratory.instruments.Instrument`.
+    '''
     hammer = Picard_0811(address='Hand')
     assert type(hammer) is Hammer
 
@@ -171,9 +183,14 @@ def test_realLife():
     This is not enforced.
 '''
 class VirtualNail(object):
+    ''' A simulation of a nail
+    '''
     state = 0
 
 class VirtualHammer(VirtualInstrument):
+    ''' A virtual instrument with the same interface as its real counterpart.
+        It is tied to a simulator, in this case :py:class:`VirtualNail`.
+    '''
     def __init__(self, viReference):
         self.viReference = viReference
 
@@ -195,6 +212,8 @@ def checkVirtualHits(virtualNail, N=1):
     assert virtualNail.state == N
 
 def test_simulator():
+    ''' Straightforward hitting a simulated nail
+    '''
     viDevice = VirtualNail()
     inst = VirtualHammer(viDevice)
     with checkVirtualHits(viDevice, 1):
@@ -206,6 +225,9 @@ def test_simulator():
     Making a correspondance between virtual reality and reality
 '''
 def test_dualized():
+    ''' Tie together a real hammer with a virtual hammer.
+        Run the same simple procedure on both.
+    '''
     viDevice = VirtualNail()
     viInst = VirtualHammer(viDevice)
     hwInst = Stanley_51_624(address='Hand')
@@ -232,6 +254,7 @@ def test_dualized():
     It is of course only as good as your simulator can correspond to reality.
 '''
 def complicatedProcedure_resultingIn3hits(hammer1, hammer2):
+    ''' Two hammers hitting one nail. hammer2 must be a ClawHammer '''
     hammer1.hit()
     hammer2.hit()
     hammer2.hit()
@@ -239,6 +262,11 @@ def complicatedProcedure_resultingIn3hits(hammer1, hammer2):
     hammer1.hit()
 
 def test_dualWeilding():
+    ''' Tie together two virtual-real pairs, and synchronize the
+        virtual state of the two together.
+
+        Repeat a complex procedure in virtual and real
+    '''
     viDevice = VirtualNail()
 
     hw1 = Picard_0812(address='Left hand')

@@ -11,7 +11,7 @@ def root():
     try:
         base = check_output(['git', 'rev-parse', '--show-toplevel'])
     except CalledProcessError:
-        raise IOError('Current working directory is not a git repository')
+        raise IOError(f"'{os.getcwd()}' is not a git repository")
     return base.decode('utf-8').strip()
 
 

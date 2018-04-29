@@ -1,3 +1,9 @@
+"""
+The laboratory module facilitates the organization and documentation
+of instruments, experiments and devices. The objects defined here are
+designed to be "hashable", i.e., easy to store and share.
+"""
+
 import jsonpickle
 from collections import MutableSequence
 
@@ -6,8 +12,12 @@ __all__ = ["Node"]
 
 class Hashable(object):
     """
-    Hashable class to be used with jsonpickle's module. No instance
-    variables starting with "__" will be serialized.
+    Hashable class to be used with jsonpickle's module.
+    No instance variables starting with "__" will be serialized.
+
+    By default, every key-value in the initializer will become instance
+    variables. E.g. ``Hashable(a=1).a == 1``
+
     """
     context = jsonpickle.pickler.Pickler(unpicklable=True, warn=True, keys=True)
 
@@ -72,11 +82,24 @@ class Hashable(object):
 
 
 class Node(Hashable):
-    def placeBench(self, new_bench):
+    """
+    Node is a token of an object that exists in a laboratory.
+    For example, subclasses are:
+
+        - a :py:class:`~lightlab.laboratory.devices.Device`
+        - a :py:class:`~lightlab.laboratory.instruments.bases.Host`
+        - a :py:class:`~lightlab.laboratory.instruments.bases.Bench`
+        - an :py:class:`~lightlab.laboratory.instruments.bases.Instrument`
+
+    """
+
+    def placeBench(self, new_bench):  # TODO Deprecate
         self.bench = new_bench
 
 
 def typed_property(type_obj, name):
+    """ Property that only accepts instances of a class and
+    stores the contents in self.name"""
     def fget(self):
         return getattr(self, name)
 
@@ -97,7 +120,7 @@ def typed_property(type_obj, name):
 # https://stackoverflow.com/questions/3487434/overriding-append-method-after-inheriting-from-a-python-list
 class NamedList(MutableSequence, Hashable):
     """
-    Instrument list that enforces that there are only one instrument name in the list.
+    Object list that enforces that there are only one object.name in the list.
 
     """
 
@@ -121,7 +144,8 @@ class NamedList(MutableSequence, Hashable):
         if not hasattr(v, 'name'):
             raise TypeError(f"{type(v)} does not have name.")
 
-    def __len__(self): return len(self.list)
+    def __len__(self):
+        return len(self.list)
 
     def __getitem__(self, i):
         if isinstance(i, str):
@@ -130,7 +154,8 @@ class NamedList(MutableSequence, Hashable):
 
     def __delitem__(self, i):
         if isinstance(i, str):
-            for idx in [idx for idx, elem in enumerate(self) if elem.name == i]:
+            matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
+            for idx in matching_idxs:
                 del self.list[idx]
         else:
             del self.list[i]
@@ -139,14 +164,21 @@ class NamedList(MutableSequence, Hashable):
         self.check(v)
         if isinstance(i, str):
             if i in self.dict.keys():
-                self.dict[i] = v
+                matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
+                assert len(matching_idxs) == 1
+                idx = matching_idxs[0]
+                self.list[idx] = v  # update current entry
             else:
                 if i != v.name:
                     # Renaming instrument to conform to the dict's key
                     # named_list['name1'] = Instrument('name2')
                     # Instrument will be renamed to name1 prior to insertion
                     v.name = i
-                self.list.append(v)
+
+                # special case when v is already in the list, in
+                # which case one must do nothing.
+                if v not in self.list:
+                    self.list.append(v)
         else:
             self.list[i] = v
 
@@ -163,7 +195,12 @@ class NamedList(MutableSequence, Hashable):
     def __str__(self):
         return str(self.list)
 
+
 class TypedList(NamedList):
+    """
+    Object list that enforces that there are only one object.name in
+    the list and that they belong to a certain class (obj_type).
+    """
 
     def __init__(self, obj_type, *args):
         self.obj_type = obj_type
@@ -173,5 +210,3 @@ class TypedList(NamedList):
         if not isinstance(v, self.obj_type):
             raise TypeError(f"{v} is not an instance of {self.obj_type}")
         return super().check(v)
-
-

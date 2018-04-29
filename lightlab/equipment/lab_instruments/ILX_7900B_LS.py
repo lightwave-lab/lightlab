@@ -26,7 +26,7 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
             * output power in dBm (``powers``)
 
         Setting/getting logic is implemented in ``MultiModuleConfigurable``,
-        which treats the channels as independent ``ConfigModules``s. This means
+        which treats the channels as independent ``ConfigModules``'s. This means
         that hardware communication is lazy -- parameter values are cached,
         and messages are only sent when they are unknown or when they change.
 
@@ -38,8 +38,9 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
             Multiple users at the same time is desirable. We are close.
             Non blocked-out channels are never touched, but there are still two issues
                 * Fundamental: VISA access with two python processes could collide
-                * Inconvenience: Have to create two different instruments with different ``useChans``
-                for what is actually one instrument -- maybe a slice method?
+                * Inconvenience: Have to create two different labstate instruments
+                    with different ``useChans`` for what is actually
+                    one instrument -- maybe a slice method?
     '''
     instrument_category = LaserSource
     maxChannel = 8

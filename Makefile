@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 
 # different tests
-TESTARGS = -s --cov=lightlab --cov-config .coveragerc
+TESTARGS = --capture=sys --cov=lightlab --cov-config .coveragerc
 TESTARGSNB = --nbval-lax --sanitize-with ipynb_pytest_santize.cfg
 
 # For devbuild, testbuild
@@ -44,6 +44,12 @@ test-unit: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test $(TESTARGS) tests; \
+	)
+
+test-simple: testbuild
+	( \
+		source venv/bin/activate; \
+		py.test $(TESTARGS) $(TESTARGSNB) tests; \
 	)
 
 test-lint: testbuild
@@ -122,7 +128,7 @@ monitorhost:
 
 
 docbuild: venvinfo/docreqs~
-venvinfo/docreqs~: $(REINSTALL_DEPS) doc-requirements.txt
+venvinfo/docreqs~: $(REINSTALL_DEPS) notebooks/Tests doc-requirements.txt
 	( \
 		source venv/bin/activate; \
 		pip install -r doc-requirements.txt | grep -v 'Requirement already satisfied'; \
@@ -132,6 +138,7 @@ venvinfo/docreqs~: $(REINSTALL_DEPS) doc-requirements.txt
 	@touch venvinfo/docreqs~
 
 docs: docbuild
+	rsync -rau notebooks/Tests/*.ipynb docs/ipynbs/Tests
 	source venv/bin/activate; $(MAKE) -C docs $(DOCTYPE_DEFAULT)
 
 docs-ci: docbuild

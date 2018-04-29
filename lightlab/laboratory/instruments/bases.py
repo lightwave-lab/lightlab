@@ -1,18 +1,21 @@
+''' This module provides an interface for instruments, hosts and benches in the lab.
 '''
-This module provides an interface for instruments in the lab and virtual ones.
-'''
+
+import os
+import platform
+from uuid import getnode as get_mac  # https://stackoverflow.com/questions/159137/getting-mac-address
+from contextlib import contextmanager
+
 from lightlab.laboratory import Node, typed_property, TypedList
 from lightlab.equipment.visa_bases import VISAObject, DefaultDriver
 
 from lightlab import logger
-import os
 import pyvisa
-from contextlib import contextmanager
 
 
 class Host(Node):
-    """ Class storing information about computer hosts, from which GPIB commands
-    are issued."""
+    """ Computer host, from which GPIB/VISA commands are issued.
+    """
     name = None
     mac_address = None
     hostname = None
@@ -20,6 +23,14 @@ class Host(Node):
 
     __cached_list_resources_info = None
     __cached_gpib_instrument_list = None
+
+    def __init__(self, name='Unnamed Host', hostname=None, **kwargs):
+        if hostname is None:
+            logger.warning("Hostname not set. isLive and list_resources not functional.")
+
+        self.hostname = hostname
+        self.name = name
+        super().__init__(**kwargs)
 
     @property
     def instruments(self):
@@ -35,35 +46,92 @@ class Host(Node):
     def isLive(self):
         ''' Pings the system and returns if it is alive.
         '''
-        logger.debug("Pinging %s...", self.hostname)
-        response = os.system("ping -c 1 {}".format(self.hostname))
-        if response != 0:
-            logger.warning("%s is not reachable via ping.", self)
-        return response == 0
+        if self.hostname is not None:
+            logger.debug("Pinging %s...", self.hostname)
+            response = os.system("ping -c 1 {}".format(self.hostname))
+            if response != 0:
+                logger.warning("%s is not reachable via ping.", self)
+            return response == 0
+        else:
+            logger.warning("Hostname not set. Unable to ping.")
+            return False
 
-    def list_resources_info(self, use_cached=True, is_local=False):
+    def _visa_prefix(self):
+        ''' The prefix necessary for connecting to remote visa servers.
+
+        Ex. 'visa://remote-server.university.edu/'
+
+            Returns:
+                (str)
+        '''
+        return 'visa://{}/'.format(self.hostname)
+
+    def gpib_port_to_address(self, port, board=0):
+        '''
+            Args:
+                port (int): The port on the GPIB bus of this host
+                board (int): For hosts with multiple GPIB busses
+
+            Returns:
+                (str): the address that can be used in an initializer
+        '''
+        localSerialStr = 'GPIB{}::{}::INSTR'.format(board, port)
+        return self._visa_prefix() + localSerialStr
+
+    def list_resources_info(self, use_cached=True):
+        """ Executes a query to the NI Visa Resource manager and
+        returns a list of instruments connected to it.
+
+        Args:
+            use_cached (bool): query only if not cached, default True
+
+        Returns:
+            list: list of `pyvisa.highlevel.ResourceInfo` named tuples.
+
+        """
         if self.__cached_list_resources_info is None:
             use_cached = False
         if use_cached:
             return self.__cached_list_resources_info
         else:
-            if is_local:
-                list_query = "?*::INSTR"
-            else:
-                list_query = "visa://" + self.hostname + "/?*::INSTR"
+            list_query = self._visa_prefix() + "?*::INSTR"
             rm = pyvisa.ResourceManager()
             logger.debug("Caching resource list in %s", self)
             self.__cached_list_resources_info = rm.list_resources_info(
                 query=list_query)
             return self.__cached_list_resources_info
 
-    def list_gpib_resources_info(self, use_cached=True, is_local=False):
+    def list_gpib_resources_info(self, use_cached=True):
+        """ Like :py:meth:`list_resources_info`, but only returns gpib
+        resources.
+
+        Args:
+            use_cached (bool): query only if not cached, default True.
+
+        Returns:
+            list: list of `pyvisa.highlevel.ResourceInfo` named tuples.
+
+        """
         return {resource_name: resource
-                for resource_name, resource in self.list_resources_info(use_cached=use_cached, is_local=is_local).items()
+                for resource_name, resource in self.list_resources_info(use_cached=use_cached).items()
                 if resource.interface_type == pyvisa.constants.InterfaceType.gpib}
 
-    def get_all_gpib_id(self, use_cached=True, is_local=False):
-        gpib_resources = self.list_gpib_resources_info(use_cached=use_cached, is_local=is_local)
+    def get_all_gpib_id(self, use_cached=True):
+        """ Queries the host for all connected GPIB instruments, and
+        queries their identities with ``instrID()``.
+
+        Warning: This might cause your instrument to lock into remote mode.
+
+        Args:
+            use_cached (bool): query only if not cached, default True
+            is_local (bool): True if querying local instruments, False
+                host is remote.
+
+        Returns:
+            dict: dictionary with gpib addresses as keys and \
+                identity strings as values.
+        """
+        gpib_resources = self.list_gpib_resources_info(use_cached=use_cached)
         if self.__cached_gpib_instrument_list is None:
             use_cached = False
         if use_cached:
@@ -81,8 +149,24 @@ class Host(Node):
             self.__cached_gpib_instrument_list = gpib_instrument_list
             return gpib_instrument_list
 
-    def findGpibAddressById(self, id_string_search, use_cached=True):
-        gpib_ids = self.get_all_gpib_id(use_cached=use_cached)
+    def findGpibAddressById(self, id_string_search, use_cached=True, is_local=False):
+        """ Finds a gpib address using :py:meth:`get_all_gpib_id`, given
+        an identity string.
+
+        Args:
+            id_string_search (str): identity string
+            use_cached (bool): query only if not cached, default True
+            is_local (bool): True if querying local instruments, False
+                host is remote.
+
+        Returns:
+            str: address if found.
+
+        Raises:
+            NotFoundError: If the instrument is not found.
+
+        """
+        gpib_ids = self.get_all_gpib_id(use_cached=use_cached, is_local=is_local)
         for gpib_address, id_string in gpib_ids.items():
             if id_string_search == id_string:
                 logger.info("Found %s in %s.", id_string_search, gpib_address)
@@ -92,19 +176,41 @@ class Host(Node):
             "{} not found in {}".format(id_string_search, self))
 
     def addInstrument(self, *instruments):
+        """ Adds an instrument to lab.instruments if it is not already present.
+
+        Args:
+            *instruments (:py:class:`Instrument`): instruments
+
+        """
+        from lightlab.laboratory.state import lab
         for instrument in instruments:
-            if instrument not in self.instruments:
-                self.instruments.append(instrument)
+            if instrument not in lab.instruments:
+                lab.instruments.append(instrument)
+            instrument.host = self
 
     def removeInstrument(self, *instruments):
+        """ Disconnects the instrument from the host
+
+        Args:
+            *instruments (:py:class:`Instrument`): instruments
+
+        """
+        # TODO Remove all connections
         for instrument in instruments:
-            try:
-                self.instruments.remove(instrument)
-            except ValueError as err:
-                logger.warn("%s not currently connected to %s",
-                            instrument, self)
+            if type(instrument) is str:
+                logger.warn('Cannot remove by name string. Use the object')
+            instrument.host = None
 
     def checkInstrumentsLive(self):
+        """ Checks whether all instruments are "live".
+
+        Instrument status is checked with the :py:meth:`Instrument.isLive()` method
+
+        Returns:
+            bool: True if all instruments are live, False otherwise
+
+
+        """
         all_live = True
         for instrument in self.instruments:
             if instrument.isLive():
@@ -116,11 +222,55 @@ class Host(Node):
     def __str__(self):
         return "Host {}".format(self.name)
 
+    def display(self):
+        """ Displays the host's instrument table in a nice format."""
+        lines = ["{}".format(self)]
+        lines.append("===========")
+        lines.append("Instruments")
+        lines.append("===========")
+        if len(self.instruments) > 0:
+            lines.extend(["   {} ({})".format(str(instrument), str(instrument.host))
+                          for instrument in self.instruments])
+        else:
+            lines.append("   No instruments.")
+        lines.append("***")
+        print("\n".join(lines))
+
+
+class LocalHost(Host):
+
+    def __init__(self, name=None):
+        if name is None:
+            name = 'localhost'
+        self.name = name
+        self.hostname = platform.node()
+        mac = get_mac()
+        # converts 90520734586583 to 52:54:00:3A:D6:D7
+        self.mac_address = ':'.join(("%012X" % mac)[i:i + 2] for i in range(0, 12, 2))
+        self.os = platform.system()
+
+    def _visa_prefix(self):
+        ''' How the visa server is specified. If this is a local host,
+        then there is no visa:// prefix
+
+            Returns:
+                (str)
+        '''
+        return ''
+
+    def isLive(self):
+        return True
+
 
 class Bench(Node):
-    """ Class storing information about benches, for the purpose of
-    facilitating location in lab. """
+    """ Represents an experiment bench for the purpose of facilitating
+    its location in lab.
+    """
     name = None
+
+    def __init__(self, name, *args, **kwargs):
+        self.name = name
+        super().__init__(*args, **kwargs)
 
     def __contains__(self, item):
 
@@ -138,11 +288,6 @@ class Bench(Node):
             logger.debug("{} is neither an Instrument nor a Device".format(item))
             return False
 
-    def __init__(self, name, *args, **kwargs):
-
-        self.name = name
-        super().__init__(*args, **kwargs)
-
     @property
     def instruments(self):
         from lightlab.laboratory.state import lab
@@ -154,39 +299,67 @@ class Bench(Node):
         return TypedList(Device, *list(filter(lambda x: x.bench == self, lab.devices)))
 
     def addInstrument(self, *instruments):
+        """ Adds an instrument to lab.instruments if it is not already
+        present and connects to the host.
+
+        Args:
+            *instruments (:py:class:`Instrument`): instruments
+
+        """
         from lightlab.laboratory.state import lab
         for instrument in instruments:
-            if instrument not in self.instruments:
+            if instrument not in lab.instruments:
                 lab.instruments.append(instrument)
+            instrument.bench = self
 
     def removeInstrument(self, *instruments):
-        from lightlab.laboratory.state import lab
+        """ Detaches the instrument from the bench.
+
+        Args:
+            *instruments (:py:class:`Instrument`): instruments
+
+        Todo:
+            Remove all connections
+        """
         # TODO Remove all connections
         for instrument in instruments:
             if type(instrument) is str:
-                logger.warn('Cannot remove by name string. Use the object')
-            try:
-                lab.instruments.remove(instrument)
-            except ValueError as err:
-                logger.warn("%s not currently placed in %s", instrument, self)
+                raise TypeError('Cannot remove by name string. Use the object')
+            instrument.bench = None
 
     def addDevice(self, *devices):
+        """ Adds a device to lab.devices if it is not already present
+        and places it in the bench.
+
+        Args:
+            *(:py:class:`Device`): devices
+
+        """
         from lightlab.laboratory.state import lab
         for device in devices:
-            if device not in self.devices:
+            if not isinstance(device, Device):
+                raise TypeError(f"{device} is not an instance of Device.")
+            if device not in lab.devices:
                 lab.devices.append(device)
+            device.bench = self
 
     def removeDevice(self, *devices):
+        """ Detaches the device from the bench.
+
+        Args:
+            *(:py:class:`Device`): devices
+
+        Todo:
+            Remove all connections
+        """
         # TODO Remove all connections
-        from lightlab.laboratory.state import lab
         for device in devices:
-            try:
-                lab.devices.remove(device)
-            except ValueError as err:
-                logger.warn("%s not currently placed in %s", device, self)
+            if type(device) is str:
+                raise TypeError('Cannot remove by name string. Use the object')
+            device.bench = None
 
     def display(self):
-        # Print benches table
+        """ Displays the bench's table in a nice format."""
         lines = ["{}".format(self)]
         lines.append("===========")
         lines.append("Instruments")
@@ -210,28 +383,32 @@ class Bench(Node):
         return "Bench {}".format(self.name)
 
 
-# TODO add instrument equality function
 class Instrument(Node):
-    """ Class storing information about instruments, for the purpose of
+    """ Represents an instrument in lab.
+
+        This class stores information about instruments, for the purpose of
         facilitating verifying whether it is connected to the correct devices.
 
         Driver feedthrough: methods, properties, and even regular attributes
         that are in ``essentialMethods`` and ``essentialProperties`` of the class
         will get/set/call through to the driver object.
+
+        Todo:
+            Add example of instrument instantiation and point to relevant ipynb.
     """
     _driver_class = None
     __driver_object = None
-    address = None
+    address = None  #: Complete Visa address of the instrument (e.g. :literal:`visa\://hostname/GPIB0::1::INSTR`)
 
     _id_string = None
     _name = None
     _bench = None
     _host = None
-    ports = None
+    ports = None  #: list(str) Port names of instruments. To be used with labstate connections.
 
-    essentialMethods = ['startup']
-    essentialProperties = []
-    optionalAttributes = []
+    essentialMethods = ['startup']  #: list of methods to be fed through the driver
+    essentialProperties = []  #: list of properties to be fed through the driver
+    optionalAttributes = []  #: list of optional attributes to be fed through the driver
 
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
         self.bench = kwargs.pop("bench", None)
@@ -248,9 +425,10 @@ class Instrument(Node):
         #     if driver_klass is not None:
         #         if not hasattr(driver_klass, attrName):
         #             raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
-        super().__init__(_name=name,
-                         _id_string=id_string,
-                         address=address, **kwargs)
+        self._name = name
+        self._id_string = id_string
+        self.address = address
+        super().__init__(**kwargs)
 
     def __dir__(self):
         ''' For autocompletion in ipython '''
@@ -298,14 +476,33 @@ class Instrument(Node):
 
     # These control contextual behavior. They are used by DualInstrument
     def hardware_warmup(self):
+        """ Called before the beginning of an experiment.
+
+        Typical warmup procedures include RESET gpib commands.
+        """
         pass
 
     def hardware_cooldown(self):
+        """ Called after the end of an experiment.
+
+        Typical cooldown procedures include laser turn-off, or orderly
+        wind-down of current etc.
+        """
         pass
 
     @contextmanager
     def warmedUp(self):
         ''' A context manager that warms up and cools down in a "with" block
+
+        Usage:
+
+        .. code-block:: python
+
+            with instr.warmedUp() as instr:  # warms up instrument
+                instr.doStuff()
+                raise Exception("Interrupting experiment")
+            # cools down instrument, even in the event of exception
+
         '''
         try:
             self.hardware_warmup()
@@ -316,6 +513,12 @@ class Instrument(Node):
     # These control properties
     @property
     def driver_class(self):
+        """ Class of the actual equipment driver
+        (from :py:mod:`lightlab.equipment.lab_instruments`)
+
+        This way the object knows how to instantiate a driver instance
+        from the labstate.
+        """
         if self._driver_class is None:
             logger.warning("Using default driver for %s.", self)
             return DefaultDriver
@@ -324,6 +527,7 @@ class Instrument(Node):
 
     @property
     def driver_object(self):
+        """ Instance of the equipment driver."""
         if self.__driver_object is None:
             try:
                 kwargs = self.driver_kwargs
@@ -341,31 +545,43 @@ class Instrument(Node):
 
     @property
     def driver(self):
+        """ Alias of :py:meth:`driver_object`."""
         return self.driver_object
-
 
     bench = typed_property(Bench, "_bench")
     host = typed_property(Host, "_host")
 
-
     @property
     def name(self):
+        """ (property) Instrument name (can only set during initialization) """
         return self._name
 
     @property
     def id_string(self):
+        """
+            The id_string should match the value returned by
+            self.driver.instrID(), and is checked by the command
+            self.isLive() in order to authenticate that the intrument
+            in that address is the intended one.
+        """
         return self._id_string
 
     def __str__(self):
         return "{}".format(self.name)
 
     def display(self):
-        # Print benches table
+        """ Displays the instrument's info table in a nice format."""
         lines = ["{}".format(self)]
         lines.append("Bench: {}".format(self.bench))
         lines.append("Host: {}".format(self.host))
         lines.append("address: {}".format(self.address))
-        lines.append("driver_class: {}".format(self.driver_class))
+        lines.append("id_string: {}".format(self.id_string))
+        if not self.id_string:
+            lines.append("The id_string should match the value returned by"
+                         " self.driver.instrID(), and is checked by the command"
+                         " self.isLive() in order to authenticate that the intrument"
+                         " in that address is the intended one.")
+        lines.append("driver_class: {}".format(self.driver_class.__name__))
         lines.append("=====")
         lines.append("Ports")
         lines.append("=====")
@@ -383,6 +599,14 @@ class Instrument(Node):
         print("\n".join(lines))
 
     def isLive(self):
+        """ Attempts VISA connection to instrument, and checks whether
+            ``instrID()`` matches :py:data:`id_string`.
+
+            Produces a warning if it is live but the id_string is wrong.
+
+            Returns:
+                (bool): True if "live", False otherwise.
+        """
         try:
             driver = self.driver_object
             query_id = driver.instrID()
@@ -403,14 +627,19 @@ class Instrument(Node):
             logger.warning(err)
             return False
 
-    def connectHost(self, host):
-        # if gpib_address is None:
-        #     if self.gpib_address is None:
-        #         self.gpib_address = self.findAddressById(host)
-        # else:
-        #     logger.info("Manually locating %s in %s", self, gpib_address)
-        #     self.gpib_address = gpib_address
-        self.host = host
+    def connectHost(self, new_host):
+        """ Sets/changes instrument's host.
+
+            Equivalent to ``self.host = new_host``
+        """
+        self.host = new_host
+
+    def placeBench(self, new_bench):
+        """ Sets/changes instrument's bench.
+
+            Equivalent to ``self.bench = new_bench``
+        """
+        self.bench = new_bench
 
     # @classmethod
     # def fromGpibAddress(cls, gpib_address):
@@ -420,10 +649,21 @@ class Instrument(Node):
     #     return cls(id_string, gpib_address=gpib_address)
 
 
-#TODO add device equality function
+class NotFoundError(RuntimeError):
+    """ Error thrown when instrument is not found
+    """
+    pass
+
+
+# TODO add device equality function
 class Device(Node):
-    name = None
-    ports = None
+    """ Represents a device in lab.
+
+    Only useful for documenting the experiment.
+    """
+
+    name = None  #: device name
+    ports = None  #: list(str) port names
     _bench = None
 
     def __init__(self, name, **kwargs):
@@ -438,7 +678,7 @@ class Device(Node):
         return "Device {}".format(self.name)
 
     def display(self):
-        # Print benches table
+        """ Displays the device's info table in a nice format."""
         lines = ["{}".format(self)]
         lines.append("Bench: {}".format(self.bench))
         lines.append("=====")
@@ -450,7 +690,3 @@ class Device(Node):
             lines.append("   No ports.")
         lines.append("***")
         print("\n".join(lines))
-
-
-class NotFoundError(RuntimeError):
-    pass

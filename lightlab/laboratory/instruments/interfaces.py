@@ -1,4 +1,7 @@
-''' This module defines the essential interfaces for each kind of instrument
+''' This module defines the essential interfaces for each kind of instrument.
+
+    Todo:
+        Document every interface.
 '''
 
 from .bases import Instrument
