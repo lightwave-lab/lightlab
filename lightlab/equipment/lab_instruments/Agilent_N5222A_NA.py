@@ -31,6 +31,10 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 
     amplitude = ConfigProperty('SOUR:POW', limits=[-30, 30])
     enable = ConfigEnableProperty('OUTP:STAT')
+    sweepEnable = ConfigProperty('SENS:SWE:TYPE',
+                                 typeCast=lambda x: x == 'LIST',
+                                 mapping={True: 'LIST', False: 'CW'},
+                                 doc='Switches between sweeping (True) and CW (False) modes')
 
     def __init__(self, name='The network analyzer', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
@@ -84,8 +88,11 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
             Returns:
                 None
         '''
-        self.swpRange = [startFreq, stopFreq]
+        # self.swpRange = [startFreq, stopFreq]
         ###### Why doesn't this set the config here? Would make sweepEnable more normal
+        #### Moving these lines here slightly changes the behavior only if someone is messing with knobs
+        self.setConfigParam('SENS:FREQ:STAR', startFreq)
+        self.setConfigParam('SENS:FREQ:STOP', stopFreq)
 
         if nPts is not None:
             self.setConfigParam('SENS:SWE:POIN', nPts)
@@ -95,22 +102,6 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
             self.setConfigParam('SENS:IF:FREQ', ifBandwidth)
 
         self.getSwpDuration(forceHardware=True)
-
-    def sweepEnable(self, swpState=None):
-        ''' Switches between sweeping (True) and CW (False) modes
-
-            Args:
-                swpState (bool): If None, only gets, doesn't set.
-
-            Returns:
-                (bool): is the output sweeping
-        '''
-        if swpState is not None:
-            self.setConfigParam('SENS:SWE:TYPE', 'LIN' if swpState else 'CW')
-            if self.swpRange is not None:
-                self.setConfigParam('SENS:FREQ:STAR', self.swpRange[0], forceHardware=True)  # Hack
-                self.setConfigParam('SENS:FREQ:STOP', self.swpRange[1], forceHardware=True)  # Hack
-        return self.getConfigParam('SENS:SWE:TYPE') == 'LIN'
 
     def normalize(self):
         pass
