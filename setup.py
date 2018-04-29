@@ -120,9 +120,15 @@ def main():
     with open('LICENSE') as f:
         license = f.read()
 
+    with open("version.py") as f:
+        code = compile(f.read(), "version.py", 'exec')
+        version_dict = {}
+        exec(code, {}, version_dict)
+        version = version_dict['version']
+
     metadata = dict(
         name='lightlab',
-        version='0.1.2',
+        version=version,
         description='Lightwave Lab instrument automation tools',
         long_description=readme,
         license=license,
@@ -135,7 +141,7 @@ def main():
             'PyVISA',
             'scipy',
             'sklearn',
-            'msgpack-numpy',
+            'dill',
         ],
         cmdclass={
             "server_permissions": PermissionCheckCommand,

@@ -39,9 +39,10 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	@-rm -rf $(BUILDDIR)/*
-	@-rm -rf API/*.rst
-	@-rm -rf sphinx/_build sphinx/_autoapi
+	rm -rf $(BUILDDIR)
+	rm -rf API/*.rst
+	rm -rf TestAPI/*.rst
+	rm -rf _autoapi
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

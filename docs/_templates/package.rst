@@ -9,22 +9,24 @@
     {%- endif %}
 
 {% if submodules %}
+
     Submodules:
 
     .. toctree::
        :maxdepth: 1
 {% for item in submodules %}
-       {{ fullname }}.{{ item }}
+       {{ item }} <{{ fullname }}.{{ item }}>
        {%- endfor %}
     {%- endif -%}
 
 {% if subpackages %}
+
     Subpackages:
 
     .. toctree::
        :maxdepth: 1
 {% for item in subpackages %}
-       {{ fullname }}.{{ item }}
+       {{ item }} <{{ fullname }}.{{ item }}>
        {%- endfor %}
     {%- endif %}
 

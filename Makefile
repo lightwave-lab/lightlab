@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 
 # different tests
-TESTARGS = -s --cov=lightlab --cov-config .coveragerc
+TESTARGS = --capture=sys --cov=lightlab --cov-config .coveragerc
 TESTARGSNB = --nbval-lax --sanitize-with ipynb_pytest_santize.cfg
 
 # For devbuild, testbuild
@@ -12,6 +12,8 @@ DOCTYPE_DEFAULT = html
 
 # Server ports for CI hosting. You can override by setting an environment variable DOCHOSTPORT
 DOCHOSTPORT ?= 8049
+
+default: help ;
 
 venv: venv/bin/activate
 venv/bin/activate:
@@ -38,10 +40,16 @@ venvinfo/testreqs~: $(REINSTALL_DEPS) test-requirements.txt
 	@mkdir -p venvinfo
 	touch venvinfo/testreqs~
 
-test: testbuild
+test-unit: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test $(TESTARGS) tests; \
+	)
+
+test-simple: testbuild
+	( \
+		source venv/bin/activate; \
+		py.test $(TESTARGS) $(TESTARGSNB) tests; \
 	)
 
 test-lint: testbuild
@@ -50,28 +58,38 @@ test-lint: testbuild
 		py.test --pylint --flakes --pylint-rcfile=pylintrc lightlab; \
 	)
 
+test-lint-errors: testbuild
+	( \
+		source venv/bin/activate; \
+		py.test --pylint --flakes --pylint-rcfile=pylintrc-errors lightlab; \
+	)
+
 test-nb: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test $(TESTARGS) $(TESTARGSNB) notebooks/Tests; \
 	)
 
-test-all: testbuild
+test-unit-all: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test $(TESTARGS) $(TESTARGSNB) tests notebooks/Tests; \
 	)
+
+test: testbuild test-unit-all test-lint ;
+
 
 clean:
 	rm -rf dist
 	rm -rf lightlab.egg-info
 	rm -rf build
 	rm -rf venvinfo
+	$(MAKE) -C docs clean
 
 purge: clean
 	rm -rf venv
 
-pip-freeze: venv
+pip-freeze: devbuild
 	( \
 		source venv/bin/activate; \
 		pipdeptree -lf | grep -E '^\w+' | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U; \
@@ -110,7 +128,7 @@ monitorhost:
 
 
 docbuild: venvinfo/docreqs~
-venvinfo/docreqs~: $(REINSTALL_DEPS) doc-requirements.txt
+venvinfo/docreqs~: $(REINSTALL_DEPS) notebooks/Tests doc-requirements.txt
 	( \
 		source venv/bin/activate; \
 		pip install -r doc-requirements.txt | grep -v 'Requirement already satisfied'; \
@@ -120,10 +138,14 @@ venvinfo/docreqs~: $(REINSTALL_DEPS) doc-requirements.txt
 	@touch venvinfo/docreqs~
 
 docs: docbuild
+	rsync -rau notebooks/Tests/*.ipynb docs/ipynbs/Tests
 	source venv/bin/activate; $(MAKE) -C docs $(DOCTYPE_DEFAULT)
 
 docs-ci: docbuild
-	source venv/bin/activate; $(MAKE) -C docs html
+	( \
+		source venv/bin/activate; \
+		$(MAKE) -C docs html; \
+	)
 
 
 dochost: docs
@@ -136,30 +158,32 @@ dochost: docs
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "--- environment ---"
-	@echo "  venv              document it"
-	@echo "  pip-freeze        document it"
-	@echo "  pip-update        document it"
-	@echo "  clean             document it"
-	@echo "  purge             document it"
+	@echo "  venv              creates a python virtualenv in venv/"
+	@echo "  pip-freeze        drops all leaf pip packages into dev-requirements.txt (Use with caution)"
+	@echo "  pip-update        updates all pip packages in virtual environment"
+	@echo "  clean             clean all build files"
+	@echo "  purge             clean and delete virtual environment"
 	@echo "--- development ---"
-	@echo "  devbuild          document it"
+	@echo "  devbuild          install dev dependencies, build lightlab, and install inside venv"
 	@echo "--- testing ---"
-	@echo "  testbuild         document it"
-	@echo "  test              document it"
-	@echo "  test-lint         document it"
-	@echo "  test-nb           document it"
-	@echo "  test-all          document it"
+	@echo "  testbuild         install test dependencies, build lightlab, and install inside venv"
+	@echo "  test-unit         perform basic unit tests"
+	@echo "  test-nb           perform unit tests defined with ipynbs"
+	@echo "  test-unit-all     perform basic unit tests + ipynbs"
+	@echo "  test-lint         perform linting tests (warnings and errors), recommended"
+	@echo "  test-lint-errors  perform linting tests (just errors)"
+	@echo "  test              perform all unit tests and linting tests"
 	@echo "--- documentation ---"
-	@echo "  docbuild          document it"
-	@echo "  docs              document it"
-	@echo "  dochost           document it"
+	@echo "  docbuild          prepare venv for documentation build"
+	@echo "  docs              build documentation"
+	@echo "  dochost           build documentation and start local http server"
 	@echo "--- jupyter server ---"
-	@echo "  server-config     document it"
-	@echo "  jupyter           document it"
-	@echo "  getjpass          document it"
-	@echo "  jupyter-password  document it"
+	@echo "  server-config     prepare a server for persistent lightlab usage (see setup.py)"
+	@echo "  jupyter           start a jupyter notebook for development"
+	@echo "  getjpass          generate a jupyter compatible password hash"
+	@echo "  jupyter-password  change your jupyter notebook user password"
 	@echo "--- monitor server ---"
-	@echo "  monitorhost       document it"
+	@echo "  monitorhost       undocumented"
 
 
-.PHONY: help test docs test-nb test-all clean purge dochost monitorhost
+.PHONY: help default test docs test-nb test-unit test-unit-all test-lint test-lint-errors clean purge dochost monitorhost pip-freeze pip-update jupyter-password getjpass

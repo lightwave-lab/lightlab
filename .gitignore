@@ -1,6 +1,7 @@
 ## Things that you use but do not track
 #######################################
 test*.json
+labstate*.json
 
 # compiled data
 data/*

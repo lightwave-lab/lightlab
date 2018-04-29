@@ -4,11 +4,12 @@ coded. All tests should be safe to run locally.'''
 import pytest
 from mock import patch
 from lightlab.equipment import lab_instruments
+from lightlab.equipment.lab_instruments import VISAInstrumentDriver
 import inspect
 
-classes = []
+classes = []  # All classes that inherit VISAInstrumentDriver
 for name, obj in inspect.getmembers(lab_instruments):
-    if inspect.isclass(obj) and issubclass(obj, lab_instruments.VISAInstrumentDriver):
+    if inspect.isclass(obj) and issubclass(obj, VISAInstrumentDriver):
         classes.append(obj)
 
 class OpenError(RuntimeError):
@@ -16,7 +17,7 @@ class OpenError(RuntimeError):
 
 
 @pytest.mark.parametrize("instrum", classes)
-def test_instantinstrum(instrum):
+def test_instantiate_instrum(instrum):
     ''' Instatiates instruments and asserts that .open should not be called
     '''
     def open_error(self):
@@ -25,3 +26,12 @@ def test_instantinstrum(instrum):
         obj = instrum()
     with pytest.raises((RuntimeError, AttributeError)):
         obj.open()
+
+
+from lightlab.equipment.lab_instruments import NI_PCI_6723, ILX_7900B_LS
+from lightlab.util.io import ChannelError
+def test_instrums_withChannels():
+    cs = NI_PCI_6723(name='a CS', address='NULL', useChans=[1, 2])
+    with pytest.raises(ChannelError):
+        cs = NI_PCI_6723(name='a CS', address='NULL', useChans=[50])
+    ls = ILX_7900B_LS(name='a LS', address='NULL', useChans=[1, 2])
