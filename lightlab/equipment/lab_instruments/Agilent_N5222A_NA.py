@@ -111,8 +111,11 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
         self.setConfigParam(prefix + ':INT', 'SWE')
         self.setConfigParam(prefix + ':POS', 'BEF')
         self.setConfigParam('TRIG:SOUR', 'EXT' if isSlave else 'IMM')
-        self.__enaBlock(prefix + ':HAND', handshake)
-        return self.__enaBlock(prefix, useAux)
+        if handshake is not None:
+            self.setConfigParam(prefix + ':HAND', handshake)
+        if useAux is not None:
+            self.setConfigParam(prefix, useAux)
+        return self.getConfigParam(prefix, useAux)
 
     def getSwpDuration(self, forceHardware=False):
         return float(self.getConfigParam('SENS:SWE:TIME', forceHardware=forceHardware))
@@ -180,20 +183,3 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
                 print('Took spectrum {} of {}'.format(iSpect+1, nSpect))
         print('done.')
         return bund
-
-    def __enaBlock(self, param, enaState=None, forceHardware=False):
-        ''' Enable wrapper that transitions from bool to whatever the equipment might put out.
-
-            Args:
-                param (str): the configuration string
-                enaState (bool, None): If None, does not set; only gets
-                forceHardware (bool): feeds through to setConfigParam
-
-            Returns:
-                (bool): is this parameter enabled
-        '''
-        wordMap = {True: 'ON', False: 'OFF'}
-        trueWords = [True, 1, '1', 'ON']
-        if enaState is not None:
-            self.setConfigParam(param, wordMap[enaState], forceHardware=forceHardware)
-        return self.getConfigParam(param, forceHardware=forceHardware) in trueWords

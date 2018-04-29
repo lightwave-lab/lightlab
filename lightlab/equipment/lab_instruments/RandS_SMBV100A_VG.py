@@ -31,7 +31,9 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
     modulationEnable = ConfigEnableProperty('MOD:STAT',
         doc='Enabler for all modulation: data, noise, carrier')
     __iqMod = ConfigEnableProperty('IQ:STAT',
-        doc='Enabler for IQ modulations: data and noise (not carrier)')  # Must be force hardware!
+        doc='Enabler for IQ modulations: data and noise (not carrier)')  # Should be force hardware!
+    noiseEnable = ConfigEnableProperty('AWGN:STAT',
+        doc='Enabler for additive white gaussian noise modulations')
 
     def __init__(self, name='The Rohde and Schwartz', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
@@ -87,7 +89,8 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
             self.setConfigParam('AWGN:BWID', bandwidth)
         if cnRatio is not None:
             self.setConfigParam('AWGN:CNR', cnRatio)
-        return self.__enaBlock('AWGN:STAT', enaState)
+        self.noiseEnable = enaState
+        return self.noiseEnable
 
     def setPattern(self, bitArray):
         ''' Data pattern for digital modulation
@@ -177,9 +180,10 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
         if enaState is not None:
             for mod in allMods:
                 if mod != typMod:
-                    self.__enaBlock(mod + ':STAT', False)
+                    self.setConfigParam(mod + ':STAT', False)
         # Enabling
-        return self.__enaBlock(typMod + ':STAT', enaState)
+        self.setConfigParam(typMod + ':STAT', enaState)
+        return enaState
 
     def listEnable(self, enaState=True, freqs=None, amps=None, isSlave=False, dwell=None):
         ''' Sets up list mode.
@@ -225,20 +229,3 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
                     raise ValueError('amps and freqs must have equal lengths, or one/both can be scalars or None')
             self.setConfigParam('LIST:FREQ', ', '.join([str(int(f)) for f in freqs]))
             self.setConfigParam('LIST:POW', ', '.join([str(int(a)) for a in amps]))
-
-    def __enaBlock(self, param, enaState=None, forceHardware=False):
-        ''' Enable wrapper that transitions from bool to whatever the equipment might put out.
-
-            Args:
-                param (str): the configuration string
-                enaState (bool, None): If None, does not set; only gets
-                forceHardware (bool): feeds through to setConfigParam
-
-            Returns:
-                (bool): is this parameter enabled
-        '''
-        wordMap = {True: 'ON', False: 'OFF'}
-        trueWords = [True, 1, '1', 'ON']
-        if enaState is not None:
-            self.setConfigParam(param, wordMap[enaState], forceHardware=forceHardware)
-        return self.getConfigParam(param, forceHardware=forceHardware) in trueWords

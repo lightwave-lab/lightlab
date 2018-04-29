@@ -502,6 +502,13 @@ class Configurable(AbstractDriver):
         logger.info('New default saved to ' + str(filename))
 
 
+### Thoughts
+# What if the name of the parameter changes with a selected channel?
+# What if there are side effects on setters?
+# How to specify force hardware?
+# What about more generic mapping, more generic tokening
+
+
 class ConfigProperty(object):
     ''' Allows properties of :py:class:`Configurable` objects to be declared in advance.
         Currently there is no way to forceHardware
