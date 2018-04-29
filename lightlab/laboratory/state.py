@@ -337,7 +337,7 @@ class LabState(Hashable):
         json_state = json.decode(frozen_json)
 
         user = json_state.pop("__user__")
-        datetime = json_state.pop("__datetime__")
+        datetime_json = json_state.pop("__datetime__")
 
         # Check integrity of stored version
         sha256 = json_state.pop("__sha256__")
@@ -361,7 +361,7 @@ class LabState(Hashable):
         restored_object.__version__ = version
         restored_object.filename = filename
         restored_object.__user__ = user
-        restored_object.__datetime__ = datetime
+        restored_object.__datetime__ = datetime_json
 
         try:
             for i in range(version, cls.__version__):
@@ -537,9 +537,6 @@ def patch_labstate(from_version, old_lab):
         # We need to transport them into a single list that will reside
         # lab.instruments, with no name duplicates.
 
-        import lightlab.laboratory.state as labstate
-        from lightlab.laboratory import TypedList
-        from lightlab.laboratory.instruments import Instrument, Bench, Host, Device
         old_benches = old_lab.benches
         old_hosts = old_lab.hosts
         old_connections = old_lab.connections
@@ -588,13 +585,13 @@ def patch_labstate(from_version, old_lab):
                     instruments.append(instrument)
 
         # instantiating new labstate from scratch.
-        lab = labstate.LabState()
-        lab.instruments.extend(instruments)
-        lab.benches.extend(benches)
-        lab.devices.extend(devices)
-        lab.hosts.extend(hosts)
-        lab.hosts['cassander'] = LocalHost(name='cassander')
-        lab.connections = old_connections
-        return lab
+        patched_lab = LabState()
+        patched_lab.instruments.extend(instruments)
+        patched_lab.benches.extend(benches)
+        patched_lab.devices.extend(devices)
+        patched_lab.hosts.extend(hosts)
+        patched_lab.hosts['cassander'] = LocalHost(name='cassander')
+        patched_lab.connections = old_connections
+        return patched_lab
 
     raise NotImplementedError("Patch not found")
