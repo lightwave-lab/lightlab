@@ -9,13 +9,16 @@ class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
 
         `Manual <http://www.manualsbase.com/manual/608672/portable_generator/agilent_technologies/n5183a_mxg/>`__
 
+        Usage: :any:`/ipynbs/Hardware/Clock.ipynb`
+
         Todo:
             Clock interface does not see sweepSetup and sweepEnable
     '''
     instrument_category = Clock
 
     def __init__(self, name='The 40GHz clock', address=None, **kwargs):
-        super().__init__(name=name, address=address, **kwargs)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        Configurable.__init__(self)
 
     def amplitude(self, amp=None):
         ''' Amplitude is in dBm

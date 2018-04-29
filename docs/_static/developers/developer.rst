@@ -1,4 +1,4 @@
-Developer: getting started
+Developer Guide
 ================================================
 This section covers topics that have great documentation online. The main differences in this workflow stem from the hardware aspect of lightlab. That means almost all development should occur on the machine in lab that is going to be accessing the instruments. First, follow the instructions for connecting to the instrumentation server for users.
 
@@ -28,12 +28,12 @@ It is recommended that you use SSHFS to mirror your work to your local computer,
 
 Linux::
 
-    alias mntlight='sshfs <server>:/home/hermione/Documents /path/to/local/dir -C -o allow_other'
+    alias mntlight='sshfs <server>:/home/lancelot/Documents /path/to/local/dir -C -o allow_other'
     alias umntlight='fusermount -u /path/to/local/dir'
 
 MacOS::
 
-    alias mntlight='sshfs <server>:/home/hermione/Documents /path/to/local/dir -C -o allow_other,auto_cache,reconnect,defer_permissions,noappledouble'
+    alias mntlight='sshfs <server>:/home/lancelot/Documents /path/to/local/dir -C -o allow_other,auto_cache,reconnect,defer_permissions,noappledouble'
     alias umntlight='umount /path/to/local/dir'
 
 4. Now you can mount and unmount your remote calibration-instrumentation folder with::
@@ -45,7 +45,7 @@ Example directory structure, environment, and usage
 ---------------------------------------------------
 If you are developing lightlab, you will likely have some other notebooks to test. Those should go in a different directory with a different virtual environment. It can be git tracked in a different repo. Here is an example directory structure::
 
-    > hermione/Documents
+    > lancelot/Documents
     | > lightlab
     | | > .git
     | | Makefile
@@ -80,7 +80,7 @@ Where the Makefile has targets for making a virtual environment and launching ju
         touch venv/bin/activate
         source venv/bin/activate; venv/bin/pip install -e $(shell cat $(PATH2LIGHTLABFILE))
 
-    jupyter: devbuild
+    jupyter:
         source venv/bin/activate; jupyter notebook; \
 
     getjpass: venv
@@ -90,9 +90,9 @@ The highlighted line will dynamically link the environment to your version of li
 
 The contents of ``.pathtolightlab`` are::
 
-    /home/hermione/Documents/lightlab
+    /home/lancelot/Documents/lightlab
 
-If this is a repo, your ``.gitignore`` should include::
+If myWork is a git repo, your ``.gitignore`` should include::
 
     .pathtolightlab
 
@@ -146,11 +146,7 @@ To launch the server from ``myWork``, just run::
 
 You can now acces your notebooks anywhere with your password at: ``https://<server name>.school.edu:<port>``.
 
-If for some reason you want to reconnect to this process, you can use ``tmux attach-process -t myNotebookServer`` or ``tmux ls`` followed by picking the right name. If you really want to kill it, you can::
-
-    $ ps aux | grep <username> | grep myNotebookServer
-
-Find the PID, and send a ``kill -9`` at it.
+If for some reason you want to reconnect to this process, you can use ``tmux attach-process -t myNotebookServer`` or ``tmux ls`` followed by picking the right name.
 
 Git and jupyter
 ***************
@@ -159,7 +155,7 @@ They do not play nice. Here are some :doc:`strategies </_static/misc/mergeWithNo
 
 Running monitor server from your ``myWork`` environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-``lightlab`` offers tools for monitoring progress of long sweeps. See :py:class:`~lightlab.util.io.ProgressWriter`. These servers are launched from your own environment, not lightlab's. So far, this is just for long sweeps that simply tell you how far along they are, and when they will complete.
+``lightlab`` offers tools for monitoring progress of long sweeps. See :py:class:`~lightlab.util.io.progress.ProgressWriter`. These servers are launched from your own environment, not lightlab's. So far, this is just for long sweeps that simply tell you how far along they are, and when they will complete.
 
 First, you must get another port allocated to you, different from the one you used for Jupyter. Put that in a file called ``.monitorhostport`` in ``myWork`` (where the Makefile is). Let's say that port is 8000::
 
@@ -194,8 +190,8 @@ To then launch the server from a tmux::
 
     How will this work for non-developers?
 
-Testing
-^^^^^^^
+Testing ``myWork``
+^^^^^^^^^^^^^^^^^^
 It's not really necessary in this example where there is just a notebook. If you are developing your own library-like functions, it is generally good practice, but
 
 **Never put hardware accessing methods in a unittest**
@@ -206,21 +202,21 @@ Contributing to ``lightlab``
 ------------------------------
 We follow this `Git branching workflow <http://nvie.com/posts/a-successful-git-branching-model/>`_. Feature branches should base off of development; when they are done, they must pass tests and test-nb's; finally they are merged to development.
 
-Testing
-^^^^^^^
+Testing ``lightlab``
+^^^^^^^^^^^^^^^^^^^^
 First off, your change should not break existing code. You can run automated tests like this::
 
-    make test
+    make test-unit
     make test-nb
 
-The test-nb target runs the **notebooks** in notebooks/Tests. This is a cool feature because it allows you to go in with jupyter and see what's happening if it fails.
-
-**Make tests for your features!** It helps a lot. Again, **Never put hardware accessing methods in a unittest**. We recommend using the `nbval <https://github.com/computationalmodelling/nbval>`_ approach. It checks for no-exceptions, not accuracy of results. If you want to check for accuracy of results, do something like::
+The test-nb target runs the **notebooks** in notebooks/Tests. This is a cool feature because it allows you to go in with jupyter and see what's happening if it fails. We recommend using the `nbval <https://github.com/computationalmodelling/nbval>`_ approach. It checks for no-exceptions, not accuracy of results. If you want to check for accuracy of results, do something like::
 
     x = 1 + 1
     assert x == 2
 
 in the cell.
+
+**Make tests for your features!** It helps a lot. Again, **Never put hardware accessing methods in a unittest**.
 
 To run just one test, use a command like::
 
@@ -231,9 +227,53 @@ Documenting
 ^^^^^^^^^^^^^^
 Documenting as you go is helpful for other developers and code reviewers.  So useful that we made a whole :doc:`tutorial <docYourCode>` on it. We use auto-API so that docstrings in code make it into the official documentation.
 
-PEP-8
+For non-hardware features, a good strategy is to use tests that are both functional and documentation by example. In cases where visualization is helpful, use notebook-based, which can be linked from this documentation or in-library docstrings :ref:`like this </ipynbs/Tests/TestPeakAssistant.ipynb>`. Otherwise, you can make `pytest <https://docs.pytest.org/en/latest/>`_ unittests in the tests directory, which can be linked like this: :py:mod:`~tests.test_virtualization`.
+
+For new hardware drivers, as a general rule, document its basic behavior in ``lightlab/notebooks/BasicHardwareTests``. Make sure to save with outputs. Finally, link it in the docstring like this::
+
+    class Tektronix_DPO4034_Oscope(VISAInstrumentDriver, TekScopeAbstract):
+    ''' Slow DPO scope. See abstract driver for description
+
+        `Manual <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`__
+
+        Usage: :any:`/ipynbs/Hardware/Oscilloscope.ipynb`
+
+    '''
+    instrument_category = Oscilloscope
+    ...
+
+Linting
 ^^^^^^^
-As of now, we don't require `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance, but we might in the future. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-pycodestyle>`_ is a good linter.
+As of now, we don't require strict `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance, but we might in the future. However, we try to follow as many of their guidelines as possible:
+
+.. figure:: images/sublimelinter_example_bad.png
+    :alt: bad pep8 example
+
+    Example of valid python code that violates some of the PEP8 guidelines.
+
+.. figure:: images/sublimelinter_example_good.png
+    :alt: good pep8 example
+
+    Fixing the PEP8 violations of the previous figure.
+
+Sometimes the linter is wrong. You can tell it to ignore lines by adding comment flags like the following example:
+
+.. code:: python
+
+    x = [x for x in sketchy_iterable]  # pylint: disable=not-an-iterable
+    from badPractice import *  # noqa
+
+``# noqa`` is going to ignore pyflakes linting, whereas ``# pylint`` configures `pylint` behavior.
+
+If you use Sublime editor
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Everyone has their favorite editor. We like `Sublime Text <https://www.sublimetext.com>`_. If you use Sublime, `here <https://github.com/SublimeLinter/SublimeLinter-flake8>`_ is a good linter. It visually shows what is going on while you code, saving lots of headaches
+
+Sublime also helps you organize your files, autocomplete, and manage whitespace. This is :doc:`sublime-lightlab`. Put it in the ``lightlab/`` directory and call it something like ``sublime-lightlab.sublime-project``.
+
+By the way, you can make a command-line Sublime by doing this in Terminal (for MacOS)::
+
+    ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/subl
 
 Adding a new package
 ^^^^^^^^^^^^^^^^^^^^^

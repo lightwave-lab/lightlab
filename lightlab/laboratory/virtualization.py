@@ -1,19 +1,309 @@
+''' Provides a framework for making virtual instruments that present
+    the same interface and simulated behavior as the real ones. Allows
+    a similar thing with functions, methods, and experiments.
+
+    Dualization is a way of tying together a real instrument with
+    its virtual counterpart. This is a powerful way to test procedures
+    in a virtual environment before flipping the switch to reality.
+    This is documented in :py:mod:`tests.test_virtualization`.
+
+    Attributes:
+        virtualOnly (bool): If virtualOnly is True, any "``with``" statements using asReal
+            will just skip the block.
+            When not using a context manager (i.e. ``exp.virtual = False``),
+            it will eventually produce a ``VirtualizationError``.
+'''
 from lightlab import logger
 from contextlib import contextmanager
 
 
-''' Module-wide variable
-    If virtualOnly is True, any ``with`` statements using asReal
-    will just skip the block
-
-    When not using a context manager, it will
-    eventually give you VirtualizationErrors
-'''
 virtualOnly = False
 
 
-class VirtualizationError(RuntimeError):
-    pass
+class Virtualizable(object):
+    ''' Virtualizable means that it can switch between two states,
+        usually corresponding
+        to a real-life situation and a virtual/simulated situation.
+
+        The attribute synced refers to other Virtualizables whose states
+        will be synchronized with this one
+    '''
+    _virtual = None
+    synced = None
+
+    def __init__(self, *args, **kwargs):
+        try:
+            super().__init__(*args, **kwargs)
+        except TypeError:
+            super().__init__()
+        self.synced = list()
+
+    def synchronize(self, *newVirtualizables):
+        ''' Adds another object that this one will put in the same virtual
+            state as itself.
+
+            Args:
+                newVirtualizables (\*args): Other virtualizable things
+        '''
+        for virtualObject in newVirtualizables:
+            if virtualObject is None or virtualObject in self.synced:
+                continue
+            if not issubclass(type(virtualObject), Virtualizable):
+                raise TypeError('virtualObject of type '
+                                + str(type(virtualObject))
+                                + ' is not a Virtualizable subclass')
+            self.synced.append(virtualObject)
+
+    def __setAll(self, toVirtual):
+        ''' Iterates over all synchronized members
+
+            Returns:
+                (list): the previous virtual states
+        '''
+        old_values = list()
+        for iSub, sub in enumerate([self] + self.synced):
+            old_values.append(sub._virtual)
+            sub._virtual = toVirtual
+        return old_values
+
+    def __restoreAll(self, old_values):
+        ''' Iterates over all synchronized members
+
+            Args:
+                old_values (list): the previous virtual states
+        '''
+        for iSub, sub in enumerate([self] + self.synced):
+            sub._virtual = old_values[iSub]
+
+    @property
+    def virtual(self):
+        ''' Returns the virtual state of this object
+        '''
+        if self._virtual is None:
+            raise VirtualizationError('Virtual context unknown.'
+                                      'Please refer to method asVirtual().')
+        else:
+            return self._virtual
+
+    @virtual.setter
+    def virtual(self, toVirtual):
+        ''' Setting the property is an alternative to context managing.
+
+            Using this can make code more concise,
+            but it does not handle warmups/cooldowns.
+            It also does not record the old states.
+        '''
+        if virtualOnly and not toVirtual:
+            toVirtual = None
+        self.__setAll(toVirtual)
+
+    @contextmanager
+    def asVirtual(self):
+        ''' Temporarily puts this and synchronized in a virtual state.
+            The state is reset at the end of the with block.
+
+            Example usage:
+
+            .. code-block:: python
+
+                exp = Virtualizable()
+                with exp.asVirtual():
+                    print(exp.virtual)  # prints True
+                print(exp.virtual)  # VirtualizationError
+        '''
+        old_values = self.__setAll(True)
+        try:
+            yield self
+        finally:
+            self.__restoreAll(old_values)
+
+    @contextmanager
+    def asReal(self):
+        ''' Temporarily puts this and synchronized in a virtual state.
+            The state is reset at the end of the with block.
+
+            If ``virtualOnly`` is True, it will skip the block without error
+
+            Example usage:
+
+            .. code-block:: python
+
+                exp = Virtualizable()
+                with exp.asVirtual():
+                    print(exp.virtual)  # prints False
+                print(exp.virtual)  # VirtualizationError
+        '''
+        if virtualOnly:
+            try:
+                yield self
+            except VirtualizationError:
+                pass
+
+        # Set the virtual states
+        old_values = self.__setAll(False)
+
+        # Try to call hardware warmup if present
+        for iSub, sub in enumerate([self] + self.synced):
+            try:
+                sub.hardware_warmup()
+            except AttributeError:
+                pass
+
+        try:
+            yield self
+
+        finally:
+            # Try to call hardware cooldown if present
+            for iSub, sub in enumerate([self] + self.synced):
+                try:
+                    sub.hardware_cooldown()
+                except AttributeError:
+                    pass
+
+            # Restore virtual states
+            self.__restoreAll(old_values)
+
+
+class VirtualInstrument(object):
+    ''' Just a placeholder for future functionality '''
+    @contextmanager
+    def asVirtual(self):
+        ''' do nothing '''
+        yield self
+
+
+class DualInstrument(Virtualizable):
+    ''' Holds a real instrument and a virtual instrument.
+        Feeds through ``__getattribute__`` and ``__setattr__``: very powerful.
+        It basically appears as one or the other instrument, as determined
+        by whether it is in virtual or real mode.
+
+        This is especially useful if you have an instrument
+        stored in the JSON labstate,
+        and would then like to virtualize it in your notebook.
+        In that case, it does not reinitialize the driver.
+
+        This is documented in :py:mod:`tests.test_virtualization`.
+
+        ``isinstance()`` and ``.__class__`` will tell you the underlying instrument type
+        ``type()`` will give you the ``DualInstrument`` subclass::
+
+            dual = DualInstrument(realOne, virtOne)
+            with dual.asReal():
+                isinstance(dual, type(realOne))  # True
+                dual.meth is realOne.meth  # True
+            isinstance(dual, type(realOne))  # False
+    '''
+    real_obj = None
+    virt_obj = None
+
+    def __init__(self, real_obj=None, virt_obj=None):
+        '''
+            Args:
+                real_obj (Instrument): the real reference
+                virt_obj (VirtualInstrument): the virtual reference
+        '''
+        self.real_obj = real_obj
+        self.virt_obj = virt_obj
+        if real_obj is not None and virt_obj is not None:
+            violated = []
+            allowed = real_obj.essentialMethods + real_obj.essentialProperties + dir(VirtualInstrument)
+            for attr in dir(type(virt_obj)):
+                if attr not in allowed \
+                        and '__' not in attr:
+                    violated.append(attr)
+            if len(violated) > 0:
+                logger.warning('Virtual instrument ({}) violates '.format(type(virt_obj).__name__) +
+                               'interface of the real one ({})'.format(type(real_obj).__name__))
+                logger.warning('Got: ' + ', '.join(violated))
+                # logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
+        self.synced = []
+
+    @Virtualizable.virtual.setter  # pylint: disable=no-member
+    def virtual(self, toVirtual):
+        ''' An alternative to context managing.
+            Note that hardware_warmup will not be called,
+            so it is not recommended to be called directly.
+        '''
+        if virtualOnly and not toVirtual:
+            toVirtual = None
+        if toVirtual == True and self.virt_obj is None:
+            raise VirtualizationError('No virtual object specified in',
+                                      type(self.real_obj))
+        elif toVirtual == False and self.real_obj is None:
+            raise VirtualizationError('No real object specified in',
+                                      type(self.virt_obj))
+        self._virtual = toVirtual
+        for sub in self.synced:
+            sub.virtual = toVirtual
+
+    def __getattribute__(self, att):
+        ''' Intercepts immediately and routes to ``virt_obj`` or ``real_obj``,
+            depending on the virtual state.
+        '''
+        if att in (list(DualInstrument.__dict__.keys()) +
+                   list(Virtualizable.__dict__.keys())):
+            return object.__getattribute__(self, att)
+        elif self._virtual is None:
+            raise VirtualizationError('Virtual context unknown.'
+                                      'Please refer to method asVirtual().'
+                                      '\nAttribute was ' + att + ' in ' + str(self))
+        else:
+            if self._virtual:
+                wrappedObj = object.__getattribute__(self, 'virt_obj')
+            else:
+                wrappedObj = object.__getattribute__(self, 'real_obj')
+            return getattr(wrappedObj, att)
+
+    def __setattr__(self, att, newV):
+        ''' Intercepts immediately and routes to ``virt_obj`` or ``real_obj``,
+            depending on the virtual state.
+        '''
+        if att in (list(DualInstrument.__dict__.keys()) +
+                   list(Virtualizable.__dict__.keys())):
+            return object.__setattr__(self, att, newV)
+        elif self._virtual is None:
+            raise VirtualizationError(
+                'Virtual context unknown.'
+                'Please refer to method asVirtual().'
+                '\nAttribute was ' + att + ' in ' + str(self))
+        else:
+            if self._virtual:
+                wrappedObj = object.__getattribute__(self, 'virt_obj')
+            else:
+                wrappedObj = object.__getattribute__(self, 'real_obj')
+            return setattr(wrappedObj, att, newV)
+
+    def __dir__(self):
+        ''' Facilitates autocompletion in IPython '''
+        return super().__dir__() + dir(self.virt_obj) + dir(self.real_obj)
+
+    @classmethod
+    def fromInstrument(cls, hwOnlyInstr, *args, **kwargs):
+        ''' Gives a new dual instrument that has all the same
+            properties and references.
+
+            The instrument base of hwOnlyInstr must be the same instrument
+            base of this class
+
+            Args:
+                hwOnlyInstr (VISAInstrumentDriver subclass): a real instrument
+                \*args, \*\*kwargs: fed to a VirtualInstrument
+
+            Todo:
+                This appears to be broken. It should not be doing ``cls(*args, **kwargs)``.
+                    It should instead be initializing a VirtualInstrument.
+        '''
+        raise NotImplementedError('This method is currently broken')
+        if hwOnlyInstr is not None and not isinstance(hwOnlyInstr, cls.real_klass):
+            raise TypeError(
+                'The fromInstrument (' + hwOnlyInstr.__class__.__name__ + ')'
+                ' is not an instance of the expected Instrument class'
+                ' (' + cls.real_klass.__name__ + ')')
+        newObj = cls(*args, **kwargs)
+        newObj.real_obj = hwOnlyInstr
+        return newObj
+
 
 
 class DualFunction(object):
@@ -75,7 +365,6 @@ class DualMethod(object):
         It uses __call__ instead of __get__ because it is its own object
 
         Todo:
-
             The naming for DualFunction and DualMethod are backwards.
             Will break notebooks when changed.
     '''
@@ -95,250 +384,5 @@ class DualMethod(object):
             return self.hardware_function(*args, **kwargs)
 
 
-class Virtualizable(object):
-    ''' Virtualizable means that it can switch between two states,
-        usually corresponding
-        to a real-life situation and a virtual/simulated situation.
-
-        The attribute synced refers to other Virtualizables whose states
-        will be synchronized with this one
-    '''
-    _virtual = None
-    synced = None
-
-    def __init__(self, *args, **kwargs):
-        try:
-            super().__init__(*args, **kwargs)
-        except TypeError:
-            super().__init__()
-        self.synced = list()
-
-    def synchronize(self, *newVirtualizables):
-        ''' Adds another object that this one will put in the same virtual
-            state as itself.
-
-            Args:
-
-                newVirtualizables (\*args): Other virtualizable things
-        '''
-        for virtualObject in newVirtualizables:
-            if virtualObject is None or virtualObject in self.synced:
-                continue
-            if not issubclass(type(virtualObject), Virtualizable):
-                raise TypeError('virtualObject of type '
-                                + str(type(virtualObject))
-                                + ' is not a Virtualizable subclass')
-            self.synced.append(virtualObject)
-
-    @property
-    def virtual(self):
-        if self._virtual is None:
-            raise VirtualizationError('Virtual context unknown.'
-                                      'Please refer to method asVirtual().')
-        else:
-            return self._virtual
-
-    @virtual.setter
-    def virtual(self, toVirtual):
-        ''' An alternative to context managing.
-        '''
-        global virtualOnly
-        if virtualOnly and not toVirtual:
-            toVirtual = None
-        self._virtual = toVirtual
-        for sub in self.synced:
-            sub.virtual = toVirtual
-
-    @contextmanager
-    def asVirtual(self):
-        old_value = self._virtual
-        self.virtual = True
-        old_subvalues = list()
-        for iSub, sub in enumerate(self.synced):
-            old_subvalues.append(sub._virtual)
-            sub.virtual = True
-        try:
-            yield self
-        finally:
-            self.virtual = old_value
-            for iSub, sub in enumerate(self.synced):
-                sub.virtual = old_subvalues[iSub]
-
-    @contextmanager
-    def asReal(self):
-        ''' If virtualOnly is True, it will skip the block without error
-        '''
-        global virtualOnly
-        if virtualOnly:
-            try:
-                yield self
-            except VirtualizationError:
-                pass
-            finally:
-                return
-
-        old_value = self._virtual
-        self.virtual = False
-        old_subvalues = list()
-        for iSub, sub in enumerate(self.synced):
-            old_subvalues.append(sub._virtual)
-            sub.virtual = False
-        try:
-            yield self
-        finally:
-            self.virtual = old_value
-            for iSub, sub in enumerate(self.synced):
-                sub.virtual = old_subvalues[iSub]
-
-
-class VirtualInstrument(object):
-    ''' Just a placeholder for future functionality '''
-    @contextmanager
-    def asVirtual(self):
-        ''' do nothing '''
-        yield self
-
-
-class DualInstrument(Virtualizable):
-    ''' Holds a real instrument and a virtual instrument.
-        Feeds through __getattribute__ and __setattr__: very powerful.
-        It basically appears as one or the other instrument, as determined
-        by whether it is in virtual or real mode.
-
-        This is especially useful if you have an instrument
-        stored in the JSON labstate,
-        and would then like to virtualize it in your notebook.
-        In that case, it does not reinitialize the driver.
-
-
-        isinstance() and __class__ will tell you the underlying instrument type
-        type() will give you the DualInstrument subclass::
-
-            dual = DualInstrument(realOne, virtOne)
-            with dual.asReal():
-                isinstance(dual, type(realOne))  # True
-            isinstance(dual, type(realOne))  # False
-    '''
-    real_obj = None
-    virt_obj = None
-
-    def __init__(self, real_obj=None, virt_obj=None):
-        '''
-            Args:
-
-                real_obj (Instrument): the real reference
-                virt_obj (VirtualInstrument): the virtual reference
-        '''
-        self.real_obj = real_obj
-        self.virt_obj = virt_obj
-        if real_obj is not None and virt_obj is not None:
-            violated = []
-            allowed = real_obj.essentialMethods + real_obj.essentialProperties + dir(VirtualInstrument)
-            for attr in dir(type(virt_obj)):
-                if attr not in allowed \
-                        and '__' not in attr:
-                    violated.append(attr)
-            if len(violated) > 0:
-                logger.warning('Virtual instrument ({}) violates the \
-                                interface of the real one ({})'.format(
-                                    type(virt_obj).__name__,
-                                    type(real_obj).__name__))
-                logger.warning('Got: ' + ', '.join(violated))
-                logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
-        self.synced = []
-
-    @Virtualizable.virtual.setter  # pylint: disable=no-member
-    def virtual(self, toVirtual):
-        ''' An alternative to context managing.
-            Note that hardware_warmup will not be called,
-            so it is not recommended to be called directly.
-        '''
-        global virtualOnly
-        if virtualOnly and not toVirtual:
-            toVirtual = None
-        if toVirtual == True and self.virt_obj is None:
-            raise VirtualizationError('No virtual object specified in',
-                                      type(self.real_obj))
-        elif toVirtual == False and self.real_obj is None:
-            raise VirtualizationError('No real object specified in',
-                                      type(self.virt_obj))
-        self._virtual = toVirtual
-        for sub in self.synced:
-            sub.virtual = toVirtual
-
-    @contextmanager
-    def asReal(self):
-        ''' Wraps making self.virtual to False.
-            Also does hardware warmup and cooldown
-        '''
-        global virtualOnly
-        if virtualOnly:
-            try:
-                yield self
-            except VirtualizationError:
-                pass
-            finally:
-                return
-
-        with super().asReal():
-            try:
-                self.hardware_warmup()
-                for sub in self.synced:
-                    sub.hardware_warmup()
-                yield self
-            finally:
-                self.hardware_cooldown()
-                for sub in self.synced:
-                    sub.hardware_cooldown()
-
-    def __getattribute__(self, att):
-        if att in (list(DualInstrument.__dict__.keys()) +
-                   list(Virtualizable.__dict__.keys())):
-            return object.__getattribute__(self, att)
-        elif self._virtual is None:
-            raise VirtualizationError('Virtual context unknown.'
-                                      'Please refer to method asVirtual().'
-                                      '\nAttribute was ' + att + ' in ' + str(self))
-        else:
-            if self._virtual:
-                wrappedObj = object.__getattribute__(self, 'virt_obj')
-            else:
-                wrappedObj = object.__getattribute__(self, 'real_obj')
-            return getattr(wrappedObj, att)
-
-    def __setattr__(self, att, newV):
-        if att in (list(DualInstrument.__dict__.keys()) +
-                   list(Virtualizable.__dict__.keys())):
-            return object.__setattr__(self, att, newV)
-        elif self._virtual is None:
-            raise VirtualizationError(
-                'Virtual context unknown.'
-                'Please refer to method asVirtual().'
-                '\nAttribute was ' + att + ' in ' + str(self))
-        else:
-            if self._virtual:
-                wrappedObj = object.__getattribute__(self, 'virt_obj')
-            else:
-                wrappedObj = object.__getattribute__(self, 'real_obj')
-            return setattr(wrappedObj, att, newV)
-
-    def __dir__(self):
-        return super().__dir__() + dir(self.virt_obj) + dir(self.real_obj)
-
-    @classmethod
-    def fromInstrument(cls, hwOnlyInstr, *args, **kwargs):
-        ''' Gives a new dual instrument that has all the same
-            properties and references.
-
-
-            The instrument base of hwOnlyInstr must be the same instrument
-            base of this class
-        '''
-        if hwOnlyInstr is not None and not isinstance(hwOnlyInstr, cls.real_klass):
-            raise TypeError(
-                'The fromInstrument (' + hwOnlyInstr.__class__.__name__ + ')'
-                ' is not an instance of the expected Instrument class'
-                ' (' + cls.real_klass.__name__ + ')')
-        newObj = cls(*args, **kwargs)
-        newObj.real_obj = hwOnlyInstr
-        return newObj
+class VirtualizationError(RuntimeError):
+    pass

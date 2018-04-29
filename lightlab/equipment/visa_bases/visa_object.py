@@ -21,7 +21,6 @@ class VISAObject(object):
         self.mbSession = None
         self._open_retries = 0
         self.__timeout = None
-        super().__init__(**kwargs)
 
     def open(self):
         '''

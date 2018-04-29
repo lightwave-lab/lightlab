@@ -121,32 +121,6 @@ Instrument drivers are pieces of code responsible to command and control instrum
 
 Another thing present in the lightlab package is the virtualization of instruments. The idea is very well suited for automated testing and data collection of devices. In this module, every object that we interact with in lab will have a corresponding Python object. An instrument is an object that understand where the instrument is located in lab, where it is connected to, and via what host it can be accessed to. Similarly, a device object contains a map of different ports it can be connected to. This way, users can design the experiment entirely on the computer with a Python notebook, simulate the expected behavior, and **using the same code**, perform the experiment in real life. This creates the idea of a “source code “ of the experiment, which can be executed by future users or users in different labs with different instruments.
 
-## The Lightwave Lab
-
-Now that all tools and concepts are laid out, we can describe how the Lightwave Lab is structured.
-
-- Servers:
-  - Git server: **lightwave.princeton.edu** (Virtual Machine Ubuntu hosted by CSES in [HPCRC](http://www.princeton.edu/researchcomputing/computational-hardware/hpcrc/) in Forrestal campus, controlled by tlima, hpeng and ecb10)
-  - Unused python notebook server: **lightwave-athena.princeton.edu** (Virtual Machine CentOS7 hosted by CSES in HPCRC and controlled by CSES)
-  - Instrumentation server: **lightwave-lab-cassander.ee.princeton.edu** (Virtual Machine CentOS 7 hosted by us, controlled by hpeng, tlima and ecb10)
-  - Backup server **lightwave-lab-dionysus.ee.princeton.edu** (Virtual Machine CentOS 7 hosted by us, controlled by hpeng, tlima and ecb10)
-- Hosts: **lightwave-lab-***
-  - Artemis (GPIB-ENET/1000, a dedicated interface between GPIB and Ethernet)
-  - Corinna (Windows 10 in Corinna bench, equipped with a NI-6723 card, and a NI GPIB-USB-HS+ adapter)
-  - Andromeda (Windows 8 in Andromeda bench, equipped same as Corinna)
-  - Etc.
-- Benches:
-  - U-bench, J315 (Currently offline, Olympias as potential host)
-  - Corinna, J315 (Currently with a Jeppix chip, online)
-  - Andromeda, J315 (Currently with silicon photonics chips, online)
-  - Bhavin/Chaoran’s bench, J315 (No host, fully offline)
-  - Leto, J315 (Discrete OCS, online)
-  - Minerva, J315 (IME chip test bench, online)
-  - Philip’s bench, J315 (No host, offline)
-  - Eric’s bench, J312 (No host, offline)
-
-A full inventory of devices, instruments and hosts is underway.
-
 ## Appendix
 ### Bash
 ### Digital security

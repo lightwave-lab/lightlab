@@ -66,6 +66,7 @@ def test_configurable():
     assert alice.getConfigParam('spam') \
            == bob.getConfigParam('spam')
 
+
 from lightlab.equipment.visa_bases import VISAInstrumentDriver, IncompleteClass
 from lightlab.equipment.lab_instruments import HP_8152A_PM
 from lightlab.laboratory.instruments import PowerMeter
@@ -84,7 +85,7 @@ def test_driver_init():
     assert pm.extra == 'foolio'
     # Still fails to initialize the driver with correct options
     with pytest.raises(AssertionError):
-        assert pm.driver_object.tempSess == False
+        assert pm.driver.tempSess == False
 
     # New style
     pm = HP_8152A_PM(name='a PM', address='NULL', extra='foolio', tempSess=False)
@@ -92,11 +93,12 @@ def test_driver_init():
     assert pm.driver_class == HP_8152A_PM
     assert pm.extra == 'foolio'
     # These arguments went to the driver
-    assert pm.driver_object.tempSess == False
+    assert pm.driver.tempSess == False
     with pytest.raises(AttributeError):
         pm.tempSess
     with pytest.raises(AttributeError):
-        pm.driver_object.extra
+        pm.driver.extra
+
 
 from lightlab.laboratory.instruments import Oscilloscope
 def test_optionals():
@@ -120,6 +122,7 @@ def test_optionals():
     d1.driver.notInInterface()
     assert 'histogramStats' not in dir(d1)
     assert 'histogramStats' in dir(d2)
+
 
 from lightlab import logger, log_to_screen, DEBUG
 

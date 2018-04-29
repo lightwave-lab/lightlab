@@ -73,12 +73,12 @@ There are several types of users.
 
 In the below examples, we will use the following usernames
 
-    * harry:    you, sysadmin
-    * hermione: a grad student ``lightlab`` developer
-    * ron:      a grad student user
-    * hagrid:   an undergrad who is anayzing ron's data
+    * arthur:    you, sysadmin
+    * lancelot:  a grad student and ``lightlab`` developer
+    * bedivere:  a grad student user
+    * galahad:   an undergrad who is anayzing bedivere's data
 
-Set up a user on this computer corresponding to every user who will be using the lab. Make sure port 22 is open for ssh access. Give them all a tutorial on ssh, python, and ipython. Give yourself and hermione a tutorial on git, SSHFS, pip, and jupyter.
+Set up a user on this computer corresponding to every user who will be using the lab. Make sure port 22 is open for ssh access. Give them all a tutorial on ssh, python, and ipython. Give yourself and lancelot a tutorial on git, SSHFS, pip, and jupyter.
 
 Install basic tools globally
 ----------------------------
@@ -115,10 +115,10 @@ Make a jupyter "user"::
 Make a jupyter group specifying who is allowed to run jupyter servers and change the labstate::
 
     sudo groupadd jupyter
-    sudo usermod -a -G jupyter harry
-    sudo usermod -a -G jupyter hermione
-    sudo usermod -a -G jupyter ron
-    <do not add hagrid>
+    sudo usermod -a -G jupyter arthur
+    sudo usermod -a -G jupyter lancelot
+    sudo usermod -a -G jupyter bedivere
+    <do not add galahad>
 
 The jupyter user home directory can be accessed by any user and written only by the jupyter users::
 
@@ -134,6 +134,8 @@ The labstate will be automatically put and backed up in the directory ``/home/ju
 
 @tlima please check
 @tlima, maybe instead of group jupyter, we should call it something like "labaccess"
+
+The first time labstate is initialized, you'll want to add the hosts and benches in the lab. This is documented in :doc:`/_static/developers/labState`.
 
 
 Running a jupyter server for the regular users

@@ -8,15 +8,18 @@ class IncompleteClass(Exception):
 
 
 class DriverMeta(type):
-    ''' Checks driver API at compile time
-
-        Driver initializer returns an instrument in ``instrument_catagory``,
+    '''
+        Driver initializer returns an instrument in ``instrument_category``,
         not an instance of the Driver itself, unless
             * ``instrument_category`` is None
             * ``directInit=True`` is passed in
+
+        Also checks that the API is satistied at compile time
     '''
     def __init__(cls, name, bases, dct):
-        ''' Checks that it satisfies the API of its Instrument
+        ''' Checks that it satisfies the API of its Instrument.
+
+            This occurs at compile-time
         '''
         if cls.instrument_category is not None:
             inst_klass = cls.instrument_category
@@ -27,10 +30,12 @@ class DriverMeta(type):
         super().__init__(name, bases, dct)
 
     def __call__(cls, *args, **kwargs):
-        """All *args go to the driver.
-        name and address go to both.
-        kwargs go priority to driver bases, otherwise to Instrument
-        """
+        '''
+            All \*args go to the driver.
+            name and address go to both.
+            kwargs go priority to driver bases, otherwise to Instrument.
+            This occurs at initialization time of an object
+        '''
         if (cls.instrument_category is not None
                 and not kwargs.pop('directInit', False)):
             name = kwargs.pop('name', None)
@@ -73,14 +78,14 @@ class DriverMeta(type):
 
 
 class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
-    """Generic (but not abstract) class for an instrument
-    Initialize using the literal visa address
+    ''' Generic (but not abstract) class for an instrument.
+        Initialize using the literal visa address
 
-    Contains a visa communication object
+        Contains a visa communication object.
 
-    This might be the place to handle message session opening/closing
-        release() should have an effect on both the message session and the lockout manager
-    """
+        Todo:
+            This might be the place to handle lockouts
+    '''
     instrument_category = None
 
     def __init__(self, name='Default Driver', address=None, directInit=False, **kwargs): # pylint: disable=unused-argument
@@ -91,7 +96,7 @@ class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
         self.__started = False
 
     def startup(self):
-        logger.debug("{}startup method empty %s", self.__class__.__name__)
+        logger.debug("%s.startup method empty", self.__class__.__name__)
 
     def open(self):
         super().open()

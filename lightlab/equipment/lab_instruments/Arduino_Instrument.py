@@ -4,6 +4,8 @@ from lightlab.laboratory.instruments import ArduinoInstrument
 class Arduino_Instrument(VISAInstrumentDriver):
     ''' Read/write interface for an arduino. Could make use of TCPIP or maybe USB
 
+        Usage: TODO
+
         Todo:
             To be implemented.
     '''

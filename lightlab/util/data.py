@@ -5,6 +5,7 @@ findPeaks obviously is important.
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import interpolate
+from IPython import display
 import lightlab.util.io as io
 from lightlab import logger
 
@@ -120,7 +121,7 @@ class MeasuredFunction(object):
         absc, ordi = dataDict['absc'], dataDict['ordi']
         return cls(absc, ordi)
 
-    def simplePlot(self, *args, **kwargs):
+    def simplePlot(self, *args, livePlot=False, **kwargs):
         ''' Plots on the current axis
 
         Args:
@@ -130,7 +131,13 @@ class MeasuredFunction(object):
         Returns:
             Whatever is returned by ``pyplot.plot``
         '''
-        return plt.plot(*(self.getData()+args), **kwargs)
+        curve = plt.plot(*(self.getData() + args), **kwargs)
+        if 'label' in kwargs.keys():
+            plt.legend()
+        if livePlot:
+            display.clear_output(wait=True)
+            display.display(plt.gcf())
+        return curve
 
     ''' Simple data handling operations ''' #pylint: disable=W0105
     def __newOfSameSubclass(self, newAbsc, newOrdi):
@@ -328,7 +335,7 @@ class MeasuredFunction(object):
             Returns:
                 MeasuredFunction: new object
         '''
-        nonNullInds = self.absc < min(segment) or self.absc > max(segment)
+        nonNullInds = np.logical_or(self.absc < min(segment), self.absc > max(segment))
         newAbsc = self.absc[nonNullInds]
         return self.__newOfSameSubclass(newAbsc, self(newAbsc))
 
@@ -884,16 +891,16 @@ def descend(yArr, invalidIndeces, startIndex, direction, threshVal):
 
         if i+sideSgn <= -1 or i+sideSgn > len(yArr):
             tooCloseToEdge = True
-            logger.debug('Too close to edge of available range')
+            logger.debug('Descend: too close to edge of available range')
         if invalidIndeces[i]:
             tooCloseToOtherPeak = True
-            logger.debug('Too close to another peak')
+            logger.debug('Descend: too close to another peak')
         validPeak = not tooCloseToEdge and not tooCloseToOtherPeak
 
         if yArr[i] <= threshVal:
             break
 
-        logger.debug('Index %s: blanked=%s, yArr=%s', i, invalidIndeces[i], yArr[i])
+        # logger.debug('Index %s: blanked=%s, yArr=%s', i, invalidIndeces[i], yArr[i])
         i += sideSgn
     else:
         validPeak = False

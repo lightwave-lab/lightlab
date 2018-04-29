@@ -19,6 +19,8 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 
         Steep learning curve.
 
+        Usage: :any:`/ipynbs/Hardware/NetworkAnalyzer.ipynb`
+
         Todo:
             All the RF equipment is reusing __enaBlock. Make this a method of Configurable.
 

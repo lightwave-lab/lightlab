@@ -7,6 +7,8 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
 
         `Manual <http://www.lightwavestore.com/product_datasheet/OTI-OPM-L-030C_pdf4.pdf>`__
 
+        Usage: :any:`/ipynbs/Hardware/PowerMeter.ipynb`
+
         Todo:
             Maybe allow a rapid continuous mode that just spits out numbers ('T0')
     '''
@@ -15,7 +17,7 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
     doReadDoubleCheck = False
 
     def __init__(self, name='The HP power meter', address=None, **kwargs):
-        super().__init__(name=name, address=address, **kwargs)
+        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
 
     def startup(self):
         self.close()
