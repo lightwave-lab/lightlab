@@ -63,6 +63,14 @@ def lab(request, monkeypatch):
     return lab
 
 
+def test_insert():
+    Bench1.addInstrument(instrument1, instrument2)
+    assert instrument1 in Bench1
+    assert instrument2 in Bench1
+    with pytest.raises(TypeError, message="failed to detect wrong instrument type"):
+        Bench1.addInstrument(device1)
+
+
 def test_duplicate_insert(lab):
     instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port11", "channel"])
     with pytest.raises(RuntimeError, message="duplicate insertion not detected"):
@@ -78,19 +86,96 @@ def test_instantiate(lab):
     assert Host1 in lab.hosts.values()
     assert Host2 in lab.hosts.values()
     assert len(lab.hosts) == 2
+    assert instrument1 in Bench1
     assert instrument1 in Bench1.instruments
     assert instrument1.bench == Bench1
+    assert instrument1 in Bench1.instruments
     assert instrument1 in Host1.instruments
     assert instrument1.host == Host1
     assert instrument1 in lab.instruments
     assert instrument2 in lab.instruments
+    assert instrument2 in Bench1
+    assert instrument2 in Bench1.instruments
     assert len(lab.instruments) == 2
     assert device1 in lab.devices
+    assert device1 in Bench1
+    assert device2 in Bench1
     assert len(lab.devices) == 2
     assert {device1: "input", instrument1: "rear_source"} in lab.connections
     assert {device1: "output", instrument2: "port1"} in lab.connections
     assert {device1: "input", instrument1: "front_source"} not in lab.connections
     assert {device1: "output", instrument2: "channel"} not in lab.connections
+
+
+def test_change_bench(lab):
+    assert instrument2.bench == Bench1
+    instrument2.bench = None
+    assert instrument2 in lab.instruments
+    assert instrument2 not in Bench1.instruments
+    instrument2.bench = Bench2
+    assert instrument2 in lab.instruments
+    assert instrument2 in Bench2.instruments
+    instrument2.bench = Bench1
+    assert instrument2.bench == Bench1
+
+
+def test_change_bench_alternative(lab):
+    assert instrument2.bench == Bench1
+    Bench2.addInstrument(instrument2)
+    assert instrument2 in lab.instruments
+    assert instrument2 in Bench2.instruments
+    Bench2.removeInstrument(instrument2)
+    assert instrument2 not in Bench2
+    assert instrument2 in lab.instruments
+    Bench1.addInstrument(instrument2)
+    assert instrument2.bench == Bench1
+
+
+def test_change_bench_device(lab):
+    assert device2.bench == Bench1
+    device2.bench = None
+    assert device2 in lab.devices
+    assert device2 not in Bench1.devices
+    device2.bench = Bench2
+    assert device2 in lab.devices
+    assert device2 in Bench2.devices
+    device2.bench = Bench1
+    assert device2.bench == Bench1
+
+
+def test_change_bench_device_alternative(lab):
+    assert device2.bench == Bench1
+    Bench2.addDevice(device2)
+    assert device2 in lab.devices
+    assert device2 in Bench2.devices
+    Bench2.removeDevice(device2)
+    assert device2 not in Bench2
+    assert device2 in lab.devices
+    Bench1.addDevice(device2)
+    assert device2.bench == Bench1
+
+
+def test_change_host(lab):
+    assert instrument2.host == Host1
+    instrument2.host = None
+    assert instrument2 in lab.instruments
+    assert instrument2 not in Host1.instruments
+    instrument2.host = Host2
+    assert instrument2 in lab.instruments
+    assert instrument2 in Host2.instruments
+    instrument2.host = Host1
+    assert instrument2.host == Host1
+
+
+def test_display():
+    Bench1.display()
+    Bench2.display()
+    Host1.display()
+    Host2.display()
+    instrument1.display()
+    instrument2.display()
+    device1.display()
+    device2.display()
 
 
 def test_delete(lab):

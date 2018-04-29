@@ -2,6 +2,7 @@ from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import PowerMeterAbstract
 from lightlab.laboratory.instruments import PowerMeter
 
+
 class Advantest_Q8221_PM(VISAInstrumentDriver, PowerMeterAbstract):
     ''' Q8221 Optical Multi-power Meter
 
@@ -17,10 +18,14 @@ class Advantest_Q8221_PM(VISAInstrumentDriver, PowerMeterAbstract):
 
     def startup(self):
         '''
-            Todo:
-                Read manual and set the channels to DBM and default channel to A
-                    * Default read: "DBA-054.8686E+00\r\n"
-                    * query("CH1"): "DBB-054.8686E+00\r\n"
+        Behaves the same as super.
+
+        Todo:
+            Read manual and set the channels to DBM and default channel to A
+
+            * Default read: ``"DBA-054.8686E+00\\r\\n"``
+            * query("CH1"): ``"DBB-054.8686E+00\\r\\n"``
+
         '''
         super().startup()
 
@@ -42,4 +47,3 @@ class Advantest_Q8221_PM(VISAInstrumentDriver, PowerMeterAbstract):
         self.write('CH' + str(channel))
         powStr = self.query('CH' + str(channel))
         return float(powStr[3:])
-

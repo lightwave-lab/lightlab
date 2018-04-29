@@ -12,7 +12,9 @@
         because they all have side effects in the real world
 '''
 import pytest
+import lightlab.util.io as io
 from lightlab.util.io import JSONpickleable
+from pathlib import Path
 from lightlab.equipment.visa_bases import VISAObject
 import numpy as np
 from lightlab.util.data import Spectrum
@@ -20,6 +22,7 @@ import os
 from lightlab import logger
 
 INSTANTIATION_COUNTER = 0
+io.fileDir = Path('.').resolve()
 filename = 'testJson.json'
 
 # Helper definitions
