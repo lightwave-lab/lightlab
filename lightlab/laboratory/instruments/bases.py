@@ -124,8 +124,6 @@ class Host(Node):
 
         Args:
             use_cached (bool): query only if not cached, default True
-            is_local (bool): True if querying local instruments, False
-                host is remote.
 
         Returns:
             dict: dictionary with gpib addresses as keys and \
@@ -149,15 +147,13 @@ class Host(Node):
             self.__cached_gpib_instrument_list = gpib_instrument_list
             return gpib_instrument_list
 
-    def findGpibAddressById(self, id_string_search, use_cached=True, is_local=False):
+    def findGpibAddressById(self, id_string_search, use_cached=True):
         """ Finds a gpib address using :py:meth:`get_all_gpib_id`, given
         an identity string.
 
         Args:
             id_string_search (str): identity string
             use_cached (bool): query only if not cached, default True
-            is_local (bool): True if querying local instruments, False
-                host is remote.
 
         Returns:
             str: address if found.
@@ -166,7 +162,7 @@ class Host(Node):
             NotFoundError: If the instrument is not found.
 
         """
-        gpib_ids = self.get_all_gpib_id(use_cached=use_cached, is_local=is_local)
+        gpib_ids = self.get_all_gpib_id(use_cached=use_cached)
         for gpib_address, id_string in gpib_ids.items():
             if id_string_search == id_string:
                 logger.info("Found %s in %s.", id_string_search, gpib_address)
