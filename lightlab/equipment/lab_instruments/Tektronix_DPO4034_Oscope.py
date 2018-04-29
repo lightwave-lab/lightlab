@@ -25,5 +25,5 @@ class Tektronix_DPO4034_Oscope(VISAInstrumentDriver, TekScopeAbstract):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         TekScopeAbstract.__init__(self)
 
-    def wfmDb(self, *args, **kwargs):
+    def wfmDb(self):  # pylint: disable=arguments-differ
         print('wfmDb is not working yet with DPOs')

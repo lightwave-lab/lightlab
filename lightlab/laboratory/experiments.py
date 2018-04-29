@@ -40,6 +40,7 @@ class Experiment(Virtualizable):
     connections = None
     _valid = None
     _lab = None
+    name = None
 
     @property
     def lab(self):
@@ -80,7 +81,6 @@ class Experiment(Virtualizable):
             self.devices = list()
         self.validate_exprs = list()
         self.connections = list()
-
 
         self.name = kwargs.pop("name", None)
         self.startup(**kwargs)
@@ -203,11 +203,9 @@ class Experiment(Virtualizable):
         pass
 
     def __str__(self):
-        try:
-            if self.name is not None:
-                return "Experiment {}".format(self.name)
-        finally:
-            return "Experiment {}".format(self.__class__.__name__)
+        if self.name is not None:
+            return "Experiment {}".format(self.name)
+        return "Experiment {}".format(self.__class__.__name__)
 
     def display(self):
         lines = ["{}".format(self)]
@@ -246,5 +244,6 @@ class MasterExperiment(Experiment):
 
         Required because you cannot startup an Experiment base object
     '''
+
     def startup(self):
         pass

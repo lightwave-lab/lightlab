@@ -48,9 +48,9 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
 
         if newFreq is not None:
             sciOrder = int(np.ceil(np.log10(newFreq) / 3))
-            logger.debug('sciOrder = {}'.format(sciOrder))
+            logger.debug('sciOrder = %s', sciOrder)
             sciUnit = sciUnits[sciOrder]
-            logger.debug('sciUnit = {}'.format(sciUnit))
+            logger.debug('sciUnit = %s', sciUnit)
             sciFreq = newFreq / toMultiplier(sciOrder)
             self.setConfigParam('FRQ', '{} {}'.format(sciFreq, sciUnit))
 
