@@ -284,9 +284,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             self.setMeasurement(1, ch, 'pk2pk')
             self.setMeasurement(2, ch, 'mean')
 
-            iTrial = 0
-
-            while iTrial<100:
+            for _ in range(100):
                 # Acquire new data
                 self.acquire(chans=[ch], avgCnt=1)
 
@@ -318,8 +316,6 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 # Adjust settings
                 self.setConfigParam(chStr + ':SCALE', newSpan / 10)
                 self.setConfigParam(chStr + ':OFFSET', newOffs)
-
-                iTrial += 1
 
         # Recover the measurement setup from before adjustment
         self.loadConfig(source='+autoAdjTemp', subgroup='MEASUREMENT')
