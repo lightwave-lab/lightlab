@@ -28,9 +28,9 @@ Use inline references with the ``:cite:`auth:99``` directive.
 
 At the end of the page, put this command to display the reference::
 
-    .. bibliography:: /lightwave-bibliography.bib
+    .. bibliography:: /light-bibliography.bib
 
-The bibtex source is located at `docs/lightwave-bibliography.bib`
+The bibtex source is located at `docs/light-bibliography.bib`
 
 
 2. Via the docstrings
