@@ -168,7 +168,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         #         nothing, a, b = tuple(powerDataList[idx + 1].split('-'))
         #         #a, b = -float(a), -float(b)
         #         powerDataFloat[i], powerDataFloat[i + 1] = -float(a), -float(b)
-        #         logger.warn("splitting %s into %s and %s", powerDataList[idx + 1], -float(a), -float(b))
+        #         logger.warning("splitting %s into %s and %s", powerDataList[idx + 1], -float(a), -float(b))
         #         i = i + 1
         #     finally:
         #         i = i + 1

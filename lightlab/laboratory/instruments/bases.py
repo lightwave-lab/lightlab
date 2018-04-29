@@ -194,7 +194,7 @@ class Host(Node):
         # TODO Remove all connections
         for instrument in instruments:
             if type(instrument) is str:
-                logger.warn('Cannot remove by name string. Use the object')
+                logger.warning('Cannot remove by name string. Use the object')
             instrument.host = None
 
     def checkInstrumentsLive(self):
@@ -612,8 +612,8 @@ class Instrument(Node):
                     logger.info("id_string of %s is accurate", self.name)
                     return True
                 else:
-                    logger.warn("%s: %s, expected %s", self.address,
-                                query_id, self.id_string)
+                    logger.warning("%s: %s, expected %s", self.address,
+                                   query_id, self.id_string)
                     return False
             else:
                 logger.debug("Cannot authenticate %s in %s.",

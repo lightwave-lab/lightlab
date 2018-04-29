@@ -1,5 +1,4 @@
 from . import VISAInstrumentDriver
-from lightlab import logger
 from pyvisa import VisaIOError
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import FunctionGenerator
@@ -7,6 +6,7 @@ from lightlab.laboratory.instruments import FunctionGenerator
 import numpy as np
 import time
 from lightlab import visalogger as logger
+
 
 class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     '''
