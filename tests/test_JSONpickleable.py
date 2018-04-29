@@ -9,7 +9,7 @@
 
     Remember that loading does not call __init__, so watch out for side effects.
         This is the primary reason that VISAObjects are not allowed
-        because they all have side effects in the real world
+        to be pickled: they all have side effects in the real world.
 '''
 import pytest
 import lightlab.util.io as io

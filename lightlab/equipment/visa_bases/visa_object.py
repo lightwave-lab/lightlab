@@ -6,7 +6,16 @@ OPEN_RETRIES = 5
 
 
 class VISAObject(object):
-    ''' Abstract class for something that communicates via GPIB
+    '''
+        Abstract class for something that communicates via messages
+        (GPIB/USB/Serial/TCPIP/etc.). It handles message-based sessions
+        in a way that provides a notion of object permanence to the
+        connection with a particular address.
+
+        It acts like a ``pyvisa`` message-based session, but it is
+        not a subclass; it is a wrapper. It only contains one (at at time).
+        That means VISAObject can offer extra opening, closing,
+        session management, and error reporting features.
     '''
     def __init__(self, address=None, tempSess=False, **kwargs):
         '''
