@@ -84,7 +84,7 @@ author = 'Alex Tait, Thomas Ferreira de Lima'
 # built documents.
 #
 
-with open("version.py") as f:
+with open("../version.py") as f:
     code = compile(f.read(), "version.py", 'exec')
     version_dict = {}
     exec(code, {}, version_dict)
