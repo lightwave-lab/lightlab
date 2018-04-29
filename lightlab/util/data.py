@@ -21,6 +21,7 @@ class MeasuredFunction(object):
 
         For simple plotting on the current axis, use :meth:`simplePlot`
     '''
+
     def __init__(self, abscissaPoints, ordinatePoints, unsafe=False):
         '''
             Args:
@@ -36,7 +37,8 @@ class MeasuredFunction(object):
             for iv, arr in enumerate((abscissaPoints, ordinatePoints)):
                 if isinstance(arr, np.ndarray):
                     if arr.ndim > 1:
-                        raise ValueError('Must be a one dimensional array. Got shape ' + str(arr.shape))
+                        raise ValueError(
+                            'Must be a one dimensional array. Got shape ' + str(arr.shape))
                     if arr.ndim == 0:
                         arr = np.array([arr])
                     checkVals[iv] = arr.copy()
@@ -45,12 +47,15 @@ class MeasuredFunction(object):
                 elif np.isscalar(arr):
                     checkVals[iv] = np.array([arr])
                 else:
-                    raise TypeError('Unsupported type: ' + str(type(arr)) + '. Need np.ndarray, scalar, list, or tuple')
+                    raise TypeError('Unsupported type: ' + str(type(arr)) +
+                                    '. Need np.ndarray, scalar, list, or tuple')
             self.absc, self.ordi = tuple(checkVals)
             if self.absc.shape != self.ordi.shape:
-                raise ValueError('Shapes do not match. Got ' + str(self.absc.shape) + ' and ' + str(self.ordi.shape))
+                raise ValueError('Shapes do not match. Got ' +
+                                 str(self.absc.shape) + ' and ' + str(self.ordi.shape))
 
-    ''' Data structuring and usage stuff ''' #pylint: disable=W0105
+    # Data structuring and usage stuff
+
     def __call__(self, testAbscissa=None):
         ''' Interpolates the discrete function
 
@@ -78,7 +83,7 @@ class MeasuredFunction(object):
         '''
         if type(sl) not in [int, slice]:
             raise ValueError('MeasuredFunction [] only works with integers and slices. ' +
-                'Got ' + str(sl) + ' (' + str(type(sl)) + ').')
+                             'Got ' + str(sl) + ' (' + str(type(sl)) + ').')
         newAbsc = self.absc[sl]
         newOrdi = self.ordi[sl]
         return self.__newOfSameSubclass(newAbsc, newOrdi)
@@ -139,7 +144,8 @@ class MeasuredFunction(object):
             display.display(plt.gcf())
         return curve
 
-    ''' Simple data handling operations ''' #pylint: disable=W0105
+    # Simple data handling operations
+
     def __newOfSameSubclass(self, newAbsc, newOrdi):
         ''' Helper functions that ensures proper inheritance of other methods.
 
@@ -285,8 +291,8 @@ class MeasuredFunction(object):
         self.absc = np.insert(self.absc, i, x)
         self.ordi = np.insert(self.ordi, i, y)
 
+    # Signal processing stuff
 
-    ''' Signal processing stuff ''' #pylint: disable=W0105
     def lowPass(self, windowWidth=None, mode='valid'):
         ''' Low pass filter performed by convolving a moving average window.
 
@@ -305,18 +311,19 @@ class MeasuredFunction(object):
             windowWidth = (max(self.absc) - min(self.absc)) / 10
         dx = abs(np.diff(self.absc[0:2])[0])
         windPts = np.int(windowWidth / dx)
-        if windPts % 2 == 0: # Make sure windPts is odd so that basis doesn't shift
+        if windPts % 2 == 0:  # Make sure windPts is odd so that basis doesn't shift
             windPts += 1
         if windPts >= np.size(self.ordi):
-            raise Exception('windowWidth is ' + str(windPts) + ' wide, which is bigger than the data itself (' + str(np.size(self.ordi)) + ')')
+            raise Exception('windowWidth is ' + str(windPts) +
+                            ' wide, which is bigger than the data itself (' + str(np.size(self.ordi)) + ')')
 
         filt = np.ones(windPts) / windPts
         invalidIndeces = int((windPts - 1) / 2)
 
-        if mode=='valid':
+        if mode == 'valid':
             newAbsc = self.absc[invalidIndeces:-invalidIndeces].copy()
             newOrdi = np.convolve(filt, self.ordi, mode='valid')
-        elif mode=='same':
+        elif mode == 'same':
             newAbsc = self.absc.copy()
             newOrdi = self.ordi.copy()
             newOrdi[invalidIndeces:-invalidIndeces] = np.convolve(filt, self.ordi, mode='valid')
@@ -392,9 +399,9 @@ class MeasuredFunction(object):
         xValArr = np.zeros(yValArr.shape)
         for iVal, y in enumerate(yValArr):
             xValArr[iVal] = interpInverse(*self.getData(),
-                startIndex=maxInd,
-                direction=directionToDescend,
-                threshVal=y)
+                                          startIndex=maxInd,
+                                          direction=directionToDescend,
+                                          threshVal=y)
         if np.isscalar(yVals):
             return xValArr[0]
         else:
@@ -424,116 +431,26 @@ class MeasuredFunction(object):
         if order == 1:
             return mean
         variance = np.mean(np.power(self.ordi - mean, 2))
-        if order==2:
+        if order == 2:
             return variance
-        if order==4:
+        if order == 4:
             kurtosis = np.mean(np.power(self.ordi - mean, 4))
             kurtosis /= variance ** 2
             if relativeGauss:
                 kurtosis -= 3
             return kurtosis
 
-    ''' Peak and trough related ''' #pylint: disable=W0105
-    def findResonanceFeatures(self, **kwargs):
-        ''' A convenient wrapper for :py:func:`findPeaks` that works with this class.
+    # Mathematics
 
-            Args:
-                **kwargs: kwargs passed to :py:func:`findPeaks`
+    # Operands must be either
+    #     the same subclass of MeasuredFunction, or
+    #     scalar numbers, or
+    #     functions/bound methods: these must be callable with one argument that is an ndarray
+    #         Please god no side-effects in these functions
 
-            Returns:
-                list[ResonanceFeature]: the detected features as nice objects
-        '''
-        mFun = self.uniformlySample()
-        dLam = np.diff(mFun.getSpan())[0] / len(mFun)
+    # The returned result is the same subclass as self,
+    # and its properties other than absc and ordi will be the SAME as the first operand
 
-        xArr, yArr = mFun.getData()
-
-        # Use the class-free peakfinder on arrays
-        pkInds, pkIndWids = findPeaks(yArr, **kwargs)
-
-        # Translate back into units of the original MeasuredFunction
-        pkLambdas = xArr[pkInds]
-        pkAmps = yArr[pkInds]
-        pkWids = pkIndWids * dLam
-
-        # Package into resonance objects
-        try:
-            isPeak = kwargs['isPeak']
-        except KeyError:
-            isPeak = True
-        resonances = np.empty(len(pkLambdas), dtype=object)
-        for iPk in range(len(resonances)):
-            resonances[iPk] = ResonanceFeature(pkLambdas[iPk], pkWids[iPk], pkAmps[iPk], isPeak=isPeak)
-        return resonances
-
-    def refineResonanceWavelengths(self, filtShapes, seedRes=None, isPeak=None):
-        ''' Convolutional resonance correction to get very robust resonance wavelengths
-
-            Does the resonance finding itself, unless an initial approximation is provided.
-
-            Also, has some special options for ``Spectrum`` types to make sure db/lin is optimal
-
-            Args:
-                filtShapes (list[MeasuredFunction]): shapes of each resonance. Must be in order of ascending abscissa/wavelength
-                seedRes (list[ResonanceFeature]): rough approximation of resonance properties. If None, this method will find them.
-                isPeak (bool): required to do peak finding, but not used if ``seedRes`` is specified
-
-            Returns:
-                list[ResonanceFeature]: the detected and refined features as nice objects
-
-            Todo:
-                take advantage of fft convolution for speed
-        '''
-        if seedRes is None:
-            if isPeak is None:
-                raise Exception('If seed resonance is not specified, isPeak must be specified.')
-            seedRes = self.findResonanceFeatures(expectedCnt=len(filtShapes), isPeak=isPeak)
-        else:
-            isPeak = seedRes[0].isPeak
-        fineRes = np.array([r.copy() for r in seedRes])
-
-        useFilts = filtShapes.copy()
-        if type(self) == Spectrum:
-            # For Spectrum objects only
-            if isPeak:
-                spectFun = self.lin()  # pylint: disable=no-member
-            else:
-                spectFun = 1 - self.lin()  # pylint: disable=no-member
-            for i in range(len(filtShapes)):
-                if type(filtShapes[i]).__name__ != 'Spectrum':
-                    raise Exception('If calling object is Spectrum, the filter shapes must also be Spectrum types')
-                if isPeak:
-                    useFilts[i] = filtShapes[i].lin()
-                else:
-                    useFilts[i] = 1 - filtShapes[i].lin()
-        else:
-            spectFun = self
-
-        confidence = 1000
-        for i,r in enumerate(fineRes):
-            thisFilt = useFilts[i]
-            cropWind = max(thisFilt.absc) * np.array([-1, 1])
-            subSpect = spectFun.shift(-r.lam).crop(cropWind)
-            basis = subSpect.absc
-            convArr = np.convolve(subSpect(basis), thisFilt(basis)[::-1], 'same')
-            lamOffset = basis[np.argmax(convArr)]
-            fineRes[i].lam = r.lam + lamOffset
-            thisConf = np.max(convArr) / np.sum(thisFilt(basis) ** 2)
-            confidence = min(confidence, thisConf)
-        return fineRes, confidence
-
-
-    ''' Mathematics
-
-        Operands must be either
-            the same subclass of MeasuredFunction, or
-            scalar numbers, or
-            functions/bound methods: these must be callable with one argument that is an ndarray
-                Please god no side-effects in these functions
-
-        The returned result is the same subclass as self,
-        and its properties other than absc and ordi will be the SAME as the first operand
-    ''' #pylint: disable=W0105
     def __binMathHelper(self, other):
         ''' returns the new abcissa and a tuple of arrays: the ordinates to operate on
         '''
@@ -563,7 +480,7 @@ class MeasuredFunction(object):
         # return newAbsc, ords
         try:
             ab = other.absc
-        except AttributeError: # in other.absc
+        except AttributeError:  # in other.absc
             pass
         else:
             if np.all(ab == self.absc):
@@ -577,7 +494,7 @@ class MeasuredFunction(object):
         newAbsc = self.absc
         try:
             other = float(other)
-        except TypeError: # not an int, float, or np.ndarry with all singleton dimensions
+        except TypeError:  # not an int, float, or np.ndarry with all singleton dimensions
             pass
         else:
             ords = (self.ordi, other * np.ones(len(newAbsc)))
@@ -585,7 +502,7 @@ class MeasuredFunction(object):
 
         try:
             othOrd = other(newAbsc)
-        except TypeError: # not callable
+        except TypeError:  # not callable
             pass
         else:
             ords = (self.ordi, othOrd)
@@ -597,9 +514,9 @@ class MeasuredFunction(object):
         for obj in (self, other):
             if isinstance(obj.ordi, MeasuredFunction):
                 raise TypeError('You have an ordinate that is a MeasuredFunction!' +
-                    ' This is a common error. It\'s in ' + str(obj))
-        raise TypeError('Unsupported types for binary math: ' + type(self).__name__ + ', ' + type(other).__name__)
-
+                                ' This is a common error. It\'s in ' + str(obj))
+        raise TypeError('Unsupported types for binary math: ' +
+                        type(self).__name__ + ', ' + type(other).__name__)
 
     @staticmethod
     def __minAbsc(fa, fb):
@@ -615,17 +532,17 @@ class MeasuredFunction(object):
     def __sub__(self, other):
         ''' Returns the subtraction of the two functions, in the domain of the shortest abscissa object.
         The other object can also be a scalar '''
-        newAbsc,ords = self.__binMathHelper(other)
+        newAbsc, ords = self.__binMathHelper(other)
         return self.__newOfSameSubclass(newAbsc, ords[0] - ords[1])
 
     def __rsub__(self, other):
-        newAbsc,ords = self.__binMathHelper(other)
+        newAbsc, ords = self.__binMathHelper(other)
         return self.__newOfSameSubclass(newAbsc, ords[1] - ords[0])
 
     def __add__(self, other):
         ''' Returns the subtraction of the two functions, in the domain of the shortest abscissa object.
         The other object can also be a scalar '''
-        newAbsc,ords = self.__binMathHelper(other)
+        newAbsc, ords = self.__binMathHelper(other)
         return self.__newOfSameSubclass(newAbsc, ords[0] + ords[1])
 
     def __radd__(self, other):
@@ -634,7 +551,7 @@ class MeasuredFunction(object):
     def __mul__(self, other):
         ''' Returns the product of the two functions, in the domain of the shortest abscissa object.
         The other object can also be a scalar '''
-        newAbsc,ords = self.__binMathHelper(other)
+        newAbsc, ords = self.__binMathHelper(other)
         return self.__newOfSameSubclass(newAbsc, ords[0] * ords[1])
 
     def __rmul__(self, other):
@@ -643,16 +560,49 @@ class MeasuredFunction(object):
     def __truediv__(self, other):
         return self * (1 / other)
 
-    def __rdiv__(self, other):
-        raise NotImplementedError('MeasuredFunction does not support right division. If DB, try subtraction')
+    def __rdiv__(self, other):  # pylint: disable=unused-argument
+        return NotImplemented
 
     def __eq__(self, other):
         if isinstance(self, type(other)):
             return np.all(self.absc == other.absc) and np.all(self.ordi == other.ordi)
         return False
 
+    def findResonanceFeatures(self, **kwargs):
+        r''' A convenient wrapper for :py:func:`findPeaks` that works with this class.
 
-class Spectrum(MeasuredFunction): # pylint: disable=abstract-method
+            Args:
+                \*\*kwargs: kwargs passed to :py:func:`findPeaks`
+
+            Returns:
+                list[ResonanceFeature]: the detected features as nice objects
+        '''
+        mFun = self.uniformlySample()
+        dLam = np.diff(mFun.getSpan())[0] / len(mFun)
+
+        xArr, yArr = mFun.getData()
+
+        # Use the class-free peakfinder on arrays
+        pkInds, pkIndWids = findPeaks(yArr, **kwargs)
+
+        # Translate back into units of the original MeasuredFunction
+        pkLambdas = xArr[pkInds]
+        pkAmps = yArr[pkInds]
+        pkWids = pkIndWids * dLam
+
+        # Package into resonance objects
+        try:
+            isPeak = kwargs['isPeak']
+        except KeyError:
+            isPeak = True
+        resonances = np.empty(len(pkLambdas), dtype=object)
+        for iPk in range(len(resonances)):
+            resonances[iPk] = ResonanceFeature(
+                pkLambdas[iPk], pkWids[iPk], pkAmps[iPk], isPeak=isPeak)
+        return resonances
+
+
+class Spectrum(MeasuredFunction):
     ''' simply stores a nm, dbm pair
 
         Also provides some decent handling of linear/dbm units.
@@ -660,6 +610,7 @@ class Spectrum(MeasuredFunction): # pylint: disable=abstract-method
         Use :meth:`lin` and :meth:`dbm` to make sure what you're getting
         for things like binary math and peakfinding, etc.
     '''
+
     def __init__(self, nm, power, inDbm=True, unsafe=False):
         '''
             Args:
@@ -713,6 +664,65 @@ class Spectrum(MeasuredFunction): # pylint: disable=abstract-method
             raise Exception('Can not do binary math on Spectra in different formats')
         return super().__binMathHelper(other)
 
+    # Peak and trough related
+
+    def refineResonanceWavelengths(self, filtShapes, seedRes=None, isPeak=None):
+        ''' Convolutional resonance correction to get very robust resonance wavelengths
+
+            Does the resonance finding itself, unless an initial approximation is provided.
+
+            Also, has some special options for ``Spectrum`` types to make sure db/lin is optimal
+
+            Args:
+                filtShapes (list[MeasuredFunction]): shapes of each resonance. Must be in order of ascending abscissa/wavelength
+                seedRes (list[ResonanceFeature]): rough approximation of resonance properties. If None, this method will find them.
+                isPeak (bool): required to do peak finding, but not used if ``seedRes`` is specified
+
+            Returns:
+                list[ResonanceFeature]: the detected and refined features as nice objects
+
+            Todo:
+                take advantage of fft convolution for speed
+        '''
+        if seedRes is None:
+            if isPeak is None:
+                raise Exception('If seed resonance is not specified, isPeak must be specified.')
+            seedRes = self.findResonanceFeatures(expectedCnt=len(filtShapes), isPeak=isPeak)
+        else:
+            isPeak = seedRes[0].isPeak
+        fineRes = np.array([r.copy() for r in seedRes])
+
+        useFilts = filtShapes.copy()
+        if type(self) == Spectrum:
+            # For Spectrum objects only
+            if isPeak:
+                spectFun = self.lin()
+            else:
+                spectFun = 1 - self.lin()
+            for i in range(len(filtShapes)):
+                if type(filtShapes[i]).__name__ != 'Spectrum':
+                    raise Exception(
+                        'If calling object is Spectrum, the filter shapes must also be Spectrum types')
+                if isPeak:
+                    useFilts[i] = filtShapes[i].lin()
+                else:
+                    useFilts[i] = 1 - filtShapes[i].lin()
+        else:
+            spectFun = self
+
+        confidence = 1000
+        for i, r in enumerate(fineRes):
+            thisFilt = useFilts[i]
+            cropWind = max(thisFilt.absc) * np.array([-1, 1])
+            subSpect = spectFun.shift(-r.lam).crop(cropWind)
+            basis = subSpect.absc
+            convArr = np.convolve(subSpect(basis), thisFilt(basis)[::-1], 'same')
+            lamOffset = basis[np.argmax(convArr)]
+            fineRes[i].lam = r.lam + lamOffset
+            thisConf = np.max(convArr) / np.sum(thisFilt(basis) ** 2)
+            confidence = min(confidence, thisConf)
+        return fineRes, confidence
+
     def findResonanceFeatures(self, **kwargs):
         ''' Overloads :py:mod:``MeasuredFunction.findResonanceFeatures`` to make sure it's in db scale
 
@@ -735,6 +745,7 @@ class ResonanceFeature(object):
             amp (float): peak amplitude
             isPeak (float): is it a peak or a dip
     '''
+
     def __init__(self, lam, fwhm, amp, isPeak=True):
         self.lam = lam
         self.fwhm = fwhm
@@ -756,23 +767,23 @@ class ResonanceFeature(object):
                 list[tuple]: 5-element list of (x,y) tuples representing points of a polygon
         '''
         w = self.fwhm
-        x = self.lam - w/2
+        x = self.lam - w / 2
         if self.isPeak:
             h = 6
-            y = self.amp - h/2
+            y = self.amp - h / 2
         else:
             h = -self.amp
             y = self.amp - 3
-        return type(self).__box2polygon(x,y,w,h)
+        return type(self).__box2polygon(x, y, w, h)
 
     def simplePlot(self, *args, **kwargs):
-        ''' Plots a box to visualize the resonance feature
+        r''' Plots a box to visualize the resonance feature
 
             The box is centered on the peak ``lam`` and ``amp`` with a width of ``fwhm``.
 
             Args:
-                *args: args passed to ``pyplot.plot``
-                **kwargs: kwargs passed to ``pyplot.plot``
+                \*args: args passed to ``pyplot.plot``
+                \*\*kwargs: kwargs passed to ``pyplot.plot``
 
             Returns:
                 whatever ``pyplot.plot`` returns
@@ -780,7 +791,7 @@ class ResonanceFeature(object):
         return plt.plot(*(self.__plottingData() + args), **kwargs)
 
     @staticmethod
-    def __box2polygon(x,y,w,h):
+    def __box2polygon(x, y, w, h):
         w = abs(w)
         h = abs(h)
         xa = x * np.ones(5)
@@ -794,6 +805,8 @@ class PeakFinderError(RuntimeError):
     pass
 
 # Classless peak finding and monotonic descent functions
+
+
 def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, descendMax=3, minSep=0):
     '''Takes an array and finds a specified number of peaks
 
@@ -840,7 +853,7 @@ def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, desc
             if isPeak or not isDb:
                 absThresh = peakAmp - descendBy
             else:
-                absThresh = min(descendBy, peakAmp-descendBy)
+                absThresh = min(descendBy, peakAmp - descendBy)
             logger.debug('absThresh = %s', absThresh)
 
             # Didn't find a peak anywhere
@@ -859,10 +872,10 @@ def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, desc
 
             # descend data down by a threshold amount
             logger.debug('-Left side')
-            indL,validL = descend(yArr, blanked, indOfMax - sepInds, 'left', absThresh)
+            indL, validL = descend(yArr, blanked, indOfMax - sepInds, 'left', absThresh)
             logger.debug('-Right side')
-            indR,validR = descend(yArr, blanked, indOfMax + sepInds, 'right', absThresh)
-            hmInds = [indL, indR+1]
+            indR, validR = descend(yArr, blanked, indOfMax + sepInds, 'right', absThresh)
+            hmInds = [indL, indR + 1]
             isValidPeak = validL and validR
             # throw out data around this peak by minimizing yArr and recording as blank
             yArr[hmInds[0]:hmInds[1]] = np.amin(yArr)
@@ -871,6 +884,7 @@ def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, desc
         pkInds[iPk] = int(np.mean(hmInds))
         pkWids[iPk] = np.diff(hmInds)[0]
     return pkInds, pkWids
+
 
 def descend(yArr, invalidIndeces, startIndex, direction, threshVal):
     ''' From the start index, descend until reaching a threshold level and return that index
@@ -889,7 +903,7 @@ def descend(yArr, invalidIndeces, startIndex, direction, threshVal):
         if not validPeak:
             break
 
-        if i+sideSgn <= -1 or i+sideSgn > len(yArr):
+        if i + sideSgn <= -1 or i + sideSgn > len(yArr):
             tooCloseToEdge = True
             logger.debug('Descend: too close to edge of available range')
         if invalidIndeces[i]:
@@ -906,6 +920,7 @@ def descend(yArr, invalidIndeces, startIndex, direction, threshVal):
         validPeak = False
     return i, validPeak
 
+
 def interpInverse(xArrIn, yArrIn, startIndex, direction, threshVal):
     ''' Gives a float representing the interpolated x value that gives y=threshVal '''
     xArr = xArrIn.copy()
@@ -919,12 +934,14 @@ def interpInverse(xArrIn, yArrIn, startIndex, direction, threshVal):
     yArr = yArr - threshVal
 
     possibleRange = (np.min(yArrIn), np.max(yArrIn))
-    #warnStr = 'Inversion requested y = {}, but {} of range is {}'
+    # warnStr = 'Inversion requested y = {}, but {} of range is {}'
     if threshVal < possibleRange[0]:
-        logger.warning('Inversion requested y = %s, but %s of range is %s', threshVal, 'minimum', np.min(yArrIn))
+        logger.warning('Inversion requested y = %s, but %s of range is %s',
+                       threshVal, 'minimum', np.min(yArrIn))
         return xArr[-1]
     elif threshVal > possibleRange[1]:
-        logger.warning('Inversion requested y = %s, but %s of range is %s', threshVal, 'maximum', np.max(yArrIn))
+        logger.warning('Inversion requested y = %s, but %s of range is %s',
+                       threshVal, 'maximum', np.max(yArrIn))
         return xArr[0]
 
     fakeInvalidIndeces = np.zeros(len(yArr), dtype=bool)
@@ -936,17 +953,19 @@ def interpInverse(xArrIn, yArrIn, startIndex, direction, threshVal):
         # raise Exception
     elif iHit in [0]:
         return xArr[iHit]
-    else: # interpolate
-        q = yArr[iHit-1:iHit+1][::-1]
-        v = xArr[iHit-1:iHit+1][::-1]
+    else:  # interpolate
+        q = yArr[iHit - 1:iHit + 1][::-1]
+        v = xArr[iHit - 1:iHit + 1][::-1]
         return np.interp(0, q, v)
 
 
 class MeasuredSurface(object):
     ''' Basically a two dimensional measured function '''
+
     def __init__(self, absc, ordi):
         if type(absc) == np.ndarray and absc.ndim != 1:
-            raise Exception('absc should be a 2-element list of arrays or an array of objects (which are arrays)')
+            raise Exception(
+                'absc should be a 2-element list of arrays or an array of objects (which are arrays)')
         if len(absc) != 2:
             raise Exception('Wrong number of abscissas. Need two')
         abscshape = np.zeros(2)
@@ -1008,11 +1027,13 @@ class MeasuredSurface(object):
     #     oneDimMf = MeasuredFunction()
     #     for abOtherDim in self.absc[1-dim]:
 
+
 class MeasuredErrorField(object):
     ''' A field that hold two abscissa arrays and two ordinate matrices
 
         Error is the measuredGrid - nominalGrid, which is a vector field
     '''
+
     def __init__(self, nominalGrid, measuredGrid):
         assert(nominalGrid.ndim == 3)
         self.nomiGrid = nominalGrid
@@ -1024,10 +1045,10 @@ class MeasuredErrorField(object):
             raise Exception('measuredGrid must be dimension 3 (meaned) or 4 (trials)')
 
     def __call__(self, testVec=None):
-        xVec = self.nomiGrid[:,:,0]
-        yVec = self.nomiGrid[:,:,1]
-        uVec = self.measGrid[:,:,0]
-        vVec = self.measGrid[:,:,1]
+        xVec = self.nomiGrid[:, :, 0]
+        yVec = self.nomiGrid[:, :, 1]
+        uVec = self.measGrid[:, :, 0]
+        vVec = self.measGrid[:, :, 1]
         u = interpolate.interp2d(xVec, yVec, uVec, kind='linear')
         v = interpolate.interp2d(xVec, yVec, vVec, kind='linear')
         testU = u(*testVec)[0]
@@ -1065,8 +1086,6 @@ class MeasuredErrorField(object):
         measSq = np.min([zcSz(self.measGrid, nomiCornerInds[i]) for i in range(2)])
         return nomiSq, measSq
 
-
-
     # def __init__(self, abscissas, ordinates):
     #     if type(abscissas) == np.ndarray and absc.ndim != 1:
     #         raise Exception('absc should be a 2-element list of arrays or an array of objects (which are arrays)')
@@ -1093,13 +1112,14 @@ class MeasuredErrorField(object):
     #     for iSurf in range(2):
     #         self.surfs[iSurf] = MeasuredSurface(abscissas, ordinates[iSurf])
 
+
 class Spectrogram(MeasuredSurface):
-    def __init__(self, *args):
-        super().__init__(*args)
+    pass
 
 
-class Waveform(MeasuredFunction): # pylint: disable=abstract-method
+class Waveform(MeasuredFunction):
     ''' stores a time, voltage pair. That's about it right now '''
+
     def __init__(self, t, v, unsafe=False):
         super().__init__(t, v, unsafe=unsafe)
 
@@ -1129,6 +1149,7 @@ class FunctionBundle(object):
 
         This provides nice plotting functions for things like eyes, but not decomposition methods: see `FunctionalBasis`
     '''
+
     def __init__(self, measFunList=None):
         ''' Can be initialized fully, or initialized with None to be built interactively.
 
@@ -1152,14 +1173,15 @@ class FunctionBundle(object):
             self.ordiMat = np.matrix(newMeasFun.ordi)
             self.memberType = type(newMeasFun)
         else:
-            y = self._putInTimebase(newMeasFun) # This does the checking for type and timebase
+            y = self._putInTimebase(newMeasFun)  # This does the checking for type and timebase
             self.ordiMat = np.append(self.ordiMat, [y], axis=0)
         self.nDims += 1
 
     def __getitem__(self, index):
         ''' Iterator that gives out individual measured functions of the type used
         '''
-        theOrdi = self.ordiMat[index,:].A1 # A1 is a special numpy thing that converts from matrix to 1-d array
+        theOrdi = self.ordiMat[
+            index, :].A1  # A1 is a special numpy thing that converts from matrix to 1-d array
         return self.memberType(self.absc, theOrdi)
 
     def __len__(self):
@@ -1253,7 +1275,7 @@ class FunctionBundle(object):
         '''
         if type(testFun).__name__ is not self.memberType.__name__:
             raise TypeError('This FunctionalBasis expects ' + str(self.memberType) +
-                ', but was given ' + str(type(testFun)) + '.')
+                            ', but was given ' + str(type(testFun)) + '.')
         # Check time base
         if np.any(testFun.absc != self.absc):
             # logger.warning('Warning: Basis signal time abscissa are different. Interpolating...')
@@ -1273,18 +1295,19 @@ class FunctionBundle(object):
                 (list(axis)): The axes that were plotted upon
         '''
         if axList is None:
-            fi, axList = plt.subplots(nrows=len(self), figsize=(14,14)) # pylint: disable=unused-variable
-            #fi, axList = plt.subplots(nrows=len(self), figsize=(14,16))
+            _, axList = plt.subplots(nrows=len(self), figsize=(14, 14))
+            # fi, axList = plt.subplots(nrows=len(self), figsize=(14,16))
         if len(axList) != len(self):
-            raise ValueError('Wrong number of axes. Got {}, need {}.'.format(len(axList), len(self)))
+            raise ValueError('Wrong number of axes. Got {}, need {}.'.format(
+                len(axList), len(self)))
         for i, ax in enumerate(axList):
             plt.sca(ax)
             self[i].simplePlot(*args, **kwargs)
             if titleRoot is not None:
-                plt.title(titleRoot.format(i+1))
-                #plt.xlabel('Time (s)')
-            #plt.ylabel('Intensity (a.u.)')
-            #plt.xlim(0,2e-8)
+                plt.title(titleRoot.format(i + 1))
+                # plt.xlabel('Time (s)')
+            # plt.ylabel('Intensity (a.u.)')
+            # plt.xlim(0,2e-8)
         return axList
 
     def histogram(self):
@@ -1298,7 +1321,7 @@ class FunctionBundle(object):
         hist, bins = np.histogram(self.ordiMat, bins='auto', density=False)
         histFun = MeasuredFunction([], [])
         for iBin, thisOrdi in enumerate(hist):
-            thisAbsc = np.mean(bins[iBin:iBin+1])
+            thisAbsc = np.mean(bins[iBin:iBin + 1])
             histFun.addPoint((thisAbsc, thisOrdi))
         return histFun
 
@@ -1402,24 +1425,25 @@ class FunctionalBasis(FunctionBundle):
 
         Created for weighted addition, decomposition, and component analysis
     '''
-    def __init__(self, measFunList=None):
-        ''' Can be initialized fully, or initialized with None to be built interactively.
 
-            Args:
-                measFunList (list[MeasuredFunction],None): list of MeasuredFunctions that must have the same abscissa.
-        '''
-        super().__init__(measFunList)
+    # def __init__(self, measFunList=None):
+    #     ''' Can be initialized fully, or initialized with None to be built interactively.
+
+    #         Args:
+    #             measFunList (list[MeasuredFunction],None): list of MeasuredFunctions that must have the same abscissa.
+    #     '''
+    #     super().__init__(measFunList)
 
     @classmethod
     def independentDefault(cls, nDims):
         ''' Gives a basis of non-overlapping pulses. Waveforms only
         '''
         newAbsc = np.linspace(0, 1, 1000)
-        pWid = .5/nDims
+        pWid = .5 / nDims
         newObj = cls()
         for iDim in range(nDims):
-            on = (iDim + .25)/nDims
-            sig = Waveform.pulse(newAbsc, tOn=on, tOff=on+pWid)
+            on = (iDim + .25) / nDims
+            sig = Waveform.pulse(newAbsc, tOn=on, tOff=on + pWid)
             newObj.addDim(sig)
         return newObj
 
@@ -1500,8 +1524,9 @@ def verifyListOfType(arg, checkType):
         for a in arg:
             if not isinstance(a, checkType):
                 raise Exception('Incorrect type, expecting ' + str(checkType) +
-                    '. Got ' + str(type(a)))
+                                '. Got ' + str(type(a)))
     return arg
+
 
 def argFlatten(*argLists, typs=(list, tuple, set)):
     ''' Takes a combination of multiple arguments and flattens the ones of type typs.
@@ -1538,7 +1563,7 @@ def argFlatten(*argLists, typs=(list, tuple, set)):
 def rms(diffArr, axis=0):
     return np.sqrt(np.mean(diffArr ** 2, axis=axis))
 
+
 def minmax(arr):
     ''' Returns a list of [min and max] of the array '''
     return np.array([np.min(arr), np.max(arr)])
-
