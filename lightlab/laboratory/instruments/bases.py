@@ -389,12 +389,24 @@ class Instrument(Node):
         This class stores information about instruments, for the purpose of
         facilitating verifying whether it is connected to the correct devices.
 
-        Driver feedthrough: methods, properties, and even regular attributes
-        that are in ``essentialMethods`` and ``essentialProperties`` of the class
-        will get/set/call through to the driver object.
+        Driver feedthrough
+            Methods, properties, and even regular attributes
+            that are in :py:data:`essential_attributes` of the class
+            will get/set/call through to the driver object.
 
-        Todo:
-            Add example of instrument instantiation and point to relevant ipynb.
+        Do not instantiate directly
+            Calling a **VISAInstrumentDriver** class will return an **Instrument** object
+
+        Short example::
+
+            osa = Apex_AP2440A_OSA(name='foo', address='NULL')
+            osa.spectrum()
+
+        Long example
+            :ref:`/ipynbs/Others/labSetup.ipynb`
+
+        Detailed testing
+            :py:func:`~tests.test_abstractDrivers.test_driver_init`
     """
     _driver_class = None
     __driver_object = None
@@ -418,13 +430,6 @@ class Instrument(Node):
         self.__driver_object = kwargs.pop("driver_object", None)
         if self.__driver_object is not None:
             self._driver_class = type(self.__driver_object)
-        # driver_klass = kwargs.get('_driver_class', None)
-        # for attrName in self.essentialMethods + self.essentialProperties:
-        #     if attrName in kwargs.keys():
-        #         raise AttributeError('Ambiguous attributes between Instrument and its driver: ' + attrName)
-        #     if driver_klass is not None:
-        #         if not hasattr(driver_klass, attrName):
-        #             raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
         self._name = name
         self._id_string = id_string
         self.address = address
