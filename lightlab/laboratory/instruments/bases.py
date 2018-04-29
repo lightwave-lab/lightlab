@@ -406,9 +406,8 @@ class Instrument(Node):
     _host = None
     ports = None  #: list(str) Port names of instruments. To be used with labstate connections.
 
-    essentialMethods = ['startup']  #: list of methods to be fed through the driver
-    essentialProperties = []  #: list of properties to be fed through the driver
-    optionalAttributes = []  #: list of optional attributes to be fed through the driver
+    essential_attributes = ['startup']  #: list of method/property/regular attributes to be fed through the driver
+    optional_attributes = []  #: list of optional attributes to be fed through the driver
 
     def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
         self.bench = kwargs.pop("bench", None)
@@ -432,26 +431,25 @@ class Instrument(Node):
 
     def __dir__(self):
         ''' For autocompletion in ipython '''
-        return super().__dir__() + self.essentialProperties \
-            + self.essentialMethods + self.implementedOptionals
+        return super().__dir__() \
+            + self.essential_attributes + self._implemented_optionals
 
     @property
-    def implementedOptionals(self):
-        implementedOptionals = list()
-        for opAttr in self.optionalAttributes:
+    def _implemented_optionals(self):
+        implemented = list()
+        for opAttr in self.optional_attributes:
             if hasattr(self._driver_class, opAttr):
-                implementedOptionals.append(opAttr)
-        return implementedOptionals
+                implemented.append(opAttr)
+        return implemented
 
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
         errorText = str(self) + ' has no attribute ' + attrName
-        if attrName in self.essentialProperties \
-                + self.essentialMethods \
-                + self.implementedOptionals:
+        if attrName in self.essential_attributes \
+                + self._implemented_optionals:
             return getattr(self.driver, attrName)
         # Time to fail
-        if attrName in self.optionalAttributes:
+        if attrName in self.optional_attributes:
             errorText += '\nThis is an optional attribute of {} '.format(type(self).__name__)
             errorText += 'not implemented by this particular driver'
         elif hasattr(self._driver_class, attrName):
@@ -460,7 +458,7 @@ class Instrument(Node):
         raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
-        if attrName in self.essentialProperties + self.essentialMethods:  # or methods
+        if attrName in self.essential_attributes:
             return setattr(self.driver, attrName, newVal)
         else:
             if attrName == 'address':  # Reinitialize the driver
@@ -469,7 +467,7 @@ class Instrument(Node):
             return super().__setattr__(attrName, newVal)
 
     def __delattr__(self, attrName):
-        if attrName in self.essentialProperties + self.essentialMethods:  # or methods
+        if attrName in self.essential_attributes:
             return self.driver.__delattr__(attrName)
         else:
             return super().__delattr__(attrName)

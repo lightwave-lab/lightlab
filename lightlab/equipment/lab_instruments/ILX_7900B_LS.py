@@ -67,7 +67,7 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
     def dfbChans(self):
         ''' Returns the blocked out channels as a list
 
-            Currently, this is not an essentialProperty, so you
+            Currently, this is not an essential_attribute, so you
             have to access like::
 
                 ch = LS.driver.dfbChans

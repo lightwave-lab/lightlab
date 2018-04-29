@@ -207,7 +207,7 @@ class DualInstrument(Virtualizable):
         self.virt_obj = virt_obj
         if real_obj is not None and virt_obj is not None:
             violated = []
-            allowed = real_obj.essentialMethods + real_obj.essentialProperties + dir(VirtualInstrument)
+            allowed = real_obj.essential_attributes + dir(VirtualInstrument)
             for attr in dir(type(virt_obj)):
                 if attr not in allowed \
                         and '__' not in attr:

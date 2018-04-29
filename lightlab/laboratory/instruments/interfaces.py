@@ -9,14 +9,14 @@ from .bases import Instrument
 
 class PowerMeter(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/PowerMeter.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['powerDbm',
          'powerLin']
 
 
 class SourceMeter(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/Keithley.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['setCurrent',
          'getCurrent',
          'measVoltage',
@@ -35,7 +35,7 @@ class SourceMeter(Instrument):
 
 class Keithley(SourceMeter):
     ''' Usage: :any:`/ipynbs/Hardware/Keithley.ipynb` '''
-    essentialMethods = SourceMeter.essentialMethods + \
+    essential_attributes = SourceMeter.essential_attributes + \
         ['setPort',
          'setCurrentMode',
          'setVoltageMode',
@@ -46,7 +46,7 @@ class Keithley(SourceMeter):
 
 class VectorGenerator(Instrument):
     ''' Usage: TODO '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['amplitude',
          'frequency',
          'enable',
@@ -60,10 +60,10 @@ class VectorGenerator(Instrument):
 
 class Clock(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/Clock.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['enable',
          'frequency']
-    optionalAttributes = Instrument.optionalAttributes + \
+    optional_attributes = Instrument.optional_attributes + \
         ['amplitude',
          'sweepSetup',
          'sweepEnable']
@@ -71,7 +71,7 @@ class Clock(Instrument):
 
 class NICurrentSource(Instrument):
     ''' Usage: :ref:`/ipynbs/Hardware/CurrentSources-NI.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['setChannelTuning',
          'getChannelTuning',
          'off']
@@ -79,7 +79,7 @@ class NICurrentSource(Instrument):
 
 class CurrentSource(Instrument):
     ''' Deprecated/Future '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['setChannelTuning',
          'getChannelTuning',
          'off']
@@ -87,7 +87,7 @@ class CurrentSource(Instrument):
 
 class FunctionGenerator(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/FunctionGenerator.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['frequency',
          'waveform',
          'amplAndOffs',
@@ -97,7 +97,7 @@ class FunctionGenerator(Instrument):
 
 class LaserSource(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/LaserSources-ILX.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['setChannelEnable',
          'getChannelEnable',
          'setChannelWls',
@@ -106,29 +106,27 @@ class LaserSource(Instrument):
          'getChannelPowers',
          'getAsSpectrum',
          'off',
-         'allOn']
-    essentialProperties = Instrument.essentialProperties + \
-        ['enableState',
+         'allOn',
+         'enableState',
          'wls',
          'powers']
-    optionalAttributes = ['wlRanges', 'allOff']
+    optional_attributes = ['wlRanges', 'allOff']
 
 
 class OpticalSpectrumAnalyzer(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/OpticalSpectrumAnalyzer.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
-        ['spectrum']
-    essentialProperties = Instrument.essentialProperties + \
-        ['wlRange']
+    essential_attributes = Instrument.essential_attributes + \
+        ['spectrum',
+         'wlRange']
 
 
 class Oscilloscope(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/Oscilloscope.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['acquire',
          'wfmDb',
          'run']
-    optionalAttributes = Instrument.optionalAttributes + \
+    optional_attributes = Instrument.optional_attributes + \
         ['histogramStats']
 
     def hardware_cooldown(self):
@@ -139,13 +137,13 @@ class Oscilloscope(Instrument):
 
 class DSAOscilloscope(Oscilloscope):
     ''' Usage: :any:`/ipynbs/Hardware/Oscilloscope.ipynb` '''
-    essentialMethods = Oscilloscope.essentialMethods + \
+    essential_attributes = Oscilloscope.essential_attributes + \
         ['histogramStats']
 
 
 class PulsePatternGenerator(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/PulsePatternGenerator.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['setPrbs',
          'setPattern',
          'getPattern',
@@ -156,7 +154,7 @@ class PulsePatternGenerator(Instrument):
 
 class RFSpectrumAnalyzer(Instrument):
     ''' Usage: TODO '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['getMeasurements',
          'setMeasurement',
          'run',
@@ -167,17 +165,16 @@ class RFSpectrumAnalyzer(Instrument):
 
 class VariableAttenuator(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/VariableAttenuator.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['on',
-         'off']
-    essentialProperties = Instrument.essentialProperties + \
-        ['attenDB',
+         'off',
+         'attenDB',
          'attenLin']
 
 
 class NetworkAnalyzer(Instrument):
     ''' Usage: :any:`/ipynbs/Hardware/NetworkAnalyzer.ipynb` '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['amplitude',
          'frequency',
          'enable',
@@ -193,6 +190,6 @@ class NetworkAnalyzer(Instrument):
 
 class ArduinoInstrument(Instrument):
     ''' Usage: TODO '''
-    essentialMethods = Instrument.essentialMethods + \
+    essential_attributes = Instrument.essential_attributes + \
         ['write',
          'query']

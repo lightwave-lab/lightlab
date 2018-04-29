@@ -74,7 +74,7 @@ def checkHits(N=1):
 class Hammer(Instrument):
     ''' An Instrument interface that defines essential methods
     '''
-    essentialMethods = Instrument.essentialMethods + ['hit', 'pickUp', 'putDown']
+    essential_attributes = Instrument.essential_attributes + ['hit', 'pickUp', 'putDown']
 
     def hardware_warmup(self):
         self.pickUp()
@@ -83,7 +83,7 @@ class Hammer(Instrument):
         self.putDown()
 
 class ClawHammer(Hammer):
-    essentialMethods = Hammer.essentialMethods + ['pull']
+    essential_attributes = Hammer.essential_attributes + ['pull']
 
 def test_badDriver():
     with pytest.raises(IncompleteClass):

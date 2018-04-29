@@ -23,7 +23,7 @@ class DriverMeta(type):
         '''
         if cls.instrument_category is not None:
             inst_klass = cls.instrument_category
-            for essential in inst_klass.essentialMethods + inst_klass.essentialProperties:
+            for essential in inst_klass.essential_attributes:
                 if essential not in dir(cls):
                     raise IncompleteClass(cls.__name__ + ' does not implement {}, '.format(essential) +
                                           'which is essential for {}'.format(inst_klass.__name__))
@@ -54,9 +54,8 @@ class DriverMeta(type):
             driver_kwargs = dict()
             instrument_kwargs = dict()
             for k, v in kwargs.items():
-                if k in cls.instrument_category.essentialMethods \
-                        + cls.instrument_category.essentialProperties \
-                        + cls.instrument_category.optionalAttributes:
+                if k in cls.instrument_category.essential_attributes \
+                        + cls.instrument_category.optional_attributes:
                     raise ValueError('Essential attribute {} cannot be '.format(k) +
                                      'passed as a kwarg to the initializer of {}.'.format(cls.__name__))
                 if k in driver_initArgNames:
