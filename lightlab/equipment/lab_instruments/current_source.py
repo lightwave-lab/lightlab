@@ -34,7 +34,7 @@ class CurrentSources(VISAInstrumentDriver):
     v2maCoef = 4  # current (milliamps) = v2maCoef * voltage (volts)
     fullChannelNums = 32  # number of dimensions that the current sources are expecting
     targetPort = 16022  # TCPIP server port; charge of an electron (Coulombs)
-    waitMsOnWrite = 500 # Time to settle after tuning
+    waitMsOnWrite = 500  # Time to settle after tuning
     __tuneState = None
     ''' Initialize a client connection over TCPIP
 
@@ -54,9 +54,9 @@ class CurrentSources(VISAInstrumentDriver):
     # The above is the old versioin of initialization, and the below is the new version!
     def __init__(self, name='The current source', address=None, **kwargs):
         logger.warning('This class to be deprecated. Use NI_PCI_6723.')
-        logger.warning('Backwards incompatibilities:\n', #pylint: disable=E1205
-            'No stateDict argument in __init__\n',
-            'No tuneState property. Use setChannelTuning and getChannelTuning')
+        logger.warning('Backwards incompatibilities:\n'
+                       'No stateDict argument in __init__\n'
+                       'No tuneState property. Use setChannelTuning and getChannelTuning')
 
         self.useChans = kwargs.pop("useChans", None)
         self.stateDict = kwargs.pop("stateDict", None)
@@ -112,12 +112,14 @@ class CurrentSources(VISAInstrumentDriver):
 
     @property
     def tuneState(self):
-        logger.warning('CurrentSources.tuneState getting/setting will be deprecated. Use dictionaries')
+        logger.warning(
+            'CurrentSources.tuneState getting/setting will be deprecated. Use dictionaries')
         return self.__tuneState
 
     @tuneState.setter
     def tuneState(self, newState):
-        logger.warning('CurrentSources.tuneState getting/setting will be deprecated. Use dictionaries')
+        logger.warning(
+            'CurrentSources.tuneState getting/setting will be deprecated. Use dictionaries')
         newState = np.array(newState)
         if len(newState) != len(self.channels):
             raise io.ChannelError('Wrong number of channels. ' +
@@ -236,4 +238,3 @@ class CurrentSources(VISAInstrumentDriver):
                 print(
                     'Error, cannot communicate with current sources, or session was closed prematurely')
         super().close()
-

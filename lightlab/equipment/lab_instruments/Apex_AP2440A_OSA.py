@@ -195,7 +195,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
                 dbmAvg = dbmAvg + dbm / avgCnt
         return Spectrum(nm, dbmAvg, inDbm=True)
 
-    #TLS access methods currently not implemented
+    # TLS access methods currently not implemented
 
     @property
     def tlsEnable(self):
@@ -209,8 +209,8 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         if newState is -1 or None: do nothing
         Returns the current on/off state as boolean, read from the OSA
         """
-        if newState != None and newState != -1:
-            if type(newState) != type(True):
+        if newState and newState != -1:
+            if isinstance(newState, bool):
                 newState = (newState != 0)
             writeVal = '1' if newState else '0'
             self.write('TLSON ' + writeVal)
@@ -225,5 +225,5 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
     def tlsWl(self, newState=None):
         """newState is a float in units of nm
         """
-        if newState != None:
+        if newState:
             self.write('TLSwl ' + str(newState))

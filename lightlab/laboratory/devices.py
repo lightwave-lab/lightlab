@@ -1,4 +1,5 @@
 '''
 This module contains virtual tokens for optical and electronic devices.
 '''
-from lightlab.laboratory.instruments import Device  # noqa # pylint: disable=unused-import
+# flake8: noqa
+from lightlab.laboratory.instruments import Device  # pylint: disable=unused-import

@@ -24,9 +24,9 @@ class MultiModalSource(object):
         bnds = [cls.baseUnit2val(vBnd, mode) for vBnd in cls.baseUnitBounds]
         enforcedValue = np.clip(val, *bnds)
         if enforcedValue != val:
-            logger.warning('Warning: value out of range was constrained.\n %s %s %s %s %s %s %s',
-                           'Requested ', val,
-                           '. Allowed range is', bnds, ' in ', mode, 's.')
+            logger.warning('Warning: value out of range was constrained.\n'
+                           'Requested %s.'
+                           'Allowed range is %s in %s s.', val, bnds, mode)
             if cls.exceptOnRangeError:
                 if val < min(bnds):
                     violation_direction = 'low'

@@ -6,6 +6,7 @@ import numpy as np
 import time
 from lightlab import logger
 
+
 class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     ''' A Keithley 2400 driver.
 
@@ -23,7 +24,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     _latestVoltageVal = 0
     currStep = None
     voltStep = None
-    rampStepTime = 0.01 # in seconds.
+    rampStepTime = 0.01  # in seconds.
 
     def __init__(self, name=None, address=None, **kwargs):
         '''
@@ -48,7 +49,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             self.setConfigParam('ROUT:TERM', 'REAR')
 
     def __setSourceMode(self, isCurrentSource):
-        # fixme: make proper automata flowchart for this.
+        # TODO: make proper automata flowchart for this.
         if isCurrentSource:
             sourceStr, meterStr = ('CURR', 'VOLT')
         else:
@@ -141,7 +142,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         v = float(retStr.split(',')[0])  # first number is voltage always
         if v >= self.protectionVoltage:
             logger.warning('Keithley compliance voltage of %s reached', self.protectionVoltage)
-            logger.warning('You are sourcing %s mW into the load.', v * self._latestCurrentVal * 1e-3)
+            logger.warning('You are sourcing %s mW into the load.',
+                           v * self._latestCurrentVal * 1e-3)
         return v
 
     def measCurrent(self):
@@ -149,7 +151,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         i = float(retStr.split(',')[1])  # second number is current always
         if i >= self.protectionCurrent:
             logger.warning('Keithley compliance current of %s reached.', self.protectionCurrent)
-            logger.warning('You are sourcing %s mW into the load.', i * self._latestVoltageVal * 1e-3)
+            logger.warning('You are sourcing %s mW into the load.',
+                           i * self._latestVoltageVal * 1e-3)
         return i
 
     def enable(self, newState=None):

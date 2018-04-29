@@ -2,6 +2,7 @@
 
 All classes are imported into this namespace.
 """
+# flake8: noqa
 
-from .bases import Host, LocalHost, Bench, Instrument, Device  # noqa
-from .interfaces import *  # noqa
+from .bases import Host, LocalHost, Bench, Instrument, Device
+from .interfaces import *  # pylint: disable=wildcard-import

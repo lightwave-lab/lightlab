@@ -8,7 +8,7 @@ OPEN_RETRIES = 5
 class VISAObject(object):
     ''' Abstract class for something that communicates via GPIB
     '''
-    def __init__(self, address=None, tempSess=False, **kwargs):
+    def __init__(self, address=None, tempSess=False):
         '''
             Args:
                 tempSess (bool): If True, the session is opened and closed every time there is a command
@@ -101,7 +101,7 @@ class VISAObject(object):
         return retStr
 
     def instrID(self):
-        """Returns the *IDN? string"""
+        r"""Returns the \*IDN? string"""
         return self.query('*IDN?')
 
     @property
@@ -130,7 +130,7 @@ class VISAObject(object):
         self.__timeout = newTimeout
 
     def reset(self):
-        """Writes *RST"""
+        r"""Writes \*RST"""
         self.write('*RST')
 
     def wait(self, bigMsTimeout=10000):
