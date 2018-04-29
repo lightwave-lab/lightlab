@@ -24,7 +24,8 @@ test-master:
   - pip install -U virtualenv pip
   - python --version
   - make test-unit-all
-  - make test-lint
+  - make test-lint-errors
+  - make test-lint || true
 
 deploy-dev:
   stage: deploy
