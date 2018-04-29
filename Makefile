@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 
 # different tests
-TESTARGS = -s --cov=lightlab --cov-config .coveragerc
+TESTARGS = --capture=sys --cov=lightlab --cov-config .coveragerc
 TESTARGSNB = --nbval-lax --sanitize-with ipynb_pytest_santize.cfg
 
 # For devbuild, testbuild

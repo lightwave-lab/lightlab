@@ -24,15 +24,11 @@ class Host(Node):
     __cached_list_resources_info = None
     __cached_gpib_instrument_list = None
 
-    def __init__(self, name='Unnamed Host', instruments=None, hostname=None, **kwargs):
-        if instruments is None:
-            instruments = list()
-        self.instruments = instruments
+    def __init__(self, name='Unnamed Host', hostname=None, **kwargs):
         if hostname is None:
             logger.warning("Hostname not set. isLive and list_resources not functional.")
 
         self.hostname = hostname
-        self.instruments = instruments
         self.name = name
         super().__init__(**kwargs)
 
@@ -180,34 +176,30 @@ class Host(Node):
             "{} not found in {}".format(id_string_search, self))
 
     def addInstrument(self, *instruments):
-        """ Adds an instrument to self.instruments if it is not already present.
+        """ Adds an instrument to lab.instruments if it is not already present.
 
         Args:
             *instruments (:py:class:`Instrument`): instruments
 
         """
+        from lightlab.laboratory.state import lab
         for instrument in instruments:
-            if not isinstance(instrument, Instrument):
-                raise TypeError(f"{instrument} is not an instance of Instrument.")
-            if instrument not in self.instruments:
-                self.instruments.append(instrument)
+            if instrument not in lab.instruments:
+                lab.instruments.append(instrument)
+            instrument.host = self
 
     def removeInstrument(self, *instruments):
-        """ Removes an instrument from self.instruments.
-        Warns the user if the instrument is not already present.
+        """ Disconnects the instrument from the host
 
         Args:
             *instruments (:py:class:`Instrument`): instruments
 
         """
+        # TODO Remove all connections
         for instrument in instruments:
             if type(instrument) is str:
-                raise TypeError('Cannot remove by name string. Use the object')
-            try:
-                self.instruments.remove(instrument)
-            except ValueError as err:
-                logger.warn("%s not currently connected to %s",
-                            instrument, self)
+                logger.warn('Cannot remove by name string. Use the object')
+            instrument.host = None
 
     def checkInstrumentsLive(self):
         """ Checks whether all instruments are "live".
@@ -276,6 +268,10 @@ class Bench(Node):
     """
     name = None
 
+    def __init__(self, name, *args, **kwargs):
+        self.name = name
+        super().__init__(*args, **kwargs)
+
     def __contains__(self, item):
 
         if isinstance(item, Instrument):
@@ -292,10 +288,6 @@ class Bench(Node):
             logger.debug("{} is neither an Instrument nor a Device".format(item))
             return False
 
-    def __init__(self, name, *args, **kwargs):
-        self.name = name
-        super().__init__(*args, **kwargs)
-
     @property
     def instruments(self):
         from lightlab.laboratory.state import lab
@@ -307,7 +299,8 @@ class Bench(Node):
         return TypedList(Device, *list(filter(lambda x: x.bench == self, lab.devices)))
 
     def addInstrument(self, *instruments):
-        """ Adds an instrument to self.instruments if it is not already present.
+        """ Adds an instrument to lab.instruments if it is not already
+        present and connects to the host.
 
         Args:
             *instruments (:py:class:`Instrument`): instruments
@@ -315,14 +308,12 @@ class Bench(Node):
         """
         from lightlab.laboratory.state import lab
         for instrument in instruments:
-            if not isinstance(instrument, Instrument):
-                raise TypeError(f"{instrument} is not an instance of Instrument.")
-            if instrument not in self.instruments:
+            if instrument not in lab.instruments:
                 lab.instruments.append(instrument)
+            instrument.bench = self
 
     def removeInstrument(self, *instruments):
-        """ Removes an instrument from self.instruments.
-        Warns the user if the instrument is not already present.
+        """ Detaches the instrument from the bench.
 
         Args:
             *instruments (:py:class:`Instrument`): instruments
@@ -330,18 +321,15 @@ class Bench(Node):
         Todo:
             Remove all connections
         """
-        from lightlab.laboratory.state import lab
         # TODO Remove all connections
         for instrument in instruments:
             if type(instrument) is str:
                 raise TypeError('Cannot remove by name string. Use the object')
-            try:
-                lab.instruments.remove(instrument)
-            except ValueError as err:
-                logger.warn("%s not currently placed in %s", instrument, self)
+            instrument.bench = None
 
     def addDevice(self, *devices):
-        """ Adds a device to self.devices if it is not already present.
+        """ Adds a device to lab.devices if it is not already present
+        and places it in the bench.
 
         Args:
             *(:py:class:`Device`): devices
@@ -351,12 +339,12 @@ class Bench(Node):
         for device in devices:
             if not isinstance(device, Device):
                 raise TypeError(f"{device} is not an instance of Device.")
-            if device not in self.devices:
+            if device not in lab.devices:
                 lab.devices.append(device)
+            device.bench = self
 
     def removeDevice(self, *devices):
-        """ Removes a device from self.devices.
-        Warns the user if the device is not already present.
+        """ Detaches the device from the bench.
 
         Args:
             *(:py:class:`Device`): devices
@@ -365,14 +353,10 @@ class Bench(Node):
             Remove all connections
         """
         # TODO Remove all connections
-        from lightlab.laboratory.state import lab
         for device in devices:
             if type(device) is str:
                 raise TypeError('Cannot remove by name string. Use the object')
-            try:
-                lab.devices.remove(device)
-            except ValueError as err:
-                logger.warn("%s not currently placed in %s", device, self)
+            device.bench = None
 
     def display(self):
         """ Displays the bench's table in a nice format."""
@@ -415,7 +399,6 @@ class Instrument(Node):
     _driver_class = None
     __driver_object = None
     address = None  #: Complete Visa address of the instrument (e.g. :literal:`visa\://hostname/GPIB0::1::INSTR`)
-
 
     _id_string = None
     _name = None
