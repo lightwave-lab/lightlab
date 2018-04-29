@@ -69,7 +69,7 @@ class Experiment(Virtualizable):
     valid = property(is_valid)
 
     def __init__(self, instruments=None, devices=None, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         if instruments is not None:
             self.instruments = instruments
         else:

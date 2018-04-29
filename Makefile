@@ -84,6 +84,9 @@ clean:
 	rm -rf lightlab.egg-info
 	rm -rf build
 	rm -rf venvinfo
+	rm -rf .cache
+	rm -rf .pytest_cache
+	rm -rf .coverage
 	$(MAKE) -C docs clean
 
 purge: clean
