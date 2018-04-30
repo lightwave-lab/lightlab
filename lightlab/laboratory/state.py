@@ -592,6 +592,12 @@ def patch_labstate(from_version, old_lab):
         patched_lab.hosts.extend(hosts)
         patched_lab.hosts['cassander'] = LocalHost(name='cassander')
         patched_lab.connections = old_connections
+
+        patched_lab.__sha256__ = old_lab.__sha256__
+        patched_lab.__version__ = LabState.__version__
+        patched_lab.filename = old_lab.filename
+        patched_lab.__user__ = old_lab.__user__
+        patched_lab.__datetime__ = old_lab.__datetime__
         return patched_lab
 
     raise NotImplementedError("Patch not found")
