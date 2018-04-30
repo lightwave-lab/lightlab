@@ -140,6 +140,9 @@ class NamedList(MutableSequence, Hashable):
     def keys(self):
         return lambda: iter([i.name for i in self])
 
+    def items(self):
+        return self.dict.items()
+
     def check(self, v):
         if not hasattr(v, 'name'):
             raise TypeError(f"{type(v)} does not have name.")
