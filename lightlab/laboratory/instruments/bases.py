@@ -481,24 +481,27 @@ class Instrument(Node):
 
         # This was put here to fetch the self.__driver_object or other mangled variables
         # after being deleted.
-        if hasattr(self.__class__, mangle(attrName, self.__class__.__name__)):
-            return getattr(self.__class__, mangle(attrName, self.__class__.__name__))
-        else:
-            raise AttributeError(errorText)
+        try:
+            return self.__dict__[mangle(attrName, self.__class__.__name__)]
+        except KeyError:
+            if hasattr(self.__class__, mangle(attrName, self.__class__.__name__)):
+                return getattr(self.__class__, mangle(attrName, self.__class__.__name__))
+            else:
+                raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
         if attrName in self.essentialProperties + self.essentialMethods:  # or methods
-            return setattr(self.driver, attrName, newVal)
+            setattr(self.driver, attrName, newVal)
         else:
             if attrName == 'address':  # Reinitialize the driver
                 if self.__driver_object is not None:
                     self.__driver_object.close()
                     self.__driver_object.address = newVal
-            self.__dict__[mangle(attrName, self.__class__.__name__)] = newVal
+            super().__setattr__(mangle(attrName, self.__class__.__name__), newVal)
 
     def __delattr__(self, attrName):
         if attrName in self.essentialProperties + self.essentialMethods:  # or methods
-            return self.driver.__delattr__(attrName)
+            self.driver.__delattr__(attrName)
         else:
             try:
                 del self.__dict__[mangle(attrName, self.__class__.__name__)]
