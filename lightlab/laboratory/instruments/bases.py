@@ -491,7 +491,9 @@ class Instrument(Node):
             return setattr(self.driver, attrName, newVal)
         else:
             if attrName == 'address':  # Reinitialize the driver
-                self.__driver_object = None
+                if self.__driver_object is not None:
+                    self.__driver_object.close()
+                    self.__driver_object.address = newVal
             self.__dict__[mangle(attrName, self.__class__.__name__)] = newVal
 
     def __delattr__(self, attrName):
