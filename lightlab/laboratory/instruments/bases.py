@@ -12,6 +12,30 @@ from lightlab.equipment.visa_bases import VISAObject, DefaultDriver
 from lightlab import logger
 import pyvisa
 
+MANGLE_LEN = 256  # magic constant from compile.c
+
+
+def mangle(name, klass):
+    if not name.startswith('__'):
+        return name
+    if len(name) + 2 >= MANGLE_LEN:
+        return name
+    if name.endswith('__'):
+        return name
+    try:
+        i = 0
+        while klass[i] == '_':
+            i = i + 1
+    except IndexError:
+        return name
+    klass = klass[i:]
+
+    tlen = len(klass) + len(name)
+    if tlen > MANGLE_LEN:
+        klass = klass[:MANGLE_LEN - tlen]
+
+    return "_%s%s" % (klass, name)
+
 
 class Host(Node):
     """ Computer host, from which GPIB/VISA commands are issued.
@@ -394,7 +418,8 @@ class Instrument(Node):
     """
     _driver_class = None
     __driver_object = None
-    address = None  #: Complete Visa address of the instrument (e.g. :literal:`visa\://hostname/GPIB0::1::INSTR`)
+    #: Complete Visa address of the instrument (e.g. :literal:`visa\://hostname/GPIB0::1::INSTR`)
+    address = None
 
     _id_string = None
     _name = None
@@ -453,7 +478,13 @@ class Instrument(Node):
         elif hasattr(self._driver_class, attrName):
             errorText += '\nIt looks like you are trying to access a low-level attribute'
             errorText += '\nUse ".driver.{}" to get it'.format(attrName)
-        raise AttributeError(errorText)
+
+        # This was put here to fetch the self.__driver_object or other mangled variables
+        # after being deleted.
+        if hasattr(self.__class__, mangle(attrName, self.__class__.__name__)):
+            return getattr(self.__class__, mangle(attrName, self.__class__.__name__))
+        else:
+            raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
         if attrName in self.essentialProperties + self.essentialMethods:  # or methods
@@ -462,13 +493,16 @@ class Instrument(Node):
             if attrName == 'address':  # Reinitialize the driver
                 del self.__driver_object
                 self.__driver_object = None
-            return super().__setattr__(attrName, newVal)
+            self.__dict__[mangle(attrName, self.__class__.__name__)] = newVal
 
     def __delattr__(self, attrName):
         if attrName in self.essentialProperties + self.essentialMethods:  # or methods
             return self.driver.__delattr__(attrName)
         else:
-            return super().__delattr__(attrName)
+            try:
+                del self.__dict__[mangle(attrName, self.__class__.__name__)]
+            except KeyError:
+                super().__delattr__(attrName)
 
     # These control contextual behavior. They are used by DualInstrument
     def hardware_warmup(self):
