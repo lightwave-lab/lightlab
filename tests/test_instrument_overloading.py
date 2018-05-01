@@ -36,6 +36,10 @@ class DerivedInstrument(Instrument):
         del self.__superprivate_variable
 
 
+class ReDerivedInstrument(DerivedInstrument):
+    pass
+
+
 class NormalClass(object):
 
     normal_variable = 'default'
@@ -65,6 +69,10 @@ class NormalClass(object):
     @superprivate_variable.deleter
     def superprivate_variable(self):
         del self.__superprivate_variable
+
+
+class DerivedClass(NormalClass):
+    pass
 
 
 class BogusDriver(VISAInstrumentDriver):
@@ -101,7 +109,7 @@ def test_address_change():
 
 
 # ### Compare DerivedInstrument's behavior with normal class
-klasses = [NormalClass, DerivedInstrument]
+klasses = [NormalClass, DerivedClass, DerivedInstrument, ReDerivedInstrument]
 
 
 @pytest.mark.parametrize("Klass", klasses)
