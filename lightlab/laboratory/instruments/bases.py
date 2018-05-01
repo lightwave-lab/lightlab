@@ -466,7 +466,7 @@ class Instrument(Node):
 
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
-        errorText = str(self) + ' has no attribute ' + attrName
+        errorText = f"'{str(self)}' has no attribute '{attrName}'"
         if attrName in self.essentialProperties \
                 + self.essentialMethods \
                 + self.implementedOptionals:
@@ -479,15 +479,12 @@ class Instrument(Node):
             errorText += '\nIt looks like you are trying to access a low-level attribute'
             errorText += '\nUse ".driver.{}" to get it'.format(attrName)
 
-        # This was put here to fetch the self.__driver_object or other mangled variables
-        # after being deleted.
+        # This was put here to match normal behavior while trying to
+        # set obj.__mangled_variable = 'something'
         try:
             return self.__dict__[mangle(attrName, self.__class__.__name__)]
         except KeyError:
-            if hasattr(self.__class__, mangle(attrName, self.__class__.__name__)):
-                return getattr(self.__class__, mangle(attrName, self.__class__.__name__))
-            else:
-                raise AttributeError(errorText)
+            raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
         if attrName in self.essentialProperties + self.essentialMethods:  # or methods

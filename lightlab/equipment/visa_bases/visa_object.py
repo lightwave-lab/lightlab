@@ -14,7 +14,6 @@ class VISAObject(object):
                 tempSess (bool): If True, the session is opened and closed every time there is a command
                 address (str): The full visa address
         '''
-        self.isOpen = False
         self.tempSess = tempSess
         self.resMan = None
         self.address = address
