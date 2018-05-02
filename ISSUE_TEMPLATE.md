@@ -13,12 +13,7 @@ Instead, to request core features, go __this__ discussion board
 
 Do you want to ask a question? Are you looking for support? The Atom message board is the best place for getting support: https://discuss.atom.io
 
-# Template
-### Prerequisites
-
-* [ ] Put an X between the brackets on this line if you have done all of the following:
-    * Reproduced the problem 
-    * Checked that your issue isn't already filed: [link]
+# Template [Title of issue]
 
 ### Description
 
@@ -39,7 +34,7 @@ Latest: [0.2.0] -- you can get this by running `python version.py` in the lightl
 
 Branch: [@development]
 
-Commit short hash: [7f3e176f]
+Commit short hash: [1234abcd]
 
 ### Additional Information
 Any additional information, configuration or data that might be necessary to reproduce the issue.
