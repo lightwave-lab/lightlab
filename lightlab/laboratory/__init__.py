@@ -9,6 +9,27 @@ from collections import MutableSequence
 
 __all__ = ["Node"]
 
+class FrozenDict(collections.Mapping):
+    """Don't forget the docstrings!!"""
+
+    def __init__(self, *args, **kwargs):
+        self._d = dict(*args, **kwargs)
+
+    def __iter__(self):
+        return iter(self._d)
+
+    def __len__(self):
+        return len(self._d)
+
+    def __getitem__(self, key):
+        return self._d[key]
+
+    def __setitem__(self, key, value):
+        raise AttributeError("read-only list")
+
+    def __delitem__(self, key):
+        raise AttributeError("read-only list")
+
 
 class Hashable(object):
     """
@@ -124,13 +145,17 @@ class NamedList(MutableSequence, Hashable):
 
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args, read_only=False):
+        self.read_only = read_only
         self.list = list()
         self.extend(list(args))
 
     @property
     def dict(self):
-        return {i.name: i for i in self}
+        if self.read_only:
+            return {FrozenDict(i._name): i for i in self}
+        else:    
+            return {i.name: i for i in self}
 
     @property
     def values(self):
@@ -156,7 +181,9 @@ class NamedList(MutableSequence, Hashable):
         return self.list[i]
 
     def __delitem__(self, i):
-        if isinstance(i, str):
+        if self.read_only:
+            raise AttributeError("read-only list")
+        elif isinstance(i, str):
             matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
             for idx in matching_idxs:
                 del self.list[idx]
@@ -164,26 +191,29 @@ class NamedList(MutableSequence, Hashable):
             del self.list[i]
 
     def __setitem__(self, i, v):
-        self.check(v)
-        if isinstance(i, str):
-            if i in self.dict.keys():
-                matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
-                assert len(matching_idxs) == 1
-                idx = matching_idxs[0]
-                self.list[idx] = v  # update current entry
-            else:
-                if i != v.name:
-                    # Renaming instrument to conform to the dict's key
-                    # named_list['name1'] = Instrument('name2')
-                    # Instrument will be renamed to name1 prior to insertion
-                    v.name = i
-
-                # special case when v is already in the list, in
-                # which case one must do nothing.
-                if v not in self.list:
-                    self.list.append(v)
+        if self.read_only:
+            raise AttributeError("read-only list")
         else:
-            self.list[i] = v
+            self.check(v)
+            if isinstance(i, str):
+                if i in self.dict.keys():
+                    matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
+                    assert len(matching_idxs) == 1
+                    idx = matching_idxs[0]
+                    self.list[idx] = v  # update current entry
+                else:
+                    if i != v.name:
+                        # Renaming instrument to conform to the dict's key
+                        # named_list['name1'] = Instrument('name2')
+                        # Instrument will be renamed to name1 prior to insertion
+                        v.name = i
+
+                    # special case when v is already in the list, in
+                    # which case one must do nothing.
+                    if v not in self.list:
+                        self.list.append(v)
+            else:
+                self.list[i] = v
 
     def insert(self, i, v):
         self.check(v)
@@ -205,9 +235,9 @@ class TypedList(NamedList):
     the list and that they belong to a certain class (obj_type).
     """
 
-    def __init__(self, obj_type, *args):
+    def __init__(self, obj_type, *args, **kwargs):
         self.obj_type = obj_type
-        super().__init__(*args)
+        super().__init__(*args, **kwargs)
 
     def check(self, v):
         if not isinstance(v, self.obj_type):
