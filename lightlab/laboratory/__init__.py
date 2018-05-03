@@ -102,6 +102,7 @@ class Node(Hashable):
 def typed_property(type_obj, name):
     """ Property that only accepts instances of a class and
     stores the contents in self.name"""
+
     def fget(self):
         return getattr(self, name)
 
@@ -145,9 +146,13 @@ class NamedList(MutableSequence, Hashable):
     def items(self):
         return self.dict.items()
 
-    def check(self, v):
-        if not hasattr(v, 'name'):
-            raise TypeError(f"{type(v)} does not have name.")
+    def check(self, value):
+        if not hasattr(value, 'name'):
+            raise TypeError(f"{type(value)} does not have name.")
+
+    def check_presence(self, name):
+        matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == name]
+        return matching_idxs
 
     def __len__(self):
         return len(self.list)
@@ -169,7 +174,7 @@ class NamedList(MutableSequence, Hashable):
         self.check(v)
         if isinstance(i, str):
             if i in self.dict.keys():
-                matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
+                matching_idxs = self.check_presence(i)
                 assert len(matching_idxs) == 1
                 idx = matching_idxs[0]
                 self.list[idx] = v  # update current entry
@@ -180,22 +185,41 @@ class NamedList(MutableSequence, Hashable):
                     # Instrument will be renamed to name1 prior to insertion
                     v.name = i
 
+                # because of the lines above, there is a special case:
                 # special case when v is already in the list, in
                 # which case one must do nothing.
                 if v not in self.list:
                     self.list.append(v)
         else:
+            # check if there is an element with the same name elsewhere in the list.
+            matching_idxs = self.check_presence(v.name)
+            assert len(matching_idxs) <= 1
+            if len(matching_idxs) > 0 and i not in matching_idxs:
+                raise RuntimeError(f"Attempting to set {v.name} in list[{i}], "
+                                   f"but {v.name} already exists in list[{matching_idxs[0]}].")
             self.list[i] = v
 
     def insert(self, index, value):
+        # This inserts a new element after index.
+        # Note: not the same as __setitem__, which replaces the value
+        # in an index.
+        # Append will call this method with self.insert(len(self), value)
         self.check(value)
-        name_list = [i.name for i in self]
-        if value.name in name_list:
-            raise RuntimeError(f"{value.name} already exists in list {name_list}.")
+        conflicts = self.check_presence(value.name)
+        if len(conflicts) > 0:
+            raise RuntimeError(f"{value.name} already exists in list[{conflicts[0]}].")
         if isinstance(index, str):
-            del self[index]
-            self[index] = index
-        self.list.insert(index, value)
+            # this code should normally never be run. but just in case,
+            # it should add value right before index's position
+            index_list = self.check_presence(index)
+            assert len(index_list) <= 1
+            if len(index_list) == 1:
+                index = index_list[0]
+                self.list.insert(index, value)
+            else:
+                self[value.name] = value
+        else:
+            self.list.insert(index, value)
 
     def __str__(self):
         return str(self.list)
