@@ -11,7 +11,7 @@ class ConfigModule(Configurable):
         within that channel. Updates only when changed or with ``forceHardware``.
         It communicates with a bank instrument of which it is a part.
         When it writes to hardware, it selects itself by first sending
-        "'CH 2'" (if it were initialized with channel 2)
+        ``'CH 2'`` (if it were initialized with channel 2)
     '''
     selectPrefix = 'CH'
 

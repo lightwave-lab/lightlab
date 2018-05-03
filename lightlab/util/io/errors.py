@@ -8,3 +8,8 @@ class RangeError(Exception):
         argument of this class' initializer
     '''
     pass
+
+class DeprecationError(NotImplementedError):
+    ''' Make sure to describe the new alternative
+    '''
+    pass

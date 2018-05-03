@@ -276,32 +276,6 @@ class DualInstrument(Virtualizable):
         ''' Facilitates autocompletion in IPython '''
         return super().__dir__() + dir(self.virt_obj) + dir(self.real_obj)
 
-    @classmethod
-    def fromInstrument(cls, hwOnlyInstr, *args, **kwargs):
-        r''' Gives a new dual instrument that has all the same
-            properties and references.
-
-            The instrument base of hwOnlyInstr must be the same instrument
-            base of this class
-
-            Args:
-                hwOnlyInstr (VISAInstrumentDriver subclass): a real instrument
-                \*args, \*\*kwargs: fed to a VirtualInstrument
-
-            Todo:
-                This appears to be broken. It should not be doing ``cls(*args, **kwargs)``.
-                    It should instead be initializing a VirtualInstrument.
-        '''
-        raise NotImplementedError('This method is currently broken')
-        # if hwOnlyInstr is not None and not isinstance(hwOnlyInstr, cls.real_klass):
-        #     raise TypeError(
-        #         'The fromInstrument (' + hwOnlyInstr.__class__.__name__ + ')'
-        #         ' is not an instance of the expected Instrument class'
-        #         ' (' + cls.real_klass.__name__ + ')')
-        # newObj = cls(*args, **kwargs)
-        # newObj.real_obj = hwOnlyInstr
-        # return newObj
-
 
 class DualFunction(object):
     """ This class implements a descriptor for a function whose behavior depends
