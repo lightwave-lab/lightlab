@@ -204,7 +204,7 @@ class CurrentSources(VISAInstrumentDriver):
             setVoltage = value
         elif self.mode == 'milliamp':
             setVoltage = value / CurrentSources.v2maCoef
-        elif self.mode == 'mwperohm':  # TODO I think this formula is in the wrong units
+        elif self.mode == 'mwperohm':
             setVoltage = np.sqrt(value * 1e3) / CurrentSources.v2maCoef
         return setVoltage
 

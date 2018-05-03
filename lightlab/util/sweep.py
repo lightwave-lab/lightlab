@@ -934,7 +934,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
             interactive (bool): show plot immediately after call, even with incomplete data (index must be specified)
 
         Todo:
-            Fix the global hack for persistent plots
+            Fix the global hack for persistent plots -- actually, this is fine
     '''
     global interAx
     global hArrow
@@ -1011,7 +1011,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
                 y = meanErrors + upDown * stddevs
                 interAx.plot(x, y, 'b')
 
-            # Monitor plotting if it's there: Todo: remove copied code
+            # Monitor plotting if it's there:
             if monitWeights is not None:
                 allPts = monitWeights[:index[0], :, 0]
                 for iv, v in np.ndenumerate(allPts):

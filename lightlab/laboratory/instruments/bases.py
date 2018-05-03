@@ -190,8 +190,9 @@ class Host(Node):
         Args:
             \*instruments (Instrument): instruments
 
+        Todo:
+            Remove all connections
         """
-        # TODO Remove all connections
         for instrument in instruments:
             if type(instrument) is str:
                 logger.warn('Cannot remove by name string. Use the object')
@@ -317,7 +318,6 @@ class Bench(Node):
         Todo:
             Remove all connections
         """
-        # TODO Remove all connections
         for instrument in instruments:
             if type(instrument) is str:
                 raise TypeError('Cannot remove by name string. Use the object')
@@ -657,11 +657,12 @@ class NotFoundError(RuntimeError):
     pass
 
 
-# TODO add device equality function
 class Device(Node):
     """ Represents a device in lab.
+        Only useful for documenting the experiment.
 
-    Only useful for documenting the experiment.
+        Todo:
+            Add equality function
     """
 
     name = None  #: device name

@@ -67,7 +67,9 @@ def _endingWith(filerootname, suffix):
 def savePickle(filename, dataTuple):
     ''' Uses pickle
 
-        Todo: timestamping would be cool
+        Args:
+            filename (str, Path): file to write to
+            dataTuple (tuple): tuple containing almost anything
     '''
     rp = _makeFileExist(_endingWith(filename, suffix='.pkl'))
     with rp.open('wb') as fx:
@@ -84,7 +86,9 @@ def loadPickle(filename):
 def savePickleGzip(filename, dataTuple):
     ''' Uses pickle
 
-        Todo: timestamping would be cool
+        Args:
+            filename (str, Path): file to write to
+            dataTuple (tuple): tuple containing almost anything
     '''
     rp = _makeFileExist(_endingWith(filename, suffix='.gz'))
     with gzip.open(rp, 'wb') as fx:
