@@ -1,11 +1,11 @@
 ''' Useful stuff having to do with data handling and processing.
 
-    :class:`MeasuredFunction` is the workhorse.
+    :class:`one_dim.MeasuredFunction` is the workhorse.
 
-    The :class:`Spectrum` class is nice for working with dbm and linear units, and also for interpolating at any value.
+    The :class:`~one_dim.Spectrum` class is nice for working with dbm and linear units
 
-    :func:`findPeaks` and :func:`descend` hold the low-level algorithms.
-    Usually, users would interact with it via ``MeasuredFunction``.
+    :func:`peaks.findPeaks` and :func:`function_inversion.descend` hold the low-level algorithms.
+    Usually, users would interact with it via :class:`~one_dim.MeasuredFunction`.
 '''
 from .basic import (verifyListOfType, argFlatten, mangle,  # noqa
                     rms, minmax)  # noqa
