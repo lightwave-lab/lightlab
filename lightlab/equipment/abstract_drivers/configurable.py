@@ -222,10 +222,17 @@ class TekConfig(object):
 
 # pylint: disable=no-member
 class Configurable(AbstractDriver):
-    ''' Instruments can be configurable and use TekConfig.
+    ''' Instruments can be configurable to keep track of settings within the instrument
 
-        This clas uses query/write methods that are not directly inherited, so the subclass or its parents must implement those functions
+        This class is setup so that the hardware state is reflected exactly in the 'live' config
+        **unless somebody changes something in lab**.
+        Watch out for that and use ``forceHardware`` if that is a risk
+
+        This clas uses query/write methods that are not directly inherited,
+        so the subclass or its parents must implement those functions
     '''
+
+    config = None #: Dictionary of TekConfig objects.
 
     def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True, **kwargs):
 
@@ -353,9 +360,6 @@ class Configurable(AbstractDriver):
             Args:
                 source (str/TekConfig): load source
                 subgroup (str): a group of commands or a single command. If '', it means everything.
-
-            Returns:
-                nothing
         '''
         if type(source) in [TekConfig, dict]:
             srcObj = source
@@ -374,9 +378,6 @@ class Configurable(AbstractDriver):
         # This writes everything without checking how it is set currently
         self._setHardwareConfig(subgroup)
 
-    # Hardware interface. User is not allowed to access directly.
-    # This class is setup so that the hardware state is reflected exactly in the 'live' config
-    #   Unless somebody changes something in lab
     def __getFullHardwareConfig(self, subgroup=''):
         ''' Get everything that is returned by the SET? query
 
