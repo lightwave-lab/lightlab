@@ -1535,6 +1535,45 @@ def argFlatten(*argLists, typs=(list, tuple, set)):
     return tuple(flatList)
 
 
+MANGLE_LEN = 256  # magic constant from compile.c
+
+
+def mangle(name, klass):
+    ''' Sanitizes attribute names that might be "hidden,"
+        denoted by leading '__'. In :py:class:`~lightlab.laboratory.Hashable` objects,
+        attributes with this kind of name can only be class attributes.
+
+        See :py:mod:`~tests.test_instrument_overloading` for user-side implications.
+
+        Behavior::
+
+            mangle('a', 'B') == 'a'
+            mangle('_a', 'B') == '_a'
+            mangle('__a__', 'B') == '__a__'
+            mangle('__a', 'B') == '_B__a'
+            mangle('__a', '_B') == '_B__a'
+    '''
+    if not name.startswith('__'):
+        return name
+    if len(name) + 2 >= MANGLE_LEN:
+        return name
+    if name.endswith('__'):
+        return name
+    try:
+        i = 0
+        while klass[i] == '_':
+            i = i + 1
+    except IndexError:
+        return name
+    klass = klass[i:]
+
+    tlen = len(klass) + len(name)
+    if tlen > MANGLE_LEN:
+        klass = klass[:MANGLE_LEN - tlen]
+
+    return "_%s%s" % (klass, name)
+
+
 # Simple common array operations
 def rms(diffArr, axis=0):
     return np.sqrt(np.mean(diffArr ** 2, axis=axis))

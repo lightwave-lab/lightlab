@@ -8,33 +8,10 @@ from contextlib import contextmanager
 
 from lightlab.laboratory import Node, typed_property, TypedList
 from lightlab.equipment.visa_bases import VISAObject, DefaultDriver
+from lightlab.util.data import mangle
 
 from lightlab import logger
 import pyvisa
-
-MANGLE_LEN = 256  # magic constant from compile.c
-
-
-def mangle(name, klass):
-    if not name.startswith('__'):
-        return name
-    if len(name) + 2 >= MANGLE_LEN:
-        return name
-    if name.endswith('__'):
-        return name
-    try:
-        i = 0
-        while klass[i] == '_':
-            i = i + 1
-    except IndexError:
-        return name
-    klass = klass[i:]
-
-    tlen = len(klass) + len(name)
-    if tlen > MANGLE_LEN:
-        klass = klass[:MANGLE_LEN - tlen]
-
-    return "_%s%s" % (klass, name)
 
 
 class Host(Node):
@@ -466,7 +443,7 @@ class Instrument(Node):
 
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
-        errorText = str(self) + ' has no attribute ' + attrName
+        errorText = f"'{str(self)}' has no attribute '{attrName}'"
         if attrName in self.essentialProperties \
                 + self.essentialMethods \
                 + self.implementedOptionals:
@@ -479,15 +456,12 @@ class Instrument(Node):
             errorText += '\nIt looks like you are trying to access a low-level attribute'
             errorText += '\nUse ".driver.{}" to get it'.format(attrName)
 
-        # This was put here to fetch the self.__driver_object or other mangled variables
-        # after being deleted.
+        # This was put here to match normal behavior while trying to
+        # set obj.__mangled_variable = 'something'
         try:
             return self.__dict__[mangle(attrName, self.__class__.__name__)]
         except KeyError:
-            if hasattr(self.__class__, mangle(attrName, self.__class__.__name__)):
-                return getattr(self.__class__, mangle(attrName, self.__class__.__name__))
-            else:
-                raise AttributeError(errorText)
+            raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
         if attrName in self.essentialProperties + self.essentialMethods:  # or methods
