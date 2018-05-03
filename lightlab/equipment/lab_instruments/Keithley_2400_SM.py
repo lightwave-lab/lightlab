@@ -6,6 +6,7 @@ import numpy as np
 import time
 from lightlab import logger
 
+
 class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     ''' A Keithley 2400 driver.
 
@@ -23,7 +24,7 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     _latestVoltageVal = 0
     currStep = None
     voltStep = None
-    rampStepTime = 0.01 # in seconds.
+    rampStepTime = 0.01  # in seconds.
 
     def __init__(self, name=None, address=None, **kwargs):
         '''
