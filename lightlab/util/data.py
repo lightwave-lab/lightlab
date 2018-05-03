@@ -1,6 +1,10 @@
 ''' Useful stuff having to do with data handling and processing.
-The Spectrum class is nice for working with dbm and linear units, and also for interpolating at any value.
-findPeaks obviously is important.
+
+    :py:class:`MeasuredFunction` is the workhorse.
+
+    The :py:class:`Spectrum` class is nice for working with dbm and linear units, and also for interpolating at any value.
+
+    :py:func:`findPeaks` obviously is important.
 '''
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,16 +15,45 @@ from lightlab import logger
 
 
 class MeasuredFunction(object):
-    ''' Takes measured points and can be called and processed in various ways
+    ''' Array of x,y points.
+        This is the workhorse class of ``lightlab`` data structures.
+        Examples can be found throughout Test notebooks.
 
-        Calling the object interpolates for the array of provided test values.
+        Supports many kinds of operations:
 
-        Supports addition and subtraction with the +/- operators.
-            * **not commutative**
-            * The domain used will be the one on the left of the operator
+        1. Data access (``mf(x)``, ``len(mf)``, ``mf[i]``, :meth:`getData`)
+            Calling the object with x-values interpolates and returns y-values.
 
-        For simple plotting on the current axis, use :meth:`simplePlot`
+        2. Storage (:meth:`copy`, :meth:`save`, :meth:`load`, :meth:`loadFromFile`)
+            see method docstrings
+
+        3. x-axis signal processing (:meth:`getSpan`, :meth:`crop`, :meth:`shift`, :meth:`flip`, :meth:`resample`, :meth:`uniformlySample`)
+            see method docstrings
+
+        4. y-axis signal processing (:meth:`getRange`, :meth:`clip`, :meth:`debias`, :meth:`unitRms`, :meth:`getMean`, :meth:`moment`)
+            see method docstrings
+
+        5. Advanced signal processing (:meth:`invert`, :meth:`lowPass`, :meth:`centerOfMass`, :meth:`findResonanceFeatures`)
+            see method docstrings
+
+        6. Binary math (``+``, ``-``, ``*``, ``/``, ``==``)
+            Operands must be either
+                * the same subclass of MeasuredFunction, or
+                * scalar numbers, or
+                * functions/bound methods: these must be callable with one argument that is an ndarray
+
+            If both are MeasuredFunction, the domain used will be the smaller of the two
+
+        7. Plotting (:meth:`simplePlot`)
+            Args and Kwargs are passed to pyplot's plot function.
+            Supports live plotting for notebooks
+
+        8. Others (:meth:`deleteSegment`, :meth:`splice`)
+            see method docstrings
     '''
+
+    absc = None  #: abscissa, a.k.a. the x-values or domain
+    ordi = None  #: ordinate, a.k.a. the y-values
 
     def __init__(self, abscissaPoints, ordinatePoints, unsafe=False):
         '''
@@ -127,11 +160,12 @@ class MeasuredFunction(object):
         return cls(absc, ordi)
 
     def simplePlot(self, *args, livePlot=False, **kwargs):
-        ''' Plots on the current axis
+        r''' Plots on the current axis
 
         Args:
-            *args (tuple): arguments passed through to ``pyplot.plot``
-            **kwargs (dict): arguments passed through to ``pyplot.plot``
+            livePlot (bool): if True, displays immediately in IPython notebook
+            \*args (tuple): arguments passed through to ``pyplot.plot``
+            \*\*kwargs (dict): arguments passed through to ``pyplot.plot``
 
         Returns:
             Whatever is returned by ``pyplot.plot``
@@ -440,44 +474,44 @@ class MeasuredFunction(object):
                 kurtosis -= 3
             return kurtosis
 
+    def findResonanceFeatures(self, **kwargs):
+        r''' A convenient wrapper for :py:func:`findPeaks` that works with this class.
+
+            Args:
+                \*\*kwargs: kwargs passed to :py:func:`findPeaks`
+
+            Returns:
+                list[ResonanceFeature]: the detected features as nice objects
+        '''
+        mFun = self.uniformlySample()
+        dLam = np.diff(mFun.getSpan())[0] / len(mFun)
+
+        xArr, yArr = mFun.getData()
+
+        # Use the class-free peakfinder on arrays
+        pkInds, pkIndWids = findPeaks(yArr, **kwargs)
+
+        # Translate back into units of the original MeasuredFunction
+        pkLambdas = xArr[pkInds]
+        pkAmps = yArr[pkInds]
+        pkWids = pkIndWids * dLam
+
+        # Package into resonance objects
+        try:
+            isPeak = kwargs['isPeak']
+        except KeyError:
+            isPeak = True
+        resonances = np.empty(len(pkLambdas), dtype=object)
+        for iPk in range(len(resonances)):
+            resonances[iPk] = ResonanceFeature(
+                pkLambdas[iPk], pkWids[iPk], pkAmps[iPk], isPeak=isPeak)
+        return resonances
+
     # Mathematics
-
-    # Operands must be either
-    #     the same subclass of MeasuredFunction, or
-    #     scalar numbers, or
-    #     functions/bound methods: these must be callable with one argument that is an ndarray
-    #         Please god no side-effects in these functions
-
-    # The returned result is the same subclass as self,
-    # and its properties other than absc and ordi will be the SAME as the first operand
 
     def __binMathHelper(self, other):
         ''' returns the new abcissa and a tuple of arrays: the ordinates to operate on
         '''
-        # if type(other).__name__ == type(self).__name__: # using name to get around autoreload bug
-        #     for obj in (self, other):
-        #         if isinstance(obj.ordi, MeasuredFunction):
-        #             raise TypeError('You have an ordinate that is a MeasuredFunction!' +
-        #                 ' This is a common error. In ' + str(obj))
-        #     if np.all(self.absc == other.absc):
-        #         newAbsc = self.absc
-        #         ords = (self.ordi, other.ordi)
-        #     else:
-        #         newAbsc = type(self).__minAbsc(self, other)
-        #         ords = (self(newAbsc), other(newAbsc))
-        # elif isinstance(other, (float, int)) or np.isscalar(other):
-        #     newAbsc = self.absc
-        #     ords = (self.ordi, other * np.ones(len(newAbsc)))
-        # elif isinstance(other, (types.FunctionType, types.MethodType)):
-        #     newAbsc = self.absc
-        #     try:
-        #         ords = (self.ordi, other(newAbsc))
-        #     except Exception as err:
-        #         logger.error('Call to {} failed'.format(other))
-        #         raise err
-        # else:
-        #     raise TypeError('Unsupported types for binary math: ' + type(self).__name__ + ', ' + type(other).__name__)
-        # return newAbsc, ords
         try:
             ab = other.absc
         except AttributeError:  # in other.absc
@@ -568,47 +602,12 @@ class MeasuredFunction(object):
             return np.all(self.absc == other.absc) and np.all(self.ordi == other.ordi)
         return False
 
-    def findResonanceFeatures(self, **kwargs):
-        r''' A convenient wrapper for :py:func:`findPeaks` that works with this class.
-
-            Args:
-                \*\*kwargs: kwargs passed to :py:func:`findPeaks`
-
-            Returns:
-                list[ResonanceFeature]: the detected features as nice objects
-        '''
-        mFun = self.uniformlySample()
-        dLam = np.diff(mFun.getSpan())[0] / len(mFun)
-
-        xArr, yArr = mFun.getData()
-
-        # Use the class-free peakfinder on arrays
-        pkInds, pkIndWids = findPeaks(yArr, **kwargs)
-
-        # Translate back into units of the original MeasuredFunction
-        pkLambdas = xArr[pkInds]
-        pkAmps = yArr[pkInds]
-        pkWids = pkIndWids * dLam
-
-        # Package into resonance objects
-        try:
-            isPeak = kwargs['isPeak']
-        except KeyError:
-            isPeak = True
-        resonances = np.empty(len(pkLambdas), dtype=object)
-        for iPk in range(len(resonances)):
-            resonances[iPk] = ResonanceFeature(
-                pkLambdas[iPk], pkWids[iPk], pkAmps[iPk], isPeak=isPeak)
-        return resonances
-
 
 class Spectrum(MeasuredFunction):
-    ''' simply stores a nm, dbm pair
-
-        Also provides some decent handling of linear/dbm units.
+    ''' Adds handling of linear/dbm units.
 
         Use :meth:`lin` and :meth:`dbm` to make sure what you're getting
-        for things like binary math and peakfinding, etc.
+        what you expect for things like binary math and peakfinding, etc.
     '''
 
     def __init__(self, nm, power, inDbm=True, unsafe=False):
@@ -629,11 +628,6 @@ class Spectrum(MeasuredFunction):
                 bool:
         '''
         return self.__inDbm
-
-    # @inDbm.setter
-    # def inDbm(self, newInDbm=True):
-    #     ''' Changes overall state of the spectrum '''
-    #     raise Exception('Spectrum dbm/linear is immutable.')
 
     def lin(self):
         ''' The spectrum in linear units
@@ -724,7 +718,7 @@ class Spectrum(MeasuredFunction):
         return fineRes, confidence
 
     def findResonanceFeatures(self, **kwargs):
-        ''' Overloads :py:mod:``MeasuredFunction.findResonanceFeatures`` to make sure it's in db scale
+        ''' Overloads :py:meth:``MeasuredFunction.findResonanceFeatures`` to make sure it's in db scale
 
             Args:
                 **kwargs: kwargs passed to :py:mod:`findPeaks`
@@ -950,8 +944,6 @@ def interpInverse(xArrIn, yArrIn, startIndex, direction, threshVal):
     if not isValid:
         logger.warning('Did not descend across threshold. Returning minimum')
         return xArr[np.argmin(yArr)]
-        # plt.plot(yArr)
-        # raise Exception
     elif iHit in [0]:
         return xArr[iHit]
     else:  # interpolate
@@ -1024,10 +1016,6 @@ class MeasuredSurface(object):
         plt.pcolormesh(XX, YY, np.array(self.ordi.T), *args, **kwargs)
         plt.autoscale(tight=True)
 
-    # def cut(self, dim, value):
-    #     oneDimMf = MeasuredFunction()
-    #     for abOtherDim in self.absc[1-dim]:
-
 
 class MeasuredErrorField(object):
     ''' A field that hold two abscissa arrays and two ordinate matrices
@@ -1087,40 +1075,17 @@ class MeasuredErrorField(object):
         measSq = np.min([zcSz(self.measGrid, nomiCornerInds[i]) for i in range(2)])
         return nomiSq, measSq
 
-    # def __init__(self, abscissas, ordinates):
-    #     if type(abscissas) == np.ndarray and absc.ndim != 1:
-    #         raise Exception('absc should be a 2-element list of arrays or an array of objects (which are arrays)')
-    #     if len(abscissas) != 2:
-    #         raise Exception('Wrong number of abscissas. Need two')
-    #     abscshape = np.zeros(2)
-    #     for iDim in range(2):
-    #         if abscissas[iDim].ndim != 1:
-    #             raise Exception('abscissa elements must be 1d arrays')
-    #         abscshape[iDim] = len(abscissas[iDim])
-
-    #     if type(ordinates) == np.ndarray and absc.ndim != 1:
-    #         raise Exception('ordinates should be a 2-element list of arrays or an array of objects (which are arrays)')
-    #     if len(ordinates) != 2:
-    #         raise Exception('Wrong number of ordinates. Need two')
-    #     ordishape = np.zeros(2)
-    #     for iSurf in range(2):
-    #         if ordinates[iSurf].ndim != 2:
-    #             raise Exception('ordinate elements must be 2d arrays')
-    #         if not np.all(ordinates[iSurf].shape == abscshape):
-    #             raise Exception('Dimensions of ordinate and abscissa do not match')
-
-    #     self.surfs = np.empty(2, dtype=object)
-    #     for iSurf in range(2):
-    #         self.surfs[iSurf] = MeasuredSurface(abscissas, ordinates[iSurf])
-
 
 class Spectrogram(MeasuredSurface):
     pass
 
 
 class Waveform(MeasuredFunction):
-    ''' stores a time, voltage pair. That's about it right now '''
+    ''' Typically used for time, voltage functions.
+        This is very similar to what is referred to as a "signal."
 
+        Has class methods for generating common time-domain signals
+    '''
     def __init__(self, t, v, unsafe=False):
         super().__init__(t, v, unsafe=unsafe)
 
@@ -1139,23 +1104,31 @@ class Waveform(MeasuredFunction):
 
 
 class FunctionBundle(object):
-    ''' A bundle of measured functions.
+    ''' A bundle of :py:class:`MeasuredFunction` s: "z" vs. "x", "i"
 
-        The key is that they have the same abscissa base. This class will take care of resampling in a common abscissa base.
+        The key is that they have the same abscissa base.
+        This class will take care of resampling in a common abscissa base.
+
         The bundle can be:
+            * iterated to get the individual :py:class`MeasuredFunction` s
+            * operated on with other ``FunctionBundles``
+            * plotted with :py:meth`simplePlot` and :py:meth:`multiAxisPlot`
 
-        * iterated to get the individual MeasuredFunctions
-        * operated on with other FunctionBundles
-        * plotted with simplePlot and multiAxisPlot
+        Distinct from a :py:class:`MeasuredSurface` because
+        the additional axis does not represent a continuous thing.
+        It is discrete and sometimes unordered.
 
-        This provides nice plotting functions for things like eyes, but not decomposition methods: see `FunctionalBasis`
+        Distince from a :py:class:`FunctionalBasis` because
+        it does not support most linear algebra-like stuff
+        (e.g. decomposision, matrix multiplication, etc.).
+        This is not a strict rule.
     '''
 
     def __init__(self, measFunList=None):
         ''' Can be initialized fully, or initialized with None to be built interactively.
 
             Args:
-                measFunList (list[MeasuredFunction],None): list of MeasuredFunctions that must have the same abscissa.
+                measFunList (list[MeasuredFunction] or None): list of MeasuredFunctions that must have the same abscissa.
         '''
         self.absc = None
         self.ordiMat = None
@@ -1426,15 +1399,6 @@ class FunctionalBasis(FunctionBundle):
 
         Created for weighted addition, decomposition, and component analysis
     '''
-
-    # def __init__(self, measFunList=None):
-    #     ''' Can be initialized fully, or initialized with None to be built interactively.
-
-    #         Args:
-    #             measFunList (list[MeasuredFunction],None): list of MeasuredFunctions that must have the same abscissa.
-    #     '''
-    #     super().__init__(measFunList)
-
     @classmethod
     def independentDefault(cls, nDims):
         ''' Gives a basis of non-overlapping pulses. Waveforms only

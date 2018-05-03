@@ -726,8 +726,6 @@ class CommandControlSweeper(Sweeper):
         Todo:
             How can we get this subsumed by a NdSweeper for trial repetition. CommandControlSweeper shouldn't be able to subsume as major
     '''
-    # def __init__(self, swpPointFun, swpValues, type, dimNames=None, swpName=None):
-
     def __init__(self, evaluate, defaultArg, swpInds, domain, nTrials=1):
         '''
             Args:
@@ -1097,10 +1095,12 @@ def availablePlots(dims=None, swpType=None):
 
 def assertValidPlotType(plType, dims=None, swpClass=None):
     if plType not in availablePlots(dims, swpClass):
-        print('This sweep is a {}-dimensional'.format(dims), swpClass.__name__, '.')
+        errStr = ['Invalid plot type.']
+        errStr.append(f'This sweep is a {dims}-dimensional {swpClass.__name__}.')
         if plType not in availablePlots():
-            print(plType, 'is not a valid plot type at all.')
+            errStr.append(f'{plType} is not a valid plot type at all.')
         else:
-            print(plType, 'is not a valid plot type for this kind of sweep.')
-        print('Available plots are:', ', '.join(availablePlots(dims, swpClass)))
-        raise KeyError('Invalid plot type')
+            errStr.append(f'{plType} is not a valid plot type for this kind of sweep.')
+        errStr.append('Available plots are: {}'.format(', '.join(availablePlots(dims, swpClass))))
+        logger.error('\n'.join(errStr))
+        raise KeyError(plType)
