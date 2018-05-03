@@ -18,7 +18,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             * `DSA 8300 <http://www.tek.com/download?n=975655&f=190886&u=http%3A%2F%2Fdownload.tek.com%2Fsecure%2FDifferential-Channel-Alignment-Application-Online-Help.pdf%3Fnvb%3D20170404035703%26amp%3Bnva%3D20170404041203%26amp%3Btoken%3D0ccdfecc3859114d89c36>`_
             * `TDS 6154C <http://www.tek.com/sites/tek.com/files/media/media/resources/55W_14873_9.pdf>`_
 
-        The main method is :py:meth:`acquire`, which takes and returns a :py:class:`~Waveform`.
+        The main method is :meth:`acquire`, which takes and returns a :class:`~Waveform`.
 
         Todo:
             These behave differently. Be more explicit about sample mode::
@@ -170,7 +170,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 chan (int): one channel at a time
 
             Returns:
-                :py:mod:`data.Waveform`: a time, voltage paired signal
+                :mod:`data.Waveform`: a time, voltage paired signal
 
             Todo:
                 Make this binary transfer to go even faster

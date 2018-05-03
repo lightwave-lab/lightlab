@@ -229,6 +229,8 @@ class Configurable(AbstractDriver):
         This clas uses query/write methods that are not directly inherited, so the subclass or its parents must implement those functions
     '''
 
+    config = None  #: Dictionary of :class:`TekConfig` objects.
+
     def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True, **kwargs):
 
         self._hardwareinit = False
@@ -296,7 +298,8 @@ class Configurable(AbstractDriver):
 
     @contextmanager
     def tempConfig(self, cStr, tempVal, forceHardware=False):
-        ''' Changes a parameter within the context of a "with" block
+        ''' Changes a parameter within the context of a "with" block.
+            Args are same as in :meth:`getConfigParam`.
         '''
         oldVal = self.getConfigParam(cStr, forceHardware)
         try:
@@ -305,12 +308,10 @@ class Configurable(AbstractDriver):
         finally:
             self.setConfigParam(cStr, oldVal)
 
-
-    # More specialized access methods that handle command subgroups, files,
-    # and tokens
     def getDefaultFilename(self):
-        # Typically: manufacturer, model#, serial#, <other stuff with strange
-        # chars>
+        r''' Combines the :data:`lightlab.util.io.paths.defaultFileDir`
+            with the \*IDN? string of this instrument.
+        '''
         info = self.instrID().split(',')
         global defaultFileDir
         deffile = defaultFileDir / '-'.join(info[:3]) + '.json'

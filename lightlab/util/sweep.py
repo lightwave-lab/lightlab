@@ -359,7 +359,7 @@ class NdSweeper(Sweeper):
 
             The array's shape must match that of the currently loaded actuation grid.
 
-            If you then :py:meth:addActuation, the static data automatically expands in dimension to accomodate.
+            If you then :meth:`addActuation`, the static data automatically expands in dimension to accomodate.
             Values are filled by tiling in the new dimension.
 
             Add static data after the actuations that have different static data,
