@@ -233,7 +233,7 @@ class Configurable(AbstractDriver):
         so the subclass or its parents must implement those functions
     '''
 
-    config = None  #: Dictionary of TekConfig objects.
+    config = None  #: Dictionary of :class:`TekConfig` objects.
 
     def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True, **kwargs):
 
@@ -330,7 +330,7 @@ class Configurable(AbstractDriver):
     @contextmanager
     def tempConfig(self, cStr, tempVal, forceHardware=False):
         ''' Changes a parameter within the context of a "with" block.
-            Args are same as in :py:meth:`getConfigParam`.
+            Args are same as in :meth:`getConfigParam`.
         '''
         oldVal = self.getConfigParam(cStr, forceHardware)
         try:
@@ -340,7 +340,7 @@ class Configurable(AbstractDriver):
             self.setConfigParam(cStr, oldVal)
 
     def getDefaultFilename(self):
-        r''' Combines the :py:data:`lightlab.util.io.paths.defaultFileDir`
+        r''' Combines the :data:`lightlab.util.io.paths.defaultFileDir`
             with the \*IDN? string of this instrument.
 
             Returns:

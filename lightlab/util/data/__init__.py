@@ -1,10 +1,10 @@
 ''' Useful stuff having to do with data handling and processing.
 
-    :py:class:`MeasuredFunction` is the workhorse.
+    :class:`MeasuredFunction` is the workhorse.
 
-    The :py:class:`Spectrum` class is nice for working with dbm and linear units, and also for interpolating at any value.
+    The :class:`Spectrum` class is nice for working with dbm and linear units, and also for interpolating at any value.
 
-    :py:func:`findPeaks` and :py:func:`descend` hold the low-level algorithms.
+    :func:`findPeaks` and :func:`descend` hold the low-level algorithms.
     Usually, users would interact with it via ``MeasuredFunction``.
 '''
 from .basic import (verifyListOfType, argFlatten, mangle,  # noqa
