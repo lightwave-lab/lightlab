@@ -79,8 +79,10 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
                 return freq
             if self.sweepEnable():
                 print('Warning: Agilent N5183 was sweeping when you set frequency, moving to CW mode')
-                self.sweepEnable(False)               # So we need to update this object's internal state too
-            self.setConfigParam('SENS:FREQ:CW', freq)  # Setting this automatically brings to CW mode
+                # So we need to update this object's internal state too
+                self.sweepEnable(False)
+            # Setting this automatically brings to CW mode
+            self.setConfigParam('SENS:FREQ:CW', freq)
         return self.getConfigParam('SENS:FREQ:CW')
 
     def enable(self, enaState=None):
@@ -174,13 +176,17 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
             for mName in activeMeasNames:
                 self.write("CALC{}:PAR:DEL '{}'".format(chanNum, mName))
             # make a new measurement
-            self.setConfigParam("CALC{}:PAR:EXT".format(chanNum), "'{}', '{}'".format(newMeasName, measType), forceHardware=True)
-            self.setConfigParam('DISP:WIND:TRACE{}:FEED'.format(traceNum), "'{}'".format(newMeasName), forceHardware=True)
+            self.setConfigParam("CALC{}:PAR:EXT".format(chanNum), "'{}', '{}'".format(
+                newMeasName, measType), forceHardware=True)
+            self.setConfigParam('DISP:WIND:TRACE{}:FEED'.format(traceNum),
+                                "'{}'".format(newMeasName), forceHardware=True)
             changed = True
-        self.setConfigParam('CALC{}:PAR:MNUM'.format(self.chanNum), self.chanNum, forceHardware=changed)
+        self.setConfigParam('CALC{}:PAR:MNUM'.format(self.chanNum),
+                            self.chanNum, forceHardware=changed)
         # self.setConfigParam('CALC{}:PAR:SEL'.format(self.chanNum), self.chanNum, forceHardware=changed)
         # wait for changes to take effect
-        # This could be improved by something like *OPC? corresponding to the end of the first sweep
+        # This could be improved by something like *OPC? corresponding to the end
+        # of the first sweep
         time.sleep(self.getSwpDuration())
 
     def spectrum(self):
@@ -201,7 +207,7 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 #       return freqs, dbm
         return Spectrum(freqs, dbm)
 
-    # TODO: get this out of here.
+    # fixme: get this out of here.
     def multiSpectra(self, nSpect=1, livePlot=False):
         bund = FunctionBundle()
         for iSpect in range(nSpect):
@@ -212,7 +218,7 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
                 display.clear_output()
                 display.display(plt.gcf())
             else:
-                print('Took spectrum {} of {}'.format(iSpect+1, nSpect))
+                print('Took spectrum {} of {}'.format(iSpect + 1, nSpect))
         print('done.')
         return bund
 

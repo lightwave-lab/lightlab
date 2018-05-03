@@ -12,6 +12,7 @@
 import pytest
 from lightlab.equipment.abstract_drivers import Configurable, AbstractDriver
 import lightlab
+from mock import patch
 
 
 def test_configurable():
@@ -33,59 +34,62 @@ def test_configurable():
             self._writeBuffer = self._writeBuffer[1:]
             return ret
 
-
     alice = MessagePasser()
     bob = MessagePasser()
     alice.other = bob
     bob.other = alice
 
-    alice.setConfigParam('foo', 1) # int
+    alice.setConfigParam('foo', 1)  # int
     bob.getConfigParam('foo')
-    bob.getConfigParam('foo') # does not attempt to read from buffer, which is empty
+    bob.getConfigParam('foo')  # does not attempt to read from buffer, which is empty
     with pytest.raises(IndexError):
         bob.getConfigParam('foo', forceHardware=True)
-    alice.setConfigParam('bar', 2.5) # float
+    alice.setConfigParam('bar', 2.5)  # float
     bob.getConfigParam('bar')
-    bob.setConfigParam('baz:zaz', 'bang') # str
+    bob.setConfigParam('baz:zaz', 'bang')  # str
     alice.getConfigParam('baz:zaz')
 
     for cmd in ['foo', 'bar', 'baz:zaz']:
         assert alice.getConfigParam(cmd) \
-               == bob.getConfigParam(cmd)
+            == bob.getConfigParam(cmd)
     assert sorted(alice.config['live'].getList(asCmd=False)) \
-           == sorted(bob.config['live'].getList(asCmd=False))
+        == sorted(bob.config['live'].getList(asCmd=False))
 
     alice.setConfigParam('spam', 2.2)
     bob.getConfigParam('spam')
     alice.setConfigParam('spam', 2.3)
     bob.getConfigParam('spam')
-    with pytest.raises(AssertionError): # Because bob only read the first one
+    with pytest.raises(AssertionError):  # Because bob only read the first one
         assert alice.getConfigParam('spam') \
-               == bob.getConfigParam('spam')
+            == bob.getConfigParam('spam')
     bob.getConfigParam('spam', forceHardware=True)
     assert alice.getConfigParam('spam') \
-           == bob.getConfigParam('spam')
+        == bob.getConfigParam('spam')
 
 
 from lightlab.equipment.visa_bases import VISAInstrumentDriver, IncompleteClass
 from lightlab.equipment.lab_instruments import HP_8152A_PM
 from lightlab.laboratory.instruments import PowerMeter
+
+
 def test_driver_init():
     # Catches incomplete API at class time
     with pytest.raises(IncompleteClass):
         class Delinquent_PM(VISAInstrumentDriver):
             instrument_category = PowerMeter
+
             def powerLin(self): pass
             # def powerDbm(self): pass
 
     # Old style still works
-    pm = PowerMeter(_driver_class=HP_8152A_PM, name='a PM', address='NULL', extra='foolio', tempSess=False)
+    pm = PowerMeter(_driver_class=HP_8152A_PM, name='a PM',
+                    address='NULL', extra='foolio', tempSess=False)
     assert pm.__class__ == PowerMeter  # not SourceMeter or HP_8152A_PM
     assert pm._driver_class == HP_8152A_PM
     assert pm.extra == 'foolio'
     # Still fails to initialize the driver with correct options
     with pytest.raises(AssertionError):
-        assert pm.driver.tempSess == False
+        assert pm.driver.tempSess is False
 
     # New style
     pm = HP_8152A_PM(name='a PM', address='NULL', extra='foolio', tempSess=False)
@@ -93,22 +97,46 @@ def test_driver_init():
     assert pm.driver_class == HP_8152A_PM
     assert pm.extra == 'foolio'
     # These arguments went to the driver
-    assert pm.driver.tempSess == False
+    assert pm.driver.tempSess is False
     with pytest.raises(AttributeError):
         pm.tempSess
     with pytest.raises(AttributeError):
         pm.driver.extra
 
+    def open_fake(self):
+        self.mbSession = 'opened'
+
+    def close_fake(self):
+        self.mbSession = 'closed'
+    with patch.object(HP_8152A_PM, 'open', open_fake), \
+            patch.object(HP_8152A_PM, 'close', close_fake):
+        # change of address should kill the connection and change driver's address
+        driver = pm.driver
+        driver.open()
+        assert driver.mbSession == 'opened'
+        pm.address = 'new_address'
+        assert pm.driver is driver
+        assert driver.mbSession is 'closed'
+        assert pm.driver.address == pm.address
+
 
 from lightlab.laboratory.instruments import Oscilloscope
+
+
 def test_optionals():
     class Driver1(VISAInstrumentDriver):
         instrument_category = Oscilloscope
+
         def acquire(self): pass
+
         def run(self): pass
+
         def wfmDb(self): pass
+
         def notInInterface(self): pass
+
     class Driver2(Driver1):
+
         def histogramStats(self): pass
 
     d1 = Driver1()
@@ -131,4 +159,3 @@ if __name__ == '__main__':
     '''
     log_to_screen(DEBUG)
     test_configurable()
-

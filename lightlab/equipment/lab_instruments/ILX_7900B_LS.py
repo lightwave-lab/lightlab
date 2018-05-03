@@ -105,6 +105,7 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
             Args:
                 newState (list, np.ndarray): enable values which must be 0 or 1
         '''
+
         for ena in newState:
             if ena not in [0, 1]:
                 raise ValueError('Laser states can only be 0 or 1. ' +

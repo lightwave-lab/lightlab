@@ -25,7 +25,7 @@ test-master:
   - python --version
   - make test-unit-all
   - make test-lint-errors
-  - make test-lint || true
+  - make test-lint
 
 deploy-dev:
   stage: deploy

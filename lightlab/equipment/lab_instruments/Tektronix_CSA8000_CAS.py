@@ -1,5 +1,6 @@
 from .Tektronix_DSA8300_Oscope import Tektronix_DSA8300_Oscope
 
+
 class Tektronix_CSA8000_CAS(Tektronix_DSA8300_Oscope):
     ''' Communication analyzer scope
         @LightwaveLab: Is this different from the DSA?

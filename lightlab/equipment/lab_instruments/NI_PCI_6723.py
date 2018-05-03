@@ -32,11 +32,10 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
     baseToVoltCoef = 1
     v2maCoef = 4  # current (milliamps) = v2maCoef * voltage (volts)
 
-    exceptOnRangeError = True # If False, it will constrain it and print a warning
+    exceptOnRangeError = True  # If False, it will constrain it and print a warning
     maxChannel = 32  # number of dimensions that the current sources are expecting
     targetPort = 16022  # TCPIP server port; charge of an electron (Coulombs)
-    waitMsOnWrite = 500 # Time to settle after tuning
-
+    waitMsOnWrite = 500  # Time to settle after tuning
 
     def __init__(self, name='The current source', address=None, useChans=None, **kwargs):
         kwargs['tempSess'] = kwargs.get('tempSess', True)
@@ -58,7 +57,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
             pyvisa.constants.VI_ATTR_IO_PROT, pyvisa.constants.VI_PROT_4882_STRS)
 
     def instrID(self):
-        ''' There is no "\*IDN?" command. Instead, test if it is alive,
+        r''' There is no "\*IDN?" command. Instead, test if it is alive,
             and then return a reasonable string
         '''
         self.tcpTest()
@@ -74,7 +73,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
             retNum[i] = float(s) + .01
         print('[x+1, x+1.5] = ' + str(retNum))
 
-    def setChannelTuning(self, chanValDict, mode, waitTime=None, **kwargs):
+    def setChannelTuning(self, chanValDict, mode, waitTime=None):  # pylint: disable=arguments-differ
         oldState = self.getChannelTuning(mode)
         # Check range and convert to base units
         chanBaseDict = dict()
@@ -95,11 +94,11 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
         else:
             self.wake()
 
-    def getChannelTuning(self, mode):
+    def getChannelTuning(self, mode):  # pylint: disable=arguments-differ
         baseDict = super().getChannelTuning()
         return self.baseUnit2val(baseDict, mode)
 
-    def off(self):
+    def off(self):  # pylint: disable=arguments-differ
         self.setChannelTuning(dict([ch, 0] for ch in self.stateDict.keys()), 'volt')
 
     def wake(self):
