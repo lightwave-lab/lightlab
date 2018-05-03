@@ -12,13 +12,13 @@ from lightlab import visalogger as logger
 class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
     ''' Primarily employs abstract classes. Follow the bases for more information
 
-        :class:`~lightlab.equipment.lab_instruments.VISAInstrumentDriver`
+        :py:class:`~lightlab.equipment.lab_instruments.VISAInstrumentDriver`
         provides communication to the board
 
-        :class:`~lightlab.equipment.abstract_drivers.MultiModalSource`
+        :py:class:`~lightlab.equipment.abstract_drivers.MultiModalSource`
         provides unit support and range checking
 
-        :class:`~lightlab.equipment.abstract_drivers.MultiChannelSource`
+        :py:class:`~lightlab.equipment.abstract_drivers.MultiChannelSource`
         provides **notion of state** (stateDict) and channel support
 
         Usage: :any:`/ipynbs/Hardware/CurrentSources-NI.ipynb`

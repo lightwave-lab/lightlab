@@ -57,10 +57,10 @@ MANGLE_LEN = 256  # magic constant from compile.c
 
 def mangle(name, klass):
     ''' Sanitizes attribute names that might be "hidden,"
-        denoted by leading '__'. In :class:`~lightlab.laboratory.Hashable` objects,
+        denoted by leading '__'. In :py:class:`~lightlab.laboratory.Hashable` objects,
         attributes with this kind of name can only be class attributes.
 
-        See :mod:`~tests.test_instrument_overloading` for user-side implications.
+        See :py:mod:`~tests.test_instrument_overloading` for user-side implications.
 
         Behavior::
 

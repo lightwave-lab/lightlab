@@ -5,7 +5,7 @@
     Dualization is a way of tying together a real instrument with
     its virtual counterpart. This is a powerful way to test procedures
     in a virtual environment before flipping the switch to reality.
-    This is documented in :mod:`tests.test_virtualization`.
+    This is documented in :py:mod:`tests.test_virtualization`.
 
     Attributes:
         virtualOnly (bool): If virtualOnly is True, any "``with``" statements using asReal
@@ -179,7 +179,7 @@ class DualInstrument(Virtualizable):
         and would then like to virtualize it in your notebook.
         In that case, it does not reinitialize the driver.
 
-        This is documented in :mod:`tests.test_virtualization`.
+        This is documented in :py:mod:`tests.test_virtualization`.
 
         ``isinstance()`` and ``.__class__`` will tell you the underlying instrument type
         ``type()`` will give you the ``DualInstrument`` subclass::

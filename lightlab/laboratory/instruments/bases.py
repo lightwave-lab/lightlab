@@ -103,14 +103,14 @@ class Host(Node):
             return self.__cached_list_resources_info
 
     def list_gpib_resources_info(self, use_cached=True):
-        """ Like :meth:`list_resources_info`, but only returns gpib
+        """ Like :py:meth:`list_resources_info`, but only returns gpib
         resources.
 
         Args:
             use_cached (bool): query only if not cached, default True.
 
         Returns:
-            (list): list of ``pyvisa.highlevel.ResourceInfo`` named tuples.
+            list: list of `pyvisa.highlevel.ResourceInfo` named tuples.
 
         """
         return {resource_name: resource
@@ -149,7 +149,7 @@ class Host(Node):
             return gpib_instrument_list
 
     def findGpibAddressById(self, id_string_search, use_cached=True):
-        """ Finds a gpib address using :meth:`get_all_gpib_id`, given
+        """ Finds a gpib address using :py:meth:`get_all_gpib_id`, given
         an identity string.
 
         Args:
@@ -201,10 +201,10 @@ class Host(Node):
     def checkInstrumentsLive(self):
         """ Checks whether all instruments are "live".
 
-        Instrument status is checked with the :meth:`Instrument.isLive` method
+        Instrument status is checked with the :py:meth:`Instrument.isLive()` method
 
         Returns:
-            (bool): True if all instruments are live, False otherwise
+            bool: True if all instruments are live, False otherwise
 
 
         """
@@ -521,7 +521,7 @@ class Instrument(Node):
     @property
     def driver_class(self):
         """ Class of the actual equipment driver
-        (from :mod:`lightlab.equipment.lab_instruments`)
+        (from :py:mod:`lightlab.equipment.lab_instruments`)
 
         This way the object knows how to instantiate a driver instance
         from the labstate.
@@ -552,7 +552,7 @@ class Instrument(Node):
 
     @property
     def driver(self):
-        """ Alias of :meth:`driver_object`."""
+        """ Alias of :py:meth:`driver_object`."""
         return self.driver_object
 
     bench = typed_property(Bench, "_bench")
@@ -607,8 +607,7 @@ class Instrument(Node):
 
     def isLive(self):
         """ Attempts VISA connection to instrument, and checks whether
-            :meth:`~lightlab.equipment.visa_bases.visa_object.instrID`
-            matches :data:`id_string`.
+            ``instrID()`` matches :py:data:`id_string`.
 
             Produces a warning if it is live but the id_string is wrong.
 

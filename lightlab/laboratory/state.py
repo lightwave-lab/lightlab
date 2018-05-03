@@ -2,10 +2,10 @@
 This module contains classes responsible to maintain a record of the
 current state of the lab.
 
-Users typically just have to import the variable :data:`~lightlab.laboratory.state.lab`.
+Users typically just have to import the variable :py:data:`lab`.
 
 Warning:
-    **Developers**: do not import :data:`lab` anywhere inside the
+    **Developers**: do not import :py:data:`lab` anywhere inside the
     `lightlab` package. This will cause the deserialization of the
     JSON file before the definition of the classes of the objects
     serialized. If you want to make use of the variable lab, import
@@ -71,13 +71,13 @@ class LabState(Hashable):
     __user__ = None
     __datetime__ = None
     __filename__ = None
-    hosts = None  #: list(:class:`~lightlab.laboratory.instruments.bases.Host`) list of hosts
-    #: list(:class:`~lightlab.laboratory.instruments.bases.Bench`) list of benches
+    hosts = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Host`) list of hosts
+    #: list(:py:class:`~lightlab.laboratory.instruments.bases.Bench`) list of benches
     benches = None
     connections = None  #: list(dict(str -> str)) list of connections
-    #: list(:class:`~lightlab.laboratory.instruments.bases.Device`) list of devices
+    #: list(:py:class:`~lightlab.laboratory.instruments.bases.Device`) list of devices
     devices = None
-    #: list(:class:`~lightlab.laboratory.instruments.bases.Instrument`) list of instruments
+    #: list(:py:class:`~lightlab.laboratory.instruments.bases.Instrument`) list of instruments
     instruments = None
 
     @property
@@ -104,11 +104,11 @@ class LabState(Hashable):
         There should be exactly one.
 
         Args:
-            *(Host): hosts
+            *(:py:class:`~lightlab.laboratory.instruments.bases.Host`): hosts
 
         Raises:
             RuntimeError: Raised if duplicate names are found.
-            TypeError: Raised if host is not of type :class:`~lightlab.laboratory.instruments.bases.Host`
+            TypeError: Raised if host is not of type :py:class:`~lightlab.laboratory.instruments.bases.Host`
 
 
         """
@@ -146,11 +146,11 @@ class LabState(Hashable):
         """ Updates benches in the benches list.
 
         Args:
-            *(Bench): benches
+            *(:py:class:`~lightlab.laboratory.instruments.bases.Bench`): benches
 
         Raises:
             RuntimeError: Raised if duplicate names are found.
-            TypeError: Raised if bench is not of type :class:`~lightlab.laboratory.instruments.bases.Bench`
+            TypeError: Raised if bench is not of type :py:class:`~lightlab.laboratory.instruments.bases.Bench`
 
 
         """
@@ -179,11 +179,11 @@ class LabState(Hashable):
         """ Inserts instrument in labstate.
 
         Args:
-            instrument (Instrument): instrument
+            instrument (:py:class:`~lightlab.laboratory.instruments.bases.Instrument`): instrument
                 to insert.
         Raises:
             RuntimeError: Raised if duplicate names are found.
-            TypeError: Raised if instrument is not of type :class:`~lightlab.laboratory.instruments.bases.Instrument`
+            TypeError: Raised if instrument is not of type :py:class:`~lightlab.laboratory.instruments.bases.Instrument`
 
         """
         self.instruments.append(instrument)
@@ -198,11 +198,12 @@ class LabState(Hashable):
         """ Inserts device in labstate.
 
         Args:
-            device (Device): device to insert.
+            device (:py:class:`~lightlab.laboratory.devices.Device`): device
+                to insert.
 
         Raises:
             RuntimeError: Raised if duplicate names are found.
-            TypeError: Raised if device is not of type :class:`~lightlab.laboratory.instruments.bases.Device`
+            TypeError: Raised if device is not of type :py:class:`~lightlab.laboratory.instruments.bases.Device`
 
         """
         self.devices.append(device)
@@ -300,13 +301,13 @@ class LabState(Hashable):
 
     @classmethod
     def loadState(cls, filename=None, validateHash=True):
-        """ Loads a :class:`LabState` object from a file.
+        """ Loads a :py:class:`LabState` object from a file.
 
         It loads and instantiates a copy of every object serialized
         with ``lab.saveState(filename)``. The objects are saved with
-        :mod:`jsonpickle`, and must be hashable and contain no
+        :py:mod:`jsonpickle`, and must be hashable and contain no
         C-object references. For convenience, lab objects are inherited
-        from `:class:`lightlab.laboratory.Hashable`.
+        from `:py:class:`lightlab.laboratory.Hashable`.
 
         By default, the sha256 hash is verified at import time to prevent
         instantiating objects from a corrupted file.

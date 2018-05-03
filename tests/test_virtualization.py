@@ -147,8 +147,8 @@ class Picard_0812(Picard_0811):
     pass
 
 def test_specialInitialization():
-    ''' When a :class:`~lightlab.equipment.visa_bases.VISAInstrumentDriver`
-        is initialized, it should return an :class:`~lightlab.laboratory.instruments.Instrument`.
+    ''' When a :py:class:`~lightlab.equipment.visa_bases.VISAInstrumentDriver`
+        is initialized, it should return an :py:class:`~lightlab.laboratory.instruments.Instrument`.
     '''
     hammer = Picard_0811(address='Hand')
     assert type(hammer) is Hammer
@@ -189,7 +189,7 @@ class VirtualNail(object):
 
 class VirtualHammer(VirtualInstrument):
     ''' A virtual instrument with the same interface as its real counterpart.
-        It is tied to a simulator, in this case :class:`VirtualNail`.
+        It is tied to a simulator, in this case :py:class:`VirtualNail`.
     '''
     def __init__(self, viReference):
         self.viReference = viReference

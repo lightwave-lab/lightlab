@@ -1,6 +1,6 @@
 ''' Objects that can be serialized in a (sort of) human readable json format
 
-    Tested in :mod:`tests.test_JSONpickleable`.
+    Tested in :py:mod:`tests.test_JSONpickleable`.
 '''
 import dill
 import jsonpickle
