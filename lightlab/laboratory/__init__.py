@@ -93,6 +93,8 @@ class Node(Hashable):
 
     """
 
+    bench = None
+
     def placeBench(self, new_bench):  # TODO Deprecate
         self.bench = new_bench
 
@@ -124,7 +126,7 @@ class NamedList(MutableSequence, Hashable):
 
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args):  # pylint: disable=super-init-not-called
         self.list = list()
         self.extend(list(args))
 
@@ -139,6 +141,9 @@ class NamedList(MutableSequence, Hashable):
     @property
     def keys(self):
         return lambda: iter([i.name for i in self])
+
+    def items(self):
+        return self.dict.items()
 
     def check(self, v):
         if not hasattr(v, 'name'):
@@ -182,15 +187,15 @@ class NamedList(MutableSequence, Hashable):
         else:
             self.list[i] = v
 
-    def insert(self, i, v):
-        self.check(v)
+    def insert(self, index, value):
+        self.check(value)
         name_list = [i.name for i in self]
-        if v.name in name_list:
-            raise RuntimeError(f"{v.name} already exists in list {name_list}.")
-        if isinstance(i, str):
-            del self[i]
-            self[i] = v
-        self.list.insert(i, v)
+        if value.name in name_list:
+            raise RuntimeError(f"{value.name} already exists in list {name_list}.")
+        if isinstance(index, str):
+            del self[index]
+            self[index] = index
+        self.list.insert(index, value)
 
     def __str__(self):
         return str(self.list)

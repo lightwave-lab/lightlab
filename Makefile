@@ -55,13 +55,13 @@ test-simple: testbuild
 test-lint: testbuild
 	( \
 		source venv/bin/activate; \
-		py.test --pylint --flakes --pylint-rcfile=pylintrc lightlab; \
+		py.test --pylint --flake8 --pylint-rcfile=pylintrc lightlab; \
 	)
 
 test-lint-errors: testbuild
 	( \
 		source venv/bin/activate; \
-		py.test --pylint --flakes --pylint-rcfile=pylintrc-errors lightlab; \
+		py.test --pylint --flake8 --pylint-rcfile=pylintrc-errors lightlab; \
 	)
 
 test-nb: testbuild
@@ -84,6 +84,9 @@ clean:
 	rm -rf lightlab.egg-info
 	rm -rf build
 	rm -rf venvinfo
+	rm -rf .cache
+	rm -rf .pytest_cache
+	rm -rf .coverage
 	$(MAKE) -C docs clean
 
 purge: clean

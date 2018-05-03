@@ -2,6 +2,7 @@ from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import TekScopeAbstract
 from lightlab.laboratory.instruments import Oscilloscope
 
+
 class Tektronix_TDS6154C_Oscope(VISAInstrumentDriver, TekScopeAbstract):
     ''' Real time scope.
         See abstract driver for description.

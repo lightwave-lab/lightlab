@@ -159,8 +159,8 @@ class MultiModuleConfigurable(AbstractDriver):
         for chan in newValDict.keys():
             if chan not in self.useChans:
                 raise ChannelError('Channel index not blocked out. ' +
-                                    'Requested {}, '.format(chan) +
-                                    'Available {}.'.format(self.useChans))
+                                   'Requested {}, '.format(chan) +
+                                   'Available {}.'.format(self.useChans))
         setArrayBuilder = self.getConfigArray(cStr)
         for iCh, chan in enumerate(self.useChans):
             if chan in newValDict.keys():
@@ -171,4 +171,3 @@ class MultiModuleConfigurable(AbstractDriver):
     def moduleIds(self):
         ''' list of module ID strings '''
         return list(self.getConfigArray('*IDN'))
-

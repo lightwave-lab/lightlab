@@ -40,6 +40,7 @@ class Experiment(Virtualizable):
     connections = None
     _valid = None
     _lab = None
+    name = None
 
     @property
     def lab(self):
@@ -60,15 +61,15 @@ class Experiment(Virtualizable):
             self._valid = self.validate()
             # Only print info is it is validated now.
             if self._valid:
-                logger.info("{} was just verified and it is live.".format(self))
+                logger.info("%s was just verified and it is live.", self)
             else:
-                logger.info("{} was just verified and it is offline.".format(self))
+                logger.info("%s was just verified and it is offline.", self)
         return self._valid
 
     valid = property(is_valid)
 
     def __init__(self, instruments=None, devices=None, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         if instruments is not None:
             self.instruments = instruments
         else:
@@ -80,7 +81,6 @@ class Experiment(Virtualizable):
             self.devices = list()
         self.validate_exprs = list()
         self.connections = list()
-
 
         self.name = kwargs.pop("name", None)
         self.startup(**kwargs)
@@ -130,7 +130,7 @@ class Experiment(Virtualizable):
             def host_in_lab(host=host):
                 expr = host == self.lab.hosts[host.name]
                 if not expr:
-                    logger.warning("{} not in lab.hosts".format(host))
+                    logger.warning("{} not in lab.hosts %s", host)
                 return expr
 
             self.validate_exprs.append(host_in_lab)
@@ -139,7 +139,7 @@ class Experiment(Virtualizable):
             def bench_in_lab(bench=bench):
                 expr = bench == self.lab.benches[bench.name]
                 if not expr:
-                    logger.warning("{} not in lab.benches".format(bench))
+                    logger.warning("{} not in lab.benches %s", bench)
                 return expr
 
             self.validate_exprs.append(bench_in_lab)
@@ -149,13 +149,13 @@ class Experiment(Virtualizable):
             if host is not None:
                 expr = (instrument in host)
                 if not expr:
-                    logger.warning("{} not in {}".format(instrument, host))
+                    logger.warning("{} not in {} %s", (instrument, host))
                 and_expr = and_expr and expr
 
             if bench is not None:
                 expr = (instrument in bench)
                 if not expr:
-                    logger.warning("{} not in {}".format(instrument, bench))
+                    logger.warning("{} not in {} %s", (instrument, bench))
                 and_expr = and_expr and expr
             return and_expr
 
@@ -181,7 +181,7 @@ class Experiment(Virtualizable):
                 if connection in connections:
                     return True
                 else:
-                    logger.error("Connection {} is not compatible with lab".format(connection))
+                    logger.error("Connection {} is not compatible with lab %s", connection)
                     return False
             self.validate_exprs.append(connection_present)
 
@@ -203,11 +203,9 @@ class Experiment(Virtualizable):
         pass
 
     def __str__(self):
-        try:
-            if self.name is not None:
-                return "Experiment {}".format(self.name)
-        finally:
-            return "Experiment {}".format(self.__class__.__name__)
+        if self.name is not None:
+            return "Experiment {}".format(self.name)
+        return "Experiment {}".format(self.__class__.__name__)
 
     def display(self):
         lines = ["{}".format(self)]
