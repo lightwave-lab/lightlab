@@ -1,4 +1,14 @@
-'''
+''' Driver metaclassing allows two powerful features to connect
+    a ``VISAInstrumentDriver`` to an ``Instrument`` with the attribute: ``instrument_category``.
+
+    1. ``Instrument`` is initialized and returned by calling a ``VISAInstrumentDriver`` class,
+    as if you were initializing that ``VISAInstrumentDriver`
+        * Enables better Instrument/Driver init argument handling
+        * Better separation of Instrument-level/Driver-level attribute access
+        * Unambiguous pickling of these two levels
+
+    2. Enforces that ``VISAInstrumentDriver``  satisfies
+    the interface of its corresponding ``Instrument``.
 '''
 import pytest
 from mock import patch
