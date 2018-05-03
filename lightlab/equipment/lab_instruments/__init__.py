@@ -5,7 +5,7 @@ from ..visa_bases import VISAInstrumentDriver
 import importlib
 import pkgutil
 
-for _, modname, _ in pkgutil.walk_packages(path=__path__,
+for _, modname, _ in pkgutil.walk_packages(path=__path__,  # noqa
                                            prefix=__name__ + '.'):
     _temp = importlib.import_module(modname)
     for k, v in _temp.__dict__.items():

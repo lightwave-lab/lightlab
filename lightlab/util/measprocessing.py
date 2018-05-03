@@ -13,8 +13,8 @@ class SpectrumMeasurementAssistant(object):
     Also handles resonance finding (This could move to a separate manager or external function)
     Interfaces directly with OSA. It DOES NOT set tuning states.
     '''
-    useBgs = ['tuned', 'smoothed', 'const'] # The order matters
-    bgSmoothDefault = 2.0 # in nm
+    useBgs = ['tuned', 'smoothed', 'const']  # The order matters
+    bgSmoothDefault = 2.0  # in nm
 
     def __init__(self, nChan=1, arePeaks=False, osaRef=None):
         self.nChan = nChan
@@ -57,10 +57,12 @@ class SpectrumMeasurementAssistant(object):
         if spect is None:
             spect = self.fgSpect(avgCnt=avgCnt)
         # Standard peak finder
-        res = spect.findResonanceFeatures(expectedCnt=self.nChan, isPeak=self.arePeaks, **self.peakfinderOptions)
+        res = spect.findResonanceFeatures(
+            expectedCnt=self.nChan, isPeak=self.arePeaks, **self.peakfinderOptions)
         # Advanced correlation based peak finder
         if self.filtShapesForConvolution is not None:
-            fineRes, confidence = spect.refineResonanceWavelengths(self.filtShapesForConvolution, seedRes=res)
+            fineRes, confidence = spect.refineResonanceWavelengths(  # pylint: disable=unused-variable
+                self.filtShapesForConvolution, seedRes=res)
             res = fineRes
         lamSort = np.argsort([r.lam for r in res])
         return res[lamSort]
@@ -71,12 +73,12 @@ class SpectrumMeasurementAssistant(object):
         if spect is None:
             spect = self.fgSpect(avgCnt=avgCnt)
         processed = spect.copy()
-        for i,r in enumerate(self.resonances(spect)):
-            segmentAroundPeak = r.lam + r.fwhm * fwhmsAround/2 * np.array([-1, 1])
+        for r in self.resonances(spect):
+            segmentAroundPeak = r.lam + r.fwhm * fwhmsAround / 2 * np.array([-1, 1])
             processed = processed.deleteSegment(segmentAroundPeak)
         return processed
 
-    def fgResPlot(self, spect=None, axis=None, avgCnt=1):
+    def fgResPlot(self, spect=None, axis=None, avgCnt=1):  # pylint: disable=unused-argument
         ''' Takes a foreground spectrum, plots it and its peaks.
         Currently the axis input is unused.
         '''
@@ -84,7 +86,8 @@ class SpectrumMeasurementAssistant(object):
             spect = self.fgSpect(avgCnt)
         res = self.resonances(spect)
         spect.simplePlot()
-        [r.simplePlot() for r in res]
+        for r in res:
+            r.simplePlot()
 
     def setBgConst(self, raw=None):
         ''' Makes a background the maximum transmission observed '''
@@ -119,7 +122,7 @@ class SpectrumMeasurementAssistant(object):
         baseRaw = base + self.getBgSpect()
         displacedRaw = displaced + self.getBgSpect()
         for r in res:
-            spliceWind = r.lam + 3 * r.fwhm * np.array([-1,1])/2
+            spliceWind = r.lam + 3 * r.fwhm * np.array([-1, 1]) / 2
             baseRaw = baseRaw.splice(displacedRaw, segment=spliceWind)
         self.__backgrounds['tuned'] = baseRaw
 
@@ -135,7 +138,7 @@ class SpectrumMeasurementAssistant(object):
         else:
             spect = self.fgSpect(avgCnt, bgType='tuned')
             newBg = spect.copy()
-            for i,r in enumerate(self.resonances(newBg)):
+            for i, r in enumerate(self.resonances(newBg)):
                 nulledPiece = spect - filtShapes[i].db().shift(r.lam)
                 newBg = newBg.splice(nulledPiece)
             self.__backgrounds['nulled'] = self.getBgSpect(bgType='tuned') - newBg
@@ -146,16 +149,15 @@ class SpectrumMeasurementAssistant(object):
             for k in preferredOrder:
                 try:
                     return self.__backgrounds[k]
-                except KeyError as e:
+                except KeyError:
                     pass
-            else:
-                return 0.
-                # raise Exception('No background spectrum has been taken')
+            return 0
+            # raise Exception('No background spectrum has been taken')
         elif bgType in preferredOrder:
             try:
                 return self.__backgrounds[bgType]
-            except KeyError as e:
+            except KeyError:
                 raise KeyError('Background of type \'' + bgType + '\' has not been taken yet.')
         else:
             raise ValueError('Invalid background token: ' + bgType +
-                '. Need ' + str(', '.join(preferredOrder)))
+                             '. Need ' + str(', '.join(preferredOrder)))

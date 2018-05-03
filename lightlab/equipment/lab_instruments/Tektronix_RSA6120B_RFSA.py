@@ -6,6 +6,7 @@ from lightlab.laboratory.instruments import RFSpectrumAnalyzer
 from lightlab.util.data import Spectrum, Spectrogram
 import numpy as np
 
+
 class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
     ''' TEKTRONIX RSA6120B, RF spectrum analyzer
 
@@ -88,11 +89,12 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
             The accuracy of timing and consistency of timing between lines is not guaranteed.
         '''
         if 'SGR' not in self.getMeasurements():
-            raise Exception('Spectrogram is not being recorded. Did you forget to call sgramInit()?')
+            raise Exception(
+                'Spectrogram is not being recorded. Did you forget to call sgramInit()?')
 
-        def qg(subParam):
-            ''' for Quick Get '''
-            return float(self.getConfigParam('SGR:' + subParam, forceHardware=True))
+        # def qg(subParam):
+            # for Quick Get '''
+            # return float(self.getConfigParam('SGR:' + subParam, forceHardware=True))
 
         # Create data structure with proper size
         trialLine = self.__sgramLines([0])[0]
@@ -121,7 +123,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         sgramMat = np.zeros((nLines, nFreqs))
 
         # Transfer data
-        logger.debug('Preparing to transfer spectrogram of shape {}...'.format(sgramMat.shape))
+        logger.debug('Preparing to transfer spectrogram of shape %s...', sgramMat.shape)
         self.__sgramLines(lineNos, container=sgramMat, debugEvery=100)
         logger.debug('Transfer complete.')
 
@@ -142,14 +144,14 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         VISAInstrumentDriver.open(self)
         for i, lno in enumerate(lineNos):
             if debugEvery is not None and i % debugEvery == 0:
-                logger.debug('Transferring {} / {}'.format(lno, lineNos[-1]))
+                logger.debug('Transferring %s / %s', lno, lineNos[-1])
             self.mbSession.write('TRAC:SGR:SEL:LINE {}'.format(lno))
             for _ in range(2):  # Sometimes the query just fails so we try again
                 rawLine = self.mbSession.query_binary_values('FETCH:SGR?')
                 if len(rawLine) > 0:
                     break
             else:
-                logger.debug('Ran out of data on line ' + str(lno))
+                logger.debug('Ran out of data on line %s', lno)
                 continue
             try:
                 container[i] = rawLine
@@ -165,7 +167,6 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
                 raise err
         VISAInstrumentDriver.close(self)
         return container
-
 
     def spectrum(self, freqReso=None, freqRange=None, typAvg='none', nAvg=None):
         ''' Acquires and transfers a spectrum.

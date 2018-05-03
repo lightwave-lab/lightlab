@@ -61,12 +61,12 @@ class Tektronix_DSA8300_Oscope(VISAInstrumentDriver, TekScopeAbstract):
 
         # Gathering
         with self.tempConfig('TRIGGER:SOURCE',
-                'FREERUN' if untriggered else 'EXTDIRECT'):
+                             'FREERUN' if untriggered else 'EXTDIRECT'):
             self._triggerAcquire()
 
         # Transfer data
         stdDev = self.query('HIS:STAT:STD?')
         sigmaStats = np.zeros(3)
         for iSigma in range(3):
-            sigmaStats[iSigma] = self.query('HIS:STAT:SIGMA{}?'.format(iSigma+1))
+            sigmaStats[iSigma] = self.query('HIS:STAT:SIGMA{}?'.format(iSigma + 1))
         return stdDev, sigmaStats

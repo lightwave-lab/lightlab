@@ -15,7 +15,7 @@ def check_socket(host, port):
     # learned from https://stackoverflow.com/questions/19196105/python-how-to-check-if-a-network-port-is-open-on-linux
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
         if sock.connect_ex((host, port)) == 0:  # pylint: disable=no-member
-            logger.debug("{}:{} socket is open".format(host, port))
+            logger.debug("%s:%s socket is open", host, port)
             port_open = True  # Port is open
         else:
             port_open = False  # Port is closed
@@ -79,8 +79,8 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         time.sleep(0.2)
 
     def instrID(self):
-        """Overloads the super function because the OSA does not respond to \*IDN?
-            Instead sends a simple command and waits for a confirmed return
+        """Overloads the super function because the OSA does not respond to *IDN?
+        Instead sends a simple command and waits for a confirmed return
         """
         try:
             self.write('SPSWPMSK?')
@@ -168,7 +168,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         #         nothing, a, b = tuple(powerDataList[idx + 1].split('-'))
         #         #a, b = -float(a), -float(b)
         #         powerDataFloat[i], powerDataFloat[i + 1] = -float(a), -float(b)
-        #         logger.warn("splitting %s into %s and %s", powerDataList[idx + 1], -float(a), -float(b))
+        #         logger.warning("splitting %s into %s and %s", powerDataList[idx + 1], -float(a), -float(b))
         #         i = i + 1
         #     finally:
         #         i = i + 1
@@ -195,7 +195,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
                 dbmAvg = dbmAvg + dbm / avgCnt
         return Spectrum(nm, dbmAvg, inDbm=True)
 
-    ''' TLS access methods currently not implemented '''
+    # TLS access methods currently not implemented
 
     @property
     def tlsEnable(self):
@@ -209,8 +209,8 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         if newState is -1 or None: do nothing
         Returns the current on/off state as boolean, read from the OSA
         """
-        if newState != None and newState != -1:
-            if type(newState) != type(True):
+        if newState and newState != -1:
+            if isinstance(newState, bool):
                 newState = (newState != 0)
             writeVal = '1' if newState else '0'
             self.write('TLSON ' + writeVal)
@@ -225,5 +225,5 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
     def tlsWl(self, newState=None):
         """newState is a float in units of nm
         """
-        if newState != None:
+        if newState:
             self.write('TLSwl ' + str(newState))
