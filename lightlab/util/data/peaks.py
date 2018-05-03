@@ -1,8 +1,8 @@
 ''' Implementation of core peak finding algorithm.
-    It is wrapped to be more user-friendly by :py:meth:`findResonanceFeatures`.
+    It is wrapped to be more user-friendly by :meth:`~lightlab.util.data.one_dim.MeasuredFunction.findResonanceFeatures`.
 
-    :py:class:`ResonanceFeature` is a data storage class
-    returned by :py:meth:`findResonanceFeatures`
+    :class:`ResonanceFeature` is a data storage class
+    returned by :meth:`~lightlab.util.data.one_dim.MeasuredFunction.findResonanceFeatures`
 '''
 import matplotlib.pyplot as plt
 import numpy as np

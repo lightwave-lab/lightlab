@@ -1,7 +1,7 @@
 '''
     Two dimensional measured objects where the second abscissa variable is either
-        * discrete (:py:class:`FunctionBundle`), or
-        * continuous (:py:class:`MeasuredSurface`)
+        * discrete (:class:`FunctionBundle`), or
+        * continuous (:class:`MeasuredSurface`)
 '''
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,21 +12,21 @@ from .one_dim import MeasuredFunction, Waveform
 
 
 class FunctionBundle(object):
-    ''' A bundle of :py:class:`MeasuredFunction`s: "z" vs. "x", "i"
+    ''' A bundle of :class:`~lightlab.util.data.one_dim.MeasuredFunction`'s: "z" vs. "x", "i"
 
         The key is that they have the same abscissa base.
         This class will take care of resampling in a common abscissa base.
 
         The bundle can be:
-            * iterated to get the individual :py:class`MeasuredFunction`s
+            * iterated to get the individual :class`~lightlab.util.data.one_dim.MeasuredFunction`'s
             * operated on with other ``FunctionBundles``
-            * plotted with :py:meth`simplePlot` and :py:meth:`multiAxisPlot`
+            * plotted with :meth`simplePlot` and :meth:`multiAxisPlot`
 
-        Distinct from a :py:class:`MeasuredSurface` because
+        Distinct from a :class:`MeasuredSurface` because
         the additional axis does not represent a continuous thing.
         It is discrete and sometimes unordered.
 
-        Distince from a :py:class:`FunctionalBasis` because
+        Distince from a :class:`FunctionalBasis` because
         it does not support most linear algebra-like stuff
         (e.g. decomposision, matrix multiplication, etc.).
         This is not a strict rule.
@@ -384,9 +384,18 @@ class FunctionalBasis(FunctionBundle):
 
 
 class MeasuredSurface(object):
-    ''' Basically a two dimensional measured function '''
+    ''' Basically a two dimensional measured function: "z" vs. "x", "y"
+
+        Useful trick when gathering data: build incrementally using :meth:`FunctionBundle.addDim`,
+        then convert that to this class using :meth:`MeasuredSurface.fromFunctionBundle`.
+    '''
 
     def __init__(self, absc, ordi):
+        '''
+            Args:
+                absc (ndarray): same meaning as measured function
+                ordi (ndarray): two-dimensional array or matrix
+        '''
         if type(absc) == np.ndarray and absc.ndim != 1:
             raise Exception(
                 'absc should be a 2-element list of arrays or an array of objects (which are arrays)')
@@ -404,12 +413,12 @@ class MeasuredSurface(object):
     def fromFunctionBundle(cls, otherBund, addedAbsc=None):
         ''' gives back a MeasuredSurface from a function Bundle
 
-            Params:
-                otherBund: The FunctionBundle. The ordering matters
-                addedAbsc: the other dimension abscissa array (default, integers)
+            Args:
+                otherBund (FunctionBundle): The source. The ordering of functions matters
+                addedAbsc (np.ndarray): the second dimension abscissa array (default, integers)
 
             Returns:
-                MeasuredSurface object
+                (:class:`MeasuredSurface`) new object
         '''
         existingAbsc = otherBund.absc
         if addedAbsc is None:

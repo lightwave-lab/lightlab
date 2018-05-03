@@ -1,3 +1,6 @@
+''' Finding the x-value that provides a targeted y-value for measured functions
+'''
+
 import numpy as np
 from lightlab import logger
 

@@ -1,3 +1,5 @@
+''' One-dimensional data structures with substantial processing abilities
+'''
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython import display
@@ -470,10 +472,10 @@ class MeasuredFunction(object):
             return kurtosis
 
     def findResonanceFeatures(self, **kwargs):
-        r''' A convenient wrapper for :py:func:`findPeaks` that works with this class.
+        r''' A convenient wrapper for :func:`~lightlab.util.data.peaks.findPeaks`
 
             Args:
-                \*\*kwargs: kwargs passed to :py:func:`findPeaks`
+                \*\*kwargs: passed to :func:`~lightlab.util.data.peaks.findPeaks`
 
             Returns:
                 list[ResonanceFeature]: the detected features as nice objects
@@ -713,10 +715,10 @@ class Spectrum(MeasuredFunction):
         return fineRes, confidence
 
     def findResonanceFeatures(self, **kwargs):
-        ''' Overloads :py:meth:``MeasuredFunction.findResonanceFeatures`` to make sure it's in db scale
+        r''' Overloads :meth:`.MeasuredFunction.findResonanceFeatures` to make sure it's in db scale
 
             Args:
-                **kwargs: kwargs passed to :py:mod:`findPeaks`
+                \*\*kwargs: kwargs passed to :mod:`~lightlab.util.data.peaks.findPeaks`
 
             Returns:
                 list[ResonanceFeature]: the detected features as nice objects
