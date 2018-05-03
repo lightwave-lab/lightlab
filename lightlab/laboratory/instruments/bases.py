@@ -173,10 +173,10 @@ class Host(Node):
             "{} not found in {}".format(id_string_search, self))
 
     def addInstrument(self, *instruments):
-        r""" Adds an instrument to lab.instruments if it is not already present.
+        """ Adds an instrument to lab.instruments if it is not already present.
 
         Args:
-            \*instruments (Instrument): instruments
+            *instruments (:py:class:`Instrument`): instruments
 
         """
         from lightlab.laboratory.state import lab
@@ -186,10 +186,10 @@ class Host(Node):
             instrument.host = self
 
     def removeInstrument(self, *instruments):
-        r""" Disconnects the instrument from the host
+        """ Disconnects the instrument from the host
 
         Args:
-            \*instruments (Instrument): instruments
+            *instruments (:py:class:`Instrument`): instruments
 
         """
         # TODO Remove all connections
@@ -295,11 +295,11 @@ class Bench(Node):
         return TypedList(Device, *list(filter(lambda x: x.bench == self, lab.devices)))
 
     def addInstrument(self, *instruments):
-        r""" Adds an instrument to lab.instruments if it is not already
+        """ Adds an instrument to lab.instruments if it is not already
         present and connects to the host.
 
         Args:
-            \*instruments (Instrument): instruments
+            *instruments (:py:class:`Instrument`): instruments
 
         """
         from lightlab.laboratory.state import lab
@@ -309,10 +309,10 @@ class Bench(Node):
             instrument.bench = self
 
     def removeInstrument(self, *instruments):
-        r""" Detaches the instrument from the bench.
+        """ Detaches the instrument from the bench.
 
         Args:
-            \*instruments (Instrument): instruments
+            *instruments (:py:class:`Instrument`): instruments
 
         Todo:
             Remove all connections
@@ -324,11 +324,11 @@ class Bench(Node):
             instrument.bench = None
 
     def addDevice(self, *devices):
-        r""" Adds a device to lab.devices if it is not already present
+        """ Adds a device to lab.devices if it is not already present
         and places it in the bench.
 
         Args:
-            \*devices (Device): devices
+            *(:py:class:`Device`): devices
 
         """
         from lightlab.laboratory.state import lab
@@ -340,10 +340,10 @@ class Bench(Node):
             device.bench = self
 
     def removeDevice(self, *devices):
-        r""" Detaches the device from the bench.
+        """ Detaches the device from the bench.
 
         Args:
-            \*devices (Device): devices
+            *(:py:class:`Device`): devices
 
         Todo:
             Remove all connections
@@ -567,8 +567,8 @@ class Instrument(Node):
     def id_string(self):
         """
             The id_string should match the value returned by
-            ``self.driver.instrID()``, and is checked by the command
-            ``self.isLive()`` in order to authenticate that the intrument
+            self.driver.instrID(), and is checked by the command
+            self.isLive() in order to authenticate that the intrument
             in that address is the intended one.
         """
         return self._id_string
