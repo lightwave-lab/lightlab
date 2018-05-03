@@ -1,3 +1,5 @@
+''' Functions for filesystem handling
+'''
 from .paths import (projectDir,  # noqa
                     dataHome,  # noqa
                     monitorDir,  # noqa
