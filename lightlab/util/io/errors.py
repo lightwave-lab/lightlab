@@ -9,7 +9,8 @@ class RangeError(Exception):
     '''
     pass
 
-class DeprecationError(NotImplementedError):
+
+class DeprecatedError(Exception):
     ''' Make sure to describe the new alternative
     '''
     pass

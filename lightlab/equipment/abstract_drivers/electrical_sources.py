@@ -176,4 +176,3 @@ class MultiChannelSource(object):
         """Turn all voltages to zero, but maintain the session
         """
         self.setChannelTuning(dict([ch, 0] for ch in self.stateDict.keys()), *setArgs)
-

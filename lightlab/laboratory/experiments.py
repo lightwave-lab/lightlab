@@ -239,13 +239,8 @@ class Experiment(Virtualizable):
         print("\n".join(lines))
 
 
-class MasterExperiment(Experiment):
-    ''' Does nothing except hold sub experiments to synchronize them
-
-        Required because you cannot startup an Experiment base object
+class MasterExperiment(Virtualizable):
+    ''' Does nothing except hold sub experiments to synchronize them.
+        This is purely a naming thing.
     '''
-    def __init__(self, *args, **kwargs):
-        raise Exception('MasterExperiment will be deprecated for Virtualizable')
-
-    def startup(self):
-        pass
+    pass
