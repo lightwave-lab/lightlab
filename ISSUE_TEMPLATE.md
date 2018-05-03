@@ -10,8 +10,7 @@ Instead, for technical support on `x`, go to `y`, where
 
 Instead, to request core features, go __this__ discussion board
 
-
-Do you want to ask a question? Are you looking for support? The Atom message board is the best place for getting support: https://discuss.atom.io
+--------
 
 # Template [Title of issue]
 

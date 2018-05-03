@@ -13,12 +13,10 @@ If a thread is working through a problem, you shouldn’t join the thread, drop 
 
 Start by getting on the same page: read the thread history; ask questions. Reply to questions/comments on your comments. If you want to show support for an idea presented in a thread, consider using a simple :+1: (`:+1:`) rather than stating the same point a different way. If you feel that there is a different approach that could be taken, but you do not have the time or motivation to implement that approach yourself, make a note to yourself to explore that approach when you have time instead of putting that burden on someone else.
 
-### Personal conduct
+### Be welcoming
 We are committed to providing a friendly, safe and welcoming environment for all, regardless of level of experience, gender identity and expression, sexual orientation, disability, personal appearance, body size, race, ethnicity, age, religion, nationality, or other similar characteristic.
 
 You will be excluded from the community if you insult, demean, or harass anyone either in a public forum or private channel. We interpret "harassment" as defined in the [Citizen Code of Conduct](http://citizencodeofconduct.org/) whose wording is derived from the [Geek Feminism Anti-Harassment Policy](http://geekfeminism.wikia.com/wiki/Conference_anti-harassment/Policy). Trolling, [microaggressions](http://geekfeminism.wikia.com/wiki/Microaggressions), and flaming are unwelcome.
-
-In addition to respecting personal differences, please be respectful of technical differences of opinion. Every design decision carries tradeoffs, and there is often no perfect solution.
 
 ## Time
 Be respectful of other people: their time, their location, and other considerations of a distributed team.
