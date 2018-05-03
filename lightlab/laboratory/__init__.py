@@ -13,24 +13,19 @@ __all__ = ["Node"]
 class Hashable(object):
     """
     Hashable class to be used with jsonpickle's module.
-    No instance variables starting with "__" will be serialized.
+    Rationale: This is a fancy way to do ``self.__dict__ == other.__dict__``.
+    That line fails when there are circular references within the __dict__.
+    ``Hashable`` solves that.
+
 
     By default, every key-value in the initializer will become instance
     variables. E.g. ``Hashable(a=1).a == 1``
 
+    No instance variables starting with "__" will be serialized.
     """
     context = jsonpickle.pickler.Pickler(unpicklable=True, warn=True, keys=True)
 
     def __eq__(self, other):
-
-        # Original idea:
-        #
-        # if self.__class__ != other.__class__:
-        #     return False
-        # else:
-        #     return self.__dict__ == other.__dict__
-        # It doesn't work because of cyclical references inside __dict__
-
         jsonpickle.set_encoder_options('json', sort_keys=True)
         json_self = self.context.flatten(self, reset=True)
         json_other = self.context.flatten(other, reset=True)
@@ -101,7 +96,8 @@ class Node(Hashable):
 
 def typed_property(type_obj, name):
     """ Property that only accepts instances of a class and
-    stores the contents in self.name"""
+    stores the contents in self.name
+    """
 
     def fget(self):
         return getattr(self, name)

@@ -89,7 +89,7 @@ Saving the entire object is good if the domains change, which is particularly im
 
 .. todo:: NdSweeper has no loadObj yet. This seems reasonable to do by stripping the bound references. Consider deprecating saving/loading just data and the savefile attribute.
 
-.. bibliography:: /lightwave-bibliography.bib
+.. bibliography:: /lightlab-bibliography.bib
 
 * :ref:`genindex`
 * :ref:`modindex`
