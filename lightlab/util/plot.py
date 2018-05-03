@@ -8,7 +8,7 @@ class DynamicLine(object):
     ''' A line that can refresh when called
     '''
 
-    def __init__(self, formatStr='b-', existing=None, geometry=[(0, 0), (4, 4)]):
+    def __init__(self, formatStr='b-', existing=None, geometry=[(0, 0), (4, 4)]):  # pylint: disable=dangerous-default-value
         '''
             Args:
                 formatStr (str): plotting line format
@@ -97,4 +97,3 @@ def plotCovEllipse(cov, pos, volume=.5, ax=None, **kwargs):
     ellip = Ellipse(xy=pos, width=width, height=height, angle=theta, **kwargs)
 
     return ax.add_artist(ellip)
-

@@ -48,7 +48,6 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             self.setConfigParam('ROUT:TERM', 'REAR')
 
     def __setSourceMode(self, isCurrentSource):
-        # TODO: make proper automata flowchart for this.
         if isCurrentSource:
             sourceStr, meterStr = ('CURR', 'VOLT')
         else:

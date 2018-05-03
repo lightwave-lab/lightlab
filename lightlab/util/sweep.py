@@ -13,6 +13,7 @@ from lightlab.util.plot import plotCovEllipse
 import lightlab.util.io as io
 from lightlab import logger
 
+
 class Sweeper(object):
     plotOptions = None
     monitorOptions = None
@@ -68,8 +69,8 @@ class Sweeper(object):
         '''
         for k, v in kwargs.items():
             if k not in self.plotOptions.keys():
-                logger.warning(k + ' is not a valid plot option.')
-                logger.warning('Valid ones are {}'.format(self.plotOptions.keys()))
+                logger.warning(k, '%s is not a valid plot option.')
+                logger.warning('Valid ones are %s', self.plotOptions.keys())
             else:
                 self.plotOptions[k] = v
         return self.plotOptions
@@ -90,8 +91,8 @@ class Sweeper(object):
         '''
         for k, v in kwargs.items():
             if k not in self.monitorOptions.keys():
-                logger.warning(k + ' is not a valid monitor option.')
-                logger.warning('Valid ones are {}'.format(self.monitorOptions.keys()))
+                logger.warning(k, '%s is not a valid monitor option.')
+                logger.warning('Valid ones are %s', self.monitorOptions.keys())
             else:
                 self.monitorOptions[k] = v
         return self.monitorOptions
@@ -101,6 +102,7 @@ class Sweeper(object):
         new = cls()
         new.load(filename)
         return new
+
 
 class NdSweeper(Sweeper):
     ''' Generic sweeper.
@@ -115,6 +117,7 @@ class NdSweeper(Sweeper):
 
         Make sure that measure is *bound* if it is a method
     '''
+
     def __init__(self):
         ''' Specify the hard domain and actuate dimensions
 
@@ -140,9 +143,10 @@ class NdSweeper(Sweeper):
         self.parse = OrderedDict()
         self.static = OrderedDict()
 
-        self.monitorOptions = {'livePlot': False, 'plotEvery': 1, 'stdoutPrint': True, 'runServer': False}
-        self.plotOptions = {'plType': 'curves', 'xKey': None, 'yKey': None, 'axArr': None, 'cmap-surf': matplotlib.cm.inferno, 'cmap-curves': matplotlib.cm.viridis}  # pylint: disable=no-member
-
+        self.monitorOptions = {'livePlot': False, 'plotEvery': 1,
+                               'stdoutPrint': True, 'runServer': False}
+        self.plotOptions = {'plType': 'curves', 'xKey': None, 'yKey': None, 'axArr': None,
+                            'cmap-surf': matplotlib.cm.inferno, 'cmap-curves': matplotlib.cm.viridis}  # pylint: disable=no-member
 
     @classmethod
     def repeater(cls, nTrials):
@@ -150,7 +154,7 @@ class NdSweeper(Sweeper):
         new.addActuation('trial', lambda a: None, np.arange(nTrials))
         return new
 
-    def gather(self, soakTime=None, autoSave=False, returnToStart=False):
+    def gather(self, soakTime=None, autoSave=False, returnToStart=False):  # pylint: disable=arguments-differ
         ''' Perform the sweep
 
             Args:
@@ -179,7 +183,7 @@ class NdSweeper(Sweeper):
                         pass
         try:
             if soakTime is not None:
-                # logger.debug('Soaking for {} seconds.'.format(soakTime))
+                logger.debug('Soaking for %s seconds.', soakTime)
                 for actu in self.actuate.values():
                     f = actu[0]
                     x = actu[1][0]
@@ -189,7 +193,7 @@ class NdSweeper(Sweeper):
             swpName = 'Generic sweep in ' + ', '.join(self.actuate.keys())
             prog = io.ProgressWriter(swpName, self.swpShape, **self.monitorOptions)
             for index in np.ndindex(self.swpShape):
-                pointData = OrderedDict() # Everything that will be measured *at this index*
+                pointData = OrderedDict()  # Everything that will be measured *at this index*
 
                 for statKey, statMat in self.static.items():
                     pointData[statKey] = statMat[index]
@@ -204,7 +208,7 @@ class NdSweeper(Sweeper):
                         x = xArr[index[iDim]]
                         pointData[aKey] = x
                     if iDim == self.actuDims - 1 or index[iDim + 1] == 0 or doEvery:
-                        y = f(x) # The actual function call occurs here
+                        y = f(x)  # The actual function call occurs here
                         if y is not None:
                             pointData[aKey + '-return'] = y
 
@@ -226,7 +230,7 @@ class NdSweeper(Sweeper):
 
                 # Insert point data into the full matrix data builder
                 # On the first go through, initialize array of correct datatype
-                for k,v in pointData.items():
+                for k, v in pointData.items():
                     if all(i == 0 for i in index):
                         if np.isscalar(v):
                             self.data[k] = np.zeros(self.swpShape, dtype=float)
@@ -235,8 +239,8 @@ class NdSweeper(Sweeper):
                     self.data[k][index] = v
 
                 if self.monitorOptions['livePlot']:
-                    if all(i==0 for i in index):
-                        axArr  = None
+                    if all(i == 0 for i in index):
+                        axArr = None
                     axArr = self.plot(axArr=axArr, index=index)
                     flatIndex = np.ravel_multi_index(index, self.swpShape)
                     if flatIndex % self.monitorOptions['plotEvery'] == 0:
@@ -271,7 +275,8 @@ class NdSweeper(Sweeper):
                     This is useful if you want to livePlot a spectrum or something at every point
                 doOnEveryPoint (bool): call this function in the inner loop or before the corresponding rows
         '''
-        # The actuate attribute is an ordered dict. Values are tuples with element-0 function, element-1 domain
+        # The actuate attribute is an ordered dict. Values are tuples with
+        # element-0 function, element-1 domain
         self.actuate[name] = (function, domain, doOnEveryPoint)
         self._recalcSwpShape()
         # If any static data is present, expand it into the new dimension
@@ -287,8 +292,8 @@ class NdSweeper(Sweeper):
         self._recalcSwpShape()
 
     def _recalcSwpShape(self):
-        self.actuDims = 0
-        self.swpShape = ()
+        self.actuDims = 0  # pylint: disable=attribute-defined-outside-init
+        self.swpShape = ()  # pylint: disable=attribute-defined-outside-init
         for actu in self.actuate.values():
             if actu[1] is not None:
                 self.actuDims += 1
@@ -343,13 +348,14 @@ class NdSweeper(Sweeper):
                 dataOfPt = OrderedDict()
                 for datKey, datVal in self.data.items():
                     if np.any(datVal.shape != self.swpShape):
-                        logger.warning('Data member {} is wrong size for reparsing {}. Skipping.'.format(datKey, pk))
+                        logger.warning(
+                            'Data member %s is wrong size for reparsing %s. Skipping.', datKey, pk)
                     else:
                         dataOfPt[datKey] = datVal[index]
                 try:
                     tempDataMat[index] = pFun(dataOfPt)
                 except KeyError:
-                    logger.warning('Parser {} depends on unpresent data. Skipping.'.format(pk))
+                    logger.warning('Parser %s depends on unpresent data. Skipping.', pk)
                     break
             else:
                 self.data[pk] = tempDataMat
@@ -373,8 +379,8 @@ class NdSweeper(Sweeper):
             contents *= np.ones(self.swpShape)
         if np.any(contents.shape != self.swpShape):
             raise ValueError('Static data ' + name + ' is wrong shape for sweep.' +
-                'Need ' + str(self.swpShape) + '. Got ' + str(contents.shape) +
-                'The order that actuations and static data are added matter.')
+                             'Need ' + str(self.swpShape) + '. Got ' + str(contents.shape) +
+                             'The order that actuations and static data are added matter.')
         self.static[name] = contents
 
     def subsume(self, other, useMinorOptions=False):
@@ -455,7 +461,7 @@ class NdSweeper(Sweeper):
                 axArr (ndarray), plt.axis): axes to plot on. Equivalent to what is returned by this method
                 pltKwargs: passed through to plotting function
         '''
-        global hCurves
+        global hCurves  # pylint: disable=global-statement
         if index is None or np.all(np.array(index) == 0):
             hCurves = None
 
@@ -465,7 +471,7 @@ class NdSweeper(Sweeper):
         else:
             fullData = tempData
         if fullData is not None:
-            plotDims = list(fullData.values())[0].ndim # Instead of self.actuDims
+            plotDims = list(fullData.values())[0].ndim  # Instead of self.actuDims
         else:
             plotDims = self.actuDims
         if plotDims == self.actuDims:
@@ -503,7 +509,7 @@ class NdSweeper(Sweeper):
         for k in xKeys + yKeys:
             if k not in fullData.keys():
                 raise KeyError(k + ' not found in data keys. ' +
-                    'Available data are ' + ', '.join(fullData.keys()))
+                               'Available data are ' + ', '.join(fullData.keys()))
 
         # Make canvas of axes based on number of y lines
         plotArrShape = np.array([len(yKeys), len(xKeys)])
@@ -512,7 +518,8 @@ class NdSweeper(Sweeper):
             return
         if axArr is None:
             if self.plotOptions['axArr'] is None:
-                fi, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1], figsize=(10, plotArrShape[0]*2.5))
+                _, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1], figsize=(
+                    10, plotArrShape[0] * 2.5))  # pylint: disable=unused-variable
             else:
                 axArr = self.plotOptions['axArr']
         axArr = np.array(axArr)
@@ -559,35 +566,41 @@ class NdSweeper(Sweeper):
                                 pass
                     hCurves[iAx] = curv
                 elif plotDims == 2:
-                    autoLabeling = autoLabelingMaster and iAx == (0, axArr.shape[1]-1)
+                    autoLabeling = autoLabelingMaster and iAx == (0, axArr.shape[1] - 1)
                     if autoLabeling:
-                        nonDomainKey = actKeyList[0]  # default is major axis actuator. As of now, only default supported
+                        # default is major axis actuator. As of now, only default supported
+                        nonDomainKey = actKeyList[0]
                         if nonDomainKey == xK:
                             nonDomainKey = actKeyList[1]
                             xData = xData.T
                             yData = yData.T
                             if index is not None:
                                 index = index[::-1]
-                        nonDomainValue = lambda iLine: self.actuate[nonDomainKey][1][iLine]
+                        nonDomainValue = (lambda iLine:
+                                          self.actuate[nonDomainKey][1][iLine])  # pylint: disable=cell-var-from-loop
 
                     nLines = yData.shape[0]
-                    colors = self.plotOptions['cmap-curves'](np.linspace(0, 1, nLines))  # The last index dereference kills any shading
+                    # The last index dereference kills any shading
+                    colors = self.plotOptions['cmap-curves'](np.linspace(0, 1, nLines))
                     ax.cla()
                     for iLine in range(nLines):
                         pltArgs = ('.-', )
                         if autoLabeling:
-                            pltKwargs['label'] = '{} = {:.2f}'.format(nonDomainKey, nonDomainValue(iLine))
+                            pltKwargs['label'] = '{} = {:.2f}'.format(
+                                nonDomainKey, nonDomainValue(iLine))
                         pltKwargs['color'] = colors[iLine][:3]
                         if index is None or iLine < index[-2]:
                             ax.plot(xData[iLine], yData[iLine], *pltArgs, **pltKwargs)
                         elif iLine == index[-2]:
-                            ax.plot(xData[iLine, slice(index[-1]+1)], yData[iLine, slice(index[-1]+1)], *pltArgs, **pltKwargs)
+                            ax.plot(xData[iLine, slice(index[-1] + 1)], yData[iLine,
+                                                                              slice(index[-1] + 1)], *pltArgs, **pltKwargs)
                         elif iLine > index[-2]:
                             pass
                     if autoLabeling:
                         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
                 else:
-                    raise Exception('Too many dimensions in sweep to plot. This should have been caught by assertValidPlotType.')
+                    raise Exception(
+                        'Too many dimensions in sweep to plot. This should have been caught by assertValidPlotType.')
 
                 if iAx[0] == plotArrShape[0] - 1:
                     ax.set_xlabel(xK)
@@ -665,7 +678,7 @@ class NdSweeper(Sweeper):
                     actFun, doEvery = None, None
                 # Do the full add
                 newObj.addActuation(actName, actFun, domain, doEvery)
-        newObj._recalcSwpShape()
+        newObj._recalcSwpShape()  # pylint: disable=protected-access
 
         # Restore parsers. Do not reparse them
         if functionSource is not None:
@@ -675,6 +688,7 @@ class NdSweeper(Sweeper):
     def load(self, savefile=None):
         super().load(savefile)
         self._recalcSwpShape()
+
 
 def simpleSweep(actuate, domain, measure=None):
     ''' Basic sweep in one dimension, without function keys, parsing, or plotting.
@@ -698,6 +712,7 @@ def simpleSweep(actuate, domain, measure=None):
     else:
         return swpObj.data['act0-return']
 
+
 class CommandControlSweeper(Sweeper):
     ''' Generic command-control sweep for evaluating a controller.
 
@@ -712,6 +727,7 @@ class CommandControlSweeper(Sweeper):
             How can we get this subsumed by a NdSweeper for trial repetition. CommandControlSweeper shouldn't be able to subsume as major
     '''
     # def __init__(self, swpPointFun, swpValues, type, dimNames=None, swpName=None):
+
     def __init__(self, evaluate, defaultArg, swpInds, domain, nTrials=1):
         '''
             Args:
@@ -734,17 +750,17 @@ class CommandControlSweeper(Sweeper):
         self.swpShape = tuple(len(dom) for dom in self.domain)
         if len(self.domain) != self.swpDims:
             raise ValueError('domain and swpInds must have the same dimension.' +
-                'Got {} and {}'.format(len(self.domain), len(self.swpInds)))
+                             'Got {} and {}'.format(len(self.domain), len(self.swpInds)))
 
         self.plotOptions = {'plType': 'curves'}
-        self.monitorOptions = {'livePlot': False, 'plotEvery': 1, 'stdoutPrint': True, 'runServer': False, 'cmdCtrlPrint': True}
+        self.monitorOptions = {'livePlot': False, 'plotEvery': 1,
+                               'stdoutPrint': True, 'runServer': False, 'cmdCtrlPrint': True}
 
         # Generate actuation sweep grid
         self.cmdGrid = np.array(np.meshgrid(*self.domain)).T
         assert(self.cmdGrid.shape == self.swpShape + (self.swpDims,))
 
         self.nTrials = nTrials
-
 
     def saveObj(self, savefile=None):
         ''' Instead of just saving data, save the whole damn thing.
@@ -770,7 +786,7 @@ class CommandControlSweeper(Sweeper):
         '''
         return io.loadPickle(savefile)
 
-    def gather(self, autoSave=False, randomize=False):
+    def gather(self, autoSave=False, randomize=False):  # pylint: disable=arguments-differ
         ''' Executes the sweep
 
             Todo:
@@ -838,11 +854,11 @@ class CommandControlSweeper(Sweeper):
             if axArr is not None:
                 plt.sca(axArr)
             elif index is None or np.all(index == 0):
-                fi, ax = plt.subplots(figsize=(6, 6))
+                plt.subplots(figsize=(6, 6))
             else:
                 plt.cla()
                 # display.clear_output(wait=True)
-            cmdMat, measMat, monitMat = self.toSweepData()
+            cmdMat, measMat, monitMat = self.toSweepData()  # pylint: disable=unused-variable
             xFull = cmdMat[:, 0]
 
             # All points over trials and the sweep parameter
@@ -850,8 +866,8 @@ class CommandControlSweeper(Sweeper):
             # Plot the in-progress line
             if index is not None:
                 if index[1] > 0:
-                    xInProgress = cmdMat[:index[1]+1, 0]
-                    yInProgress = allPts[index[0], :index[1]+1]
+                    xInProgress = cmdMat[:index[1] + 1, 0]
+                    yInProgress = allPts[index[0], :index[1] + 1]
                     plt.plot(xInProgress, yInProgress, 'g.-')
 
             # Plot the lines that have finished, and their statistics
@@ -908,8 +924,8 @@ class CommandControlSweeper(Sweeper):
 
         # Take the worst case grid point
         consolidateErrorVsWeight = lambda x: np.max(np.abs(x)) if worstCase else rms(x, axis=None)
-        accuracy = consolidateErrorVsWeight(netErrMeanVsWeight) # This gives accuracy
-        precision = consolidateErrorVsWeight(netErrStddevVsWeight) # Precision
+        accuracy = consolidateErrorVsWeight(netErrMeanVsWeight)  # This gives accuracy
+        precision = consolidateErrorVsWeight(netErrStddevVsWeight)  # Precision
 
         if not bits:
             return accuracy, precision
@@ -919,10 +935,12 @@ class CommandControlSweeper(Sweeper):
             precisionBits = np.log2(domainSpan / precision)
             return accuracyBits, precisionBits
 
+
 interAx = None
 hCurves = None
 hArrow = None
 hEllipse = None
+
 
 def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
     ''' sweepData should have ALL the command weights specified
@@ -936,9 +954,9 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
         Todo:
             Fix the global hack for persistent plots -- actually, this is fine
     '''
-    global interAx
-    global hArrow
-    global hEllipse
+    global interAx  # pylint: disable=global-statement
+    global hArrow  # pylint: disable=global-statement
+    global hEllipse  # pylint: disable=global-statement
 
     cmdWeights, measWeights, monitWeights = sweepData
 
@@ -949,7 +967,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
         interAx = ax
         if is2D:
             for gridIndex in np.ndindex(gridShape):
-                fullIndex = (measWeights.shape[0]-1, *gridIndex)
+                fullIndex = (measWeights.shape[0] - 1, *gridIndex)
                 plotCmdCtrl(sweepData, index=fullIndex, interactive=False)
         else:
             plotCmdCtrl(sweepData, index=(measWeights.shape[0], 0, 0), interactive=False)
@@ -958,7 +976,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
         if interAx is None or all(i == 0 for i in index):
             # Initialize plotting objects
             if ax is None:
-                fig, ax = plt.subplots(figsize=(5,5))
+                fig, ax = plt.subplots(figsize=(5, 5))  # pylint: disable=unused-variable
             interAx = ax
             plt.cla()
             if is2D:
@@ -972,16 +990,16 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
                 ySweep = cmdWeights[0, :, 1]
                 yRange = (np.min(ySweep), np.max(ySweep))
                 for sPt in xSweep:
-                    interAx.plot(2*[sPt], yRange, 'k-')
+                    interAx.plot(2 * [sPt], yRange, 'k-')
                 for sPt in ySweep:
-                    interAx.plot(xRange, 2*[sPt], 'k-')
+                    interAx.plot(xRange, 2 * [sPt], 'k-')
                 # plt.xlim(xRange + np.array([-1, 1]) * np.diff(xRange)[0] * .1)
                 # plt.ylim(yRange + np.array([-1, 1]) * np.diff(yRange)[0] * .1)
                 # interAx.set(aspect='equal')
             else:
                 xSweep = cmdWeights[:, 0]
                 xRange = (np.min(xSweep), np.max(xSweep))
-                interAx.plot(xRange, 2*[0], 'k-')
+                interAx.plot(xRange, 2 * [0], 'k-')
                 plt.xlim(xRange)
                 plt.ylim(xRange - np.mean(xRange))
                 # interAx.set(aspect='equal')
@@ -1023,7 +1041,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
                 interAx.plot(x, y, 'g')
         else:  # 2D
             gridIndex = index[1:]
-            valsAtThisGridPt = measWeights[(slice(index[0]+1), *index[1:])]
+            valsAtThisGridPt = measWeights[(slice(index[0] + 1), *index[1:])]
             # plot newest raw point itself (and others at this grid point)
             for pt in valsAtThisGridPt:
                 interAx.plot(*pt, '.k')
@@ -1053,6 +1071,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
         #     display.clear_output(wait=True)
         #     display.display(interAx.figure)
 
+
 # Information on types of plots
 # (set of possible dimensions, type of sweep in {'nd', 'cmd'})
 pTypes = {}
@@ -1060,19 +1079,21 @@ pTypes['curves'] = ({1, 2}, {NdSweeper.__name__, CommandControlSweeper.__name__}
 pTypes['surf'] = ({2}, {NdSweeper.__name__})
 pTypes['cmdErr'] = ({1, 2}, {CommandControlSweeper.__name__})
 
+
 def availablePlots(dims=None, swpType=None):
     ''' Filter by dims and swpType
 
         If the argument is none, do not filter by that
     '''
     avail = []
-    for k,v in pTypes.items():
+    for k, v in pTypes.items():
         if dims is None or dims in v[0]:
             if swpType is None \
-                or type(swpType) is type and swpType.__name__ in v[1] \
-                or type(swpType) is str and swpType in v[1]:
+                    or type(swpType) is type and swpType.__name__ in v[1] \
+                    or type(swpType) is str and swpType in v[1]:
                 avail.append(k)
     return avail
+
 
 def assertValidPlotType(plType, dims=None, swpClass=None):
     if plType not in availablePlots(dims, swpClass):

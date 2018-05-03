@@ -148,7 +148,6 @@ class TekConfig(object):
 
     @classmethod
     def fromFile(cls, fname, subgroup=''):
-        from pathlib import Path
         fpath = Path(fname)
         with fpath.open('r') as fx:
             d = json.load(fx)
@@ -216,7 +215,6 @@ class TekConfig(object):
         else:
             configToSave = existingConfig.transfer(self, subgroup=subgroup)
 
-        from pathlib import Path
         fpath = Path(fname)
         with fpath.open('w+') as fx:
             fx.write(str(configToSave))  # __str__ gives nice json format
@@ -313,7 +311,6 @@ class Configurable(AbstractDriver):
             with the \*IDN? string of this instrument.
         '''
         info = self.instrID().split(',')
-        global defaultFileDir
         deffile = defaultFileDir / '-'.join(info[:3]) + '.json'
         return deffile
 
@@ -392,13 +389,13 @@ class Configurable(AbstractDriver):
                 TekConfig: structured configuration object
         '''
         self.initHardware()
-        logger.info('Querying SET? response of ' + self.instrID())
+        logger.info('Querying SET? response of %s', self.instrID())
         try:
             resp = self.query('SET?')
             return TekConfig.fromSETresponse(resp, subgroup=subgroup)
         except VisaIOError as err:  # SET timed out. You are done.
-            logger.error(self.instrID() + ' timed out on \'SET?\'. \
-                         Try resetting with \'*RST\'.')
+            logger.error('%s timed out on \'SET?\'. \
+                         Try resetting with \'*RST\'.', self.instrID())
             raise err
 
     def _getHardwareConfig(self, cStrList):
@@ -418,11 +415,11 @@ class Configurable(AbstractDriver):
 
             try:
                 ret = self.query(cStr + '?')
-            except VisaIOError as err:
-                logger.error('Problematic parameter was {}.\n'.format(cStr) +
-                             'Likely it does not exist in this instrument command structure.')
+            except VisaIOError:
+                logger.error('Problematic parameter was %s.\n'
+                             'Likely it does not exist in this instrument command structure.', cStr)
                 raise
-            logger.debug('Queried {}, got {}'.format(cStr, ret))
+            logger.debug('Queried %s, got %s', cStr, ret)
 
             if self.header:
                 val = ret.split(' ')[-1]
@@ -450,7 +447,7 @@ class Configurable(AbstractDriver):
                 cmd = cmd[1:]
             if not self.space:
                 ''.join(cmd.split(' '))
-            logger.debug('Sending ' + str(cmd) + ' to configurable hardware')
+            logger.debug('Sending %s to configurable hardware', cmd)
             self.write(cmd)
 
     def generateDefaults(self, filename=None, overwrite=False):
@@ -469,8 +466,8 @@ class Configurable(AbstractDriver):
         if filename is None:
             filename = self.getDefaultFilename()
         if Path(filename).exists() and not overwrite:
-            logger.warning(filename + ' already exists. \
-                           Use `overwrite` if you really want.')
+            logger.warning('%s already exists.'
+                           'Use `overwrite` if you really want.', filename)
             return
 
         allConfig = self.__getFullHardwareConfig()
@@ -487,10 +484,9 @@ class Configurable(AbstractDriver):
                 val = self.query(cStr + '?', withTimeout=1000)
                 cfgBuild.set(cStr, val)
                 logger.info(cStr, '<--', val)
-            except VisaIOError as e:
+            except VisaIOError:
                 logger.info(cStr, 'X -- skipping')
 
         cfgBuild.save(filename)
-        logger.info('New default saved to ' + str(filename))
+        logger.info('New default saved to %s', filename)
 # pylint: enable=no-member
-

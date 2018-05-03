@@ -167,6 +167,24 @@ def test_change_host(lab):
     assert instrument2.host == Host1
 
 
+def test_bench_iteration(lab):
+    benches_items = []
+    benches_names = []
+    for bench_name, bench in lab.benches.items():
+        device_names = [str(device) for device in bench.devices]
+        instrument_names = [str(instrument) for instrument in bench.instruments]
+        assert bench_name == bench.name
+        benches_items.append(bench)
+        benches_names.append(bench_name)
+
+    benches_values = []
+    for bench in lab.benches.values():
+        benches_values.append(bench)
+    assert benches_items == benches_values
+
+    assert benches_names == [bench.name for bench in benches_values]
+
+
 def test_display():
     Bench1.display()
     Bench2.display()

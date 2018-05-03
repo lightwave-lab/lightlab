@@ -4,6 +4,7 @@ from lightlab.laboratory.instruments import VectorGenerator
 
 import numpy as np
 
+
 class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
     ''' Rohde and Schwartz SMBV100A
 
@@ -235,7 +236,8 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
                 dwell (float): time to wait at each point, if untriggered
         '''
         if enaState:
-            self.carrierMod(False)  # This will be automatically disabled, so we want to keep our config state accurate
+            # This will be automatically disabled, so we want to keep our config state accurate
+            self.carrierMod(False)
         self.setConfigParam('FREQ:MODE', 'LIST' if enaState else 'CW')
         if isSlave is not None:
             self.setConfigParam('LIST:MODE', 'STEP' if isSlave else 'AUTO')
@@ -257,7 +259,8 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
                 freqs = freqs * np.ones(len(amps))
             else:
                 if len(amps) != len(freqs):
-                    raise ValueError('amps and freqs must have equal lengths, or one/both can be scalars or None')
+                    raise ValueError(
+                        'amps and freqs must have equal lengths, or one/both can be scalars or None')
             self.setConfigParam('LIST:FREQ', ', '.join([str(int(f)) for f in freqs]))
             self.setConfigParam('LIST:POW', ', '.join([str(int(a)) for a in amps]))
 

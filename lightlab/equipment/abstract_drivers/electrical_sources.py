@@ -24,9 +24,9 @@ class MultiModalSource(object):
         bnds = [cls.baseUnit2val(vBnd, mode) for vBnd in cls.baseUnitBounds]
         enforcedValue = np.clip(val, *bnds)
         if enforcedValue != val:
-            logger.warning('Warning: value out of range was constrained.\n' +
-                           'Requested ' + str(val) +
-                           '. Allowed range is' + str(bnds) + ' in ' + mode + 's.')
+            logger.warning('Warning: value out of range was constrained.\n'
+                           'Requested %s.'
+                           'Allowed range is %s in %s s.', val, bnds, mode)
             if cls.exceptOnRangeError:
                 if val < min(bnds):
                     violation_direction = 'low'
@@ -137,7 +137,7 @@ class MultiChannelSource(object):
         ''' Returns the blocked out channels as a list '''
         return self.useChans
 
-    def setChannelTuning(self, chanValDict, *args, **kwargs):
+    def setChannelTuning(self, chanValDict):
         ''' Sets a number of channel values and updates hardware
 
             Args:
@@ -161,7 +161,7 @@ class MultiChannelSource(object):
         # Change our *internal* state
         self.stateDict.update(chanValDict)
 
-    def getChannelTuning(self, *args, **kwargs):
+    def getChannelTuning(self):
         ''' The inverse of setChannelTuning
 
             Args:
