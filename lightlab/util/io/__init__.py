@@ -4,6 +4,8 @@ from .paths import (projectDir,  # noqa
                     lightlabDevelopmentDir)  # noqa
 
 fileDir = dataHome  # Set this in your experiment
+
+
 def _getFileDir(childFile=None):
     ''' This is only used within this package.
         The idea is to create a dynamic link to this changing attribute
@@ -28,4 +30,3 @@ from .saveload import (pprintFileDir,  # noqa
 from .progress import printWait, printProgress, ProgressWriter  # noqa
 from .errors import ChannelError, RangeError  # noqa
 from .jsonpickleable import JSONpickleable  # noqa
-

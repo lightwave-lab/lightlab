@@ -10,8 +10,9 @@ from pathlib import Path
 
 from .paths import projectDir, monitorDir
 
+
 def printWait(*args):
-    ''' Prints your message followed by ``...``
+    r''' Prints your message followed by ``...``
 
         This displays immediately, but
             * your next print will show up on the same line
@@ -65,8 +66,10 @@ class ProgressWriter(object):
     '''
     progFileDefault = monitorDir / 'sweep.html'
     tFmt = '%a, %d %b %Y %H:%M:%S'
+    __tagHead = None
+    __tagFoot = None
 
-    def __init__(self, name, swpSize, runServer=True, stdoutPrint=False, **kwargs):
+    def __init__(self, name, swpSize, runServer=True, stdoutPrint=False, **kwargs):  # pylint: disable=unused-argument
         '''
             Args:
                 name (str): name to be displayed
@@ -100,7 +103,7 @@ class ProgressWriter(object):
         if self.printing:
             print(self.name)
             prntStr = ''
-            for iterDim, dimSize in enumerate(self.size):
+            for iterDim, _ in enumerate(self.size):
                 prntStr += 'Dim-' + str(iterDim) + '...'
             print(prntStr)
             self.__writeStdio()
@@ -131,7 +134,7 @@ class ProgressWriter(object):
                 t += '<meta http-equiv="refresh" content="5" />\n'  # Autorefresh every 5 seconds
             t += '<body>\n'
             t += '<h1>' + self.name + '</h1>\n'
-            t += '<hr \>\n'
+            t += r'<hr \>\\n'
             self.__tagHead = t
         if not hasattr(self, '__tagFoot') or self.__tagFoot is None:
             t = '</body>\n'
@@ -166,7 +169,7 @@ class ProgressWriter(object):
             dimStr = i * 'sub-' + 'dimension[' + str(i) + '] : '
             dimStr += str(p + 1) + ' of ' + str(self.size[i])
             body += ptag(dimStr)
-        body += '<hr \>\n'
+        body += r'<hr \>\\n'
 
         # Calculating timing
         currentTime = time.time()
@@ -194,7 +197,7 @@ class ProgressWriter(object):
         if self.completed:
             raise Exception(
                 'This sweep has supposedly completed. Make a new object to go again')
-        for i in range(steps):
+        for _ in range(steps):
             self.__updateOneInternal()
         if not self.completed:
             if self.serving:

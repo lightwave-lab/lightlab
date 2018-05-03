@@ -31,15 +31,11 @@ class Virtualizable(object):
     _virtual = None
     synced = None
 
-    def __init__(self, *args, **kwargs):
-        try:
-            super().__init__(*args, **kwargs)
-        except TypeError:
-            super().__init__()
+    def __init__(self):
         self.synced = list()
 
     def synchronize(self, *newVirtualizables):
-        ''' Adds another object that this one will put in the same virtual
+        r''' Adds another object that this one will put in the same virtual
             state as itself.
 
             Args:
@@ -49,9 +45,9 @@ class Virtualizable(object):
             if virtualObject is None or virtualObject in self.synced:
                 continue
             if not issubclass(type(virtualObject), Virtualizable):
-                raise TypeError('virtualObject of type '
-                                + str(type(virtualObject))
-                                + ' is not a Virtualizable subclass')
+                raise TypeError('virtualObject of type ' +
+                                str(type(virtualObject)) +
+                                ' is not a Virtualizable subclass')
             self.synced.append(virtualObject)
 
     def __setAll(self, toVirtual):
@@ -61,9 +57,9 @@ class Virtualizable(object):
                 (list): the previous virtual states
         '''
         old_values = list()
-        for iSub, sub in enumerate([self] + self.synced):
-            old_values.append(sub._virtual)
-            sub._virtual = toVirtual
+        for sub in ([self] + self.synced):
+            old_values.append(sub._virtual)  # pylint: disable=protected-access
+            sub._virtual = toVirtual  # pylint: disable=protected-access
         return old_values
 
     def __restoreAll(self, old_values):
@@ -73,7 +69,7 @@ class Virtualizable(object):
                 old_values (list): the previous virtual states
         '''
         for iSub, sub in enumerate([self] + self.synced):
-            sub._virtual = old_values[iSub]
+            sub._virtual = old_values[iSub]  # pylint: disable=protected-access
 
     @property
     def virtual(self):
@@ -143,7 +139,7 @@ class Virtualizable(object):
         old_values = self.__setAll(False)
 
         # Try to call hardware warmup if present
-        for iSub, sub in enumerate([self] + self.synced):
+        for sub in ([self] + self.synced):
             try:
                 sub.hardware_warmup()
             except AttributeError:
@@ -154,7 +150,7 @@ class Virtualizable(object):
 
         finally:
             # Try to call hardware cooldown if present
-            for iSub, sub in enumerate([self] + self.synced):
+            for sub in ([self] + self.synced):
                 try:
                     sub.hardware_cooldown()
                 except AttributeError:
@@ -207,7 +203,8 @@ class DualInstrument(Virtualizable):
         self.virt_obj = virt_obj
         if real_obj is not None and virt_obj is not None:
             violated = []
-            allowed = real_obj.essentialMethods + real_obj.essentialProperties + dir(VirtualInstrument)
+            allowed = real_obj.essentialMethods + \
+                real_obj.essentialProperties + dir(VirtualInstrument)
             for attr in dir(type(virt_obj)):
                 if attr not in allowed \
                         and '__' not in attr:
@@ -215,9 +212,10 @@ class DualInstrument(Virtualizable):
             if len(violated) > 0:
                 logger.warning('Virtual instrument ({}) violates '.format(type(virt_obj).__name__) +
                                'interface of the real one ({})'.format(type(real_obj).__name__))
-                logger.warning('Got: ' + ', '.join(violated))
+                logger.warning('Got: ' + ', '.join(violated))  # pylint: disable=logging-not-lazy
                 # logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
         self.synced = []
+        super().__init__()
 
     @Virtualizable.virtual.setter  # pylint: disable=no-member
     def virtual(self, toVirtual):
@@ -227,10 +225,10 @@ class DualInstrument(Virtualizable):
         '''
         if virtualOnly and not toVirtual:
             toVirtual = None
-        if toVirtual == True and self.virt_obj is None:
+        if toVirtual and self.virt_obj is None:
             raise VirtualizationError('No virtual object specified in',
                                       type(self.real_obj))
-        elif toVirtual == False and self.real_obj is None:
+        elif not toVirtual and self.real_obj is None:
             raise VirtualizationError('No real object specified in',
                                       type(self.virt_obj))
         self._virtual = toVirtual
@@ -280,7 +278,7 @@ class DualInstrument(Virtualizable):
 
     @classmethod
     def fromInstrument(cls, hwOnlyInstr, *args, **kwargs):
-        ''' Gives a new dual instrument that has all the same
+        r''' Gives a new dual instrument that has all the same
             properties and references.
 
             The instrument base of hwOnlyInstr must be the same instrument
@@ -295,15 +293,14 @@ class DualInstrument(Virtualizable):
                     It should instead be initializing a VirtualInstrument.
         '''
         raise NotImplementedError('This method is currently broken')
-        if hwOnlyInstr is not None and not isinstance(hwOnlyInstr, cls.real_klass):
-            raise TypeError(
-                'The fromInstrument (' + hwOnlyInstr.__class__.__name__ + ')'
-                ' is not an instance of the expected Instrument class'
-                ' (' + cls.real_klass.__name__ + ')')
-        newObj = cls(*args, **kwargs)
-        newObj.real_obj = hwOnlyInstr
-        return newObj
-
+        # if hwOnlyInstr is not None and not isinstance(hwOnlyInstr, cls.real_klass):
+        #     raise TypeError(
+        #         'The fromInstrument (' + hwOnlyInstr.__class__.__name__ + ')'
+        #         ' is not an instance of the expected Instrument class'
+        #         ' (' + cls.real_klass.__name__ + ')')
+        # newObj = cls(*args, **kwargs)
+        # newObj.real_obj = hwOnlyInstr
+        # return newObj
 
 
 class DualFunction(object):
@@ -330,6 +327,7 @@ class DualFunction(object):
         otherwise the hardware decorated function will be called instead.
 
     """
+
     def __init__(self, virtual_function=None,
                  hardware_function=None, doc=None):
         self.virtual_function = virtual_function
@@ -368,6 +366,7 @@ class DualMethod(object):
             The naming for DualFunction and DualMethod are backwards.
             Will break notebooks when changed.
     '''
+
     def __init__(self, dualInstrument=None, virtual_function=None,
                  hardware_function=None, doc=None):
         self.dualInstrument = dualInstrument

@@ -114,6 +114,8 @@ class Node(Hashable):
 
     """
 
+    bench = None
+
     def placeBench(self, new_bench):  # TODO Deprecate
         self.bench = new_bench
 
@@ -121,6 +123,7 @@ class Node(Hashable):
 def typed_property(type_obj, name):
     """ Property that only accepts instances of a class and
     stores the contents in self.name"""
+
     def fget(self):
         return getattr(self, name)
 
@@ -145,7 +148,7 @@ class NamedList(MutableSequence, Hashable):
 
     """
 
-    def __init__(self, *args, read_only=False):
+    def __init__(self, *args, read_only=False): # pylint: disable=super-init-not-called
         self.read_only = read_only
         self.list = list()
         self.extend(list(args))
@@ -168,9 +171,13 @@ class NamedList(MutableSequence, Hashable):
     def items(self):
         return self.dict.items()
 
-    def check(self, v):
-        if not hasattr(v, 'name'):
-            raise TypeError(f"{type(v)} does not have name.")
+    def check(self, value):
+        if not hasattr(value, 'name'):
+            raise TypeError(f"{type(value)} does not have name.")
+
+    def check_presence(self, name):
+        matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == name]
+        return matching_idxs
 
     def __len__(self):
         return len(self.list)
@@ -215,15 +222,27 @@ class NamedList(MutableSequence, Hashable):
             else:
                 self.list[i] = v
 
-    def insert(self, i, v):
-        self.check(v)
-        name_list = [i.name for i in self]
-        if v.name in name_list:
-            raise RuntimeError(f"{v.name} already exists in list {name_list}.")
-        if isinstance(i, str):
-            del self[i]
-            self[i] = v
-        self.list.insert(i, v)
+    def insert(self, index, value):
+        # This inserts a new element after index.
+        # Note: not the same as __setitem__, which replaces the value
+        # in an index.
+        # Append will call this method with self.insert(len(self), value)
+        self.check(value)
+        conflicts = self.check_presence(value.name)
+        if len(conflicts) > 0:
+            raise RuntimeError(f"{value.name} already exists in list[{conflicts[0]}].")
+        if isinstance(index, str):
+            # this code should normally never be run. but just in case,
+            # it should add value right before index's position
+            index_list = self.check_presence(index)
+            assert len(index_list) <= 1
+            if len(index_list) == 1:
+                index = index_list[0]
+                self.list.insert(index, value)
+            else:
+                self[value.name] = value
+        else:
+            self.list.insert(index, value)
 
     def __str__(self):
         return str(self.list)

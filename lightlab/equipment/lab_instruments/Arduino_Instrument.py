@@ -1,6 +1,7 @@
 from . import VISAInstrumentDriver
 from lightlab.laboratory.instruments import ArduinoInstrument
 
+
 class Arduino_Instrument(VISAInstrumentDriver):
     ''' Read/write interface for an arduino. Could make use of TCPIP or maybe USB
 
@@ -17,5 +18,5 @@ class Arduino_Instrument(VISAInstrumentDriver):
     def write(self, writeStr):
         pass
 
-    def query(self):
+    def query(self, queryStr, withTimeout=None):
         return 'hey'
