@@ -8,33 +8,10 @@ from contextlib import contextmanager
 
 from lightlab.laboratory import Node, typed_property, TypedList
 from lightlab.equipment.visa_bases import VISAObject, DefaultDriver
+from lightlab.util.data import mangle
 
 from lightlab import logger
 import pyvisa
-
-MANGLE_LEN = 256  # magic constant from compile.c
-
-
-def mangle(name, klass):
-    if not name.startswith('__'):
-        return name
-    if len(name) + 2 >= MANGLE_LEN:
-        return name
-    if name.endswith('__'):
-        return name
-    try:
-        i = 0
-        while klass[i] == '_':
-            i = i + 1
-    except IndexError:
-        return name
-    klass = klass[i:]
-
-    tlen = len(klass) + len(name)
-    if tlen > MANGLE_LEN:
-        klass = klass[:MANGLE_LEN - tlen]
-
-    return "_%s%s" % (klass, name)
 
 
 class Host(Node):
