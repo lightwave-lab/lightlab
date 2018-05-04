@@ -5,15 +5,16 @@ designed to be "hashable", i.e., easy to store and share.
 """
 
 import jsonpickle
-from collections import MutableSequence
+from collections import MutableSequence, Mapping
 
 __all__ = ["Node"]
 
-class FrozenDict(collections.Mapping):
+
+class FrozenDict(Mapping):
     """Don't forget the docstrings!!"""
 
-    def __init__(self, *args, **kwargs):
-        self._d = dict(*args, **kwargs)
+    def __init__(self, data):
+        self._d = data
 
     def __iter__(self):
         return iter(self._d)
@@ -25,10 +26,10 @@ class FrozenDict(collections.Mapping):
         return self._d[key]
 
     def __setitem__(self, key, value):
-        raise AttributeError("read-only list")
+        raise RuntimeError("read-only list being called")
 
     def __delitem__(self, key):
-        raise AttributeError("read-only list")
+        raise RuntimeError("read-only list being called")
 
 
 class Hashable(object):
@@ -40,7 +41,8 @@ class Hashable(object):
     variables. E.g. ``Hashable(a=1).a == 1``
 
     """
-    context = jsonpickle.pickler.Pickler(unpicklable=True, warn=True, keys=True)
+    context = jsonpickle.pickler.Pickler(
+        unpicklable=True, warn=True, keys=True)
 
     def __eq__(self, other):
 
@@ -148,17 +150,16 @@ class NamedList(MutableSequence, Hashable):
 
     """
 
-    def __init__(self, *args, read_only=False): # pylint: disable=super-init-not-called
-        self.read_only = read_only
+    read_only = False
+
+    def __init__(self, *args, read_only=False, **kwargs):  # pylint: disable=super-init-not-called
         self.list = list()
         self.extend(list(args))
+        self.read_only = read_only
 
     @property
     def dict(self):
-        if self.read_only:
-            return {FrozenDict(i._name): i for i in self}
-        else:    
-            return {i.name: i for i in self}
+        return FrozenDict({i.name: i for i in self})
 
     @property
     def values(self):
@@ -176,7 +177,8 @@ class NamedList(MutableSequence, Hashable):
             raise TypeError(f"{type(value)} does not have name.")
 
     def check_presence(self, name):
-        matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == name]
+        matching_idxs = [idx for idx, elem in enumerate(
+            self) if elem.name == name]
         return matching_idxs
 
     def __len__(self):
@@ -189,9 +191,10 @@ class NamedList(MutableSequence, Hashable):
 
     def __delitem__(self, i):
         if self.read_only:
-            raise AttributeError("read-only list")
-        elif isinstance(i, str):
-            matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
+            raise RuntimeError("attempting to delete item from read-only list")
+        if isinstance(i, str):
+            matching_idxs = [idx for idx,
+                             elem in enumerate(self) if elem.name == i]
             for idx in matching_idxs:
                 del self.list[idx]
         else:
@@ -199,50 +202,53 @@ class NamedList(MutableSequence, Hashable):
 
     def __setitem__(self, i, v):
         if self.read_only:
-            raise AttributeError("read-only list")
-        else:
-            self.check(v)
-            if isinstance(i, str):
-                if i in self.dict.keys():
-                    matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
-                    assert len(matching_idxs) == 1
-                    idx = matching_idxs[0]
-                    self.list[idx] = v  # update current entry
-                else:
-                    if i != v.name:
-                        # Renaming instrument to conform to the dict's key
-                        # named_list['name1'] = Instrument('name2')
-                        # Instrument will be renamed to name1 prior to insertion
-                        v.name = i
-
-                    # special case when v is already in the list, in
-                    # which case one must do nothing.
-                    if v not in self.list:
-                        self.list.append(v)
+            raise RuntimeError("attempting to change read-only list")
+        self.check(v)
+        if isinstance(i, str):
+            if i in self.dict.keys():
+                matching_idxs = [idx for idx,
+                                 elem in enumerate(self) if elem.name == i]
+                assert len(matching_idxs) == 1
+                idx = matching_idxs[0]
+                self.list[idx] = v  # update current entry
             else:
-                self.list[i] = v
+                if i != v.name:
+                    # Renaming instrument to conform to the dict's key
+                    # named_list['name1'] = Instrument('name2')
+                    # Instrument will be renamed to name1 prior to insertion
+                    v.name = i
+
+                # special case when v is already in the list, in
+                # which case one must do nothing.
+                if v not in self.list:
+                    self.list.append(v)
+        else:
+            self.list[i] = v
 
     def insert(self, index, value):
         # This inserts a new element after index.
         # Note: not the same as __setitem__, which replaces the value
         # in an index.
         # Append will call this method with self.insert(len(self), value)
-        self.check(value)
-        conflicts = self.check_presence(value.name)
-        if len(conflicts) > 0:
-            raise RuntimeError(f"{value.name} already exists in list[{conflicts[0]}].")
-        if isinstance(index, str):
-            # this code should normally never be run. but just in case,
-            # it should add value right before index's position
-            index_list = self.check_presence(index)
-            assert len(index_list) <= 1
-            if len(index_list) == 1:
-                index = index_list[0]
-                self.list.insert(index, value)
-            else:
-                self[value.name] = value
+        if self.read_only:
+            raise RuntimeError("attempting to insert item to read-only list")
         else:
-            self.list.insert(index, value)
+            self.check(value)
+            conflicts = self.check_presence(value.name)
+            if len(conflicts) > 0:
+                raise RuntimeError(f"{value.name} already exists in list[{conflicts[0]}].")
+            if isinstance(index, str):
+                # this code should normally never be run. but just in case,
+                # it should add value right before index's position
+                index_list = self.check_presence(index)
+                assert len(index_list) <= 1
+                if len(index_list) == 1:
+                    index = index_list[0]
+                    self.list.insert(index, value)
+                else:
+                    self[value.name] = value
+            else:
+                self.list.insert(index, value)
 
     def __str__(self):
         return str(self.list)
@@ -254,9 +260,9 @@ class TypedList(NamedList):
     the list and that they belong to a certain class (obj_type).
     """
 
-    def __init__(self, obj_type, *args, **kwargs):
+    def __init__(self, obj_type, *args, read_only=False, **kwargs):
         self.obj_type = obj_type
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, read_only=read_only, **kwargs)
 
     def check(self, v):
         if not isinstance(v, self.obj_type):
