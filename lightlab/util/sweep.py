@@ -248,18 +248,19 @@ class NdSweeper(Sweeper):
                             self.data[k] = np.empty(self.swpShape, dtype=object)
                     self.data[k][index] = v
 
+                # Plotting during the sweep
                 if self.monitorOptions['livePlot']:
                     if all(i == 0 for i in index):
                         axArr = None
                     axArr = self.plot(axArr=axArr, index=index)
                     flatIndex = np.ravel_multi_index(index, self.swpShape)
                     if flatIndex % self.monitorOptions['plotEvery'] == 0:
-                        display.clear_output(wait=True)
                         display.display(plt.gcf())
+                        display.clear_output(wait=True)
+                # Progress report
                 prog.update()
-            if self.monitorOptions['livePlot']:
-                display.clear_output(wait=True)
-                display.display(plt.gcf())
+            # End of the main loop
+
         except Exception as err:
             logger.error('Error while sweeping. Reloading old data')
             self.data = oldData
