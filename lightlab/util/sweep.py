@@ -513,9 +513,9 @@ class NdSweeper(Sweeper):
             if not autoLabelingMaster:
                 raise Exception('No axis key specified explicitly or found in self.actuate')
             for datKey, datVal in fullData.items():
-                if (datKey not in xKeys
-                        and datKey not in actKeyList
-                        and np.isscalar(datVal.item(0))):
+                if (datKey not in xKeys and
+                        datKey not in actKeyList and
+                        np.isscalar(datVal.item(0))):
                     yKeys += (datKey, )
         # Check it
         for k in xKeys + yKeys:
