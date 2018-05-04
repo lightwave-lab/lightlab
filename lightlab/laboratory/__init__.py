@@ -231,7 +231,7 @@ class TypedList(NamedList):
         self.obj_type = obj_type
         super().__init__(*args)
 
-    def check(self, v):
-        if not isinstance(v, self.obj_type):
-            raise TypeError(f"{v} is not an instance of {self.obj_type}")
-        return super().check(v)
+    def check(self, value):
+        if not isinstance(value, self.obj_type):
+            raise TypeError(f"{value} is not an instance of {self.obj_type}")
+        return super().check(value)

@@ -104,6 +104,17 @@ class Sweeper(object):
         return new
 
 
+class Actuation(object):
+    function = None
+    domain = None
+    doOnEveryPoint = None
+
+    def __init__(self, function=None, domain=None, doOnEveryPoint=False):
+        self.function = function
+        self.domain = domain
+        self.doOnEveryPoint = doOnEveryPoint
+
+
 class NdSweeper(Sweeper):
     ''' Generic sweeper.
 
@@ -117,6 +128,10 @@ class NdSweeper(Sweeper):
 
         Make sure that measure is *bound* if it is a method
     '''
+    measure = None
+    actuate = None
+    parse = None
+    static = None
 
     def __init__(self):
         ''' Specify the hard domain and actuate dimensions
@@ -165,10 +180,6 @@ class NdSweeper(Sweeper):
             Returns:
                 None
         '''
-        # recalculate these just in case
-        # self.actuDims = len(self.actuate)
-        # self.swpShape = tuple(len(a[1]) for a in self.actuate.values())
-
         # Initialize builders that start off with None grids
         if self.data is None:
             oldData = None
@@ -200,17 +211,16 @@ class NdSweeper(Sweeper):
 
                 # Do the actuation, storing domain args and return values
                 for iDim, actu in enumerate(self.actuate.items()):
-                    aKey, aVals = actu
-                    f, xArr, doEvery = aVals
-                    if xArr is None:
+                    actuKey, actuObj = actu
+                    if actuObj.domain is None:
                         x = None
                     else:
-                        x = xArr[index[iDim]]
-                        pointData[aKey] = x
-                    if iDim == self.actuDims - 1 or index[iDim + 1] == 0 or doEvery:
-                        y = f(x)  # The actual function call occurs here
+                        x = actuObj.domain[index[iDim]]
+                        pointData[actuKey] = x
+                    if iDim == self.actuDims - 1 or index[iDim + 1] == 0 or actuObj.doOnEveryPoint:
+                        y = actuObj.function(x)  # The actual function call occurs here
                         if y is not None:
-                            pointData[aKey + '-return'] = y
+                            pointData[actuKey + '-return'] = y
 
                 # Do the measurement, store returns
                 for measKey, measFun in self.measure.items():
@@ -265,25 +275,27 @@ class NdSweeper(Sweeper):
             self.save()
 
     def addActuation(self, name, function, domain, doOnEveryPoint=False):
-        ''' Specify an actuation dimension: what is called, how many points, the domain values to use as arguments.
+        ''' Specify an actuation dimension: what is called, the domain values to use as arguments.
 
             Args:
                 name (str): key for accessing this actuator's value data
                 function (func): actuation function, usually linked to hardware. One argument.
                 domain (ndarray, None): 1D array of arguments that will be passed to the function.
                     If None, the function is called with a None argument every point (if doOnEveryPoint is True).
-                    This is useful if you want to livePlot a spectrum or something at every point
-                doOnEveryPoint (bool): call this function in the inner loop or before the corresponding rows
+                doOnEveryPoint (bool): call this function in the inner loop (True)
+                    or once before the corresponding rows(False)
         '''
-        # The actuate attribute is an ordered dict. Values are tuples with
-        # element-0 function, element-1 domain
-        self.actuate[name] = (function, domain, doOnEveryPoint)
+        newActu = Actuation(function, domain, doOnEveryPoint)
+        self.addActuationObject(name, newActu)
+
+    def addActuationObject(self, name, actuationObj):
+        self.actuate[name] = actuationObj
         self._recalcSwpShape()
         # If any static data is present, expand it into the new dimension
         # when you add an actuation, it goes in the lowest index (highest number)
-        # so if you do d_new[..., 0], you get d_old
+        # so if you do data_new[..., 0], you get data_old
         for statKey, statVal in self.static.items():
-            tileBy = (len(domain),) + statVal.ndim * (1,)
+            tileBy = (len(actuationObj.domain),) + statVal.ndim * (1,)
             self.static[statKey] = np.tile(statVal, tileBy).T
 
     def reinitActuation(self):
@@ -295,9 +307,9 @@ class NdSweeper(Sweeper):
         self.actuDims = 0  # pylint: disable=attribute-defined-outside-init
         self.swpShape = ()  # pylint: disable=attribute-defined-outside-init
         for actu in self.actuate.values():
-            if actu[1] is not None:
+            if actu.domain is not None:
                 self.actuDims += 1
-                self.swpShape += (len(actu[1]), )
+                self.swpShape += (len(actu.domain), )
 
     def addMeasurement(self, name, function):
         ''' Specify a measurement to be taken at every sweep point.
@@ -397,9 +409,9 @@ class NdSweeper(Sweeper):
         '''
         if issubclass(type(other), type(self)):
             new = self.copy(includeData=False)
-            for aNam, aVal in other.actuate.items():
+            for aNam, aObj in other.actuate.items():
                 if aNam not in new.actuate.keys():
-                    new.addActuation(aNam, *aVal)
+                    new.addActuationObject(aNam, aObj)
             for mNam, mVal in other.measure.items():
                 if mNam not in new.measure.keys():
                     new.addMeasurement(mNam, mVal)
@@ -420,8 +432,8 @@ class NdSweeper(Sweeper):
             If includeData, it does a deep copy of data
         '''
         new = NdSweeper()
-        for aNam, aVal in self.actuate.items():
-            new.addActuation(aNam, *aVal)
+        for aNam, aObj in self.actuate.items():
+            new.addActuationObject(aNam, aObj)
         for mNam, mVal in self.measure.items():
             new.addMeasurement(mNam, mVal)
         for pNam, pVal in self.parse.items():
@@ -574,7 +586,7 @@ class NdSweeper(Sweeper):
                             if index is not None:
                                 index = index[::-1]
                         nonDomainValue = (lambda iLine:
-                                          self.actuate[nonDomainKey][1][iLine])  # pylint: disable=cell-var-from-loop
+                                          self.actuate[nonDomainKey].domain[iLine])  # pylint: disable=cell-var-from-loop
 
                     nLines = yData.shape[0]
                     # The last index dereference kills any shading
@@ -611,8 +623,8 @@ class NdSweeper(Sweeper):
                 # xKeys we treat as meaningless. just use the actuation domains
                 # We also treat yData as color data
                 doms = [None] * 2
-                for iDim, actuVal in enumerate(self.actuate.values()):
-                    doms[iDim] = actuVal[1][slicer[iDim]]
+                for iDim, actuObj in enumerate(self.actuate.values()):
+                    doms[iDim] = actuObj.domain[slicer[iDim]]
                 domainGrids = np.meshgrid(*doms[::-1], indexing='xy')
                 if 'cmap' not in pltKwargs.keys():
                     pltKwargs['cmap'] = self.plotOptions['cmap-surf']
@@ -660,21 +672,21 @@ class NdSweeper(Sweeper):
         except KeyError:
             pass
         else:
-            for iAct, actName in enumerate(actKeyList):
-                # Full data, which is N-dimensional
-                actData = newObj.data[actName]
+            for iAct, actuName in enumerate(actKeyList):
+                # Try to extract the actuation function (not domain)
+                if functionSource is not None:
+                    actuObj = functionSource.actuate[actuName]
+                else:
+                    # no function was given, so gathering won't work
+                    actuObj = Actuation()
+                # Full data as taken, which is N-dimensional
+                actData = newObj.data[actuName]
                 # Extract one vector along the right direction to serve as domain
                 sliceOneDim = [0] * len(actKeyList)
                 sliceOneDim[iAct] = slice(None)
-                domain = actData[sliceOneDim]
-                # Try to extract the actuation function
-                if functionSource is not None:
-                    actFun, _, doEvery = functionSource.actuate[actName]
-                else:
-                    # no function was stored, so gathering won't work
-                    actFun, doEvery = None, None
+                actuObj.domain = actData[sliceOneDim]
                 # Do the full add
-                newObj.addActuation(actName, actFun, domain, doEvery)
+                newObj.addActuationObject(actuName, actuObj)
         newObj._recalcSwpShape()  # pylint: disable=protected-access
 
         # Restore parsers. Do not reparse them
