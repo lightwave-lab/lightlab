@@ -26,10 +26,10 @@ class FrozenDict(Mapping):
         return self._d[key]
 
     def __setitem__(self, key, value):
-        raise RuntimeError("read-only list being called")
+        raise RuntimeError("attempting to change read-only list")
 
     def __delitem__(self, key):
-        raise RuntimeError("read-only list being called")
+        raise RuntimeError("attempting to delete item from read-only list")
 
 
 class Hashable(object):
@@ -152,7 +152,7 @@ class NamedList(MutableSequence, Hashable):
 
     read_only = False
 
-    def __init__(self, *args, read_only=False, **kwargs):  # pylint: disable=super-init-not-called
+    def __init__(self, *args, read_only=False):  # pylint: disable=super-init-not-called
         self.list = list()
         self.extend(list(args))
         self.read_only = read_only
