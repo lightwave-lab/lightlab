@@ -286,9 +286,9 @@ class NdSweeper(Sweeper):
                     or once before the corresponding rows(False)
         '''
         newActu = Actuation(function, domain, doOnEveryPoint)
-        self._addActuationObject(name, newActu)
+        self.addActuationObject(name, newActu)
 
-    def _addActuationObject(self, name, actuationObj):
+    def addActuationObject(self, name, actuationObj):
         self.actuate[name] = actuationObj
         self._recalcSwpShape()
         # If any static data is present, expand it into the new dimension
@@ -411,7 +411,7 @@ class NdSweeper(Sweeper):
             new = self.copy(includeData=False)
             for aNam, aObj in other.actuate.items():
                 if aNam not in new.actuate.keys():
-                    new._addActuationObject(aNam, aObj)
+                    new.addActuationObject(aNam, aObj)
             for mNam, mVal in other.measure.items():
                 if mNam not in new.measure.keys():
                     new.addMeasurement(mNam, mVal)
@@ -433,7 +433,7 @@ class NdSweeper(Sweeper):
         '''
         new = NdSweeper()
         for aNam, aObj in self.actuate.items():
-            new._addActuationObject(aNam, aObj)
+            new.addActuationObject(aNam, aObj)
         for mNam, mVal in self.measure.items():
             new.addMeasurement(mNam, mVal)
         for pNam, pVal in self.parse.items():
@@ -689,7 +689,7 @@ class NdSweeper(Sweeper):
                 sliceOneDim[iAct] = slice(None)
                 actuObj.domain = actData[sliceOneDim]
                 # Do the full add
-                newObj._addActuationObject(actuName, actuObj)
+                newObj.addActuationObject(actuName, actuObj)
         newObj._recalcSwpShape()  # pylint: disable=protected-access
 
         # Restore parsers. Do not reparse them
