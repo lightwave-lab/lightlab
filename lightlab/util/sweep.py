@@ -193,21 +193,23 @@ class NdSweeper(Sweeper):
                     except KeyError:
                         pass
         try:
+            swpName = 'Generic sweep in ' + ', '.join(self.actuate.keys())
+            prog = io.ProgressWriter(swpName, self.swpShape, **self.monitorOptions)
+
+            # Soak at the first point
             if soakTime is not None:
                 logger.debug('Soaking for %s seconds.', soakTime)
                 for actuObj in self.actuate.values():
                     actuObj.function(actuObj.domain[0])
                 time.sleep(soakTime)
 
-            swpName = 'Generic sweep in ' + ', '.join(self.actuate.keys())
-            prog = io.ProgressWriter(swpName, self.swpShape, **self.monitorOptions)
             for index in np.ndindex(self.swpShape):
                 pointData = OrderedDict()  # Everything that will be measured *at this index*
 
                 for statKey, statMat in self.static.items():
                     pointData[statKey] = statMat[index]
 
-                # Do the actuation, storing domain args and return values
+                # Do the actuation, storing domain args and return values (if present)
                 for iDim, actu in enumerate(self.actuate.items()):
                     actuKey, actuObj = actu
                     if actuObj.domain is None:
@@ -220,7 +222,7 @@ class NdSweeper(Sweeper):
                         if y is not None:
                             pointData[actuKey + '-return'] = y
 
-                # Do the measurement, store returns
+                # Do the measurement, store return values
                 for measKey, measFun in self.measure.items():
                     pointData[measKey] = measFun()
                     # print('   Meas', measKey, ':', pointData[measKey])
@@ -548,6 +550,10 @@ class NdSweeper(Sweeper):
         if np.any(axArr.shape != plotArrShape):
             raise Exception('Shape of axArray does not match plotArrShape')
 
+        if self.plotOptions['plType'] is 'curves' and plotDims == 1:
+            if hCurves is None:
+                hCurves = np.empty(axArr.shape, dtype=object)
+
         for iAx, ax in np.ndenumerate(axArr):
             xK = xKeys[iAx[1]]
             yK = yKeys[iAx[0]]
@@ -561,15 +567,12 @@ class NdSweeper(Sweeper):
                         yData = yData[:index[0] + 1]
                         ax.cla()
                     curv = ax.plot(xData, yData, '.-', **pltKwargs)
-                    if hCurves is None:
-                        hCurves = np.empty(axArr.shape, dtype=object)
-                    else:
-                        if hCurves[iAx] is not None:  # pylint:disable=unsubscriptable-object
-                            try:
-                                hCurves[iAx][0].remove()
-                            except ValueError:
-                                # it was probably an old one
-                                pass
+                    if hCurves[iAx] is not None:  # pylint:disable=unsubscriptable-object
+                        try:
+                            hCurves[iAx][0].remove()
+                        except ValueError:
+                            # it was probably an old one
+                            pass
                     hCurves[iAx] = curv
                 elif plotDims == 2:
                     autoLabeling = autoLabelingMaster and iAx == (0, axArr.shape[1] - 1)
@@ -582,8 +585,6 @@ class NdSweeper(Sweeper):
                             yData = yData.T
                             if index is not None:
                                 index = index[::-1]
-                        nonDomainValue = (lambda iLine:
-                                          self.actuate[nonDomainKey].domain[iLine])  # pylint: disable=cell-var-from-loop
 
                     nLines = yData.shape[0]
                     # The last index dereference kills any shading
@@ -592,8 +593,8 @@ class NdSweeper(Sweeper):
                     for iLine in range(nLines):
                         pltArgs = ('.-', )
                         if autoLabeling:
-                            pltKwargs['label'] = '{} = {:.2f}'.format(
-                                nonDomainKey, nonDomainValue(iLine))
+                            nonDomainValue = self.actuate[nonDomainKey].domain[iLine]
+                            pltKwargs['label'] = '{} = {:.2f}'.format(nonDomainKey, nonDomainValue)
                         pltKwargs['color'] = colors[iLine][:3]
                         if index is None or iLine < index[-2]:
                             ax.plot(xData[iLine], yData[iLine], *pltArgs, **pltKwargs)
@@ -623,10 +624,8 @@ class NdSweeper(Sweeper):
                 for iDim, actuObj in enumerate(self.actuate.values()):
                     doms[iDim] = actuObj.domain[slicer[iDim]]
                 domainGrids = np.meshgrid(*doms[::-1], indexing='xy')
-                if 'cmap' not in pltKwargs.keys():
-                    pltKwargs['cmap'] = self.plotOptions['cmap-surf']
-                if 'shading' not in pltKwargs.keys():
-                    pltKwargs['shading'] = 'gouraud'
+                pltKwargs['cmap'] = pltKwargs.pop('cmap', self.plotOptions['cmap-surf'])
+                pltKwargs['shading'] = pltKwargs.pop('shading', 'gouraud')
                 cax = ax.pcolormesh(*domainGrids, yData, **pltKwargs)
                 plt.gcf().colorbar(cax, ax=ax)
                 ax.autoscale(tight=True)
