@@ -465,7 +465,6 @@ class NdSweeper(Sweeper):
         if index is None or np.all(np.array(index) == 0):
             hCurves = None
 
-        plType = self.plotOptions['plType']
         if tempData is None:
             fullData = self.data
         else:
@@ -474,13 +473,8 @@ class NdSweeper(Sweeper):
             plotDims = list(fullData.values())[0].ndim  # Instead of self.actuDims
         else:
             plotDims = self.actuDims
-        if plotDims == self.actuDims:
-            autoLabelingMaster = True
-            actKeyList = list(self.actuate.keys())
-        else:
-            autoLabelingMaster = False
 
-        assertValidPlotType(plType, plotDims, type(self))
+        assertValidPlotType(self.plotOptions['plType'], plotDims, type(self))
 
         if pltKwargs is None:
             pltKwargs = {}
@@ -492,18 +486,24 @@ class NdSweeper(Sweeper):
             slicer = argFlatten(slicer, typs=tuple)
 
         # First figure out what the keys of data are
+        if plotDims == self.actuDims:
+            autoLabelingMaster = True
+            actKeyList = list(self.actuate.keys())
+        else:
+            autoLabelingMaster = False
         xKeys = argFlatten(self.plotOptions['xKey'], typs=tuple)
-        if len(xKeys) is 0:  # default is the minor sweep domain
+        if len(xKeys) == 0:  # default is the minor sweep domain
             if not autoLabelingMaster:
                 raise Exception('No axis key specified explicitly or found in self.actuate')
             xKeys = (actKeyList[-1], )
-
         yKeys = argFlatten(self.plotOptions['yKey'], typs=tuple)
-        if len(yKeys) is 0:  # default is all scalar non-domains
+        if len(yKeys) == 0:  # default is all scalar non-domains
             if not autoLabelingMaster:
                 raise Exception('No axis key specified explicitly or found in self.actuate')
             for datKey, datVal in fullData.items():
-                if datKey not in xKeys and datKey not in actKeyList and np.isscalar(datVal.item(0)):
+                if (datKey not in xKeys
+                        and datKey not in actKeyList
+                        and np.isscalar(datVal.item(0))):
                     yKeys += (datKey, )
         # Check it
         for k in xKeys + yKeys:
@@ -535,20 +535,17 @@ class NdSweeper(Sweeper):
         if axArr.ndim == 0:
             if np.all(plotArrShape == 1):
                 axArr = np.expand_dims(np.expand_dims(axArr, 0), 0)
+        # Check it
         if np.any(axArr.shape != plotArrShape):
             raise Exception('Shape of axArray does not match plotArrShape')
 
         for iAx, ax in np.ndenumerate(axArr):
-            # ax.cla()
             xK = xKeys[iAx[1]]
             yK = yKeys[iAx[0]]
-            # dereference
-            xData = fullData[xK]
-            yData = fullData[yK]
-            # slice
-            xData = xData[slicer]
-            yData = yData[slicer]
-            if plType is 'curves':
+            # dereference and slice
+            xData = fullData[xK][slicer]
+            yData = fullData[yK][slicer]
+            if self.plotOptions['plType'] is 'curves':
                 if plotDims == 1:
                     if index is not None:
                         xData = xData[:index[0] + 1]
@@ -605,12 +602,12 @@ class NdSweeper(Sweeper):
                 if iAx[0] == plotArrShape[0] - 1:
                     ax.set_xlabel(xK)
                 else:
-                    ax.tick_params(labelbottom='off')
+                    ax.tick_params(labelbottom=False)
                 if iAx[1] == 0:
                     ax.set_ylabel(yK)
                 else:
-                    ax.tick_params(labelleft='off')
-            elif plType is 'surf':
+                    ax.tick_params(labelleft=False)
+            elif self.plotOptions['plType'] is 'surf':
                 # xKeys we treat as meaningless. just use the actuation domains
                 # We also treat yData as color data
                 doms = [None] * 2
@@ -628,7 +625,7 @@ class NdSweeper(Sweeper):
                 if iAx[0] == plotArrShape[0] - 1:
                     ax.set_xlabel(actKeyList[1])
                 else:
-                    ax.tick_params(labelbottom='off')
+                    ax.tick_params(labelbottom=False)
                 ax.set_ylabel(actKeyList[0])
         return axArr
 
