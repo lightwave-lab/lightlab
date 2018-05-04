@@ -195,10 +195,8 @@ class NdSweeper(Sweeper):
         try:
             if soakTime is not None:
                 logger.debug('Soaking for %s seconds.', soakTime)
-                for actu in self.actuate.values():
-                    f = actu[0]
-                    x = actu[1][0]
-                    f(x)
+                for actuObj in self.actuate.values():
+                    actuObj.function(actuObj.domain[0])
                 time.sleep(soakTime)
 
             swpName = 'Generic sweep in ' + ', '.join(self.actuate.keys())
@@ -267,10 +265,8 @@ class NdSweeper(Sweeper):
             raise err
 
         if returnToStart:
-            for actu in self.actuate.values():
-                f = actu[0]
-                x = actu[1][0]
-                f(x)
+            for actuObj in self.actuate.values():
+                actuObj.function(actuObj.domain[0])
 
         if autoSave:
             self.save()
