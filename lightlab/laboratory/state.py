@@ -25,7 +25,7 @@ from lightlab.laboratory.instruments import Host, LocalHost, Bench, Instrument, 
 import hashlib
 import jsonpickle
 import sys
-from lightlab import logger
+from lightlab import logger, config
 import getpass
 from datetime import datetime
 from json import JSONDecodeError
@@ -40,7 +40,8 @@ def timestamp_string():
 
 
 json = jsonpickle.json
-_filename = Path("/home/jupyter/labstate.json")
+# _filename = Path("/home/jupyter/labstate.json")
+_filename = config.get_config_param('labstate.filepath')
 try:
     with open(_filename, 'r'):
         pass

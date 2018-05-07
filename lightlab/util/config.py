@@ -4,9 +4,10 @@ from configparser import ConfigParser
 from pathlib import Path
 import argparse
 
-user_config_dir = os.path.expanduser("~") + "/.lightlab"
-user_config_path = user_config_dir + "/config.conf"
+user_config_path = os.path.expanduser("~") + "/.lightlab" + "/config.conf"
 user_config_path = Path(user_config_path).resolve()
+
+system_config_path = Path("/usr/local/etc/lightlab.conf")
 
 default_config = {"labstate": {'filepath': '~/.lightlab/labstate.json'}}
 
@@ -14,15 +15,14 @@ default_config = {"labstate": {'filepath': '~/.lightlab/labstate.json'}}
 def write_default_config():
     config = ConfigParser()
     config.read_dict(default_config)
-    with open(user_config_path, 'w') as user_config_file:
-        config.write(user_config_file)
+    config_save(config, False)
 
 
 def get_config():
     config = ConfigParser()
     config.read_dict(default_config)  # Read default first
     if os.path.isfile(user_config_path):
-        config.read(user_config_path)
+        config.read([system_config_path, user_config_path])
     return config
 
 
@@ -110,51 +110,66 @@ def reset_config_param(param):
     return config
 
 
-def config_save(config):
+def config_save(config, omit_default=True):
+    """ Save config to a file. Omits default values if omit_default is True."""
     # remove all items that are default
-    unset_items = []
-    for section in config.sections():
-        if section in default_config.keys():
-            for option in config[section].keys():
-                if option in default_config[section].keys():
-                    if config[section][option] == default_config[section][option]:
-                        unset_items.append((section, option))
-    for section, item in unset_items:
-        config.remove_option(section, item)
+    if omit_default:
+        unset_items = []
+        for section in config.sections():
+            if section in default_config.keys():
+                for option in config[section].keys():
+                    if option in default_config[section].keys():
+                        if config[section][option] == default_config[section][option]:
+                            unset_items.append((section, option))
+        for section, item in unset_items:
+            config.remove_option(section, item)
 
-    # remove all sections that are default
-    unset_sections = []
-    for section in config.sections():
-        if len(config[section].keys()) == 0:
-            unset_sections.append(section)
-    for section in unset_sections:
-        config.remove_section(section)
+        # remove all sections that are default
+        unset_sections = []
+        for section in config.sections():
+            if len(config[section].keys()) == 0:
+                unset_sections.append(section)
+        for section in unset_sections:
+            config.remove_section(section)
 
     if not os.path.isfile(user_config_path):
-        os.makedirs(user_config_dir, exist_ok=True)
+        os.makedirs(user_config_path.parent, exist_ok=True)
         user_config_path.touch()
 
+    if not os.access(user_config_path, os.W_OK):
+        print(f"Write permission to {user_config_path} denied. You cannot save. Try again with sudo.")
+        return False
     with open(user_config_path, 'w') as user_config_file:
         config.write(user_config_file)
-        print(f'----saving {user_config_path}-----', file=sys.stderr)
+        print(f'----saving {user_config_path}----', file=sys.stderr)
         config.write(sys.stderr)
-        print(f'----------------------------------', file=sys.stderr)
+        print('----{}----'.format("-" * len(f"saving {user_config_path}")), file=sys.stderr)
     return True
 
 
 config_cmd_parser = argparse.ArgumentParser(
     prog="lightlab config", formatter_class=argparse.RawTextHelpFormatter)
+config_cmd_parser.add_argument('--system', action='store_true',
+                               help='manipulate lightlab configuration for all users. run as root.')
 config_cmd_parser.add_argument('action', action='store', type=str,
                                help="write-default: write default configuration\n"
                                     "get [a.b [a2.b2]]: get configuration values\n"
                                     "set a.b c: set configuration value\n"
-                                    "unset a.b: unset configuration value\n", nargs='?',
+                                    "reset a[.b]: unset configuration value\n", nargs='?',
                                choices=("write-default", "get", "set", "reset"), metavar="command")
 config_cmd_parser.add_argument('params', nargs=argparse.REMAINDER)
 
 
 def config_main(args):
     config_args = config_cmd_parser.parse_args(args)
+
+    # If --system is set, change system_config_path
+    if config_args.system:
+        global user_config_path
+        user_config_path = system_config_path
+    elif os.getuid() == 0:
+        raise SystemExit("Do not run as root except with --system flag.")
+
     params = config_args.params
     if config_args.action == 'write-default':
         write_default_config()
@@ -171,10 +186,12 @@ def config_main(args):
             set_value = params[1]
             set_config_param(param, set_value)
         else:
-            raise RuntimeError(f"Invalid syntax. Use lightlab config set section.item value.")
+            raise SystemExit(f"Invalid syntax. Use lightlab config set section.item value.")
     elif config_args.action == 'reset':
         if len(params) == 1:
             param = params[0]
             reset_config_param(param)
         else:
-            raise RuntimeError(f"Invalid syntax. Use lightlab config unset section.item")
+            raise SystemExit(f"Invalid syntax. Use lightlab config reset section[.item]")
+    else:
+        config_cmd_parser.print_help()

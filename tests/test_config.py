@@ -115,7 +115,9 @@ def test_set_config_param(config_default):
 
 
 def execute(command):
-    args = command.split(" ")
+    args = command.strip().split(" ")
+    if args[0] == '':
+        args = []
     return config.config_main(args)
 
 
@@ -133,7 +135,7 @@ def test_command_line(config_default, capsys):
     captured1 = capsys.readouterr()
     assert "labstate.filepath: ~/.lightlab/labstate.json\n" == captured1.out
 
-    with pytest.raises(RuntimeError, message="invalid syntax"):
+    with pytest.raises(SystemExit, message="invalid syntax"):
         execute("set")
 
     with pytest.raises(config.InvalidOption, message="invalid syntax"):
@@ -146,10 +148,10 @@ def test_command_line(config_default, capsys):
     captured1 = capsys.readouterr()
     assert "labstate.filepath: 123\n" == captured1.out
 
-    with pytest.raises(RuntimeError, message="invalid syntax"):
+    with pytest.raises(SystemExit, message="invalid syntax"):
         execute("reset")
 
-    with pytest.raises(RuntimeError, message="invalid syntax"):
+    with pytest.raises(SystemExit, message="invalid syntax"):
         execute("reset labstate.filepath test_section")
 
     execute("reset labstate")
@@ -168,3 +170,7 @@ def test_command_line(config_default, capsys):
     execute("get labstate.filepath")
     captured1 = capsys.readouterr()
     assert "labstate.filepath: ~/.lightlab/labstate.json\n" == captured1.out
+
+    execute(" ")
+    captured = capsys.readouterr()
+    assert "usage: lightlab config" in captured.out
