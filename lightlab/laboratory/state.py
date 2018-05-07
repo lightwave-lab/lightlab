@@ -41,21 +41,38 @@ def timestamp_string():
 
 json = jsonpickle.json
 # _filename = Path("/home/jupyter/labstate.json")
-_filename = config.get_config_param('labstate.filepath')
+_filename = os.path.expanduser(config.get_config_param('labstate.filepath'))  # resolve '~' to home folder
 try:
-    with open(_filename, 'r'):
-        pass
-    if not os.access(_filename, os.W_OK):
-        logger.warning("Write permission to %s denied. "
+    _filename = Path(_filename).resolve()  # resolve symlinks if any
+    can_write = True
+    if not os.path.isfile(_filename):
+        # file does not exist
+
+        # try to make directory
+        os.makedirs(_filename.parent, exist_ok=True)
+
+        # check if directory is writable
+        can_write = os.access(_filename.parent, os.W_OK)
+    else:
+        # file exists
+        # can open? if not, error!
+        with open(_filename, 'r'):
+            pass
+        # can write? warning
+        can_write = os.access(_filename, os.W_OK)
+    if can_write:
+        _filename.touch()
+    else:
+        logger.warning("Write permission to existing %s denied. "
                        "You will not be able to use lab.saveState().", _filename)
 except OSError as error:
     if isinstance(error, FileNotFoundError):
         logger.warning("%s was not found.", _filename)
     if isinstance(error, PermissionError):
-        logger.warning("You don't have permission to read %s.", _filename)
+        logger.warning("You don't have permission to read/access %s.", _filename)
     new_filename = 'labstate-local.json'
     logger.warning(f"{_filename} not available. Fallback to local {new_filename}.")
-    _filename = new_filename
+    _filename = Path(new_filename)
 
 
 def hash_sha256(string):
@@ -485,7 +502,7 @@ def __init__(module):
         logger.error("%s: %s.", e.__class__.__name__, e)
         empty_lab = True
     except (JSONDecodeError) as e:
-        logger.error("%s: %s corrupted. %s.", e.__class__.__name__, _filename, e)
+        logger.error("%s: %s corrupted or empty. %s.", e.__class__.__name__, _filename, e)
         empty_lab = True
 
     if empty_lab:
