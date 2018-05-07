@@ -23,11 +23,18 @@ class Agilent_33220_FG(VISAInstrumentDriver, Configurable):
 
     def __init__(self, name='Agilent synth', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-        Configurable.__init__(self, precedingColon=False, interveningSpace=False)
+        Configurable.__init__(self, precedingColon=False)
 
     def startup(self):
         pass
         # self.write('D0')  # enable output
+
+    def enable(self, enaState=None):
+        wordMap = {True: 'ON', False: 'OFF'}
+        trueWords = [True, 1, '1', 'ON']
+        if enaState is not None:
+            self.setConfigParam('OUTP', wordMap[enaState])
+        return self.getConfigParam('OUTP') in trueWords
 
     def frequency(self, newFreq=None):
         if newFreq is not None:
@@ -45,7 +52,7 @@ class Agilent_33220_FG(VISAInstrumentDriver, Configurable):
                     self.setConfigParam('FUNC', tok.upper())
             else:
                 newWave + ' is not a valid waveform: ' + str(tokens)
-        return self.getConfigParam('FUNC')
+        return self.getConfigParam('FUNC').lower()
 
     def setArbitraryWaveform(self, wfm):
         ''' Arbitrary waveform
@@ -90,9 +97,11 @@ class Agilent_33220_FG(VISAInstrumentDriver, Configurable):
     def duty(self, duty=None):
         ''' duty is in percentage. For ramp waveforms, duty is the percent of
             time spent rising.
+
+            Critical:
+                Again, this is having dpath troubles.
         '''
         if self.waveform() == 'squ':
-            # FUNC:SQU:DCYCLE
             if duty is not None:
                 self.setConfigParam('FUNC:SQU:DCYCLE', duty)
             return self.getConfigParam('FUNC:SQU:DCYCLE')
