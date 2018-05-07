@@ -21,4 +21,4 @@ labstate_parser.add_argument('--show', action='store_true',
 
 
 def labstate_main(args):
-    print(f"labstate feature not yet implemented (args = {args}")
+    print(f"labstate feature not yet implemented (args = {args})")

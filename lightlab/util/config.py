@@ -167,7 +167,7 @@ def config_main(args):
     if config_args.system:
         global user_config_path  # pylint: disable=W0603
         user_config_path = system_config_path
-    elif os.getuid() == 0:
+    elif os.getuid() == 0 and not os.environ.get('DOCKER'):
         raise SystemExit("Do not run as root except with --system flag.")
 
     params = config_args.params
