@@ -2,7 +2,7 @@ SHELL := /usr/bin/env bash
 
 # different tests
 TESTARGS = --capture=sys --cov=lightlab --cov-config .coveragerc
-TESTARGSNB = --nbval-lax --sanitize-with ipynb_pytest_santize.cfg
+TESTARGSNB = --nbval-lax
 
 # For devbuild, testbuild
 REINSTALL_DEPS = $(shell find lightlab -type f) venv setup.py

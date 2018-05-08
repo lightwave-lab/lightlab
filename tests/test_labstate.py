@@ -14,6 +14,7 @@ import logging
 
 logging.disable(logging.CRITICAL)
 filename = 'test_{}.json'.format(int(time.time()))
+labstate._filename = filename
 
 # Shared objects
 Host1 = LocalHost(name="Host1")
@@ -63,7 +64,7 @@ def lab(request, monkeypatch):
     return lab
 
 
-def test_insert():
+def test_insert(lab):
     Bench1.addInstrument(instrument1, instrument2)
     assert instrument1 in Bench1
     assert instrument2 in Bench1
@@ -378,3 +379,11 @@ def test_overwriting(lab):
     assert lab.hosts["Host1"] == updated_server
     with pytest.raises(KeyError):
         lab.hosts["Another Host"]
+
+def test_readonly(lab):
+    instrument3 = Instrument(name="instrument3", bench=None, host=None, ports=["port11", "channel"])
+    with pytest.raises(RuntimeError):        
+        Host2.instruments.append(instrument3)
+        Bench2.instruments.append(instrument3)
+        Host1.instruments.dict['instrument1'] = instrument3
+        Bench1.instruments.dict['instrument1'] = instrument3
