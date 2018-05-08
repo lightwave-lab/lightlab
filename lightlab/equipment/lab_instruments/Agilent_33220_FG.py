@@ -89,10 +89,10 @@ class Agilent_33220_FG(VISAInstrumentDriver, Configurable):
             self.setConfigParam('VOLT', amplitude)
         ampl = self.getConfigParam('VOLT')
 
-        # if offset is not None:
-        #     self.setConfigParam('VOLT:OFFS', offset)
-        # offs = self.getConfigParam('VOLT:OFFS')
-        return (ampl, None)
+        if offset is not None:
+            self.setConfigParam('VOLT:OFFS', offset)
+        offs = self.getConfigParam('VOLT:OFFS')
+        return (ampl, offs)
 
     def duty(self, duty=None):
         ''' duty is in percentage. For ramp waveforms, duty is the percent of
