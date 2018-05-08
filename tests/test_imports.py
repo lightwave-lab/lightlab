@@ -19,15 +19,7 @@ def test_import(modname):
 
 
 def test_some_visa_driver_imports():
-    ''' Shows the different, literal ways to import the drivers
+    ''' Some examples of literal imports. These are what you actually use
     '''
-    # Concise, recommended
     from lightlab.equipment.lab_instruments import Tektronix_DSA8300_Oscope
     from lightlab.equipment.lab_instruments import Keithley_2400_SM
-    # Also work
-    from lightlab.equipment.lab_instruments.Tektronix_DSA8300_Oscope import Tektronix_DSA8300_Oscope
-    from lightlab.equipment.lab_instruments.Keithley_2400_SM import Keithley_2400_SM
-
-
-def test_io_import():
-    from lightlab.util import io

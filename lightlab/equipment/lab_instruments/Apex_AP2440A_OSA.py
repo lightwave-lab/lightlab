@@ -156,24 +156,6 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
             raise e
         self.close()
 
-        # split, clip header, reject empties, convert to float
-        # powerData = [float(s) for s in retStr.split(' ')[1:] if s != '']
-        # powerDataList = powerData.split(' ')
-        # powerDataFloat = np.zeros(int(powerDataList[0]))
-        # i = 0
-        # for idx, number in enumerate(powerDataList[1:]):
-        #     try:
-        #         powerDataFloat[i] = float(number)
-        #     except ValueError as e:
-        #         nothing, a, b = tuple(powerDataList[idx + 1].split('-'))
-        #         #a, b = -float(a), -float(b)
-        #         powerDataFloat[i], powerDataFloat[i + 1] = -float(a), -float(b)
-        #         logger.warning("splitting %s into %s and %s", powerDataList[idx + 1], -float(a), -float(b))
-        #         i = i + 1
-        #     finally:
-        #         i = i + 1
-        # powerDataFloat = -np.abs(powerDataFloat)
-
         dataLen = int(powerData[0])
         powerData = np.array(powerData[1:])
         wavelengthData = np.linspace(self.wlRange[1], self.wlRange[0], dataLen)

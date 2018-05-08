@@ -1,3 +1,6 @@
+''' Functions for filesystem handling
+'''
+from pathlib import Path
 from .paths import (projectDir,  # noqa
                     dataHome,  # noqa
                     monitorDir,  # noqa
@@ -15,9 +18,9 @@ def _getFileDir(childFile=None):
             the resolved path to this file within the directory
     '''
     if childFile is None:
-        return fileDir
+        return Path(fileDir).resolve()
     else:
-        return (fileDir / childFile).resolve()
+        return (Path(fileDir) / childFile).resolve()
 
 from .saveload import (pprintFileDir,  # noqa
                        savePickle,  # noqa
