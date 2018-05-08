@@ -14,6 +14,8 @@ Host machines
 
 You first need to install NI-VISA in all machines, including the server, which can also play the dual role of a host, since it can also be connected to instruments. Download NI-VISA `here <http://www.ni.com/visa/>`_. Installing for MacOS, Windows, Linux (Fedora-like) was a matter of following NI's instructions. Installing in ubuntu machines was a little trickier, but here is what worked for us.
 
+.. _ubuntu_installation:
+
 Installing NI-visa (32-bit) in Ubuntu (64-bit)
 """"""""""""""""""""""""""""""""""""""""""""""
 

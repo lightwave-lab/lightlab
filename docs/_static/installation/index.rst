@@ -21,7 +21,7 @@ Hardware
 pyvisa
 ^^^^^^
 
-    We rely heavily on pyvisa_ for instrument control. It provides a wrapper layer for a VISA backend that you have to install in your computer prior to using lightlab. This is typically going to be a *National Instruments* backend, but the pyvisa team is working on a new pure-python backend (pyvisa-py_). Refer to pyvisa_installation_ for installation instructions.
+    We rely heavily on pyvisa_ for instrument control. It provides a wrapper layer for a VISA backend that you have to install in your computer prior to using lightlab. This is typically going to be a *National Instruments* backend, but the pyvisa team is working on a new pure-python backend (pyvisa-py_). Refer to pyvisa_installation_ for installation instructions. If you need to install in ubuntu, see :ref:`ubuntu_installation`.
 
 .. warning::
 
