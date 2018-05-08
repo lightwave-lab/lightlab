@@ -1,15 +1,12 @@
 .. _getting-started:
 
-Getting Started
+Getting Started to Python, Jupyter, git
 ================================================
 
+.. todo::
+    Include more tutorial pages and useful links for intriductory python.
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    engineersGuide
-   user
-   sysadmin
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

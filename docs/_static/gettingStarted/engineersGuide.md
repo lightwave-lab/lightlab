@@ -1,5 +1,7 @@
 # An engineer’s guide to modern lab control
 
+Author: *Thomas Ferreira de Lima* (tlima@princeton.edu)
+
 ## Introduction
 
 Over the years, software engineering has evolved into a very prominent field that penetrates all industrial sectors. Its core principles and philosophy was to make life easier for consumers to achieve their goals. That was when Apple and Microsoft were created. Then, as the field evolved, it has become important to make software engineering as inclusive as possible to new “developers”, and to make collaboration as seamless as possible. This is the age of the apps. Now, software programming is becoming considered as fundamental as math and science, and are starting to enter school curricula.

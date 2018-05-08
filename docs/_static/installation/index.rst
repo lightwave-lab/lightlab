@@ -27,31 +27,34 @@ pyvisa
 
     Currently we are also working with *python3*. This might present some minor inconvenience in installation, but it allows us to write code that will be supported in the long term. All dependencies are easily available in python3 and are automatically installed with pip.
 
-    Proceed with installing lightlab once you have something that looks like the following output::
+Proceed with installing lightlab once you have something that looks like the following output::
 
-        >>> import visa
-        >>> rm = visa.ResourceManager()
-        >>> print(rm.list_resources())
-        ('GPIB0::20::INSTR', 'GPIB1::24::INSTR', 'ASRL1::INSTR', 'ASRL2::INSTR', 'ASRL3::INSTR', 'ASRL4::INSTR')
+    >>> import visa
+    >>> rm = visa.ResourceManager()
+    >>> print(rm.list_resources())
+    ('GPIB0::20::INSTR', 'GPIB1::24::INSTR', 'ASRL1::INSTR', 'ASRL2::INSTR', 'ASRL3::INSTR', 'ASRL4::INSTR')
 
-    .. _pyvisa: https://github.com/pyvisa/pyvisa
-    .. _pyvisa_installation: http://pyvisa.readthedocs.io/en/stable/getting.html
-    .. _pyvisa-py: https://github.com/pyvisa/pyvisa-py
+.. _pyvisa: https://github.com/pyvisa/pyvisa
+.. _pyvisa_installation: http://pyvisa.readthedocs.io/en/stable/getting.html
+.. _pyvisa-py: https://github.com/pyvisa/pyvisa-py
 
 Installation in personal computer
 ---------------------------------
 
-    Regular users can install lightlab with pip::
+Regular users can install lightlab with pip::
 
-        $ pip install lightlab
+    $ pip install lightlab
 
-    For more experienced users: install the lightlab package like any other python package::
+For more experienced users: install the lightlab package like any other python package::
 
-        $ python3 install setup.py
+    $ python3 install setup.py
 
-    If you are new to python programming, jupyter notebooks, you might want to sit down and patiently read the :ref:`getting-started` Pages.
+If you are new to python programming, jupyter notebooks, you might want to sit down and patiently read the :ref:`getting-started` Pages.
 
-.. toctree::
-   :maxdepth: 2
 
-   advanced_installation
+.. contents:: Advanced Installation
+    :depth: 4
+
+
+.. include:: advanced_installation.rst
+.. include:: sysadmin.rst
