@@ -84,14 +84,14 @@ class Agilent_33220_FG(VISAInstrumentDriver, Configurable):
                              'You can specify one element as None if you don\'t want to set it')
         amplitude, offset = amplOffs
 
+        if offset is not None:
+            self.setConfigParam('VOLT:OFFS', offset)
+        offs = self.getConfigParam('VOLT:OFFS')
+
         if amplitude is not None:
             amplitude = np.clip(amplitude, *self.amplitudeRange)
             self.setConfigParam('VOLT', amplitude)
         ampl = self.getConfigParam('VOLT')
-
-        if offset is not None:
-            self.setConfigParam('VOLT:OFFS', offset)
-        offs = self.getConfigParam('VOLT:OFFS')
         return (ampl, offs)
 
     def duty(self, duty=None):

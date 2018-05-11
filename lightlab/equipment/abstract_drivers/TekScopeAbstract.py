@@ -69,10 +69,10 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             self.setConfigParam('DATA:STOP', nPts)
 
         presentSettings = dict()
-        presentSettings['avgCnt'] = self.getConfigParam('ACQUIRE:NUMAVG')
-        presentSettings['duration'] = self.getConfigParam('HORIZONTAL:MAIN:SCALE')
-        presentSettings['position'] = self.getConfigParam('HORIZONTAL:MAIN:POSITION')
-        presentSettings['nPts'] = self.getConfigParam(self._recLenParam)
+        presentSettings['avgCnt'] = self.getConfigParam('ACQUIRE:NUMAVG', forceHardware=True)
+        presentSettings['duration'] = self.getConfigParam('HORIZONTAL:MAIN:SCALE', forceHardware=True)
+        presentSettings['position'] = self.getConfigParam('HORIZONTAL:MAIN:POSITION', forceHardware=True)
+        presentSettings['nPts'] = self.getConfigParam(self._recLenParam, forceHardware=True)
         return presentSettings
 
     def acquire(self, chans=None, timeout=None, **kwargs):
