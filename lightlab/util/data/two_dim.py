@@ -196,7 +196,6 @@ class FunctionBundle(object):
         '''
         if axList is None:
             _, axList = plt.subplots(nrows=len(self), figsize=(14, 14))
-            # fi, axList = plt.subplots(nrows=len(self), figsize=(14,16))
         if len(axList) != len(self):
             raise ValueError('Wrong number of axes. Got {}, need {}.'.format(
                 len(axList), len(self)))
@@ -208,6 +207,7 @@ class FunctionBundle(object):
                 # plt.xlabel('Time (s)')
             if i < len(self) - 1:
                 ax.xaxis.set_ticklabels([])
+                ax.set_xlabel('')
             # plt.ylabel('Intensity (a.u.)')
             # plt.xlim(0,2e-8)
         return axList

@@ -69,13 +69,14 @@ class TekConfig(object):
         ''' Takes the value only, not a dictionary '''
         # First check that it does not exist as a subdir
         try:
-            ex = self.get(cStr, asCmd=False)
-            if type(ex) is dict:
-                # we don't want to overwrite this subdirectory, so put a tag on cmd
-                cStr = cStr + self.separator + '&'
+            ex = dpath.util.get(self.dico, cStr, separator=self.separator)
         except KeyError:
             # doesn't exist, we are good to go
             pass
+        else:
+            if type(ex) is dict:
+                # we don't want to overwrite this subdirectory, so put a tag on cmd
+                cStr = cStr + self.separator + '&'
 
         cmd = (cStr, val)
         success = dpath.util.set(self.dico, *cmd, separator=self.separator)
