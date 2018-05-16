@@ -80,6 +80,7 @@ class PermissionCheckCommand(distutils.cmd.Command):
 
     def run(self):
         """Run command."""
+
         def run_command(self, command):
             self.announce("Running command: {}".format(command),
                           level=distutils.log.INFO)
@@ -144,6 +145,9 @@ def main():
             'sklearn',
             'dill',
         ],
+        entry_points={
+            'console_scripts': ['lightlab=lightlab.command_line:main'],
+        },
         cmdclass={
             "server_permissions": PermissionCheckCommand,
         },

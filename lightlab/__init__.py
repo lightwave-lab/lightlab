@@ -33,3 +33,5 @@ def log_visa_to_screen(level=WARNING):
 
 log_to_screen(INFO)
 log_visa_to_screen(WARNING)
+
+import lightlab.util.config as config  # noqa
