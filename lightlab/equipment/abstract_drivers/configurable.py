@@ -58,6 +58,8 @@ class TekConfig(object):
             val = dpath.util.get(self.dico, cStr, separator=self.separator)
         except KeyError:
             raise KeyError(cStr + ' is not present in this TekConfig instance')
+        if type(val) is dict and '&' in val.keys():
+            val = val['&']
         if not asCmd:
             return val
         else:

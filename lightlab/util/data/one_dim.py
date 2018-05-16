@@ -262,6 +262,14 @@ class MeasuredFunction(object):
         '''
         return self.__newOfSameSubclass(self.absc[::-1], self.ordi)
 
+    def reverse(self):
+        ''' Flips the ordinate, keeping abscissa in order
+
+            Returns:
+                MeasuredFunction: new object
+        '''
+        return self.__newOfSameSubclass(self.absc, self.ordi[::-1])
+
     def debias(self):
         ''' Removes mean from the function
 
