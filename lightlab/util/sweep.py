@@ -480,7 +480,7 @@ class NdSweeper(Sweeper):
         if pltKwargs is None:
             pltKwargs = {}
 
-        # Which data structure to use and its dimensionality
+        # Which data dict to use and its dimensionality
         if tempData is None:
             fullData = self.data
         else:
@@ -497,44 +497,39 @@ class NdSweeper(Sweeper):
             slicer = argFlatten(slicer, typs=tuple)
 
         # Figure out what the keys of data are
-        if plotDims == self.actuDims:
-            autoLabelingMaster = True
-            actKeyList = list(self.actuate.keys())
-        else:
-            autoLabelingMaster = False
+        actuationKeys = list(self.actuate.keys())
         xKeys = argFlatten(self.plotOptions['xKey'], typs=tuple)
         yKeys = argFlatten(self.plotOptions['yKey'], typs=tuple)
-        if (len(xKeys) == 0 or len(yKeys) == 0) and not autoLabelingMaster:
-            raise ValueError('No axis key specified explicitly or found in self.actuate')
         if len(xKeys) == 0:
             # default is the most minor sweep domain
-            xKeys = (actKeyList[-1], )
+            xKeys = (actuationKeys[-1], )
         if len(yKeys) == 0:
             # default is all scalar ranges
             for datKey, datVal in fullData.items():
                 if (datKey not in xKeys and
-                        datKey not in actKeyList and
+                        datKey not in actuationKeys and
                         np.isscalar(datVal.item(0))):
                     yKeys += (datKey, )
         # Check it
+        if (len(xKeys) == 0 or len(yKeys) == 0):
+            raise ValueError('No axis key specified explicitly or found in self.actuate')
         for k in xKeys + yKeys:
             if k not in fullData.keys():
                 raise KeyError(k + ' not found in data keys. ' +
                                'Available data are ' + ', '.join(fullData.keys()))
 
-        # Make canvas of axes based on number of y lines
+        # Make grid of axes based on number of pairs of variables
         plotArrShape = np.array([len(yKeys), len(xKeys)])
-        if all(s == 0 for s in plotArrShape):
-            logger.warning('No plots specified or available')
-            return
         if axArr is not None:
             pass
         elif self.plotOptions['axArr'] is not None:
             axArr = self.plotOptions['axArr']
         else:
-            _, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1], figsize=(
-                10, plotArrShape[0] * 2.5))  # pylint: disable=unused-variable
+            _, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1],
+                                    figsize=(10, plotArrShape[0] * 2.5))  # pylint: disable=unused-variable
+
         axArr = np.array(axArr)
+        # Force into a two dimensional array
         if axArr.ndim == 2:
             pass
         elif axArr.ndim == 1:
@@ -544,7 +539,7 @@ class NdSweeper(Sweeper):
                 axArr = np.expand_dims(axArr, 0)
             elif plotArrShape[1] == 1:
                 axArr = np.expand_dims(axArr, 1)
-        if axArr.ndim == 0:
+        elif axArr.ndim == 0:
             if np.all(plotArrShape == 1):
                 axArr = np.expand_dims(np.expand_dims(axArr, 0), 0)
         # Check it
@@ -553,27 +548,25 @@ class NdSweeper(Sweeper):
 
         # Prepare options for plotting that do not depend on index or line no.
         sample_xK = xKeys[0]
-        sample_yK = yKeys[0]
-        # dereference and slice
         sample_xData = fullData[sample_xK][slicer]
-        sample_yData = fullData[sample_yK][slicer]
-        if self.plotOptions['plType'] is 'curves'
+        if self.plotOptions['plType'] == 'curves':
             pltArgs = ('.-', )
             if plotDims == 1:
                 if hCurves is None:
                     hCurves = np.empty(axArr.shape, dtype=object)
             elif plotDims == 2:
-                nLines = sample_yData.shape[0]
-                colors = self.plotOptions['cmap-curves'](np.linspace(0, 1, nLines))
                 invertDomainPriority = False
-                if autoLabelingMaster:
-                    if actKeyList[0] != sample_xK:
-                        curveKey = actKeyList[0]
+                autoLabeling = (plotDims == self.actuDims)
+                if autoLabeling:
+                    if actuationKeys[0] != sample_xK:
+                        curveKey = actuationKeys[0]
                     else:
-                        curveKey = actKeyList[1]
+                        curveKey = actuationKeys[1]
                         if index is not None:
                             index = index[::-1]
                         invertDomainPriority = True
+                nLines = sample_xData.shape[0 if not invertDomainPriority else 1]
+                colors = self.plotOptions['cmap-curves'](np.linspace(0, 1, nLines))
 
         # Loop over axes (i.e. axis key variables) and plot
         for iAx, ax in np.ndenumerate(axArr):
@@ -582,9 +575,6 @@ class NdSweeper(Sweeper):
             # dereference and slice
             xData = fullData[xK][slicer]
             yData = fullData[yK][slicer]
-            if invertDomainPriority:
-                xData = xData.T
-                yData = yData.T
 
             if self.plotOptions['plType'] == 'curves':
                 if plotDims == 1:
@@ -604,6 +594,10 @@ class NdSweeper(Sweeper):
                     hCurves[iAx] = curv
                 elif plotDims == 2:
                     ax.cla()  # no caching, just clear
+                    if invertDomainPriority:
+                        xData = xData.T
+                        yData = yData.T
+
                     for iLine in range(nLines):
                         # slicing data based on what the line and index are
                         xLine = xData[iLine, :]
@@ -623,8 +617,8 @@ class NdSweeper(Sweeper):
                             curveValue = self.actuate[curveKey].domain[iLine]
                             pltKwargs['label'] = '{} = {:.2f}'.format(curveKey, curveValue)
                         ax.plot(xLine, yLine, *pltArgs, **pltKwargs)
-                    # legend?
-                    if autoLabeling:
+                    # legend
+                    if autoLabeling:  # AND it is the top right
                         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
                 else:
                     raise ValueError('Too many dimensions in sweep to plot. '
@@ -652,10 +646,10 @@ class NdSweeper(Sweeper):
                 ax.autoscale(tight=True)
                 ax.set_title(yK)
                 if iAx[0] == plotArrShape[0] - 1:
-                    ax.set_xlabel(actKeyList[1])
+                    ax.set_xlabel(actuationKeys[1])
                 else:
                     ax.tick_params(labelbottom=False)
-                ax.set_ylabel(actKeyList[0])
+                ax.set_ylabel(actuationKeys[0])
         return axArr
 
     def saveObj(self, savefile=None):
@@ -685,11 +679,11 @@ class NdSweeper(Sweeper):
         newObj = cls.fromFile(savefile)
         # Restore actuations
         try:
-            actKeyList = newObj.data.pop('actuation-keys')
+            actuationKeys = newObj.data.pop('actuation-keys')
         except KeyError:
             pass
         else:
-            for iAct, actuName in enumerate(actKeyList):
+            for iAct, actuName in enumerate(actuationKeys):
                 # Try to extract the actuation function (not domain)
                 if functionSource is not None:
                     actuObj = functionSource.actuate[actuName]
@@ -699,7 +693,7 @@ class NdSweeper(Sweeper):
                 # Full data as taken, which is N-dimensional
                 actData = newObj.data[actuName]
                 # Extract one vector along the right direction to serve as domain
-                sliceOneDim = [0] * len(actKeyList)
+                sliceOneDim = [0] * len(actuationKeys)
                 sliceOneDim[iAct] = slice(None)
                 actuObj.domain = actData[sliceOneDim]
                 # Do the full add
