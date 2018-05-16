@@ -83,6 +83,55 @@ class FunctionBundle(object):
     def __truediv__(self, other):
         return self * (1 / other)
 
+    def __getattr__(self, attrName):
+        ''' Feeds through **callable** methods to its members (type MeasuredFunction),
+            if the attribute is not found in the FunctionBundle.
+            If it finds it there, then applies it to every function in the bundle
+
+            Be aware that some are overloaded in FunctionBundle. For example,::
+
+            .. code-block:: python
+
+                spct1 = Spectrum([0, 1, 2], [2, 5, 3])
+                spct2 = Spectrum([0, 1, 2], [4, 4, 1])
+                funBun = FunctionBundle([spct1, spct2])
+
+            Those defined here will not feed through.
+            Typically, they give you a single MeasuredFunction (subclass)
+
+            .. code-block:: python
+
+                spct1.max() == 5
+                funBun.max() == Spectrum([0, 1, 2], [4, 5, 3])
+
+            Others will fall through. They always return a FunctionBundle::
+
+            .. code-block:: python
+
+                reversedFunBund = FunctionBundle([
+                                      spct1.reverse(),
+                                      spct2.reverse())
+                                      ])
+                funBun.reverse() == reversedFunBund
+        '''
+        try:
+            memberClassFunc = getattr(self.memberType, attrName):
+        except AttributeError as err:
+            betterErrStr = err.args[0] + ', neither does \'{}\' object'.format(type(self).__name__)
+            err.args = tuple(betterErrStr, err.args[1:])
+            raise
+        if not iscallable(memberClassFunc):
+            raise TypeError(f'{memberClassFunc} in'
+                            ' {} of {}'.format(type(self).__name__, self.memberType.__name__)
+                            ' is not callable')
+        def fakeFun(*args, **kwargs):
+            newBundle = type(self)()
+            for item in self:
+                newItem = memberClassFunc(item, *args, **kwargs)
+                newBundle.addDim(newItem)
+            return newBundle
+        return fakeFun
+
     def copy(self):
         newObj = type(self)()
         newObj.__dict__ = self.__dict__.copy()
