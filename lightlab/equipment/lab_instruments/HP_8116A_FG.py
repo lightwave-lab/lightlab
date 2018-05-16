@@ -6,6 +6,7 @@ from lightlab.laboratory.instruments import FunctionGenerator
 import numpy as np
 import time
 from lightlab import visalogger as logger
+from . import BuggyHardware
 
 
 class HP_8116A_FG(VISAInstrumentDriver, Configurable):
