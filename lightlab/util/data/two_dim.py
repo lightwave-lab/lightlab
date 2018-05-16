@@ -61,6 +61,10 @@ class FunctionBundle(object):
 
     def __getitem__(self, index):
         ''' Iterator that gives out individual measured functions of the type used
+
+            Todo:
+                This should handle slices.
+                If it gets a slice, it should return a function bundle
         '''
         theOrdi = self.ordiMat[
             index, :].A1  # A1 is a special numpy thing that converts from matrix to 1-d array
@@ -178,7 +182,6 @@ class FunctionBundle(object):
         '''
         if axList is None:
             _, axList = plt.subplots(nrows=len(self), figsize=(14, 14))
-            # fi, axList = plt.subplots(nrows=len(self), figsize=(14,16))
         if len(axList) != len(self):
             raise ValueError('Wrong number of axes. Got {}, need {}.'.format(
                 len(axList), len(self)))
