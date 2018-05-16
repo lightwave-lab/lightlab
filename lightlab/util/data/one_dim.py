@@ -171,8 +171,8 @@ class MeasuredFunction(object):
         if 'label' in kwargs.keys():
             plt.legend()
         if livePlot:
-            display.clear_output(wait=True)
             display.display(plt.gcf())
+            display.clear_output(wait=True)
         return curve
 
     # Simple data handling operations
@@ -654,6 +654,13 @@ class Spectrum(MeasuredFunction):
         if type(other) is type(self) and other.inDbm is not self.inDbm:
             raise Exception('Can not do binary math on Spectra in different formats')
         return super().__binMathHelper(other)
+
+    def simplePlot(self, *args, **kwargs):
+        ''' More often then not, this is db vs. wavelength, so label it
+        '''
+        super().simplePlot(*args, **kwargs)
+        plt.xlabel('Wavelength (nm)')
+        plt.ylabel('Transmission ({})'.format('dB' if self.inDbm else 'lin'))
 
     # Peak and trough related
 

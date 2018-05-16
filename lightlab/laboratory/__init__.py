@@ -5,9 +5,31 @@ designed to be "hashable", i.e., easy to store and share.
 """
 
 import jsonpickle
-from collections import MutableSequence
+from collections import MutableSequence, Mapping
 
 __all__ = ["Node"]
+
+
+class FrozenDict(Mapping):
+    """Don't forget the docstrings!!"""
+
+    def __init__(self, data):
+        self._d = data
+
+    def __iter__(self):
+        return iter(self._d)
+
+    def __len__(self):
+        return len(self._d)
+
+    def __getitem__(self, key):
+        return self._d[key]
+
+    def __setitem__(self, key, value):
+        raise RuntimeError("attempting to change read-only list")
+
+    def __delitem__(self, key):
+        raise RuntimeError("attempting to delete item from read-only list")
 
 
 class Hashable(object):
@@ -23,7 +45,8 @@ class Hashable(object):
 
     No instance variables starting with "__" will be serialized.
     """
-    context = jsonpickle.pickler.Pickler(unpicklable=True, warn=True, keys=True)
+    context = jsonpickle.pickler.Pickler(
+        unpicklable=True, warn=True, keys=True)
 
     def __eq__(self, other):
         jsonpickle.set_encoder_options('json', sort_keys=True)
@@ -123,13 +146,16 @@ class NamedList(MutableSequence, Hashable):
 
     """
 
-    def __init__(self, *args):  # pylint: disable=super-init-not-called
+    read_only = False
+
+    def __init__(self, *args, read_only=False):  # pylint: disable=super-init-not-called
         self.list = list()
         self.extend(list(args))
+        self.read_only = read_only
 
     @property
     def dict(self):
-        return {i.name: i for i in self}
+        return FrozenDict({i.name: i for i in self})
 
     @property
     def values(self):
@@ -147,7 +173,8 @@ class NamedList(MutableSequence, Hashable):
             raise TypeError(f"{type(value)} does not have name.")
 
     def check_presence(self, name):
-        matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == name]
+        matching_idxs = [idx for idx, elem in enumerate(
+            self) if elem.name == name]
         return matching_idxs
 
     def __len__(self):
@@ -159,18 +186,24 @@ class NamedList(MutableSequence, Hashable):
         return self.list[i]
 
     def __delitem__(self, i):
+        if self.read_only:
+            raise RuntimeError("attempting to delete item from read-only list")
         if isinstance(i, str):
-            matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
+            matching_idxs = [idx for idx,
+                             elem in enumerate(self) if elem.name == i]
             for idx in matching_idxs:
                 del self.list[idx]
         else:
             del self.list[i]
 
     def __setitem__(self, i, v):
+        if self.read_only:
+            raise RuntimeError("attempting to change read-only list")
         self.check(v)
         if isinstance(i, str):
             if i in self.dict.keys():
-                matching_idxs = self.check_presence(i)
+                matching_idxs = [idx for idx,
+                                 elem in enumerate(self) if elem.name == i]
                 assert len(matching_idxs) == 1
                 idx = matching_idxs[0]
                 self.list[idx] = v  # update current entry
@@ -181,18 +214,11 @@ class NamedList(MutableSequence, Hashable):
                     # Instrument will be renamed to name1 prior to insertion
                     v.name = i
 
-                # because of the lines above, there is a special case:
                 # special case when v is already in the list, in
                 # which case one must do nothing.
                 if v not in self.list:
                     self.list.append(v)
         else:
-            # check if there is an element with the same name elsewhere in the list.
-            matching_idxs = self.check_presence(v.name)
-            assert len(matching_idxs) <= 1
-            if len(matching_idxs) > 0 and i not in matching_idxs:
-                raise RuntimeError(f"Attempting to set {v.name} in list[{i}], "
-                                   f"but {v.name} already exists in list[{matching_idxs[0]}].")
             self.list[i] = v
 
     def insert(self, index, value):
@@ -200,22 +226,25 @@ class NamedList(MutableSequence, Hashable):
         # Note: not the same as __setitem__, which replaces the value
         # in an index.
         # Append will call this method with self.insert(len(self), value)
-        self.check(value)
-        conflicts = self.check_presence(value.name)
-        if len(conflicts) > 0:
-            raise RuntimeError(f"{value.name} already exists in list[{conflicts[0]}].")
-        if isinstance(index, str):
-            # this code should normally never be run. but just in case,
-            # it should add value right before index's position
-            index_list = self.check_presence(index)
-            assert len(index_list) <= 1
-            if len(index_list) == 1:
-                index = index_list[0]
-                self.list.insert(index, value)
-            else:
-                self[value.name] = value
+        if self.read_only:
+            raise RuntimeError("attempting to insert item to read-only list")
         else:
-            self.list.insert(index, value)
+            self.check(value)
+            conflicts = self.check_presence(value.name)
+            if len(conflicts) > 0:
+                raise RuntimeError(f"{value.name} already exists in list[{conflicts[0]}].")
+            if isinstance(index, str):
+                # this code should normally never be run. but just in case,
+                # it should add value right before index's position
+                index_list = self.check_presence(index)
+                assert len(index_list) <= 1
+                if len(index_list) == 1:
+                    index = index_list[0]
+                    self.list.insert(index, value)
+                else:
+                    self[value.name] = value
+            else:
+                self.list.insert(index, value)
 
     def __str__(self):
         return str(self.list)
@@ -227,9 +256,9 @@ class TypedList(NamedList):
     the list and that they belong to a certain class (obj_type).
     """
 
-    def __init__(self, obj_type, *args):
+    def __init__(self, obj_type, *args, read_only=False, **kwargs):
         self.obj_type = obj_type
-        super().__init__(*args)
+        super().__init__(*args, read_only=read_only, **kwargs)
 
     def check(self, value):
         if not isinstance(value, self.obj_type):

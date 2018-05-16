@@ -36,7 +36,7 @@ class Host(Node):
     @property
     def instruments(self):
         from lightlab.laboratory.state import lab
-        return TypedList(Instrument, *list(filter(lambda x: x.host == self, lab.instruments)))
+        return TypedList(Instrument, *list(filter(lambda x: x.host == self, lab.instruments)), read_only=True)
 
     def __contains__(self, item):
         instrument_search = item in self.instruments
@@ -287,7 +287,7 @@ class Bench(Node):
     @property
     def instruments(self):
         from lightlab.laboratory.state import lab
-        return TypedList(Instrument, *list(filter(lambda x: x.bench == self, lab.instruments)))
+        return TypedList(Instrument, *list(filter(lambda x: x.bench == self, lab.instruments)), read_only=True)
 
     @property
     def devices(self):

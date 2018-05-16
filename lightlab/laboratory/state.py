@@ -25,7 +25,7 @@ from lightlab.laboratory.instruments import Host, LocalHost, Bench, Instrument, 
 import hashlib
 import jsonpickle
 import sys
-from lightlab import logger
+from lightlab import logger, config
 import getpass
 from datetime import datetime
 from json import JSONDecodeError
@@ -40,21 +40,43 @@ def timestamp_string():
 
 
 json = jsonpickle.json
-_filename = Path("/home/jupyter/labstate.json")
+# _filename = Path("/home/jupyter/labstate.json")
+_filename = os.path.expanduser(config.get_config_param(
+    'labstate.filepath'))  # resolve '~' to home folder
+
+
 try:
-    with open(_filename, 'r'):
-        pass
-    if not os.access(_filename, os.W_OK):
-        logger.warning("Write permission to %s denied. "
+    _filename = Path(_filename).resolve()  # resolve symlinks if any
+    can_write = True
+    if not os.path.isfile(_filename):
+        # file does not exist
+
+        # try to make directory
+        os.makedirs(_filename.parent, exist_ok=True)
+
+        # check if directory is writable
+        can_write = os.access(_filename.parent, os.W_OK)
+
+    else:
+        # file exists
+        # can open? if not, error!
+        with open(_filename, 'r'):
+            pass
+        # can write? warning
+        can_write = os.access(_filename, os.W_OK)
+    if can_write:
+        _filename.touch()  # this empty file will trigger a warning the first time labstate is loaded
+    else:
+        logger.warning("Write permission to existing %s denied. "
                        "You will not be able to use lab.saveState().", _filename)
 except OSError as error:
     if isinstance(error, FileNotFoundError):
         logger.warning("%s was not found.", _filename)
     if isinstance(error, PermissionError):
-        logger.warning("You don't have permission to read %s.", _filename)
+        logger.warning("You don't have permission to read/access %s.", _filename)
     new_filename = 'labstate-local.json'
     logger.warning(f"{_filename} not available. Fallback to local {new_filename}.")
-    _filename = new_filename
+    _filename = Path(new_filename)
 
 
 def hash_sha256(string):
@@ -327,7 +349,8 @@ class LabState(Hashable):
         Raises:
             RuntimeWarning: if file version is older than lightlab.
             RuntimeError: if file version is newer than lightlab.
-            RuntimeError: if the hash file inside the .json file does not
+            JSONDecodeError: if there is any problem decoding the .json file.
+            JSONDecodeError: if the hash file inside the .json file does not
                 match the computed hash during import.
             OSError: if there is any problem loading the file.
 
@@ -346,8 +369,8 @@ class LabState(Hashable):
         sha256 = json_state.pop("__sha256__")
         jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)
         if validateHash and sha256 != hash_sha256(json.encode(json_state)):
-            raise RuntimeError("Labstate is corrupted. {} vs {}.".format(
-                sha256, hash_sha256(json.encode(json_state))))
+            raise JSONDecodeError("Labstate is corrupted. expected: {} vs actual: {}.".format(
+                sha256, hash_sha256(json.encode(json_state))), str(filename), 0)
 
         # Compare versions of file vs. class
         version = json_state.pop("__version__")
@@ -435,6 +458,13 @@ class LabState(Hashable):
             logger.debug(f"File not found: {fname}. Saving for the first time.")
             self._saveState(fname, save_backup=False)
             return
+        except JSONDecodeError:
+            if os.stat(fname).st_size == 0:
+                logger.warning("%s is empty. Saving for the first time.", _filename)
+                self._saveState(fname, save_backup=False)
+                return
+            else:
+                raise
 
         if not self.__sha256__:
             logger.debug("Attempting to compare fabricated labstate vs. preloaded one.")
@@ -475,7 +505,7 @@ class LabState(Hashable):
             logger.debug("%s's sha: %s", fname, json_state["__sha256__"])
 
 
-def __init__(module):
+def init_module(module):
     # do something that imports this module again
     empty_lab = False
     try:
@@ -483,13 +513,16 @@ def __init__(module):
     except (OSError) as e:
         logger.error("%s: %s.", e.__class__.__name__, e)
         empty_lab = True
-    except (JSONDecodeError) as e:
-        logger.error("%s: %s corrupted. %s.", e.__class__.__name__, _filename, e)
+    except JSONDecodeError as e:
+        if os.stat(_filename).st_size == 0:
+            logger.warning("%s is empty.", _filename)
+        else:
+            logger.error("%s: %s is corrupted. %s.", e.__class__.__name__, _filename, e)
         empty_lab = True
 
     if empty_lab:
-        logger.error("Starting fresh new LabState(). "
-                     "Save for the first time with lab._saveState()")
+        logger.warning("Starting fresh new LabState(). "
+                       "Save for the first time with lab._saveState()")
         module.lab = module.LabState()
 
 
@@ -514,7 +547,7 @@ class _Sneaky(object):
         # e.g. if we need module.lab
         if self.initializing and name == "lab":
             self.initializing = False
-            __init__(self.module)
+            self.module.init_module(self.module)
         return getattr(self.module, name)
 
     def __setattr__(self, name, value):
