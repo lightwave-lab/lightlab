@@ -9,7 +9,8 @@ test:
   script:
   - pip install -U virtualenv pip
   - python --version
-  - DOCKER=1 make test
+  - DOCKER=1 make test-unit-all
+  - make test-lint-errors
 
 test-master:
   image: python:3.6
@@ -22,7 +23,8 @@ test-master:
   script:
   - pip install -U virtualenv pip
   - python --version
-  - DOCKER=1 make test
+  - DOCKER=1 make test-unit-all
+  - make test-lint-errors
   - make test-lint
 
 deploy-dev:
