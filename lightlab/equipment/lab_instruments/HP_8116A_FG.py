@@ -1,11 +1,12 @@
+# FALSE POSITIVES HERE. "noqa" should disable it but does not
 from . import VISAInstrumentDriver
-from pyvisa import VisaIOError
+from pyvisa import VisaIOError  # noqa
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import FunctionGenerator
 
 import numpy as np
-import time
-from lightlab import visalogger as logger
+import time  # noqa
+from lightlab import visalogger as logger  # noqa
 from . import BuggyHardware
 
 
