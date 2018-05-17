@@ -44,7 +44,7 @@ def pprintFileDir():
             continue
         if child.is_file():
             children.append(child)
-    childNames = map(lambda x: x.name, children)
+    childNames = list(map(lambda x: x.name, children))
     sortedChildren = [x for _, x in sorted(zip(childNames, children))]
     for child in sortedChildren:
         justified = child.name.rjust(maxStrLen) + '   '

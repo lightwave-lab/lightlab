@@ -11,7 +11,7 @@ import matplotlib.cm as cm
 from .one_dim import MeasuredFunction, Waveform
 
 
-class FunctionBundle(object):
+class FunctionBundle(object):  # pylint: disable=eq-without-hash
     ''' A bundle of :class:`~lightlab.util.data.one_dim.MeasuredFunction`'s: "z" vs. "x", "i"
 
         The key is that they have the same abscissa base.
