@@ -4,14 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from IPython import display
 import lightlab.util.io as io
-from lightlab import logger
 
 from .peaks import findPeaks, ResonanceFeature
 from .basic import rms
 from .function_inversion import interpInverse
 
 
-class MeasuredFunction(object):
+class MeasuredFunction(object):  # pylint: disable=eq-without-hash
     ''' Array of x,y points.
         This is the workhorse class of ``lightlab`` data structures.
         Examples can be found throughout Test notebooks.
@@ -136,24 +135,14 @@ class MeasuredFunction(object):
         '''
         return self.__newOfSameSubclass(self.absc, self.ordi)
 
-    def save(self, savefile=None):
-        if savefile is None:
-            logger.error('Warning: No save file specified')
+    def save(self, savefile):
         io.saveMat(savefile, {'absc': self.absc, 'ordi': self.ordi})
 
-    def load(self, savefile=None):
-        if savefile is None:
-            logger.warning('Warning: No save file specified')
-        dataDict = io.loadMat(savefile)
-        self.absc, self.ordi = dataDict['absc'], dataDict['ordi']
-        return self
-
     @classmethod
-    def loadFromFile(cls, savefile=None):
-        if savefile is None:
-            logger.warning('Warning: No save file specified')
+    def load(cls, savefile):
         dataDict = io.loadMat(savefile)
-        absc, ordi = dataDict['absc'], dataDict['ordi']
+        absc = dataDict['absc']
+        ordi = dataDict['ordi']
         return cls(absc, ordi)
 
     def simplePlot(self, *args, livePlot=False, **kwargs):
@@ -319,7 +308,7 @@ class MeasuredFunction(object):
                 xyPoint (tuple): x and y values to be inserted
 
             Returns:
-                None: modifies this object
+                None: it modifies this object
         '''
         x, y = xyPoint
         for i in range(len(self)):
@@ -598,9 +587,6 @@ class MeasuredFunction(object):
 
     def __truediv__(self, other):
         return self * (1 / other)
-
-    def __rdiv__(self, other):  # pylint: disable=unused-argument
-        return NotImplemented
 
     def __eq__(self, other):
         if isinstance(self, type(other)):

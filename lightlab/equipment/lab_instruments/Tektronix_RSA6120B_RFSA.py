@@ -115,7 +115,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
             nLines = int(duration / estTimePerLine)
             print('Warning: line density too high. You will get {} lines.'.format(nLines))
             downsample = 1
-        lineNos = np.array(range(nLines), dtype=int) * downsample
+        lineNos = np.arange(nLines, dtype=int) * downsample
 
         # lineNos = np.arange(0,101,1)
         # nLines = len(lineNos)

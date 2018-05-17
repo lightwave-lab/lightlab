@@ -1067,7 +1067,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
             # plot mean error line
             mean = np.mean(valsAtThisGridPt, axis=0)
             target = cmdWeights[gridIndex]
-            arro = interAx.plot(*zip(target, mean), 'r', lw=2)
+            arro = interAx.plot(*zip(target, mean), 'r', lw=2)  # pylint: disable=zip-builtin-not-iterating
 
             # plot variance ellipse
             if index[0] > 0:

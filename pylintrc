@@ -123,6 +123,11 @@ disable=blacklisted-name,
         trailing-comma-tuple,
         stop-iteration-return,
         simplify-boolean-expression,
+        old-division,
+        no-absolute-import,
+        dict-items-not-iterating,
+        dict-keys-not-iterating,
+        dict-values-not-iterating,
         inconsistent-return-statements
 
 # Enable the message, report, category or checker with the given id(s). You can
@@ -327,8 +332,6 @@ enable=syntax-error,
        delslice-method,
        getslice-method,
        setslice-method,
-       no-absolute-import,
-       old-division,
        dict-iter-method,
        dict-view-method,
        next-method-called,
@@ -361,10 +364,7 @@ enable=syntax-error,
        deprecated-str-translate-call,
        deprecated-itertools-function,
        deprecated-types-field,
-       next-method-defined,
-       dict-items-not-iterating,
-       dict-keys-not-iterating,
-       dict-values-not-iterating
+       next-method-defined
 
 
 [REPORTS]
