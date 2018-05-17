@@ -2,21 +2,21 @@
     Resolves several directories as follows.
     These can be overridden after import if desired.
 
-        1. projectDir
-            The git repo of the file that first imported io
+        1. ``projectDir``
+            The git repo of the file that first imported ``io``
 
-        2. dataHome = projectDir/data
+        2. ``dataHome`` = (default) ``projectDir / "data"``
             Where all your data is saved.
 
-        3. fileDir = dataHome
+        3. ``fileDir`` = (default) ``dataHome``
             Where all the save/load functions will look.
             Usually this is set differently from notebook to notebook.
 
-        4. monitorDir = projectDir/progress-monitor
+        4. ``monitorDir`` = (default) ``projectDir / "progress-monitor"``
             Where html for sweep progress monitoring will be written
             by ``ProgressWriter``.
 
-        5. lightlabDevelopmentDir
+        5. ``lightlabDevelopmentDir``
             The path to a source directory of ``lightlab`` for development.
             It is found through the ".pathtolightlab" file.
             This is currently unused.

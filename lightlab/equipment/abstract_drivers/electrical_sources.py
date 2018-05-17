@@ -24,9 +24,9 @@ class MultiModalSource(object):
         bnds = [cls.baseUnit2val(vBnd, mode) for vBnd in cls.baseUnitBounds]
         enforcedValue = np.clip(val, *bnds)
         if enforcedValue != val:
-            logger.warning('Warning: value out of range was constrained.\n' +
-                           'Requested ' + str(val) +
-                           '. Allowed range is' + str(bnds) + ' in ' + mode + 's.')
+            logger.warning('Warning: value out of range was constrained.\n'
+                           'Requested %s.'
+                           'Allowed range is %s in %s s.', val, bnds, mode)
             if cls.exceptOnRangeError:
                 if val < min(bnds):
                     violation_direction = 'low'
@@ -137,7 +137,7 @@ class MultiChannelSource(object):
         ''' Returns the blocked out channels as a list '''
         return self.useChans
 
-    def setChannelTuning(self, chanValDict, *args, **kwargs):
+    def setChannelTuning(self, chanValDict):
         ''' Sets a number of channel values and updates hardware
 
             Args:
@@ -161,7 +161,7 @@ class MultiChannelSource(object):
         # Change our *internal* state
         self.stateDict.update(chanValDict)
 
-    def getChannelTuning(self, *args, **kwargs):
+    def getChannelTuning(self):
         ''' The inverse of setChannelTuning
 
             Args:
@@ -176,54 +176,3 @@ class MultiChannelSource(object):
         """Turn all voltages to zero, but maintain the session
         """
         self.setChannelTuning(dict([ch, 0] for ch in self.stateDict.keys()), *setArgs)
-
-
-# class ElectricalSenseSource(MultiChannelSource):
-#     ''' Also provides measureVoltage
-
-#         Todo:
-#             make sure mode is in milliamps for query
-#     '''
-#     def __init__(self, resistiveDict, voltQueryMethod=None, **kwargs):
-#         ''' In this one, current is in amps
-
-#             Args:
-#                 resistiveDict (dict): keys are useChans, values are objects that provide
-#                 voltQueryMethod is unbound method with one argument: current
-
-#         '''
-#         super().__init__(useChans=list(resistiveDict.keys()), **kwargs)
-#         self.resistors = resistiveDict
-#         resType = type(resistors.values()[0])
-#         if voltQueryMethod is None:
-#             try:
-#                 self.voltQuery = resType.getVoltage
-#             except AttributeError as err:
-#                 print(resType, 'does not have getVoltage(self, current)')
-#                 raise err
-#         else:
-#             try:
-#                 resType.voltQueryMethod(resistors.values()[0])
-#             except AttributeError as err:
-#                 print(resType, 'has no unbound method', str(voltQueryMethod))
-#             self.voltQuery = voltQueryMethod
-
-#     setCurrent = setChannelTuning
-
-#     def measureVoltage(self):
-#         voltDict = dict()
-#         for ch, ival in self.stateDict.items():
-#             voltDict[ch] = self.voltQuery(self.resistors[ch], ival)
-#         return voltDict
-
-
-# class SingleSenseSource(ElectricalSenseSource):
-#     def __init__(self, resistive, voltQueryMethod=None, **kwargs):
-#         super().__init__({0, resistive}, voltQueryMethod=voltQueryMethod, **kwargs)
-
-#     def setCurrent(self, curr):
-#         return super().setChannelTuning({0: curr})
-
-#     def measureVoltage(self):
-#         voltDict = super().measureVoltage()
-#         return voltDict[0]

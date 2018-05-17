@@ -2,6 +2,7 @@ from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import Clock
 
+
 class Agilent_83712B_clock(VISAInstrumentDriver, Configurable):
     '''
         Where is manual?

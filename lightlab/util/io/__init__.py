@@ -1,9 +1,14 @@
+''' Functions for filesystem handling
+'''
+from pathlib import Path
 from .paths import (projectDir,  # noqa
                     dataHome,  # noqa
                     monitorDir,  # noqa
                     lightlabDevelopmentDir)  # noqa
 
 fileDir = dataHome  # Set this in your experiment
+
+
 def _getFileDir(childFile=None):
     ''' This is only used within this package.
         The idea is to create a dynamic link to this changing attribute
@@ -13,9 +18,9 @@ def _getFileDir(childFile=None):
             the resolved path to this file within the directory
     '''
     if childFile is None:
-        return fileDir
+        return Path(fileDir).resolve()
     else:
-        return (fileDir / childFile).resolve()
+        return (Path(fileDir) / childFile).resolve()
 
 from .saveload import (pprintFileDir,  # noqa
                        savePickle,  # noqa
@@ -28,4 +33,3 @@ from .saveload import (pprintFileDir,  # noqa
 from .progress import printWait, printProgress, ProgressWriter  # noqa
 from .errors import ChannelError, RangeError  # noqa
 from .jsonpickleable import JSONpickleable  # noqa
-

@@ -11,7 +11,7 @@ from IPython import display
 from .data import FunctionBundle
 
 
-def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=True):
+def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=True):  # pylint: disable=W0613
     ''' Looks at a sense variable at different delays after calling an actuate function.
         Good for determining the time needed to wait for settling.
         Calls each function once per delay point to construct a picture like the strobe experiment, or a sampling scope
@@ -76,7 +76,8 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
         raise NotImplementedError(
             'Since sweeper does not do well with >2 dimensions, you can only strobe a 1-D sweep')
     aKey, actu = list(varSwp.actuate.items())[0]
-    varFun, varDom, varEvery = actu
+    varFun = actu.function
+    varDom = actu.domain
     measParseKeys = list(varSwp.measure.keys()) + list(varSwp.parse.keys())
 
     # soakFun wraps the existing actuator with a long delay afterwards to ensure equilibration
@@ -121,7 +122,7 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
 
     # Adding actuation following reset: the default actuation, then a delay
     # associated with the strobe
-    strobeSwp.addActuation('strobeDelay', lambda t: time.sleep(t), np.linspace(0, maxDelay, nPts))
+    strobeSwp.addActuation('strobeDelay', time.sleep, np.linspace(0, maxDelay, nPts))
 
     # Provides normalized parsers for plotting
     strobeSwp.plotOptions['xKey'] = ('strobeDelay')
@@ -152,7 +153,7 @@ def monitorVariable(fValue, sleepSec=0, nReps=100, plotEvery=1):
     t0 = time.time()
     timeFun = lambda: time.time() - t0
 
-    fi, ax = plt.subplots(figsize=(12, 7))
+    _, ax = plt.subplots(figsize=(12, 7))
     cycleDefault = plt.rcParams['axes.prop_cycle'].by_key()['color']
     cycleContrained = cycleDefault[:w]
     ax.set_prop_cycle(cycler('color', cycleContrained))

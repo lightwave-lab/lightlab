@@ -2,6 +2,7 @@ from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import PowerMeterAbstract
 from lightlab.laboratory.instruments import PowerMeter
 
+
 class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
     ''' HP8152A power meter
 
@@ -66,10 +67,10 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
             val *= -1
         return str(val)
 
-    def query(self, *args, **kwargs):
+    def query(self, *args, **kwargs):  # pylint: disable=arguments-differ
         ''' Conditionally check for read character doubling
         '''
-        retRaw = super().query(*args, **kwargs)
+        retRaw = super().query(*args, **kwargs)  # pylint: disable=arguments-differ
         if self.doReadDoubleCheck:
             return self.proccessWeirdRead(retRaw)
         else:
@@ -85,15 +86,17 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
                 (double): Power in dB or dBm
         '''
         self.validateChannel(channel)
-        for trial in range(10):  # Sometimes it gets out of range, so we have to try a few times
+        trial = 0
+        while trial < 10:  # Sometimes it gets out of range, so we have to try a few times
             self.write('CH' + str(channel))
             powStr = self.query('TRG')
             v = float(powStr)
             if abs(v) < 999:  # check if it's reasonable
-                return v
+                break
             else:
-                continue
+                # continue
+                trial += 1
         else:
             raise Exception('Power meter values are unreasonable.'
                             ' Got {}'.format(v))
-
+        return v

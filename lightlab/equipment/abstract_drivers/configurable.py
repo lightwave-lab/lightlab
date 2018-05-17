@@ -58,6 +58,8 @@ class TekConfig(object):
             val = dpath.util.get(self.dico, cStr, separator=self.separator)
         except KeyError:
             raise KeyError(cStr + ' is not present in this TekConfig instance')
+        if type(val) is dict and '&' in val.keys():
+            val = val['&']
         if not asCmd:
             return val
         else:
@@ -67,13 +69,14 @@ class TekConfig(object):
         ''' Takes the value only, not a dictionary '''
         # First check that it does not exist as a subdir
         try:
-            ex = self.get(cStr, asCmd=False)
-            if type(ex) is dict:
-                # we don't want to overwrite this subdirectory, so put a tag on cmd
-                cStr = cStr + self.separator + '&'
+            ex = dpath.util.get(self.dico, cStr, separator=self.separator)
         except KeyError:
             # doesn't exist, we are good to go
             pass
+        else:
+            if type(ex) is dict:
+                # we don't want to overwrite this subdirectory, so put a tag on cmd
+                cStr = cStr + self.separator + '&'
 
         cmd = (cStr, val)
         success = dpath.util.set(self.dico, *cmd, separator=self.separator)
@@ -135,7 +138,8 @@ class TekConfig(object):
 
             Args:
                 source (TekConfig or dict): the object from which config values are pulled into self
-                subgroup (str): subgroup must be a subdirectory. If '', it is root directory. It can also be a command string, in which case, only that parameter is affected
+                subgroup (str): subgroup must be a subdirectory. If '', it is root directory.
+                    It can also be a command string, in which case, only that parameter is affected
         '''
         if type(source) is dict:
             sCon = type(self)(source)
@@ -148,7 +152,6 @@ class TekConfig(object):
 
     @classmethod
     def fromFile(cls, fname, subgroup=''):
-        from pathlib import Path
         fpath = Path(fname)
         with fpath.open('r') as fx:
             d = json.load(fx)
@@ -216,7 +219,6 @@ class TekConfig(object):
         else:
             configToSave = existingConfig.transfer(self, subgroup=subgroup)
 
-        from pathlib import Path
         fpath = Path(fname)
         with fpath.open('w+') as fx:
             fx.write(str(configToSave))  # __str__ gives nice json format
@@ -224,10 +226,17 @@ class TekConfig(object):
 
 # pylint: disable=no-member
 class Configurable(AbstractDriver):
-    ''' Instruments can be configurable and use TekConfig.
+    ''' Instruments can be configurable to keep track of settings within the instrument
 
-        This clas uses query/write methods that are not directly inherited, so the subclass or its parents must implement those functions
+        This class is setup so that the hardware state is reflected exactly in the 'live' config
+        **unless somebody changes something in lab**.
+        Watch out for that and use ``forceHardware`` if that is a risk
+
+        This clas uses query/write methods that are not directly inherited,
+        so the subclass or its parents must implement those functions
     '''
+
+    config = None  #: Dictionary of TekConfig objects.
 
     def __init__(self, headerIsOptional=True, verboseIsOptional=False, precedingColon=True, interveningSpace=True, **kwargs):
 
@@ -240,14 +249,18 @@ class Configurable(AbstractDriver):
         self.colon = precedingColon
         self.space = interveningSpace
 
-        self.config = {}
+        self.config = dict()
         self.config['default'] = None
+        self.config['init'] = TekConfig()
         self.config['live'] = TekConfig()
         self.separator = self.config['live'].separator
 
         super().__init__(**kwargs)
 
     def initHardware(self):
+        ''' Runs upon first hardware access.
+            Tells the instrument how to format its commands
+        '''
         if not self._hardwareinit:
             if self.verboseIsOptional:
                 self.write('VERBOSE ON')
@@ -258,10 +271,15 @@ class Configurable(AbstractDriver):
 
     # Simple, individual getter and setter
     def setConfigParam(self, cStr, val=None, forceHardware=False):
-        ''' Sets an individual configuration parameter
+        ''' Sets an individual configuration parameter.
+            If the value has been read before, and there is no change,
+            then it will **not** write to the hardware.
 
-            forceHardware means it will always send to hardware,
-                in case it is critical and tends to be changed by pesky lab users
+            Args:
+                cStr (str): name of the command
+                val (any): value to send. Detects type, so if it's an int, it will be stored as int
+                forceHardware (bool): will always send to hardware,
+                    in case it is critical or if it tends to be changed by pesky lab users
 
             Returns:
                 (bool): Did it requre a write to hardware?
@@ -270,33 +288,52 @@ class Configurable(AbstractDriver):
             val = ''
         try:
             prevVal = self.config['live'].get(cStr, asCmd=False)
-            refresh = (str(val) != str(prevVal))
         except KeyError:
+            prevVal = None
             refresh = True
+        else:
+            refresh = (str(val) != str(prevVal))
         if refresh or forceHardware:
             self.config['live'].set(cStr, val)
+            if prevVal is None:
+                self.config['init'].transfer(self.config['live'], cStr)
             self._setHardwareConfig(cStr)  # send only the one that changed
             return True
         else:
             return False
 
     def getConfigParam(self, cStr, forceHardware=False):
-        ''' This assumes that nobody in lab touched anything and is much faster than getting from hardware.
+        ''' Gets a single parameter.
+            If the value has been read before, and there is no change,
+            then it will **not** query the hardware.
+
+            This is much faster than getting from hardware; however,
+            it assumes that nobody in lab touched anything.
+
+            Args:
+                cStr (str): name of the command
+                forceHardware (bool): will always query from hardware,
+                    in case it is critical or if it tends to be changed by pesky lab users
+
+            Returns:
+                (any): command value. Detects type, so that ``'2.5'`` will return as ``float``
 
             If the command is not recognized, attempts to get it from hardware
         '''
-        if not forceHardware:
-            try:
-                return self.config['live'].get(cStr, asCmd=False)
-            except KeyError:  # not in the current structure, try getting from hardware
-                pass
-        # get it from hardware
-        self._getHardwareConfig(cStr)
+        try:
+            prevVal = self.config['live'].get(cStr, asCmd=False)
+        except KeyError:
+            prevVal = None
+        if prevVal is None or forceHardware:  # Try getting from hardware
+            self._getHardwareConfig(cStr)
+        if prevVal is None:  # This is the first time getting, so it goes in 'init'
+            self.config['init'].transfer(self.config['live'], cStr)
         return self.config['live'].get(cStr, asCmd=False)
 
     @contextmanager
     def tempConfig(self, cStr, tempVal, forceHardware=False):
-        ''' Changes a parameter within the context of a "with" block
+        ''' Changes a parameter within the context of a "with" block.
+            Args are same as in :py:meth:`getConfigParam`.
         '''
         oldVal = self.getConfigParam(cStr, forceHardware)
         try:
@@ -305,14 +342,14 @@ class Configurable(AbstractDriver):
         finally:
             self.setConfigParam(cStr, oldVal)
 
-
-    # More specialized access methods that handle command subgroups, files,
-    # and tokens
     def getDefaultFilename(self):
-        # Typically: manufacturer, model#, serial#, <other stuff with strange
-        # chars>
+        r''' Combines the :py:data:`lightlab.util.io.paths.defaultFileDir`
+            with the \*IDN? string of this instrument.
+
+            Returns:
+                (str): the default filename
+        '''
         info = self.instrID().split(',')
-        global defaultFileDir
         deffile = defaultFileDir / '-'.join(info[:3]) + '.json'
         return deffile
 
@@ -323,9 +360,6 @@ class Configurable(AbstractDriver):
 
             Args:
                 subgroup (str): a group of commands or a single command. If '', it means everything.
-
-            Returns:
-                nothing
 
             Side effects:
                 if dest is object or dict, modifies it
@@ -357,9 +391,6 @@ class Configurable(AbstractDriver):
             Args:
                 source (str/TekConfig): load source
                 subgroup (str): a group of commands or a single command. If '', it means everything.
-
-            Returns:
-                nothing
         '''
         if type(source) in [TekConfig, dict]:
             srcObj = source
@@ -374,13 +405,11 @@ class Configurable(AbstractDriver):
             raise Exception(
                 'Invalid load source. It must be a file, token, or TekConfig object')
 
-        self.config['live'].transfer(srcObj, subgroup=subgroup)
+        for liveInit in ['live', 'init']:
+            self.config[liveInit].transfer(srcObj, subgroup=subgroup)
         # This writes everything without checking how it is set currently
         self._setHardwareConfig(subgroup)
 
-    # Hardware interface. User is not allowed to access directly.
-    # This class is setup so that the hardware state is reflected exactly in the 'live' config
-    #   Unless somebody changes something in lab
     def __getFullHardwareConfig(self, subgroup=''):
         ''' Get everything that is returned by the SET? query
 
@@ -391,13 +420,13 @@ class Configurable(AbstractDriver):
                 TekConfig: structured configuration object
         '''
         self.initHardware()
-        logger.info('Querying SET? response of ' + self.instrID())
+        logger.info('Querying SET? response of %s', self.instrID())
         try:
             resp = self.query('SET?')
             return TekConfig.fromSETresponse(resp, subgroup=subgroup)
         except VisaIOError as err:  # SET timed out. You are done.
-            logger.error(self.instrID() + ' timed out on \'SET?\'. \
-                         Try resetting with \'*RST\'.')
+            logger.error('%s timed out on \'SET?\'. \
+                         Try resetting with \'*RST\'.', self.instrID())
             raise err
 
     def _getHardwareConfig(self, cStrList):
@@ -417,16 +446,17 @@ class Configurable(AbstractDriver):
 
             try:
                 ret = self.query(cStr + '?')
-            except VisaIOError as err:
-                logger.error('Problematic parameter was {}.\n'.format(cStr) +
-                             'Likely it does not exist in this instrument command structure.')
+            except VisaIOError:
+                logger.error('Problematic parameter was %s.\n'
+                             'Likely it does not exist in this instrument command structure.', cStr)
                 raise
-            logger.debug('Queried {}, got {}'.format(cStr, ret))
+            logger.debug('Queried %s, got %s', cStr, ret)
 
             if self.header:
                 val = ret.split(' ')[-1]
             else:
                 val = ret
+            # Type detection
             try:
                 val = float(val)
             except ValueError:
@@ -449,7 +479,7 @@ class Configurable(AbstractDriver):
                 cmd = cmd[1:]
             if not self.space:
                 ''.join(cmd.split(' '))
-            logger.debug('Sending ' + str(cmd) + ' to configurable hardware')
+            logger.debug('Sending %s to configurable hardware', cmd)
             self.write(cmd)
 
     def generateDefaults(self, filename=None, overwrite=False):
@@ -468,8 +498,8 @@ class Configurable(AbstractDriver):
         if filename is None:
             filename = self.getDefaultFilename()
         if Path(filename).exists() and not overwrite:
-            logger.warning(filename + ' already exists. \
-                           Use `overwrite` if you really want.')
+            logger.warning('%s already exists.'
+                           'Use `overwrite` if you really want.', filename)
             return
 
         allConfig = self.__getFullHardwareConfig()
@@ -486,10 +516,9 @@ class Configurable(AbstractDriver):
                 val = self.query(cStr + '?', withTimeout=1000)
                 cfgBuild.set(cStr, val)
                 logger.info(cStr, '<--', val)
-            except VisaIOError as e:
+            except VisaIOError:
                 logger.info(cStr, 'X -- skipping')
 
         cfgBuild.save(filename)
-        logger.info('New default saved to ' + str(filename))
+        logger.info('New default saved to %s', filename)
 # pylint: enable=no-member
-

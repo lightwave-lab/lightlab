@@ -25,7 +25,7 @@ from lightlab.laboratory.instruments import Host, LocalHost, Bench, Instrument, 
 import hashlib
 import jsonpickle
 import sys
-from lightlab import logger
+from lightlab import logger, config
 import getpass
 from datetime import datetime
 from json import JSONDecodeError
@@ -40,21 +40,43 @@ def timestamp_string():
 
 
 json = jsonpickle.json
-_filename = Path("/home/jupyter/labstate.json")
+# _filename = Path("/home/jupyter/labstate.json")
+_filename = os.path.expanduser(config.get_config_param(
+    'labstate.filepath'))  # resolve '~' to home folder
+
+
 try:
-    with open(_filename, 'r'):
-        pass
-    if not os.access(_filename, os.W_OK):
-        logger.warning("Write permission to %s denied. " \
-            "You will not be able to use lab.saveState().", _filename)
+    _filename = Path(_filename).resolve()  # resolve symlinks if any
+    can_write = True
+    if not os.path.isfile(_filename):
+        # file does not exist
+
+        # try to make directory
+        os.makedirs(_filename.parent, exist_ok=True)
+
+        # check if directory is writable
+        can_write = os.access(_filename.parent, os.W_OK)
+
+    else:
+        # file exists
+        # can open? if not, error!
+        with open(_filename, 'r'):
+            pass
+        # can write? warning
+        can_write = os.access(_filename, os.W_OK)
+    if can_write:
+        _filename.touch()  # this empty file will trigger a warning the first time labstate is loaded
+    else:
+        logger.warning("Write permission to existing %s denied. "
+                       "You will not be able to use lab.saveState().", _filename)
 except OSError as error:
     if isinstance(error, FileNotFoundError):
         logger.warning("%s was not found.", _filename)
     if isinstance(error, PermissionError):
-        logger.warning("You don't have permission to read %s.", _filename)
+        logger.warning("You don't have permission to read/access %s.", _filename)
     new_filename = 'labstate-local.json'
     logger.warning(f"{_filename} not available. Fallback to local {new_filename}.")
-    _filename = new_filename
+    _filename = Path(new_filename)
 
 
 def hash_sha256(string):
@@ -72,10 +94,13 @@ class LabState(Hashable):
     __datetime__ = None
     __filename__ = None
     hosts = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Host`) list of hosts
-    benches = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Bench`) list of benches
+    #: list(:py:class:`~lightlab.laboratory.instruments.bases.Bench`) list of benches
+    benches = None
     connections = None  #: list(dict(str -> str)) list of connections
-    devices = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Device`) list of devices
-    instruments = None  #: list(:py:class:`~lightlab.laboratory.instruments.bases.Instrument`) list of instruments
+    #: list(:py:class:`~lightlab.laboratory.instruments.bases.Device`) list of devices
+    devices = None
+    #: list(:py:class:`~lightlab.laboratory.instruments.bases.Instrument`) list of instruments
+    instruments = None
 
     @property
     def instruments_dict(self):  # TODO DEPRECATE
@@ -235,14 +260,14 @@ class LabState(Hashable):
         for connection in connections:
             for k1, v1 in connection.items():
                 if v1 not in k1.ports:
-                    logger.error("Port '{}' is not in '{}: {}'".format(v1, k1, k1.ports))
+                    logger.error("Port '%s' is not in '%s: %s'", v1, k1, k1.ports)
                     raise RuntimeError("Port '{}' is not in '{}: {}'".format(v1, k1, k1.ports))
 
         # Remove old conflicting connections
         def check_if_port_is_not_connected(connection, k1, v1):
             for k2, v2 in connection.items():
                 if (k1, v1) == (k2, v2):
-                    logger.warning("Deleting existing connection {}.".format(connection))
+                    logger.warning("Deleting existing connection %s.", connection)
                     return False
             return True
         for connection in connections:
@@ -324,7 +349,8 @@ class LabState(Hashable):
         Raises:
             RuntimeWarning: if file version is older than lightlab.
             RuntimeError: if file version is newer than lightlab.
-            RuntimeError: if the hash file inside the .json file does not
+            JSONDecodeError: if there is any problem decoding the .json file.
+            JSONDecodeError: if the hash file inside the .json file does not
                 match the computed hash during import.
             OSError: if there is any problem loading the file.
 
@@ -343,8 +369,8 @@ class LabState(Hashable):
         sha256 = json_state.pop("__sha256__")
         jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)
         if validateHash and sha256 != hash_sha256(json.encode(json_state)):
-            raise RuntimeError("Labstate is corrupted. {} vs {}.".format(
-                sha256, hash_sha256(json.encode(json_state))))
+            raise JSONDecodeError("Labstate is corrupted. expected: {} vs actual: {}.".format(
+                sha256, hash_sha256(json.encode(json_state))), str(filename), 0)
 
         # Compare versions of file vs. class
         version = json_state.pop("__version__")
@@ -432,11 +458,18 @@ class LabState(Hashable):
             logger.debug(f"File not found: {fname}. Saving for the first time.")
             self._saveState(fname, save_backup=False)
             return
+        except JSONDecodeError:
+            if os.stat(fname).st_size == 0:
+                logger.warning("%s is empty. Saving for the first time.", _filename)
+                self._saveState(fname, save_backup=False)
+                return
+            else:
+                raise
 
         if not self.__sha256__:
             logger.debug("Attempting to compare fabricated labstate vs. preloaded one.")
             self.__sha256__ = self.__toJSON()["__sha256__"]
-            logger.debug("self.__sha256__: {}".format(self.__sha256__))
+            logger.debug("self.__sha256__: %s", self.__sha256__)
 
         if loaded_lab == self:
             logger.debug("Detected no changes in labstate. Nothing to do.")
@@ -446,7 +479,7 @@ class LabState(Hashable):
             self._saveState(fname, save_backup)
         else:
             logger.error(
-                "{}'s hash does not match with the one loaded in memory. Aborting save.".format(fname))
+                "%s's hash does not match with the one loaded in memory. Aborting save.", fname)
 
     def _saveState(self, fname=None, save_backup=True):
         """ Saves the file without checking hash """
@@ -469,10 +502,10 @@ class LabState(Hashable):
             json_state = self.__toJSON()
             file.write(json.encode(json_state))
             self.__sha256__ = json_state["__sha256__"]
-            logger.debug("{}'s sha: {}".format(fname, json_state["__sha256__"]))
+            logger.debug("%s's sha: %s", fname, json_state["__sha256__"])
 
 
-def __init__(module):
+def init_module(module):
     # do something that imports this module again
     empty_lab = False
     try:
@@ -480,13 +513,16 @@ def __init__(module):
     except (OSError) as e:
         logger.error("%s: %s.", e.__class__.__name__, e)
         empty_lab = True
-    except (JSONDecodeError) as e:
-        logger.error("%s: %s corrupted. %s.", e.__class__.__name__, _filename, e)
+    except JSONDecodeError as e:
+        if os.stat(_filename).st_size == 0:
+            logger.warning("%s is empty.", _filename)
+        else:
+            logger.error("%s: %s is corrupted. %s.", e.__class__.__name__, _filename, e)
         empty_lab = True
 
     if empty_lab:
-        logger.error("Starting fresh new LabState(). " \
-            "Save for the first time with lab._saveState()")
+        logger.warning("Starting fresh new LabState(). "
+                       "Save for the first time with lab._saveState()")
         module.lab = module.LabState()
 
 
@@ -511,7 +547,7 @@ class _Sneaky(object):
         # e.g. if we need module.lab
         if self.initializing and name == "lab":
             self.initializing = False
-            __init__(self.module)
+            self.module.init_module(self.module)
         return getattr(self.module, name)
 
     def __setattr__(self, name, value):
@@ -592,6 +628,12 @@ def patch_labstate(from_version, old_lab):
         patched_lab.hosts.extend(hosts)
         patched_lab.hosts['cassander'] = LocalHost(name='cassander')
         patched_lab.connections = old_connections
+
+        patched_lab.__sha256__ = old_lab.__sha256__
+        patched_lab.__version__ = LabState.__version__
+        patched_lab.filename = old_lab.filename
+        patched_lab.__user__ = old_lab.__user__
+        patched_lab.__datetime__ = old_lab.__datetime__
         return patched_lab
 
     raise NotImplementedError("Patch not found")

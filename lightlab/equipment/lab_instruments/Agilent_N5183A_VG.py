@@ -4,6 +4,7 @@ from lightlab.laboratory.instruments import Clock
 
 from lightlab import logger
 
+
 class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
     ''' Agilent N5183A Vector Generator
 
@@ -53,12 +54,14 @@ class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
         '''
         if freq is not None:
             if freq > 40e9:
-                logger.warning('Agilent N5183 ony goes up to 40GHz, given {}GHz.'.format(freq / 1e9))
+                logger.warning('Agilent N5183 ony goes up to 40GHz, given %s GHz.', freq / 1e9)
                 freq = 40e9
             if self.sweepEnable():
-                logger.warning('Agilent N5183 was sweeping when you set frequency, moving to CW mode')
+                logger.warning(
+                    'Agilent N5183 was sweeping when you set frequency, moving to CW mode')
             self.setConfigParam('FREQ:CW', freq)  # Setting this automatically brings to CW mode
-            self.sweepEnable(False)               # So we need to update this object's internal state too
+            # So we need to update this object's internal state too
+            self.sweepEnable(False)
         return self.getConfigParam('FREQ:CW')
 
     def enable(self, enaState=None):

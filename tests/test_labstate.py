@@ -14,6 +14,7 @@ import logging
 
 logging.disable(logging.CRITICAL)
 filename = 'test_{}.json'.format(int(time.time()))
+labstate._filename = filename
 
 # Shared objects
 Host1 = LocalHost(name="Host1")
@@ -63,7 +64,7 @@ def lab(request, monkeypatch):
     return lab
 
 
-def test_insert():
+def test_insert(lab):
     Bench1.addInstrument(instrument1, instrument2)
     assert instrument1 in Bench1
     assert instrument2 in Bench1
@@ -167,6 +168,24 @@ def test_change_host(lab):
     assert instrument2.host == Host1
 
 
+def test_bench_iteration(lab):
+    benches_items = []
+    benches_names = []
+    for bench_name, bench in lab.benches.items():
+        device_names = [str(device) for device in bench.devices]
+        instrument_names = [str(instrument) for instrument in bench.instruments]
+        assert bench_name == bench.name
+        benches_items.append(bench)
+        benches_names.append(bench_name)
+
+    benches_values = []
+    for bench in lab.benches.values():
+        benches_values.append(bench)
+    assert benches_items == benches_values
+
+    assert benches_names == [bench.name for bench in benches_values]
+
+
 def test_display():
     Bench1.display()
     Bench2.display()
@@ -226,7 +245,7 @@ def test_corruptreload_changecontent(lab):
         refrozen_json = json.dumps(json_state, sort_keys=True, indent=4)
         with open(filename, 'w') as file:
             file.write(refrozen_json)
-    with pytest.raises(RuntimeError, message="corruption within file was not detected"):
+    with pytest.raises(json.decoder.JSONDecodeError, message="corruption within file was not detected"):
         labstate.LabState.loadState(filename)
 
 
@@ -360,3 +379,11 @@ def test_overwriting(lab):
     assert lab.hosts["Host1"] == updated_server
     with pytest.raises(KeyError):
         lab.hosts["Another Host"]
+
+def test_readonly(lab):
+    instrument3 = Instrument(name="instrument3", bench=None, host=None, ports=["port11", "channel"])
+    with pytest.raises(RuntimeError):        
+        Host2.instruments.append(instrument3)
+        Bench2.instruments.append(instrument3)
+        Host1.instruments.dict['instrument1'] = instrument3
+        Bench1.instruments.dict['instrument1'] = instrument3

@@ -4,6 +4,7 @@ from lightlab.laboratory.instruments import VariableAttenuator
 import numpy as np
 import time
 
+
 class HP_8156A_VA(VISAInstrumentDriver):
     ''' HP8156A variable attenuator
 

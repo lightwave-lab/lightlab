@@ -8,6 +8,7 @@ from contextlib import contextmanager
 
 from lightlab.laboratory import Node, typed_property, TypedList
 from lightlab.equipment.visa_bases import VISAObject, DefaultDriver
+from lightlab.util.data import mangle
 
 from lightlab import logger
 import pyvisa
@@ -17,8 +18,8 @@ class Host(Node):
     """ Computer host, from which GPIB/VISA commands are issued.
     """
     name = None
-    mac_address = None
     hostname = None
+    mac_address = None
     os = "linux-ubuntu"  # linux-ubuntu, linux-centos, windows, mac etc.
 
     __cached_list_resources_info = None
@@ -35,12 +36,12 @@ class Host(Node):
     @property
     def instruments(self):
         from lightlab.laboratory.state import lab
-        return TypedList(Instrument, *list(filter(lambda x: x.host == self, lab.instruments)))
+        return TypedList(Instrument, *list(filter(lambda x: x.host == self, lab.instruments)), read_only=True)
 
     def __contains__(self, item):
         instrument_search = item in self.instruments
         if not instrument_search:
-            logger.info("{} not found in {}'s instruments.".format(item, self))
+            logger.info("%s not found in %s's instruments.", item, self)
         return instrument_search
 
     def isLive(self):
@@ -167,7 +168,7 @@ class Host(Node):
             if id_string_search == id_string:
                 logger.info("Found %s in %s.", id_string_search, gpib_address)
                 return gpib_address
-        logger.warning("{} not found in {}".format(id_string_search, self))
+        logger.warning("%s not found in %s", id_string_search, self)
         raise NotFoundError(
             "{} not found in {}".format(id_string_search, self))
 
@@ -194,7 +195,7 @@ class Host(Node):
         # TODO Remove all connections
         for instrument in instruments:
             if type(instrument) is str:
-                logger.warn('Cannot remove by name string. Use the object')
+                logger.warning('Cannot remove by name string. Use the object')
             instrument.host = None
 
     def checkInstrumentsLive(self):
@@ -238,8 +239,7 @@ class LocalHost(Host):
     def __init__(self, name=None):
         if name is None:
             name = 'localhost'
-        self.name = name
-        self.hostname = platform.node()
+        super().__init__(name=name, hostname=platform.node())
         mac = get_mac()
         # converts 90520734586583 to 52:54:00:3A:D6:D7
         self.mac_address = ':'.join(("%012X" % mac)[i:i + 2] for i in range(0, 12, 2))
@@ -273,21 +273,21 @@ class Bench(Node):
         if isinstance(item, Instrument):
             instrument_search = item in self.instruments
             if not instrument_search:
-                logger.info("{} not found in {}'s instruments.".format(item, self))
+                logger.info("%s not found in %s's instruments.", item, self)
             return instrument_search
         elif isinstance(item, Device):
             device_search = item in self.devices
             if not device_search:
-                logger.info("{} not found in {}'s devices.".format(item, self))
+                logger.info("%s not found in %s's devices.", item, self)
             return device_search
         else:
-            logger.debug("{} is neither an Instrument nor a Device".format(item))
+            logger.debug("%s is neither an Instrument nor a Device", item)
             return False
 
     @property
     def instruments(self):
         from lightlab.laboratory.state import lab
-        return TypedList(Instrument, *list(filter(lambda x: x.bench == self, lab.instruments)))
+        return TypedList(Instrument, *list(filter(lambda x: x.bench == self, lab.instruments)), read_only=True)
 
     @property
     def devices(self):
@@ -394,7 +394,8 @@ class Instrument(Node):
     """
     _driver_class = None
     __driver_object = None
-    address = None  #: Complete Visa address of the instrument (e.g. :literal:`visa\://hostname/GPIB0::1::INSTR`)
+    #: Complete Visa address of the instrument (e.g. :literal:`visa\://hostname/GPIB0::1::INSTR`)
+    address = None
 
     _id_string = None
     _name = None
@@ -441,7 +442,7 @@ class Instrument(Node):
 
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
-        errorText = str(self) + ' has no attribute ' + attrName
+        errorText = f"'{str(self)}' has no attribute '{attrName}'"
         if attrName in self.essentialProperties \
                 + self.essentialMethods \
                 + self.implementedOptionals:
@@ -453,22 +454,34 @@ class Instrument(Node):
         elif hasattr(self._driver_class, attrName):
             errorText += '\nIt looks like you are trying to access a low-level attribute'
             errorText += '\nUse ".driver.{}" to get it'.format(attrName)
-        raise AttributeError(errorText)
+
+        # This was put here to match normal behavior while trying to
+        # set obj.__mangled_variable = 'something'
+        try:
+            return self.__dict__[mangle(attrName, self.__class__.__name__)]
+        except KeyError:
+            raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
-        if attrName in self.essentialProperties + self.essentialMethods:  # or methods
-            return setattr(self.driver, attrName, newVal)
+        if attrName in self.essentialProperties \
+                + self.essentialMethods \
+                + self.implementedOptionals:
+            setattr(self.driver, attrName, newVal)
         else:
             if attrName == 'address':  # Reinitialize the driver
-                del self.__driver_object
-                self.__driver_object = None
-            return super().__setattr__(attrName, newVal)
+                if self.__driver_object is not None:
+                    self.__driver_object.close()
+                    self.__driver_object.address = newVal
+            super().__setattr__(mangle(attrName, self.__class__.__name__), newVal)
 
     def __delattr__(self, attrName):
         if attrName in self.essentialProperties + self.essentialMethods:  # or methods
-            return self.driver.__delattr__(attrName)
+            self.driver.__delattr__(attrName)
         else:
-            return super().__delattr__(attrName)
+            try:
+                del self.__dict__[mangle(attrName, self.__class__.__name__)]
+            except KeyError:
+                super().__delattr__(attrName)
 
     # These control contextual behavior. They are used by DualInstrument
     def hardware_warmup(self):
@@ -612,14 +625,14 @@ class Instrument(Node):
                     logger.info("id_string of %s is accurate", self.name)
                     return True
                 else:
-                    logger.warn("%s: %s, expected %s", self.address,
-                                query_id, self.id_string)
+                    logger.warning("%s: %s, expected %s", self.address,
+                                   query_id, self.id_string)
                     return False
             else:
                 logger.debug("Cannot authenticate %s in %s.",
                              self.name, self.address)
                 return True
-        except Exception as err:
+        except pyvisa.VisaIOError as err:
             logger.warning(err)
             return False
 
