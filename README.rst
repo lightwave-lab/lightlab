@@ -48,7 +48,6 @@ Readthedocs: `lightlab.readthedocs.io <http://lightlab.readthedocs.io/en/latest/
 
 Github: https://github.com/lightwave-lab/lightlab
 
-
 Supported platforms
 -------------------
 
