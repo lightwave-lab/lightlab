@@ -14,7 +14,7 @@ from setuptools import setup, find_packages
 LABSTATE_FILENAME = "labstate.json"
 JUPYTER_GROUP = "jupyter"
 
-assert sys.version_info >= (3, 6), "Use python 3.6!"
+assert sys.version_info >= (3, 5), "Use python 3.6! (3.5 is ok)"
 
 
 def touch(fname, times=None):
