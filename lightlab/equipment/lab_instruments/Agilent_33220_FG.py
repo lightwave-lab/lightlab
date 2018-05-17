@@ -1,11 +1,9 @@
 from . import VISAInstrumentDriver
-from pyvisa import VisaIOError
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import FunctionGenerator
 
 import numpy as np
-import time
-from lightlab import visalogger as logger
+# from lightlab import visalogger as logger
 
 
 class Agilent_33220_FG(VISAInstrumentDriver, Configurable):

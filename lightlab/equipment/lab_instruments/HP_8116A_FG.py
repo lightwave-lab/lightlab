@@ -1,12 +1,11 @@
-# FALSE POSITIVES HERE. "noqa" should disable it but does not
 from . import VISAInstrumentDriver
-from pyvisa import VisaIOError  # noqa
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import FunctionGenerator
 
 import numpy as np
-import time  # noqa
-from lightlab import visalogger as logger  # noqa
+import time
+from pyvisa import VisaIOError
+from lightlab import visalogger as logger
 from . import BuggyHardware
 
 
@@ -121,7 +120,3 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
             self.setConfigParam('DTY', '{} %'.format(duty))
 
         return self.getConfigParam('DTY')
-
-
-class BuggyHardware(Exception):
-    pass
