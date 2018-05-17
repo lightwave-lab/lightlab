@@ -41,7 +41,7 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
         super()._setHardwareConfig(subgroup)
         time.sleep(.2)
 
-    def enable(self, enaState=None):
+    def enable(self, enaState=None):  # pylint: disable=unused-argument
         raise BuggyHardware('This old synth can\'t be enabled remotely')
 
     def frequency(self, newFreq=None):

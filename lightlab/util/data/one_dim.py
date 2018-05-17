@@ -663,10 +663,10 @@ class Spectrum(MeasuredFunction):
             raise Exception('Can not do binary math on Spectra in different formats')
         return super().__binMathHelper(other)
 
-    def simplePlot(self, *args, **kwargs):
+    def simplePlot(self, *args, livePlot=False, **kwargs):
         ''' More often then not, this is db vs. wavelength, so label it
         '''
-        super().simplePlot(*args, **kwargs)
+        super().simplePlot(*args, livePlot=livePlot, **kwargs)
         plt.xlabel('Wavelength (nm)')
         plt.ylabel('Transmission ({})'.format('dB' if self.inDbm else 'lin'))
 
