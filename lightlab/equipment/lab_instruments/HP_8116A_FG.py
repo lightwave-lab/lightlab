@@ -1,10 +1,10 @@
 from . import VISAInstrumentDriver
-from pyvisa import VisaIOError
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import FunctionGenerator
 
 import numpy as np
 import time
+from pyvisa import VisaIOError
 from lightlab import visalogger as logger
 from . import BuggyHardware
 
@@ -13,7 +13,7 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     '''
         Function Generator
 
-        Manual?
+        `Manual <http://www.nousnexus.com/Manuals/Agilent_HP_8116A_manual.pdf>`__
 
         Usage: :any:`/ipynbs/Hardware/FunctionGenerator.ipynb`
 

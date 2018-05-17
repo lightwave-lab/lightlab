@@ -122,7 +122,7 @@ class SpectrumMeasurementAssistant(object):
         baseRaw = base + self.getBgSpect()
         displacedRaw = displaced + self.getBgSpect()
         for r in res:
-            spliceWind = r.lam + 3 * r.fwhm * np.array([-1, 1]) / 2
+            spliceWind = r.lam + 6 * r.fwhm * np.array([-1, 1]) / 2
             baseRaw = baseRaw.splice(displacedRaw, segment=spliceWind)
         self.__backgrounds['tuned'] = baseRaw
 
