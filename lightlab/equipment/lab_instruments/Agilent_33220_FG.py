@@ -48,8 +48,9 @@ class Agilent_33220_FG(VISAInstrumentDriver, Configurable):
             for tok in tokens:
                 if newWave.lower().startswith(tok):
                     self.setConfigParam('FUNC', tok.upper())
+                    break
             else:
-                newWave + ' is not a valid waveform: ' + str(tokens)
+                raise ValueError(newWave + ' is not a valid waveform: ' + str(tokens))
         return self.getConfigParam('FUNC').lower()
 
     def setArbitraryWaveform(self, wfm):
