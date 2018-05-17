@@ -12,6 +12,7 @@ from lightlab.laboratory import Hashable
 from .saveload import _endingWith, _makeFileExist
 from . import _getFileDir
 
+
 class HardwareReference(object):
     ''' Spoofs an instrument
     '''
@@ -80,7 +81,7 @@ class JSONpickleable(Hashable):
                 elif (val.__class__.__name__ == 'VISAObject' or
                       any(base.__name__ == 'VISAObject' for base in val.__class__.mro())):
                     klassname = val.__class__.__name__
-                    logger.warning('Not pickling {} = {}.'.format(key, klassname))
+                    logger.warning('Not pickling %s = %s.', key, klassname)
                     state[key] = HardwareReference('Reference to a ' + klassname)
 
                 # 3. functions that are not available in modules - saves the code text

@@ -16,7 +16,7 @@ class Advantest_Q8221_PM(VISAInstrumentDriver, PowerMeterAbstract):
     def __init__(self, name='The Advantest power meter', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
 
-    def startup(self):
+    def startup(self):  # pylint: disable=useless-super-delegation
         '''
         Behaves the same as super.
 

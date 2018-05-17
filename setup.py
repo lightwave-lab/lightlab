@@ -37,16 +37,17 @@ class PermissionCheckCommand(distutils.cmd.Command):
         # Each user option must be listed here with their default value.
         self.jupyter_home_dir = '/home/jupyter'
         self.jupyter_group = JUPYTER_GROUP
+        self.actions = []
+        self.username = getpass.getuser()
+        self.file_path = os.path.join(self.jupyter_home_dir, LABSTATE_FILENAME)
 
     def finalize_options(self):
         """Post-process options."""
         if self.jupyter_home_dir:
-            self.need_permissions = False
-            self.actions = []
-            self.username = getpass.getuser()
+            need_permissions = False
+
             if self.username == "root":
                 raise RuntimeError("root execution not supported")
-            self.file_path = os.path.join(self.jupyter_home_dir, LABSTATE_FILENAME)
 
             if os.access(self.file_path, os.R_OK | os.W_OK | os.X_OK):
                 return
@@ -54,7 +55,7 @@ class PermissionCheckCommand(distutils.cmd.Command):
             try:
                 os.makedirs(self.jupyter_home_dir, mode=0o770, exist_ok=True)
             except PermissionError:
-                self.need_permissions = True
+                need_permissions = True
                 self.announce("Need to create {}.".format(self.jupyter_home_dir),
                               level=distutils.log.ERROR)
                 self.actions.extend(["create_folder", "create_file"])
@@ -62,12 +63,12 @@ class PermissionCheckCommand(distutils.cmd.Command):
                 try:
                     touch(self.file_path)
                 except PermissionError:
-                    self.need_permissions = True
+                    need_permissions = True
                     self.announce("Need write permissions to {}.".format(self.file_path),
                                   level=distutils.log.ERROR)
                 self.actions.append("create_file")
 
-            if self.need_permissions:
+            if need_permissions:
                 try:
                     gid = grp.getgrnam(self.jupyter_group).gr_gid
                     if not (gid in os.getgroups()):
@@ -79,6 +80,7 @@ class PermissionCheckCommand(distutils.cmd.Command):
 
     def run(self):
         """Run command."""
+
         def run_command(self, command):
             self.announce("Running command: {}".format(command),
                           level=distutils.log.INFO)
@@ -118,12 +120,12 @@ def main():
         readme = f.read()
 
     with open('LICENSE') as f:
-        license = f.read()
+        license_text = f.read()
 
     with open("version.py") as f:
         code = compile(f.read(), "version.py", 'exec')
         version_dict = {}
-        exec(code, {}, version_dict)
+        exec(code, {}, version_dict)  # pylint: disable=exec-used
         version = version_dict['version']
 
     metadata = dict(
@@ -131,7 +133,7 @@ def main():
         version=version,
         description='Lightwave Lab instrument automation tools',
         long_description=readme,
-        license=license,
+        license=license_text,
         packages=find_packages(exclude=('tests', 'docs', 'data')),
         install_requires=[
             'dpath',
@@ -143,6 +145,9 @@ def main():
             'sklearn',
             'dill',
         ],
+        entry_points={
+            'console_scripts': ['lightlab=lightlab.command_line:main'],
+        },
         cmdclass={
             "server_permissions": PermissionCheckCommand,
         },

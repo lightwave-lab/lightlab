@@ -23,6 +23,7 @@ docs/*.pdf
 
 # Testing outputs
 .pytest_cache/*
+notebooks/Tests/temp-*
 
 
 ## Things that are typically hidden
@@ -118,6 +119,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+.pytest_cache/
 
 # Translations
 *.mo

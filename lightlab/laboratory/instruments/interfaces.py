@@ -8,14 +8,14 @@ from .bases import Instrument
 
 
 class PowerMeter(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/PowerMeter.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/PowerMeter.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['powerDbm',
          'powerLin']
 
 
 class SourceMeter(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/Keithley.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/Keithley.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['setCurrent',
          'getCurrent',
@@ -34,7 +34,7 @@ class SourceMeter(Instrument):
 
 
 class Keithley(SourceMeter):
-    ''' Usage: :any:`/ipynbs/Hardware/Keithley.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/Keithley.ipynb` '''
     essentialMethods = SourceMeter.essentialMethods + \
         ['setPort',
          'setCurrentMode',
@@ -45,7 +45,9 @@ class Keithley(SourceMeter):
 
 
 class VectorGenerator(Instrument):
-    ''' Usage: TODO '''
+    ''' Todo:
+            Usage example
+    '''
     essentialMethods = Instrument.essentialMethods + \
         ['amplitude',
          'frequency',
@@ -59,7 +61,7 @@ class VectorGenerator(Instrument):
 
 
 class Clock(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/Clock.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/Clock.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['enable',
          'frequency']
@@ -86,7 +88,7 @@ class CurrentSource(Instrument):
 
 
 class FunctionGenerator(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/FunctionGenerator.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/FunctionGenerator.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['frequency',
          'waveform',
@@ -96,7 +98,7 @@ class FunctionGenerator(Instrument):
 
 
 class LaserSource(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/LaserSources-ILX.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/LaserSources-ILX.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['setChannelEnable',
          'getChannelEnable',
@@ -115,7 +117,7 @@ class LaserSource(Instrument):
 
 
 class OpticalSpectrumAnalyzer(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/OpticalSpectrumAnalyzer.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/OpticalSpectrumAnalyzer.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['spectrum']
     essentialProperties = Instrument.essentialProperties + \
@@ -123,7 +125,7 @@ class OpticalSpectrumAnalyzer(Instrument):
 
 
 class Oscilloscope(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/Oscilloscope.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/Oscilloscope.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['acquire',
          'wfmDb',
@@ -138,13 +140,13 @@ class Oscilloscope(Instrument):
 
 
 class DSAOscilloscope(Oscilloscope):
-    ''' Usage: :any:`/ipynbs/Hardware/Oscilloscope.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/Oscilloscope.ipynb` '''
     essentialMethods = Oscilloscope.essentialMethods + \
         ['histogramStats']
 
 
 class PulsePatternGenerator(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/PulsePatternGenerator.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/PulsePatternGenerator.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['setPrbs',
          'setPattern',
@@ -166,7 +168,7 @@ class RFSpectrumAnalyzer(Instrument):
 
 
 class VariableAttenuator(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/VariableAttenuator.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/VariableAttenuator.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['on',
          'off']
@@ -176,7 +178,7 @@ class VariableAttenuator(Instrument):
 
 
 class NetworkAnalyzer(Instrument):
-    ''' Usage: :any:`/ipynbs/Hardware/NetworkAnalyzer.ipynb` '''
+    ''' Usage: :ref:`/ipynbs/Hardware/NetworkAnalyzer.ipynb` '''
     essentialMethods = Instrument.essentialMethods + \
         ['amplitude',
          'frequency',

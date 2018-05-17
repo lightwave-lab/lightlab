@@ -2,7 +2,7 @@ SHELL := /usr/bin/env bash
 
 # different tests
 TESTARGS = --capture=sys --cov=lightlab --cov-config .coveragerc
-TESTARGSNB = --nbval-lax --sanitize-with ipynb_pytest_santize.cfg
+TESTARGSNB = --nbval-lax
 
 # For devbuild, testbuild
 REINSTALL_DEPS = $(shell find lightlab -type f) venv setup.py
@@ -53,15 +53,16 @@ test-simple: testbuild
 	)
 
 test-lint: testbuild
+	# This is only used for master
 	( \
 		source venv/bin/activate; \
-		py.test --pylint --flakes --pylint-rcfile=pylintrc lightlab; \
+		py.test --pylint --flake8 --pylint-rcfile=pylintrc lightlab; \
 	)
 
 test-lint-errors: testbuild
 	( \
 		source venv/bin/activate; \
-		py.test --pylint --flakes --pylint-rcfile=pylintrc-errors lightlab; \
+		py.test --pylint --flake8 --pylint-rcfile=pylintrc-errors lightlab; \
 	)
 
 test-nb: testbuild
@@ -76,7 +77,8 @@ test-unit-all: testbuild
 		py.test $(TESTARGS) $(TESTARGSNB) tests notebooks/Tests; \
 	)
 
-test: testbuild test-unit-all test-lint ;
+# this is equivalent to what is run on CI:development
+test: testbuild test-unit-all test-lint-errors ;
 
 
 clean:
@@ -84,6 +86,9 @@ clean:
 	rm -rf lightlab.egg-info
 	rm -rf build
 	rm -rf venvinfo
+	rm -rf .cache
+	rm -rf .pytest_cache
+	rm -rf .coverage
 	$(MAKE) -C docs clean
 
 purge: clean

@@ -32,7 +32,6 @@ class LS_MessageSender(ILX_7900B_LS):
     def query(self, string):
         ''' Argument "string" is ignored '''
         return '1550'
-        # raise NotImplementedError('Sender has no query')
 
     @property
     def wlRanges(self):

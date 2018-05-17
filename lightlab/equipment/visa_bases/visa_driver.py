@@ -30,14 +30,14 @@ class DriverMeta(type):
         super().__init__(name, bases, dct)
 
     def __call__(cls, *args, **kwargs):
-        '''
+        r'''
             All \*args go to the driver.
             name and address go to both.
             kwargs go priority to driver bases, otherwise to Instrument.
             This occurs at initialization time of an object
         '''
-        if (cls.instrument_category is not None
-                and not kwargs.pop('directInit', False)):
+        if (cls.instrument_category is not None and
+                not kwargs.pop('directInit', False)):
             name = kwargs.pop('name', None)
             address = kwargs.pop('address', None)
 
@@ -46,7 +46,7 @@ class DriverMeta(type):
             def getArgs(klass):
                 if klass is object:
                     return []
-                initArgs = inspect.getargspec(klass.__init__)[0]
+                initArgs = inspect.getfullargspec(klass.__init__)[0]
                 for base_klass in klass.__bases__:
                     initArgs.extend(getArgs(base_klass))
                 return initArgs
@@ -88,7 +88,7 @@ class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
     '''
     instrument_category = None
 
-    def __init__(self, name='Default Driver', address=None, directInit=False, **kwargs):
+    def __init__(self, name='Default Driver', address=None, directInit=False, **kwargs):  # pylint: disable=unused-argument
         self.name = name
         if 'tempSess' not in kwargs.keys():
             kwargs['tempSess'] = True
@@ -96,7 +96,7 @@ class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
         self.__started = False
 
     def startup(self):
-        logger.debug("{}.startup method empty".format(self.__class__.__name__))
+        logger.debug("%s.startup method empty", self.__class__.__name__)
 
     def open(self):
         super().open()

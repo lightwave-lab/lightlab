@@ -69,10 +69,10 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             self.setConfigParam('DATA:STOP', nPts)
 
         presentSettings = dict()
-        presentSettings['avgCnt'] = self.getConfigParam('ACQUIRE:NUMAVG')
-        presentSettings['duration'] = self.getConfigParam('HORIZONTAL:MAIN:SCALE')
-        presentSettings['position'] = self.getConfigParam('HORIZONTAL:MAIN:POSITION')
-        presentSettings['nPts'] = self.getConfigParam(self._recLenParam)
+        presentSettings['avgCnt'] = self.getConfigParam('ACQUIRE:NUMAVG', forceHardware=True)
+        presentSettings['duration'] = self.getConfigParam('HORIZONTAL:MAIN:SCALE', forceHardware=True)
+        presentSettings['position'] = self.getConfigParam('HORIZONTAL:MAIN:POSITION', forceHardware=True)
+        presentSettings['nPts'] = self.getConfigParam(self._recLenParam, forceHardware=True)
         return presentSettings
 
     def acquire(self, chans=None, timeout=None, **kwargs):
@@ -185,8 +185,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             logger.error('Problem during query_ascii_values(\'CURV?\')')
             try:
                 self.close()
-            except Exception:
-                logger.exception('Failed to close! ' + str(self.address))
+            except pyvisa.VisaIOError:
+                logger.error('Failed to close! %s', self.address)
             raise err
         self.close()
         return voltRaw
@@ -284,7 +284,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             self.setMeasurement(1, ch, 'pk2pk')
             self.setMeasurement(2, ch, 'mean')
 
-            for iTrial in range(100):
+            for _ in range(100):
                 # Acquire new data
                 self.acquire(chans=[ch], avgCnt=1)
 

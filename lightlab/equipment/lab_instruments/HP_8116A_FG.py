@@ -1,10 +1,13 @@
 from . import VISAInstrumentDriver
+from pyvisa import VisaIOError
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import FunctionGenerator
 
 import numpy as np
 import time
 from lightlab import visalogger as logger
+from . import BuggyHardware
+
 
 class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     '''
@@ -31,12 +34,15 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
         return 'Function generator, HP 8116A'
 
     def _getHardwareConfig(self, cStrList):
-        raise Exception(
-            'Function generator GPIB is broken so values can\'t be read from hardware')
+        raise BuggyHardware(
+            'Synth GPIB is broken so values can\'t be read from hardware')
 
     def _setHardwareConfig(self, subgroup=''):
         super()._setHardwareConfig(subgroup)
         time.sleep(.2)
+
+    def enable(self, enaState=None):
+        raise BuggyHardware('This old synth can\'t be enabled remotely')
 
     def frequency(self, newFreq=None):
         sciUnits = ['MZ', 'HZ', 'KHZ', 'MHZ']
@@ -46,9 +52,9 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
 
         if newFreq is not None:
             sciOrder = int(np.ceil(np.log10(newFreq) / 3))
-            logger.debug('sciOrder = {}'.format(sciOrder))
+            logger.debug('sciOrder = %s', sciOrder)
             sciUnit = sciUnits[sciOrder]
-            logger.debug('sciUnit = {}'.format(sciUnit))
+            logger.debug('sciUnit = %s', sciUnit)
             sciFreq = newFreq / toMultiplier(sciOrder)
             self.setConfigParam('FRQ', '{} {}'.format(sciFreq, sciUnit))
 
@@ -66,7 +72,7 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
         if newWave is not None:
             try:
                 iTok = tokens.index(newWave)
-            except ValueError as e:
+            except ValueError:
                 raise ValueError(
                     newWave + ' is not a valid sync source: ' + str(tokens))
             self.setConfigParam('W', iTok)
@@ -96,13 +102,15 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
             self.setConfigParam('AMP', '{} V'.format(amplitude))
         try:
             ampl = float(self.getConfigParam('AMP').split(' ')[0])
-        except Exception:
+        except VisaIOError:
+            logger.error('unable to get the amplitude')
             ampl = None
         if offset is not None:
             self.setConfigParam('OFS', '{} V'.format(offset))
         try:
             offs = float(self.getConfigParam('OFS').split(' ')[0])
-        except Exception:
+        except VisaIOError:
+            logger.error('unable to get the offset')
             offs = None
         return (ampl, offs)
 
