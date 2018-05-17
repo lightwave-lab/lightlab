@@ -52,11 +52,15 @@ pyvisa
 Installation
 ------------
 
-    For experienced users: install the lightlab package like any other python package::
+    You can install the lightlab package like any other python package::
 
-        python3 install setup.py
+        pip install lightlab
 
-    If you are new to python programming, jupyter notebooks, you might want to sit down and patiently read the :ref:`getting-started` Pages.
+    If you are new to python programming, jupyter notebooks, you might want to sit down and patiently read the :ref:`getting-started` Pages. If you want to develop and write drivers, good for you. It's on `github <https://github.com/lightwave-lab/lightlab>`__ along with guides on contributing and can be cloned by::
+
+        git clone git@github.com:lightwave-lab/lightlab.git
+
+     Your environment will be slightly different if you're developing, described :ref:`here <basic_environment>`.
 
 .. toctree::
    :maxdepth: 2
