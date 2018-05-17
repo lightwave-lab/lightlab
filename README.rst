@@ -1,17 +1,22 @@
 Lightlab
 ========
 
-A python library for remote laboratory control. Laboratory remoting greatly facilitates experimental
-research through access from anywhere, large dataset gathering, storage, and analysis,
-repeatability, live status and progress monitoring, intra- and inter-group collaboration.
+A python library for remote laboratory control. Laboratory remoting facilitates experimental research:
+* access from anywhere
+* large dataset gathering, storage, and analysis
+* repeatability
+* real-time status and progress monitoring,
+* intra- and inter-group collaboration
 
-Philosophy of a modern lab: https://www.readthedocs.io (not yet)
+This package includes:
+* A shared library of instrument drivers
+* Representation of state for labs of multiple users
+* Driver-independent abstractions of instruments
+* Utilities for data structures, advanced sweeping, search procedures, spectrum analysis, and characterization
+* Constructs of laboratory virtualization for repeatability and rapid user code development
+* Detailed documentation of tips, tricks, and instructions for prepping your lab for remoting
 
-Includes: - A shared library of instrument drivers - Representation of state for labs of multiple
-users - Driver-independent abstractions of instruments - Utilities for data structures, advanced
-sweeping, search procedures, spectrum analysis, and characterization - Constructs of laboratory
-virtualization for repeatability and rapid user code development - Detailed documentation of tips,
-tricks, and instructions for prepping your lab for remoting
+Here is our `philosophy <http://lightlab.readthedocs.io/en/development/_static/gettingStarted/engineersGuide.html>`__ of how a modern lab can look.
 
 Installation
 ------------
@@ -22,34 +27,27 @@ From PyPI:
 
     pip install lightlab
 
-or from source on github: (not yet)
+From source:
 
 ::
 
-    git clone <project url>
+    git clone git@github.com:lightwave-lab/lightlab.git
+    cd lightlab
+    make venv
 
 Getting started
 ---------------
 
-1. Configure GPIB/ethernet communication on an instrumentation server
-2. Initialize the representation of your lab's state
-3. Write a driver or use an existing one
-4. Read the documentation
+1. Configure GPIB/ethernet communication on an `instrumentation server <http://lightlab.readthedocs.io/en/latest/_static/gettingStarted/sysadmin.html>`__
+2. Initialize the representation of your `lab state <http://lightlab.readthedocs.io/en/latest/_static/developers/labState.html>`__
+3. `Write a driver <http://lightlab.readthedocs.io/en/latest/_static/tutorials/drivers/drivers.html>`__ or use an existing one
+4. Read about advanced features and `tutorials <http://lightlab.readthedocs.io/en/latest/_static/tutorials/index.html>`__
 5. Get going!
 
-Documentation
--------------
+Readthedocs: `lightlab.readthedocs.io <http://lightlab.readthedocs.io/en/latest/>`_
 
-Contains full instructions for getting started and setting up your lab and workflow.
+Github: https://github.com/lightwave-lab/lightlab
 
-Hosted on readthedocs here (not yet)
-
-Contributing
-------------
-
-We welcome contributions, especially for new drivers. Fork the repo to your github user account and
-clone from there. Please unittest your contributions in a repeatable virtual laboratory; test the
-driver in experiment, not unittests; then create a pull request.
 
 Supported platforms
 -------------------
