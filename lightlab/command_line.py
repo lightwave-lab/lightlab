@@ -1,7 +1,7 @@
 import argparse
 from lightlab.util.config import config_main
 
-version = '0.2.2'
+version = '1.0.1'
 
 parser = argparse.ArgumentParser(description="lightlab configuration tool")
 parser.add_argument('command', type=str, choices=['labstate', 'config'],
