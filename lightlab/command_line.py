@@ -1,10 +1,13 @@
 import argparse
 from lightlab.util.config import config_main
 
+version = '0.2.1'
+
 parser = argparse.ArgumentParser(description="lightlab configuration tool")
 parser.add_argument('command', type=str, choices=['labstate', 'config'],
                     metavar='<command>', help='config, labstate')
 parser.add_argument('args', nargs=argparse.REMAINDER)
+parser.add_argument('-v', '--version', action='version', version=f'%(prog)s v{version}')
 
 
 def main():
