@@ -13,7 +13,7 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     '''
         Function Generator
 
-        Manual?
+        `Manual <http://www.nousnexus.com/Manuals/Agilent_HP_8116A_manual.pdf>`__
 
         Usage: :any:`/ipynbs/Hardware/FunctionGenerator.ipynb`
 
