@@ -12,7 +12,7 @@ Includes:
 - Detailed documentation of tips, tricks, and instructions for prepping your lab for remoting
 
 ## Installation
-#### From PyPI (not yet)
+#### From PyPI
 
     pip install lightlab
 

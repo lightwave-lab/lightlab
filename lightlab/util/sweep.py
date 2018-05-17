@@ -193,23 +193,23 @@ class NdSweeper(Sweeper):
                     except KeyError:
                         pass
         try:
-            if soakTime is not None:
-                logger.debug('Soaking for %s seconds.', soakTime)
-                for actu in self.actuate.values():
-                    f = actu[0]
-                    x = actu[1][0]
-                    f(x)
-                time.sleep(soakTime)
-
             swpName = 'Generic sweep in ' + ', '.join(self.actuate.keys())
             prog = io.ProgressWriter(swpName, self.swpShape, **self.monitorOptions)
+
+            # Soak at the first point
+            if soakTime is not None:
+                logger.debug('Soaking for %s seconds.', soakTime)
+                for actuObj in self.actuate.values():
+                    actuObj.function(actuObj.domain[0])
+                time.sleep(soakTime)
+
             for index in np.ndindex(self.swpShape):
                 pointData = OrderedDict()  # Everything that will be measured *at this index*
 
                 for statKey, statMat in self.static.items():
                     pointData[statKey] = statMat[index]
 
-                # Do the actuation, storing domain args and return values
+                # Do the actuation, storing domain args and return values (if present)
                 for iDim, actu in enumerate(self.actuate.items()):
                     actuKey, actuObj = actu
                     if actuObj.domain is None:
@@ -222,7 +222,7 @@ class NdSweeper(Sweeper):
                         if y is not None:
                             pointData[actuKey + '-return'] = y
 
-                # Do the measurement, store returns
+                # Do the measurement, store return values
                 for measKey, measFun in self.measure.items():
                     pointData[measKey] = measFun()
                     # print('   Meas', measKey, ':', pointData[measKey])
@@ -248,28 +248,27 @@ class NdSweeper(Sweeper):
                             self.data[k] = np.empty(self.swpShape, dtype=object)
                     self.data[k][index] = v
 
+                # Plotting during the sweep
                 if self.monitorOptions['livePlot']:
                     if all(i == 0 for i in index):
                         axArr = None
                     axArr = self.plot(axArr=axArr, index=index)
                     flatIndex = np.ravel_multi_index(index, self.swpShape)
                     if flatIndex % self.monitorOptions['plotEvery'] == 0:
-                        display.clear_output(wait=True)
                         display.display(plt.gcf())
+                        display.clear_output(wait=True)
+                # Progress report
                 prog.update()
-            if self.monitorOptions['livePlot']:
-                display.clear_output(wait=True)
-                display.display(plt.gcf())
+            # End of the main loop
+
         except Exception as err:
             logger.error('Error while sweeping. Reloading old data')
             self.data = oldData
             raise err
 
         if returnToStart:
-            for actu in self.actuate.values():
-                f = actu[0]
-                x = actu[1][0]
-                f(x)
+            for actuObj in self.actuate.values():
+                actuObj.function(actuObj.domain[0])
 
         if autoSave:
             self.save()
@@ -453,7 +452,8 @@ class NdSweeper(Sweeper):
             The xKeys and yKeys are keys within this objects **data** dictionary (actuation, measurement, and parsers)
                 The total number of plots will be the product of len('xKey') and len('yKey').
                 xKeys can be anything, including parsed data members. By default it is the minor actuation variable
-                yKeys can also be anything that has scalar elements. By default it is everything that is currently present, except xKeys
+                yKeys can also be anything that has scalar elements.
+                By default it is everything that is currently present, except xKeys and non-scalars
 
             When doing line plots in 2D sweeps, the legend does automatic labelling.
                 Each line must correspond to an actuation dimension, otherwise it doesn't make sense.
@@ -465,18 +465,22 @@ class NdSweeper(Sweeper):
                 Ignores whatever is in xKeys. The plotting domain is locked to the actuation domain in order to keep a rectangular grid.
                 The values indicated in yKeys will become color data.
 
-            Todo:
-                Specify line labeling variable to be minor axis even for arbitrary xKeys, not just actuKey[0]
-
             Args:
                 slicer (tuple, slice): domain slices
                 axArr (ndarray), plt.axis): axes to plot on. Equivalent to what is returned by this method
                 pltKwargs: passed through to plotting function
+
+            Todo:
+                * Graphics caching for 2D line plots
         '''
         global hCurves  # pylint: disable=global-statement
         if index is None or np.all(np.array(index) == 0):
             hCurves = None
 
+        if pltKwargs is None:
+            pltKwargs = {}
+
+        # Which data dict to use and its dimensionality
         if tempData is None:
             fullData = self.data
         else:
@@ -485,56 +489,47 @@ class NdSweeper(Sweeper):
             plotDims = list(fullData.values())[0].ndim  # Instead of self.actuDims
         else:
             plotDims = self.actuDims
-
         assertValidPlotType(self.plotOptions['plType'], plotDims, type(self))
-
-        if pltKwargs is None:
-            pltKwargs = {}
-
-        # Cut down the domain to the region of interest
+        # Cuts down the domain to the region of interest
         if slicer is None:
             slicer = (slice(None),) * plotDims
         else:
             slicer = argFlatten(slicer, typs=tuple)
 
-        # First figure out what the keys of data are
-        if plotDims == self.actuDims:
-            autoLabelingMaster = True
-            actKeyList = list(self.actuate.keys())
-        else:
-            autoLabelingMaster = False
+        # Figure out what the keys of data are
+        actuationKeys = list(self.actuate.keys())
         xKeys = argFlatten(self.plotOptions['xKey'], typs=tuple)
-        if len(xKeys) == 0:  # default is the minor sweep domain
-            if not autoLabelingMaster:
-                raise Exception('No axis key specified explicitly or found in self.actuate')
-            xKeys = (actKeyList[-1], )
         yKeys = argFlatten(self.plotOptions['yKey'], typs=tuple)
-        if len(yKeys) == 0:  # default is all scalar non-domains
-            if not autoLabelingMaster:
-                raise Exception('No axis key specified explicitly or found in self.actuate')
+        if len(xKeys) == 0:
+            # default is the most minor sweep domain
+            xKeys = (actuationKeys[-1], )
+        if len(yKeys) == 0:
+            # default is all scalar ranges
             for datKey, datVal in fullData.items():
                 if (datKey not in xKeys and
-                        datKey not in actKeyList and
+                        datKey not in actuationKeys and
                         np.isscalar(datVal.item(0))):
                     yKeys += (datKey, )
         # Check it
+        if (len(xKeys) == 0 or len(yKeys) == 0):
+            raise ValueError('No axis key specified explicitly or found in self.actuate')
         for k in xKeys + yKeys:
             if k not in fullData.keys():
                 raise KeyError(k + ' not found in data keys. ' +
                                'Available data are ' + ', '.join(fullData.keys()))
 
-        # Make canvas of axes based on number of y lines
+        # Make grid of axes based on number of pairs of variables
         plotArrShape = np.array([len(yKeys), len(xKeys)])
-        if all(s == 0 for s in plotArrShape):
-            print('No plots specified or available')
-            return
-        if axArr is None:
-            if self.plotOptions['axArr'] is None:
-                _, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1], figsize=(
-                    10, plotArrShape[0] * 2.5))  # pylint: disable=unused-variable
-            else:
-                axArr = self.plotOptions['axArr']
+        if axArr is not None:
+            pass
+        elif self.plotOptions['axArr'] is not None:
+            axArr = self.plotOptions['axArr']
+        else:
+            _, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1],
+                                    figsize=(10, plotArrShape[0] * 2.5))  # pylint: disable=unused-variable
+
         axArr = np.array(axArr)
+        # Force into a two dimensional array
         if axArr.ndim == 2:
             pass
         elif axArr.ndim == 1:
@@ -544,72 +539,90 @@ class NdSweeper(Sweeper):
                 axArr = np.expand_dims(axArr, 0)
             elif plotArrShape[1] == 1:
                 axArr = np.expand_dims(axArr, 1)
-        if axArr.ndim == 0:
+        elif axArr.ndim == 0:
             if np.all(plotArrShape == 1):
                 axArr = np.expand_dims(np.expand_dims(axArr, 0), 0)
         # Check it
         if np.any(axArr.shape != plotArrShape):
-            raise Exception('Shape of axArray does not match plotArrShape')
+            raise ValueError('Shape of axArray does not match plotArrShape')
 
+        # Prepare options for plotting that do not depend on index or line no.
+        sample_xK = xKeys[0]
+        sample_xData = fullData[sample_xK][slicer]
+        if self.plotOptions['plType'] == 'curves':
+            pltArgs = ('.-', )
+            if plotDims == 1:
+                if hCurves is None:
+                    hCurves = np.empty(axArr.shape, dtype=object)
+            elif plotDims == 2:
+                invertDomainPriority = False
+                autoLabeling = (plotDims == self.actuDims)
+                if autoLabeling:
+                    if actuationKeys[0] != sample_xK:
+                        curveKey = actuationKeys[0]
+                    else:
+                        curveKey = actuationKeys[1]
+                        if index is not None:
+                            index = index[::-1]
+                        invertDomainPriority = True
+                nLines = sample_xData.shape[0 if not invertDomainPriority else 1]
+                colors = self.plotOptions['cmap-curves'](np.linspace(0, 1, nLines))
+
+        # Loop over axes (i.e. axis key variables) and plot
         for iAx, ax in np.ndenumerate(axArr):
             xK = xKeys[iAx[1]]
             yK = yKeys[iAx[0]]
             # dereference and slice
             xData = fullData[xK][slicer]
             yData = fullData[yK][slicer]
-            if self.plotOptions['plType'] is 'curves':
+
+            if self.plotOptions['plType'] == 'curves':
                 if plotDims == 1:
+                    # slice it
                     if index is not None:
                         xData = xData[:index[0] + 1]
                         yData = yData[:index[0] + 1]
                         ax.cla()
-                    curv = ax.plot(xData, yData, '.-', **pltKwargs)
-                    if hCurves is None:
-                        hCurves = np.empty(axArr.shape, dtype=object)
-                    else:
-                        if hCurves[iAx] is not None:  # pylint:disable=unsubscriptable-object
-                            try:
-                                hCurves[iAx][0].remove()
-                            except ValueError:
-                                # it was probably an old one
-                                pass
+                    curv = ax.plot(xData, yData, *pltArgs, **pltKwargs)
+                    # caching the part of the line that has already been drawn
+                    if hCurves[iAx] is not None:  # pylint:disable=unsubscriptable-object
+                        try:
+                            hCurves[iAx][0].remove()
+                        except ValueError:
+                            # it was probably an old one
+                            pass
                     hCurves[iAx] = curv
                 elif plotDims == 2:
-                    autoLabeling = autoLabelingMaster and iAx == (0, axArr.shape[1] - 1)
-                    if autoLabeling:
-                        # default is major axis actuator. As of now, only default supported
-                        nonDomainKey = actKeyList[0]
-                        if nonDomainKey == xK:
-                            nonDomainKey = actKeyList[1]
-                            xData = xData.T
-                            yData = yData.T
-                            if index is not None:
-                                index = index[::-1]
-                        nonDomainValue = (lambda iLine:
-                                          self.actuate[nonDomainKey].domain[iLine])  # pylint: disable=cell-var-from-loop
+                    ax.cla()  # no caching, just clear
+                    if invertDomainPriority:
+                        xData = xData.T
+                        yData = yData.T
 
-                    nLines = yData.shape[0]
-                    # The last index dereference kills any shading
-                    colors = self.plotOptions['cmap-curves'](np.linspace(0, 1, nLines))
-                    ax.cla()
                     for iLine in range(nLines):
-                        pltArgs = ('.-', )
-                        if autoLabeling:
-                            pltKwargs['label'] = '{} = {:.2f}'.format(
-                                nonDomainKey, nonDomainValue(iLine))
-                        pltKwargs['color'] = colors[iLine][:3]
-                        if index is None or iLine < index[-2]:
-                            ax.plot(xData[iLine], yData[iLine], *pltArgs, **pltKwargs)
-                        elif iLine == index[-2]:
-                            ax.plot(xData[iLine, slice(index[-1] + 1)], yData[iLine,
-                                                                              slice(index[-1] + 1)], *pltArgs, **pltKwargs)
-                        elif iLine > index[-2]:
+                        # slicing data based on what the line and index are
+                        xLine = xData[iLine, :]
+                        yLine = yData[iLine, :]
+                        if index is None:
                             pass
-                    if autoLabeling:
+                        elif iLine < index[-2]:  # these lines are complete
+                            pass
+                        elif iLine == index[-2]:  # these lines are in-progress
+                            xLine = xLine[slice(index[-1] + 1)]
+                            yLine = yLine[slice(index[-1] + 1)]
+                        elif iLine > index[-2]:  # these have not been started
+                            break
+                        # line options
+                        pltKwargs['color'] = colors[iLine][:3]
+                        if autoLabeling:
+                            curveValue = self.actuate[curveKey].domain[iLine]
+                            pltKwargs['label'] = '{} = {:.2f}'.format(curveKey, curveValue)
+                        ax.plot(xLine, yLine, *pltArgs, **pltKwargs)
+                    # legend
+                    if autoLabeling:  # AND it is the top right
                         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
                 else:
-                    raise Exception(
-                        'Too many dimensions in sweep to plot. This should have been caught by assertValidPlotType.')
+                    raise ValueError('Too many dimensions in sweep to plot. '
+                                     'This should have been caught by assertValidPlotType.')
 
                 if iAx[0] == plotArrShape[0] - 1:
                     ax.set_xlabel(xK)
@@ -619,26 +632,24 @@ class NdSweeper(Sweeper):
                     ax.set_ylabel(yK)
                 else:
                     ax.tick_params(labelleft=False)
-            elif self.plotOptions['plType'] is 'surf':
+            elif self.plotOptions['plType'] == 'surf':
                 # xKeys we treat as meaningless. just use the actuation domains
-                # We also treat yData as color data
+                # We treat yData as color data
                 doms = [None] * 2
                 for iDim, actuObj in enumerate(self.actuate.values()):
                     doms[iDim] = actuObj.domain[slicer[iDim]]
                 domainGrids = np.meshgrid(*doms[::-1], indexing='xy')
-                if 'cmap' not in pltKwargs.keys():
-                    pltKwargs['cmap'] = self.plotOptions['cmap-surf']
-                if 'shading' not in pltKwargs.keys():
-                    pltKwargs['shading'] = 'gouraud'
+                pltKwargs['cmap'] = pltKwargs.pop('cmap', self.plotOptions['cmap-surf'])
+                pltKwargs['shading'] = pltKwargs.pop('shading', 'gouraud')
                 cax = ax.pcolormesh(*domainGrids, yData, **pltKwargs)
                 plt.gcf().colorbar(cax, ax=ax)
                 ax.autoscale(tight=True)
                 ax.set_title(yK)
                 if iAx[0] == plotArrShape[0] - 1:
-                    ax.set_xlabel(actKeyList[1])
+                    ax.set_xlabel(actuationKeys[1])
                 else:
                     ax.tick_params(labelbottom=False)
-                ax.set_ylabel(actKeyList[0])
+                ax.set_ylabel(actuationKeys[0])
         return axArr
 
     def saveObj(self, savefile=None):
@@ -668,11 +679,11 @@ class NdSweeper(Sweeper):
         newObj = cls.fromFile(savefile)
         # Restore actuations
         try:
-            actKeyList = newObj.data.pop('actuation-keys')
+            actuationKeys = newObj.data.pop('actuation-keys')
         except KeyError:
             pass
         else:
-            for iAct, actuName in enumerate(actKeyList):
+            for iAct, actuName in enumerate(actuationKeys):
                 # Try to extract the actuation function (not domain)
                 if functionSource is not None:
                     actuObj = functionSource.actuate[actuName]
@@ -682,7 +693,7 @@ class NdSweeper(Sweeper):
                 # Full data as taken, which is N-dimensional
                 actData = newObj.data[actuName]
                 # Extract one vector along the right direction to serve as domain
-                sliceOneDim = [0] * len(actKeyList)
+                sliceOneDim = [0] * len(actuationKeys)
                 sliceOneDim[iAct] = slice(None)
                 actuObj.domain = actData[sliceOneDim]
                 # Do the full add
