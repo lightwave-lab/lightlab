@@ -114,16 +114,18 @@ class FunctionBundle(object):
                                       ])
                 funBun.reverse() == reversedFunBund
         '''
+        if attrName == 'memberType':
+            raise AttributeError(attrName)
         try:
-            memberClassFunc = getattr(self.memberType, attrName):
+            memberClassFunc = getattr(self.memberType, attrName)
         except AttributeError as err:
             betterErrStr = err.args[0] + ', neither does \'{}\' object'.format(type(self).__name__)
-            err.args = tuple(betterErrStr, err.args[1:])
+            err.args = tuple([betterErrStr, err.args[1:]])
             raise
         if not iscallable(memberClassFunc):
             raise TypeError(f'{memberClassFunc} in'
-                            ' {} of {}'.format(type(self).__name__, self.memberType.__name__)
-                            ' is not callable')
+                            ' {} of {}'.format(type(self).__name__, self.memberType.__name__) + ' '
+                            'is not callable')
         def fakeFun(*args, **kwargs):
             newBundle = type(self)()
             for item in self:

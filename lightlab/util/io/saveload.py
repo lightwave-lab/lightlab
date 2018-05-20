@@ -41,13 +41,14 @@ def pprintFileDir():
         if child.is_dir():
             print(child.name.rjust(maxStrLen), '** directory')
     # Print files
+    childrenFiles = []
     for child in _getFileDir().iterdir():
         if child.name in ['.', '..', '.DS_Store']:
             continue
         if child.is_file():
-            children.append(child)
-    childNames = list(map(lambda x: x.name, children))
-    sortedChildren = [x for _, x in sorted(zip(childNames, children))]
+            childrenFiles.append(child)
+    childNames = list(map(lambda x: x.name, childrenFiles))
+    sortedChildren = [x for _, x in sorted(zip(childNames, childrenFiles))]
     for child in sortedChildren:
         justified = child.name.rjust(maxStrLen) + '   '
         if child.name.endswith('.pkl'):
