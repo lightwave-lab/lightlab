@@ -3,15 +3,19 @@ Welcome to Lightlab's documentation!
 
     This package offers the ability to control multi-instrument experiments, and to collect and store data and methods very efficiently. It was developed by researchers in an integrated photonics lab (hence lightlab) with equipment mostly controlled by the GPIB protocol. It can be used as a combination of these three tasks:
 
-    #. Multi-instrument experiment remote control and command.
-    #. Structuring the entire experimental procedure and data in python code.
-    #. Creating virtual experiments that can be validated in a real lab.
+    #. Consolidated multi-instrument remote control
+    #. Virtual laboratory environments: repeatable, shareable
+    #. Utilities for experimental research: from serial comm. to testing, analysis, gathering, post-processing – to paper-ready plotting
+    #. All structured in python
+
+.. figure:: frontpage.png
+    :alt: Example of a jupyter session
+    :figwidth: 600px
+    :align: center
+
+    ``lightlab`` in a Jupyter notebook
 
     We wrote this documentation with love to all young experimental researchers that are not necessarily familiar with all the software tools introduced here. We attempted to include how-tos at every step to make sure everyone can get through the initial steps.
-
-.. todo::
-
-    Include a simple but powerful jupyter screenshot showing a plot from an experiment run.
 
 .. warning::
 
