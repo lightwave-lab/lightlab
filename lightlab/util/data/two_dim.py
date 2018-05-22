@@ -184,9 +184,6 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
         '''
         return self.memberType(self.absc, np.mean(self.ordiMat, axis=0).A1)
 
-    def reverse(self):
-        self.ordiMat = self.ordiMat[::-1]
-
     def _putInTimebase(self, testFun):
         ''' Makes sure signal type is correct and time basis is the same
 
