@@ -8,6 +8,7 @@ import numpy as np
 from scipy import interpolate
 import matplotlib.cm as cm
 from functools import wraps
+from itertools import repeat
 
 from .one_dim import MeasuredFunction, Waveform
 
@@ -24,8 +25,8 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
             * plotted with :meth`simplePlot` and :meth:`multiAxisPlot`
 
         Feeds through **callable** signal processing methods to its members (type MeasuredFunction),
-        If the method is not found in the FunctionBundle, but it is in it's member,
-        it will be applied to every function in the bundle, returning a new bundle.
+        If the method is not found in the FunctionBundle, and it is in it's member,
+        it will be mapped to every function in the bundle, returning a new bundle.
 
         Distinct from a :class:`MeasuredSurface` because
         the additional axis does not represent a continuous thing.
@@ -84,24 +85,32 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
                 self.ordiMat == other.ordiMat)
 
     def __add__(self, other):
-        if np.isscalar(other):
-            other = np.ones(self.nDims) * other
-        newObj = self.copy()
-        for iDim in range(self.nDims):
-            newObj.ordiMat[iDim] = self.ordiMat[iDim] + other[iDim]
-        return newObj
+        ''' This works with scalars, vectors, MeasuredFunctions, and FunctionBundles
+        '''
+        if np.isscalar(other) or isinstance(other, MeasuredFunction):
+            other = repeat(other, self.nDims)
+        newBundle = type(self)()
+        for selfItem, otherItem in zip(self, other):
+            newItem = selfItem + otherItem
+            newBundle.addDim(newItem)
+        return newBundle
 
     def __radd__(self, other):
         return self.__add__(other)
 
+    def __sub__(self, other):
+        return self.__add__(-1 * other)
+
     def __mul__(self, other):
-        ''' This works with scalars and vectors '''
-        if np.isscalar(other):
-            other = np.ones(self.nDims) * other
-        newObj = self.copy()
-        for iDim in range(self.nDims):
-            newObj.ordiMat[iDim] = self.ordiMat[iDim] * other[iDim]
-        return newObj
+        ''' This works with scalars, vectors, MeasuredFunctions, and FunctionBundles
+        '''
+        if np.isscalar(other) or isinstance(other, MeasuredFunction):
+            other = repeat(other, self.nDims)
+        newBundle = type(self)()
+        for selfItem, otherItem in zip(self, other):
+            newItem = selfItem + otherItem
+            newBundle.addDim(newItem)
+        return newBundle
 
     def __rmul__(self, other):
         return self.__mul__(other)
