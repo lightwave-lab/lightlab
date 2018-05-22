@@ -15,7 +15,7 @@ Welcome to Lightlab's documentation!
 
     ``lightlab`` in a Jupyter notebook
 
-    We wrote this documentation with love to all young experimental researchers that are not necessarily familiar with all the software tools introduced here. We attempted to include how-tos at every step to make sure everyone can get through the initial steps.
+We wrote this documentation with love to all young experimental researchers that are not necessarily familiar with all the software tools introduced here. We attempted to include how-tos at every step to make sure everyone can get through the initial steps.
 
 .. warning::
 
@@ -56,15 +56,15 @@ pyvisa
 Installation
 ------------
 
-    You can install the lightlab package like any other python package::
+You can install the lightlab package like any other python package::
 
-        pip install lightlab
+    pip install lightlab
 
-    If you are new to python programming, jupyter notebooks, you might want to sit down and patiently read the :ref:`getting-started` Pages. If you want to develop and write drivers, good for you. It's on `github <https://github.com/lightwave-lab/lightlab>`__ along with guides on contributing and can be cloned by::
+If you are new to python programming, jupyter notebooks, you might want to sit down and patiently read the :ref:`getting-started` Pages. If you want to develop and write drivers, good for you. It's on `github <https://github.com/lightwave-lab/lightlab>`__ along with guides on contributing and can be cloned by::
 
-        git clone git@github.com:lightwave-lab/lightlab.git
+    git clone git@github.com:lightwave-lab/lightlab.git
 
-     Your environment will be slightly different if you're developing, described :ref:`here <basic_environment>`.
+Your environment will be slightly different if you're developing, described :ref:`here <basic_environment>`.
 
 .. toctree::
    :maxdepth: 2
