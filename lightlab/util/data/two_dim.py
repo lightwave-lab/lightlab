@@ -154,6 +154,7 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
             raise TypeError(f'{memberClassFunc} in'
                             ' {} of {}'.format(type(self).__name__, self.memberType.__name__) + ' '
                             'is not callable')
+
         @wraps(memberClassFunc)
         def fakeFun(*args, **kwargs):
             newBundle = type(self)()
