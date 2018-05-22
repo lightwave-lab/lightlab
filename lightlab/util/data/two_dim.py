@@ -136,11 +136,11 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
 
             .. code-block:: python
 
-                reversedFunBund = FunctionBundle([
-                                      spct1.reverse(),
-                                      spct2.reverse())
+                croppedFunBund = FunctionBundle([
+                                      spct1.crop([0, 1]),
+                                      spct2.crop([0, 1]))
                                       ])
-                funBun.reverse() == reversedFunBund
+                funBun.crop([0, 1]) == croppedFunBund
 
             Note:
                 Be careful about "overloading" a MeasuredFunction method in FunctionBundle.

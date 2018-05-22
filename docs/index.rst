@@ -3,15 +3,19 @@ Welcome to Lightlab's documentation!
 
     This package offers the ability to control multi-instrument experiments, and to collect and store data and methods very efficiently. It was developed by researchers in an integrated photonics lab (hence lightlab) with equipment mostly controlled by the GPIB protocol. It can be used as a combination of these three tasks:
 
-    #. Multi-instrument experiment remote control and command.
-    #. Structuring the entire experimental procedure and data in python code.
-    #. Creating virtual experiments that can be validated in a real lab.
+    #. Consolidated multi-instrument remote control
+    #. Virtual laboratory environments: repeatable, shareable
+    #. Utilities for experimental research: from serial comm. to testing, analysis, gathering, post-processing – to paper-ready plotting
+    #. All structured in python
 
-    We wrote this documentation with love to all young experimental researchers that are not necessarily familiar with all the software tools introduced here. We attempted to include how-tos at every step to make sure everyone can get through the initial steps.
+.. figure:: frontpage.png
+    :alt: Example of a jupyter session
+    :figwidth: 600px
+    :align: center
 
-.. todo::
+    ``lightlab`` in a Jupyter notebook
 
-    Include a simple but powerful jupyter screenshot showing a plot from an experiment run.
+We wrote this documentation with love to all young experimental researchers that are not necessarily familiar with all the software tools introduced here. We attempted to include how-tos at every step to make sure everyone can get through the initial steps.
 
 .. warning::
 
@@ -52,15 +56,15 @@ pyvisa
 Installation
 ------------
 
-    You can install the lightlab package like any other python package::
+You can install the lightlab package like any other python package::
 
-        pip install lightlab
+    pip install lightlab
 
-    If you are new to python programming, jupyter notebooks, you might want to sit down and patiently read the :ref:`getting-started` Pages. If you want to develop and write drivers, good for you. It's on `github <https://github.com/lightwave-lab/lightlab>`__ along with guides on contributing and can be cloned by::
+If you are new to python programming, jupyter notebooks, you might want to sit down and patiently read the :ref:`getting-started` Pages. If you want to develop and write drivers, good for you. It's on `github <https://github.com/lightwave-lab/lightlab>`__ along with guides on contributing and can be cloned by::
 
-        git clone git@github.com:lightwave-lab/lightlab.git
+    git clone git@github.com:lightwave-lab/lightlab.git
 
-     Your environment will be slightly different if you're developing, described :ref:`here <basic_environment>`.
+Your environment will be slightly different if you're developing, described :ref:`here <basic_environment>`.
 
 .. toctree::
    :maxdepth: 2

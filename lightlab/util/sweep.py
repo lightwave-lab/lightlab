@@ -618,7 +618,7 @@ class NdSweeper(Sweeper):
                             pltKwargs['label'] = '{} = {:.2f}'.format(curveKey, curveValue)
                         ax.plot(xLine, yLine, *pltArgs, **pltKwargs)
                     # legend
-                    if autoLabeling:  # AND it is the top right
+                    if autoLabeling and iAx[0] == 0 and iAx[1] == plotArrShape[1] - 1:  # AND it is the top right
                         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
                 else:
                     raise ValueError('Too many dimensions in sweep to plot. '
