@@ -463,7 +463,9 @@ class Instrument(Node):
             raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
-        if attrName in self.essentialProperties + self.essentialMethods:  # or methods
+        if attrName in self.essentialProperties \
+                + self.essentialMethods \
+                + self.implementedOptionals:
             setattr(self.driver, attrName, newVal)
         else:
             if attrName == 'address':  # Reinitialize the driver

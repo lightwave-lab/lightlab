@@ -5,6 +5,14 @@ from ..visa_bases import VISAInstrumentDriver
 import importlib
 import pkgutil
 
+
+class BuggyHardware(Exception):
+    ''' Not all instruments behave as they are supposed to.
+        This might be lab specific. atait is not sure exactly how to deal with that.
+    '''
+    pass
+
+
 for _, modname, _ in pkgutil.walk_packages(path=__path__,  # noqa
                                            prefix=__name__ + '.'):
     _temp = importlib.import_module(modname)

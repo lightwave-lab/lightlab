@@ -7,7 +7,7 @@ from lightlab import log_to_screen, WARNING
 log_to_screen(WARNING)
 
 def start(instrumentName):
-    instr = lab.instruments_dict[instrumentName]
+    instr = lab.instruments[instrumentName]
     if instr.isLive():
         print('It is alive')
     else:

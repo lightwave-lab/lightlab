@@ -94,7 +94,10 @@ class FunctionGenerator(Instrument):
          'waveform',
          'amplAndOffs',
          'amplitudeRange',  # This should be a class attribute, not a method
-         'duty']
+         'duty',
+         'enable']
+    optionalAttributes = Instrument.optionalAttributes + \
+        ['setArbitraryWaveform']
 
 
 class LaserSource(Instrument):
