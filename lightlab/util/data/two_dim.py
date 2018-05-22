@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import interpolate
 import matplotlib.cm as cm
+from functools import wraps
 
 from .one_dim import MeasuredFunction, Waveform
 
@@ -22,11 +23,15 @@ class FunctionBundle(object):
             * operated on with other ``FunctionBundles``
             * plotted with :meth`simplePlot` and :meth:`multiAxisPlot`
 
+        Feeds through **callable** signal processing methods to its members (type MeasuredFunction),
+        If the method is not found in the FunctionBundle, but it is in it's member,
+        it will be applied to every function in the bundle, returning a new bundle.
+
         Distinct from a :class:`MeasuredSurface` because
         the additional axis does not represent a continuous thing.
         It is discrete and sometimes unordered.
 
-        Distince from a :class:`FunctionalBasis` because
+        Distinct from a :class:`FunctionalBasis` because
         it does not support most linear algebra-like stuff
         (e.g. decomposision, matrix multiplication, etc.).
         This is not a strict rule.
@@ -70,6 +75,7 @@ class FunctionBundle(object):
         return self.ordiMat.shape[0]
 
     def __mul__(self, other):
+        ''' This works with scalars and vectors '''
         if np.isscalar(other):
             other = np.ones(self.nDims) * other
         newObj = self.copy()
@@ -86,9 +92,10 @@ class FunctionBundle(object):
     def __getattr__(self, attrName):
         ''' Feeds through **callable** methods to its members (type MeasuredFunction),
             if the attribute is not found in the FunctionBundle.
-            If it finds it there, then applies it to every function in the bundle
+            If it finds it there, then applies it to every function in the bundle.
+            With binary operator math, it only works with scalars.
 
-            Be aware that some are overloaded in FunctionBundle. For example,::
+            For example, starting with::
 
             .. code-block:: python
 
@@ -96,15 +103,7 @@ class FunctionBundle(object):
                 spct2 = Spectrum([0, 1, 2], [4, 4, 1])
                 funBun = FunctionBundle([spct1, spct2])
 
-            Those defined here will not feed through.
-            Typically, they give you a single MeasuredFunction (subclass)
-
-            .. code-block:: python
-
-                spct1.max() == 5
-                funBun.max() == Spectrum([0, 1, 2], [4, 5, 3])
-
-            Others will fall through. They always return a FunctionBundle::
+            You can do
 
             .. code-block:: python
 
@@ -113,19 +112,29 @@ class FunctionBundle(object):
                                       spct2.reverse())
                                       ])
                 funBun.reverse() == reversedFunBund
+
+            Note:
+                Be careful about "overloading" a MeasuredFunction method in FunctionBundle.
+                It can have a different meaning than what would happen if not overloaded.
+                For example ``MeasuredFunction.__mul__(nonscalar)`` is function multiplication,
+                while ``FunctionBundle.__mul__(nonscalar)`` means vector dot product.
+
+            Todo:
+                This only works with :class:`~lightlab.util.data.one_dim.SignalProcessingMixin`
+                methods that are MF-in/MF-out. How should we handle characteristic-type methods,
+                such as ``centerOfMass``, or ``getRange``?
         '''
-        if attrName == 'memberType':
-            raise AttributeError(attrName)
         try:
             memberClassFunc = getattr(self.memberType, attrName)
         except AttributeError as err:
             betterErrStr = err.args[0] + ', neither does \'{}\' object'.format(type(self).__name__)
             err.args = tuple([betterErrStr, err.args[1:]])
             raise
-        if not iscallable(memberClassFunc):
+        if not callable(memberClassFunc):
             raise TypeError(f'{memberClassFunc} in'
                             ' {} of {}'.format(type(self).__name__, self.memberType.__name__) + ' '
                             'is not callable')
+        @wraps(memberClassFunc)
         def fakeFun(*args, **kwargs):
             newBundle = type(self)()
             for item in self:
@@ -155,44 +164,8 @@ class FunctionBundle(object):
         '''
         return self.memberType(self.absc, np.mean(self.ordiMat, axis=0).A1)
 
-    def crop(self, segment):
-        ''' Crop abscissa to segment domain
-
-            Args:
-                segment (list[float,float]): the span of the new abscissa domain
-
-            Returns:
-                MeasuredFunction: new object
-        '''
-        newObj = type(self)()
-        for iFun in range(len(self)):
-            fun = self[iFun].crop(segment)
-            newObj.addDim(fun)
-        return newObj
-
     def reverse(self):
         self.ordiMat = self.ordiMat[::-1]
-
-    def unitRms(self):
-        ''' Returns a bundle with each waveform in unit variance '''
-        newBundle = type(self)()
-        for wfm in self:
-            newBundle.addDim(wfm.unitRms())
-        return newBundle
-
-    def resample(self, nsamp=100):
-        ''' Resample over the same domain span, but with a different number of points.
-
-            Args:
-                nsamp (int): number of samples in the new object
-
-            Returns:
-                FunctionBundle: new object
-        '''
-        newBundle = type(self)()
-        for item in self:
-            newBundle.addDim(item.resample(nsamp))
-        return newBundle
 
     def _putInTimebase(self, testFun):
         ''' Makes sure signal type is correct and time basis is the same
