@@ -21,8 +21,13 @@ def write_default_config():
 def get_config():
     config = ConfigParser()
     config.read_dict(default_config)  # Read default first
+    read_files = []
+    if os.path.isfile(system_config_path):
+        read_files.append(system_config_path)
     if os.path.isfile(user_config_path):
-        config.read([system_config_path, user_config_path])
+        read_files.append(user_config_path)
+    if len(read_files) > 0:
+        config.read(read_files)
     return config
 
 
