@@ -17,7 +17,6 @@ class HP_8157A_VA(VISAInstrumentDriver):
     safeSleepTime = 1  # Time it takes to settle
     __attenDB = None
 
-
     def __init__(self, name='The VOA on the Minerva bench', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
 
@@ -40,9 +39,8 @@ class HP_8157A_VA(VISAInstrumentDriver):
     @property
     def attenDB(self):
         if self.__attenDB is None:
-            self.__attenDB = float(self.query("ATT?")) 
+            self.__attenDB = float(self.query("ATT?"))
         return self.__attenDB
-
 
     @attenDB.setter
     def attenDB(self, newAttenDB):
@@ -68,22 +66,14 @@ class HP_8157A_VA(VISAInstrumentDriver):
         self.write('ATT ' + str(self.attenDB) + 'DB')
         time.sleep(sleepTime)  # Let it settle
 
-    def calibrate(self, cal_factor, sleepTime=None): #cal_factor is in dB
+    def calibrate(self, cal_factor, sleepTime=None):   # cal_factor is in dB
         if sleepTime is None:
             sleepTime = self.safeSleepTime
-        self.write('CAL ' + str(self.cal_factor) + 'DB')
+        self.write('CAL ' + str(cal_factor) + 'DB')
         time.sleep(sleepTime)  # Let it settle
 
-
-    def set_wavelength(self, wl, sleepTime=None): #wl can be in m, mm, um, or nm. here we choose nm.
+    def set_wavelength(self, wl, sleepTime=None):   # wl can be in m, mm, um, or nm. here we choose nm.
         if sleepTime is None:
             sleepTime = self.safeSleepTime
-        self. write('WVL' + str(self.wl) + 'NM')
+        self. write('WVL' + str(wl) + 'NM')
         time.sleep(sleepTime)
-
-
-
-
-
-
-    
