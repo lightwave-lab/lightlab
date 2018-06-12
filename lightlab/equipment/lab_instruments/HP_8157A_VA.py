@@ -16,6 +16,8 @@ class HP_8157A_VA(VISAInstrumentDriver):
     instrument_category = VariableAttenuator
     safeSleepTime = 1  # Time it takes to settle
     __attenDB = None
+    __wvl = None
+    __cal = None
 
     def __init__(self, name='The VOA on the Minerva bench', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
@@ -42,6 +44,18 @@ class HP_8157A_VA(VISAInstrumentDriver):
             self.__attenDB = float(self.query("ATT?"))
         return self.__attenDB
 
+    @property
+    def wavelength(self):
+        if self.__wvl is None:
+            self.__wvl = float(self.query("WVL?"))
+        return self.__wvl
+
+    @property
+    def calibration(self):
+        if self.__cal is None:
+            self.__cal = float(self.query("CAL?"))
+        return self.__cal
+
     @attenDB.setter
     def attenDB(self, newAttenDB):
         if newAttenDB < 0:
@@ -66,13 +80,15 @@ class HP_8157A_VA(VISAInstrumentDriver):
         self.write('ATT ' + str(self.attenDB) + 'DB')
         time.sleep(sleepTime)  # Let it settle
 
-    def calibrate(self, cal_factor, sleepTime=None):   # cal_factor is in dB
+    @calibration.setter
+    def calibration(self, cal_factor, sleepTime=None):   # cal_factor is in dB
         if sleepTime is None:
             sleepTime = self.safeSleepTime
         self.write('CAL ' + str(cal_factor) + 'DB')
         time.sleep(sleepTime)  # Let it settle
 
-    def set_wavelength(self, wl, sleepTime=None):   # wl can be in m, mm, um, or nm. here we choose nm.
+    @wavelength.setter
+    def wavelength(self, wl, sleepTime=None):   # wl can be in m, mm, um, or nm. here we choose nm.
         if sleepTime is None:
             sleepTime = self.safeSleepTime
         self. write('WVL' + str(wl) + 'NM')
