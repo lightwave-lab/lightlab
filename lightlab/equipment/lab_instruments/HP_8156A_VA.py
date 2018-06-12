@@ -65,3 +65,11 @@ class HP_8156A_VA(VISAInstrumentDriver):
             sleepTime = self.safeSleepTime
         self.write('INP:ATT ' + str(self.attenDB) + 'DB')
         time.sleep(sleepTime)  # Let it settle
+
+    @property
+    def wavelength(self):
+        raise NotImplementedError('please implement me!')
+
+    @property
+    def calibration(self):
+        raise NotImplementedError('please implement me!')

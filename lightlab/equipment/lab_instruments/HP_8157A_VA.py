@@ -26,10 +26,10 @@ class HP_8157A_VA(VISAInstrumentDriver):
         self.on()
 
     def on(self):
-        self.write('D 1')  # enable #D1
+        self.write('D 0')  # enable #D1
 
     def off(self):
-        self.write('D 0')  # disable
+        self.write('D 1')  # disable
 
     def setAtten(self, val, isLin=True):
         ''' Simple method instead of property access '''
@@ -47,11 +47,12 @@ class HP_8157A_VA(VISAInstrumentDriver):
     @property
     def wavelength(self):
         if self.__wvl is None:
-            self.__wvl = float(self.query("WVL?"))
+            self.__wvl = float(self.query("WVL?")) * 1e9
         return self.__wvl
 
     @property
     def calibration(self):
+        '''Calibration compensates for the insertion loss of the instruments.'''
         if self.__cal is None:
             self.__cal = float(self.query("CAL?"))
         return self.__cal

@@ -177,7 +177,9 @@ class VariableAttenuator(Instrument):
          'off']
     essentialProperties = Instrument.essentialProperties + \
         ['attenDB',
-         'attenLin']
+         'attenLin',
+         'wavelength',
+         'calibration']
 
 
 class NetworkAnalyzer(Instrument):
