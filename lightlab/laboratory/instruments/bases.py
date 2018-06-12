@@ -677,7 +677,7 @@ class Device(Node):
 
     def __init__(self, name, **kwargs):
         self.name = name
-        self.ports = kwargs.pop("ports", dict())
+        self.ports = kwargs.pop("ports", list())
         self.bench = kwargs.pop("bench", None)
         super().__init__(**kwargs)
 
