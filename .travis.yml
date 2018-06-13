@@ -1,0 +1,11 @@
+language: python
+python:
+  - "3.6"
+# command to install dependencies
+install:
+  - pip install -U virtualenv pip
+  - python --version
+# command to run tests
+script:
+  - DOCKER=1 make test-unit-all
+  - make test-lint-errors
