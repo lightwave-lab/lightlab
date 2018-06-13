@@ -53,6 +53,7 @@ test-simple: testbuild
 	)
 
 test-lint: testbuild
+	# This is only used for master
 	( \
 		source venv/bin/activate; \
 		py.test --pylint --flake8 --pylint-rcfile=pylintrc lightlab; \
@@ -77,7 +78,8 @@ test-unit-all: testbuild
 		py.test $(TESTARGS) $(TESTARGSNB) tests notebooks/Tests; \
 	)
 
-test: testbuild test-unit-all test-lint ;
+# this is equivalent to what is run on CI:development
+test: testbuild test-unit-all test-lint-errors ;
 
 
 clean:

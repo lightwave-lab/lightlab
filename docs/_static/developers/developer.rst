@@ -41,8 +41,54 @@ MacOS::
     $ mntlight
     $ unmtlight
 
-Example directory structure, environment, and usage
----------------------------------------------------
+.. _basic_environment:
+
+Example directory structure and environment: **Non**-developers
+---------------------------------------------------------------
+Lightlab is meant to be used by other code, usually via jupyter notebooks. We suggest that this user code be in a virtual environment with the following structure
+
+::
+
+    > bedivere/Documents
+    | > myWork
+    | | > .git (optional)
+    | | requirements.txt
+    | | Makefile
+    | | > notebooks
+    | | | labSetup.ipynb
+    | | | gatherData.ipynb
+    | | -
+    | | > data
+    | | | someData.pkl
+    | | -
+    | -
+    -
+
+Where the contents of ``requirements.txt`` will include "lightlab" and other packages you need for your work.
+
+The Makefile has targets for making a virtual environment and launching jupyter
+
+.. code-block:: bash
+
+    venv: venv/bin/activate
+    venv/bin/activate: requirements.txt
+        test -d venv || virtualenv -p python3 --prompt "(myWork-venv) " --distribute venv
+        venv/bin/pip install -Ur requirements.txt
+        touch venv/bin/activate
+
+    jupyter:
+        source venv/bin/activate; jupyter notebook; \
+
+    getjpass: venv
+        venv/bin/python -c 'from notebook.auth import passwd; print(passwd())'
+
+With these things in place, you can run ``make jupyter`` have a fully fledged, clean environment with lightlab installed.
+
+Notebooks contain the procedures used to configure labstate, gather data, save data, analyze data, and make nice plots you can use in papers. The ``labSetup.ipynb`` file will look like :any:`this one </ipynbs/Others/labSetup.ipynb>`, but populated with your lab's sensitive addresses, ports, namespaces, etc.
+
+
+Example directory structure and environment: Developers
+-------------------------------------------------------
 If you are developing lightlab, you will likely have some other notebooks to test. Those should go in a different directory with a different virtual environment. It can be git tracked in a different repo. Here is an example directory structure::
 
     > lancelot/Documents
@@ -53,10 +99,12 @@ If you are developing lightlab, you will likely have some other notebooks to tes
     | | etc...
     | -
     | > myWork
-    | | Makefile
+    | | > .git (optional)
     | | requirements.txt
+    | | Makefile
     | | .pathtolightlab
     | | > notebooks
+    | | | labSetup.ipynb
     | | | gatherData.ipynb
     | | -
     | | > data
@@ -65,7 +113,7 @@ If you are developing lightlab, you will likely have some other notebooks to tes
     | -
     -
 
-Where the Makefile has targets for making a virtual environment and launching jupyter
+Where the Makefile has a modification for dynamic installation of lightlab.
 
 .. code-block:: bash
     :emphasize-lines: 9
@@ -80,13 +128,7 @@ Where the Makefile has targets for making a virtual environment and launching ju
         touch venv/bin/activate
         source venv/bin/activate; venv/bin/pip install -e $(shell cat $(PATH2LIGHTLABFILE))
 
-    jupyter:
-        source venv/bin/activate; jupyter notebook; \
-
-    getjpass: venv
-        venv/bin/python -c 'from notebook.auth import passwd; print(passwd())'
-
-The highlighted line will dynamically link the environment to your version of lightlab under development. If you have autoreload on in ipython, then text changes in lightlab will take effect immediately (excluding adding new methods).
+The highlighted line will dynamically link the environment to your version of lightlab under development. If you have autoreload on in ipython, then text changes in lightlab will take effect immediately (excluding adding new methods). It is important that "lightlab" is **not** in your ``requirements.txt`` file.
 
 The contents of ``.pathtolightlab`` are::
 

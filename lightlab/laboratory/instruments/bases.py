@@ -468,7 +468,9 @@ class Instrument(Node):
             raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
-        if attrName in self.essentialProperties + self.essentialMethods:  # or methods
+        if attrName in self.essentialProperties \
+                + self.essentialMethods \
+                + self.implementedOptionals:
             setattr(self.driver, attrName, newVal)
         else:
             if attrName == 'address':  # Reinitialize the driver
@@ -682,7 +684,7 @@ class Device(Node):
 
     def __init__(self, name, **kwargs):
         self.name = name
-        self.ports = kwargs.pop("ports", dict())
+        self.ports = kwargs.pop("ports", list())
         self.bench = kwargs.pop("bench", None)
         super().__init__(**kwargs)
 

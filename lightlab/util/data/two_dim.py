@@ -11,7 +11,7 @@ import matplotlib.cm as cm
 from .one_dim import MeasuredFunction, Waveform
 
 
-class FunctionBundle(object):
+class FunctionBundle(object):  # pylint: disable=eq-without-hash
     ''' A bundle of :class:`~lightlab.util.data.one_dim.MeasuredFunction`'s: "z" vs. "x", "i"
 
         The key is that they have the same abscissa base.
@@ -61,6 +61,10 @@ class FunctionBundle(object):
 
     def __getitem__(self, index):
         ''' Iterator that gives out individual measured functions of the type used
+
+            Todo:
+                This should handle slices.
+                If it gets a slice, it should return a function bundle
         '''
         theOrdi = self.ordiMat[
             index, :].A1  # A1 is a special numpy thing that converts from matrix to 1-d array
@@ -68,6 +72,22 @@ class FunctionBundle(object):
 
     def __len__(self):
         return self.ordiMat.shape[0]
+
+    def __eq__(self, other):
+        return (self.memberType is other.memberType and
+                self.absc == other.absc and
+                self.ordiMat == other.ordiMat)
+
+    def __add__(self, other):
+        if np.isscalar(other):
+            other = np.ones(self.nDims) * other
+        newObj = self.copy()
+        for iDim in range(self.nDims):
+            newObj.ordiMat[iDim] = self.ordiMat[iDim] + other[iDim]
+        return newObj
+
+    def __radd__(self, other):
+        return self.__add__(other)
 
     def __mul__(self, other):
         if np.isscalar(other):
@@ -121,6 +141,13 @@ class FunctionBundle(object):
 
     def reverse(self):
         self.ordiMat = self.ordiMat[::-1]
+
+    def debias(self):
+        ''' Returns a bundle with each waveform in unit variance '''
+        newBundle = type(self)()
+        for wfm in self:
+            newBundle.addDim(wfm.debias())
+        return newBundle
 
     def unitRms(self):
         ''' Returns a bundle with each waveform in unit variance '''
@@ -178,7 +205,6 @@ class FunctionBundle(object):
         '''
         if axList is None:
             _, axList = plt.subplots(nrows=len(self), figsize=(14, 14))
-            # fi, axList = plt.subplots(nrows=len(self), figsize=(14,16))
         if len(axList) != len(self):
             raise ValueError('Wrong number of axes. Got {}, need {}.'.format(
                 len(axList), len(self)))
@@ -188,6 +214,9 @@ class FunctionBundle(object):
             if titleRoot is not None:
                 plt.title(titleRoot.format(i + 1))
                 # plt.xlabel('Time (s)')
+            if i < len(self) - 1:
+                ax.xaxis.set_ticklabels([])
+                ax.set_xlabel('')
             # plt.ylabel('Intensity (a.u.)')
             # plt.xlim(0,2e-8)
         return axList

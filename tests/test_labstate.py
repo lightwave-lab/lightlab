@@ -245,7 +245,7 @@ def test_corruptreload_changecontent(lab):
         refrozen_json = json.dumps(json_state, sort_keys=True, indent=4)
         with open(filename, 'w') as file:
             file.write(refrozen_json)
-    with pytest.raises(RuntimeError, message="corruption within file was not detected"):
+    with pytest.raises(json.decoder.JSONDecodeError, message="corruption within file was not detected"):
         labstate.LabState.loadState(filename)
 
 

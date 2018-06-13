@@ -38,19 +38,24 @@ def pprintFileDir():
         if child.is_dir():
             print(child.name.rjust(maxStrLen), '** directory')
     # Print files
+    children = []
     for child in _getFileDir().iterdir():
-        justified = child.name.rjust(maxStrLen) + '   '
         if child.name in ['.', '..', '.DS_Store']:
             continue
-        elif child.is_file():
-            if child.name.endswith('.pkl'):
-                print(justified, f'loadPickle({child.stem})')
-            elif child.name.endswith('.gz'):
-                print(justified, f'loadPickleGzip({child.stem})')
-            elif child.name.endswith('.mat'):
-                print(justified, f'loadMat({child.stem})')
-            else:
-                print(justified)
+        if child.is_file():
+            children.append(child)
+    childNames = list(map(lambda x: x.name, children))
+    sortedChildren = [x for _, x in sorted(zip(childNames, children))]
+    for child in sortedChildren:
+        justified = child.name.rjust(maxStrLen) + '   '
+        if child.name.endswith('.pkl'):
+            print(justified, f'loadPickle({child.stem})')
+        elif child.name.endswith('.gz'):
+            print(justified, f'loadPickleGzip({child.stem})')
+        elif child.name.endswith('.mat'):
+            print(justified, f'loadMat({child.stem})')
+        else:
+            print(justified)
 
 
 def _endingWith(filerootname, suffix):

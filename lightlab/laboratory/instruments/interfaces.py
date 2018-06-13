@@ -94,7 +94,10 @@ class FunctionGenerator(Instrument):
          'waveform',
          'amplAndOffs',
          'amplitudeRange',  # This should be a class attribute, not a method
-         'duty']
+         'duty',
+         'enable']
+    optionalAttributes = Instrument.optionalAttributes + \
+        ['setArbitraryWaveform']
 
 
 class LaserSource(Instrument):
@@ -174,7 +177,9 @@ class VariableAttenuator(Instrument):
          'off']
     essentialProperties = Instrument.essentialProperties + \
         ['attenDB',
-         'attenLin']
+         'attenLin',
+         'wavelength',
+         'calibration']
 
 
 class NetworkAnalyzer(Instrument):

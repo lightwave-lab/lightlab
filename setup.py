@@ -14,7 +14,7 @@ from setuptools import setup, find_packages
 LABSTATE_FILENAME = "labstate.json"
 JUPYTER_GROUP = "jupyter"
 
-assert sys.version_info >= (3, 6), "Use python 3.6!"
+assert sys.version_info >= (3, 6), "Use python 3.6 - We are living in the __future__!"
 
 
 def touch(fname, times=None):
@@ -80,6 +80,7 @@ class PermissionCheckCommand(distutils.cmd.Command):
 
     def run(self):
         """Run command."""
+
         def run_command(self, command):
             self.announce("Running command: {}".format(command),
                           level=distutils.log.INFO)
@@ -115,7 +116,7 @@ class PermissionCheckCommand(distutils.cmd.Command):
 
 
 def main():
-    with open('README.md') as f:
+    with open('README.rst') as f:
         readme = f.read()
 
     with open('LICENSE') as f:
@@ -144,6 +145,9 @@ def main():
             'sklearn',
             'dill',
         ],
+        entry_points={
+            'console_scripts': ['lightlab=lightlab.command_line:main'],
+        },
         cmdclass={
             "server_permissions": PermissionCheckCommand,
         },
