@@ -126,15 +126,26 @@ def main():
         code = compile(f.read(), "version.py", 'exec')
         version_dict = {}
         exec(code, {}, version_dict)  # pylint: disable=exec-used
-        version = version_dict['version']
+        release = version_dict['release']
 
     metadata = dict(
         name='lightlab',
-        version=version,
+        version=release,
         description='Lightwave Lab instrument automation tools',
         long_description=readme,
-        license=license_text,
+        license=license_text.split('\n')[0],
         packages=find_packages(exclude=('tests', 'docs', 'data')),
+        url="https://github.com/lightwave-lab/lightlab",
+        author="Alex Tait <atait@ieee.org>, Thomas Ferreira de Lima <tlima@princeton.edu>",
+        author_email="tlima@princeton.edu",
+        classifiers=(
+            "Programming Language :: Python :: 3.6",
+            "License :: OSI Approved :: MIT License",
+            "Operating System :: OS Independent",
+            "Topic :: Scientific/Engineering",
+            "Topic :: System :: Hardware :: Hardware Drivers",
+            "Framework :: Jupyter",
+        ),
         install_requires=[
             'dpath',
             'jsonpickle',
