@@ -9,3 +9,12 @@ install:
 script:
   - DOCKER=1 make test-unit-all
   - make test-lint-errors
+  - make test-lint
+# deploy:
+#   provider: pypi
+#   user: "tlima"
+#   password: "pw"
+#   on:
+#     tags: true
+#     branch: master
+
