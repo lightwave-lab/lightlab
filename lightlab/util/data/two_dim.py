@@ -66,14 +66,25 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
         self.nDims += 1
 
     def __getitem__(self, index):
-        ''' Iterator that gives out individual measured functions of the type used
+        ''' Gives out individual measured functions of the type used, or
+            If it gets a slice, it returns a function bundle,
+            just like a sliced numpy array returns a numpy array.
 
-            Todo:
-                This should handle slices.
-                If it gets a slice, it should return a function bundle
+            Args:
+                index (int or slice): which of the function(s) do you want to get
+
+            Returns:
+                (MeasuredFunction or FunctionBundle): depending on type of index
         '''
-        theOrdi = self.ordiMat[index, :].A1  # A1 is a special numpy thing that converts from matrix to 1-d array
-        return self.memberType(self.absc, theOrdi)
+        if type(index) is int:
+            theOrdi = self.ordiMat[index, :].A1  # A1 is a special numpy thing that converts from matrix to 1-d array
+            return self.memberType(self.absc, theOrdi)
+        elif type(index) is slice:
+            newBundle = self.copy()
+            newOrdiMat = self.ordiMat[index, :]
+            newBundle.ordiMat = newOrdiMat
+            newBundle.nDims = np.shape(newOrdiMat)[0]
+            return newBundle
 
     def __len__(self):
         return self.ordiMat.shape[0]
