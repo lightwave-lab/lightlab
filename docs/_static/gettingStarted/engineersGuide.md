@@ -1,5 +1,7 @@
 # An engineer’s guide to modern lab control
 
+Author: *Thomas Ferreira de Lima* (tlima@princeton.edu)
+
 ## Introduction
 
 Over the years, software engineering has evolved into a very prominent field that penetrates all industrial sectors. Its core principles and philosophy was to make life easier for consumers to achieve their goals. That was when Apple and Microsoft were created. Then, as the field evolved, it has become important to make software engineering as inclusive as possible to new “developers”, and to make collaboration as seamless as possible. This is the age of the apps. Now, software programming is becoming considered as fundamental as math and science, and are starting to enter school curricula.
@@ -57,7 +59,7 @@ git commit -m “finished simulation”
 git push
 ```
 
-![How git push works.](https://wac-cdn.atlassian.com/dam/jcr:f148974e-7d4d-4c0e-bd31-8ac5467d1e6a/04.svg?cdnVersion=ie)
+![How git push works. From Atlassian.](images/atlassian_push.png)
 
 The other main property of Git is that it can automatically “merge” a number of edits together in one step. Its algorithm is very powerful, works flawlessly when it can, and falls back to human intervention in case of “conflicts”. When two collaborators create local commits, their history tree forks into two parallel versions that need to be conciliated. If one pushes first, the other’s push will fail and abort, because its local repository does not agree with the most recent state of the remote repository. So the proper procedure is to sync the local with the remote by “pulling” changes from remote:
 

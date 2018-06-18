@@ -103,14 +103,14 @@ class Host(Node):
             return self.__cached_list_resources_info
 
     def list_gpib_resources_info(self, use_cached=True):
-        """ Like :py:meth:`list_resources_info`, but only returns gpib
+        """ Like :meth:`list_resources_info`, but only returns gpib
         resources.
 
         Args:
             use_cached (bool): query only if not cached, default True.
 
         Returns:
-            list: list of `pyvisa.highlevel.ResourceInfo` named tuples.
+            (list): list of ``pyvisa.highlevel.ResourceInfo`` named tuples.
 
         """
         return {resource_name: resource
@@ -149,7 +149,7 @@ class Host(Node):
             return gpib_instrument_list
 
     def findGpibAddressById(self, id_string_search, use_cached=True):
-        """ Finds a gpib address using :py:meth:`get_all_gpib_id`, given
+        """ Finds a gpib address using :meth:`get_all_gpib_id`, given
         an identity string.
 
         Args:
@@ -173,10 +173,10 @@ class Host(Node):
             "{} not found in {}".format(id_string_search, self))
 
     def addInstrument(self, *instruments):
-        """ Adds an instrument to lab.instruments if it is not already present.
+        r""" Adds an instrument to lab.instruments if it is not already present.
 
         Args:
-            *instruments (:py:class:`Instrument`): instruments
+            \*instruments (Instrument): instruments
 
         """
         from lightlab.laboratory.state import lab
@@ -186,13 +186,14 @@ class Host(Node):
             instrument.host = self
 
     def removeInstrument(self, *instruments):
-        """ Disconnects the instrument from the host
+        r""" Disconnects the instrument from the host
 
         Args:
-            *instruments (:py:class:`Instrument`): instruments
+            \*instruments (Instrument): instruments
 
+        Todo:
+            Remove all connections
         """
-        # TODO Remove all connections
         for instrument in instruments:
             if type(instrument) is str:
                 logger.warning('Cannot remove by name string. Use the object')
@@ -201,10 +202,10 @@ class Host(Node):
     def checkInstrumentsLive(self):
         """ Checks whether all instruments are "live".
 
-        Instrument status is checked with the :py:meth:`Instrument.isLive()` method
+        Instrument status is checked with the :meth:`Instrument.isLive` method
 
         Returns:
-            bool: True if all instruments are live, False otherwise
+            (bool): True if all instruments are live, False otherwise
 
 
         """
@@ -295,11 +296,11 @@ class Bench(Node):
         return TypedList(Device, *list(filter(lambda x: x.bench == self, lab.devices)))
 
     def addInstrument(self, *instruments):
-        """ Adds an instrument to lab.instruments if it is not already
+        r""" Adds an instrument to lab.instruments if it is not already
         present and connects to the host.
 
         Args:
-            *instruments (:py:class:`Instrument`): instruments
+            \*instruments (Instrument): instruments
 
         """
         from lightlab.laboratory.state import lab
@@ -309,26 +310,25 @@ class Bench(Node):
             instrument.bench = self
 
     def removeInstrument(self, *instruments):
-        """ Detaches the instrument from the bench.
+        r""" Detaches the instrument from the bench.
 
         Args:
-            *instruments (:py:class:`Instrument`): instruments
+            \*instruments (Instrument): instruments
 
         Todo:
             Remove all connections
         """
-        # TODO Remove all connections
         for instrument in instruments:
             if type(instrument) is str:
                 raise TypeError('Cannot remove by name string. Use the object')
             instrument.bench = None
 
     def addDevice(self, *devices):
-        """ Adds a device to lab.devices if it is not already present
+        r""" Adds a device to lab.devices if it is not already present
         and places it in the bench.
 
         Args:
-            *(:py:class:`Device`): devices
+            \*devices (Device): devices
 
         """
         from lightlab.laboratory.state import lab
@@ -340,10 +340,10 @@ class Bench(Node):
             device.bench = self
 
     def removeDevice(self, *devices):
-        """ Detaches the device from the bench.
+        r""" Detaches the device from the bench.
 
         Args:
-            *(:py:class:`Device`): devices
+            \*devices (Device): devices
 
         Todo:
             Remove all connections
@@ -385,12 +385,24 @@ class Instrument(Node):
         This class stores information about instruments, for the purpose of
         facilitating verifying whether it is connected to the correct devices.
 
-        Driver feedthrough: methods, properties, and even regular attributes
-        that are in ``essentialMethods`` and ``essentialProperties`` of the class
-        will get/set/call through to the driver object.
+        Driver feedthrough
+            Methods, properties, and even regular attributes
+            that are in :py:data:`essential_attributes` of the class
+            will get/set/call through to the driver object.
 
-        Todo:
-            Add example of instrument instantiation and point to relevant ipynb.
+        Do not instantiate directly
+            Calling a **VISAInstrumentDriver** class will return an **Instrument** object
+
+        Short example::
+
+            osa = Apex_AP2440A_OSA(name='foo', address='NULL')
+            osa.spectrum()
+
+        Long example
+            :ref:`/ipynbs/Others/labSetup.ipynb`
+
+        Detailed testing
+            :py:func:`~tests.test_abstractDrivers.test_driver_init`
     """
     _driver_class = None
     __driver_object = None
@@ -415,13 +427,6 @@ class Instrument(Node):
         self.__driver_object = kwargs.pop("driver_object", None)
         if self.__driver_object is not None:
             self._driver_class = type(self.__driver_object)
-        # driver_klass = kwargs.get('_driver_class', None)
-        # for attrName in self.essentialMethods + self.essentialProperties:
-        #     if attrName in kwargs.keys():
-        #         raise AttributeError('Ambiguous attributes between Instrument and its driver: ' + attrName)
-        #     if driver_klass is not None:
-        #         if not hasattr(driver_klass, attrName):
-        #             raise AttributeError('Driver class {} does not implement essential attribute {}'.format(driver_klass.__name__, attrName))
         self._name = name
         self._id_string = id_string
         self.address = address
@@ -523,7 +528,7 @@ class Instrument(Node):
     @property
     def driver_class(self):
         """ Class of the actual equipment driver
-        (from :py:mod:`lightlab.equipment.lab_instruments`)
+        (from :mod:`lightlab.equipment.lab_instruments`)
 
         This way the object knows how to instantiate a driver instance
         from the labstate.
@@ -554,7 +559,7 @@ class Instrument(Node):
 
     @property
     def driver(self):
-        """ Alias of :py:meth:`driver_object`."""
+        """ Alias of :meth:`driver_object`."""
         return self.driver_object
 
     bench = typed_property(Bench, "_bench")
@@ -569,8 +574,8 @@ class Instrument(Node):
     def id_string(self):
         """
             The id_string should match the value returned by
-            self.driver.instrID(), and is checked by the command
-            self.isLive() in order to authenticate that the intrument
+            ``self.driver.instrID()``, and is checked by the command
+            ``self.isLive()`` in order to authenticate that the intrument
             in that address is the intended one.
         """
         return self._id_string
@@ -609,7 +614,8 @@ class Instrument(Node):
 
     def isLive(self):
         """ Attempts VISA connection to instrument, and checks whether
-            ``instrID()`` matches :py:data:`id_string`.
+            :meth:`~lightlab.equipment.visa_bases.visa_object.instrID`
+            matches :data:`id_string`.
 
             Produces a warning if it is live but the id_string is wrong.
 
@@ -664,11 +670,12 @@ class NotFoundError(RuntimeError):
     pass
 
 
-# TODO add device equality function
 class Device(Node):
     """ Represents a device in lab.
+        Only useful for documenting the experiment.
 
-    Only useful for documenting the experiment.
+        Todo:
+            Add equality function
     """
 
     name = None  #: device name
@@ -677,7 +684,7 @@ class Device(Node):
 
     def __init__(self, name, **kwargs):
         self.name = name
-        self.ports = kwargs.pop("ports", dict())
+        self.ports = kwargs.pop("ports", list())
         self.bench = kwargs.pop("bench", None)
         super().__init__(**kwargs)
 

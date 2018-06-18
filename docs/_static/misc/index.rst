@@ -6,6 +6,7 @@ Miscellaneous Documentation
     :caption: Advanced topics
 
     mergeWithNotebooks
+    command_line_tools
 
 .. toctree::
    :maxdepth: 2

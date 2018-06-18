@@ -69,6 +69,7 @@ test-nb: testbuild
 	( \
 		source venv/bin/activate; \
 		py.test $(TESTARGS) $(TESTARGSNB) notebooks/Tests; \
+		rsync -rau notebooks/Tests/*.ipynb docs/ipynbs/Tests
 	)
 
 test-unit-all: testbuild
@@ -143,7 +144,6 @@ venvinfo/docreqs~: $(REINSTALL_DEPS) notebooks/Tests doc-requirements.txt
 	@touch venvinfo/docreqs~
 
 docs: docbuild
-	rsync -rau notebooks/Tests/*.ipynb docs/ipynbs/Tests
 	source venv/bin/activate; $(MAKE) -C docs $(DOCTYPE_DEFAULT)
 
 docs-ci: docbuild
