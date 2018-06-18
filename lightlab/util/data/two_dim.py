@@ -72,8 +72,7 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
                 This should handle slices.
                 If it gets a slice, it should return a function bundle
         '''
-        theOrdi = self.ordiMat[
-            index, :].A1  # A1 is a special numpy thing that converts from matrix to 1-d array
+        theOrdi = self.ordiMat[index, :].A1  # A1 is a special numpy thing that converts from matrix to 1-d array
         return self.memberType(self.absc, theOrdi)
 
     def __len__(self):
@@ -108,7 +107,7 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
             other = repeat(other, self.nDims)
         newBundle = type(self)()
         for selfItem, otherItem in zip(self, other):
-            newItem = selfItem + otherItem
+            newItem = selfItem * otherItem
             newBundle.addDim(newItem)
         return newBundle
 
@@ -153,6 +152,8 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
                 methods that are MF-in/MF-out. How should we handle characteristic-type methods,
                 such as ``centerOfMass``, or ``getRange``?
         '''
+        if attrName == 'memberType':
+            raise RuntimeError('Missed "memberType"')
         try:
             memberClassFunc = getattr(self.memberType, attrName)
         except AttributeError as err:
@@ -178,6 +179,10 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
         newObj.__dict__ = self.__dict__.copy()
         newObj.ordiMat = self.ordiMat.copy()
         return newObj
+
+    def extend(self, otherFunctionBund):
+        for func in otherFunctionBund:
+            self.addDim(func)
 
     def max(self):
         ''' Returns a single MeasuredFunction(subclass) that is the maximum of all in this bundle
