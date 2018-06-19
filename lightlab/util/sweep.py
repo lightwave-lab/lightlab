@@ -376,7 +376,7 @@ class NdSweeper(Sweeper):
 
             The array's shape must match that of the currently loaded actuation grid.
 
-            If you then :py:meth:addActuation, the static data automatically expands in dimension to accomodate.
+            If you then :meth:`addActuation`, the static data automatically expands in dimension to accomodate.
             Values are filled by tiling in the new dimension.
 
             Add static data after the actuations that have different static data,
@@ -970,7 +970,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
             interactive (bool): show plot immediately after call, even with incomplete data (index must be specified)
 
         Todo:
-            Fix the global hack for persistent plots
+            Fix the global hack for persistent plots -- actually, this is fine
     '''
     global interAx  # pylint: disable=global-statement
     global hArrow  # pylint: disable=global-statement
@@ -1047,7 +1047,7 @@ def plotCmdCtrl(sweepData, index=None, ax=None, interactive=False):
                 y = meanErrors + upDown * stddevs
                 interAx.plot(x, y, 'b')
 
-            # Monitor plotting if it's there: Todo: remove copied code
+            # Monitor plotting if it's there:
             if monitWeights is not None:
                 allPts = monitWeights[:index[0], :, 0]
                 for iv, v in np.ndenumerate(allPts):

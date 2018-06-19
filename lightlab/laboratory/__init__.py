@@ -104,10 +104,10 @@ class Node(Hashable):
     Node is a token of an object that exists in a laboratory.
     For example, subclasses are:
 
-        - a :py:class:`~lightlab.laboratory.devices.Device`
-        - a :py:class:`~lightlab.laboratory.instruments.bases.Host`
-        - a :py:class:`~lightlab.laboratory.instruments.bases.Bench`
-        - an :py:class:`~lightlab.laboratory.instruments.bases.Instrument`
+        - a :class:`~lightlab.laboratory.devices.Device`
+        - a :class:`~lightlab.laboratory.instruments.bases.Host`
+        - a :class:`~lightlab.laboratory.instruments.bases.Bench`
+        - an :class:`~lightlab.laboratory.instruments.bases.Instrument`
 
     """
 

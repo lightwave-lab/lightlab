@@ -14,7 +14,9 @@ class DriverMeta(type):
             * ``instrument_category`` is None
             * ``directInit=True`` is passed in
 
-        Also checks that the API is satistied at compile time
+        Also checks that the API is satistied at compile time,
+        providing some early protection against bad drivers, like this:
+        :py:func:`~tests.test_virtualization.test_badDriver`.
     '''
     def __init__(cls, name, bases, dct):
         ''' Checks that it satisfies the API of its Instrument.
@@ -34,6 +36,7 @@ class DriverMeta(type):
             All \*args go to the driver.
             name and address go to both.
             kwargs go priority to driver bases, otherwise to Instrument.
+
             This occurs at initialization time of an object
         '''
         if (cls.instrument_category is not None and
@@ -82,9 +85,6 @@ class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
         Initialize using the literal visa address
 
         Contains a visa communication object.
-
-        Todo:
-            This might be the place to handle lockouts
     '''
     instrument_category = None
 

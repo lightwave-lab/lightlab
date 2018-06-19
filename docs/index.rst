@@ -70,6 +70,7 @@ Your environment will be slightly different if you're developing, described :ref
    :maxdepth: 2
    :caption: Contents:
 
+   _static/installation/index
    _static/gettingStarted/index
    _static/developers/index
    _static/tutorials/index
