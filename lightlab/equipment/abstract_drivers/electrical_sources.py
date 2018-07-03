@@ -65,13 +65,13 @@ class MultiModalSource(object):
             if mode == 'volt':
                 baseVal[ch] = vEl / cls.baseToVoltCoef
             elif mode == 'milliamp':
-                baseVal[ch] = cls.val2baseUnit(vEl, 'volt') / cls.v2maCoef
+                baseVal[ch] = cls.val2baseUnit(vEl / cls.v2maCoef, 'volt')
             elif mode == 'amp':
-                baseVal[ch] = cls.val2baseUnit(vEl, 'milliamp') * 1e3
+                baseVal[ch] = cls.val2baseUnit(vEl * 1e3, 'milliamp')
             elif mode == 'wattperohm':
-                baseVal[ch] = np.sign(vEl) * np.sqrt(abs(cls.val2baseUnit(vEl, 'amp')))
+                baseVal[ch] = cls.val2baseUnit(np.sign(vEl) * np.sqrt(abs(vEl)), 'amp')
             elif mode == 'mwperohm':
-                baseVal[ch] = cls.val2baseUnit(vEl, 'wattperohm') / 1e3
+                baseVal[ch] = cls.val2baseUnit(vEl / 1e3, 'wattperohm')
         if valueWasDict:
             return baseVal
         else:
