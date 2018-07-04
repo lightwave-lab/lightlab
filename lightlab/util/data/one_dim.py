@@ -732,10 +732,16 @@ class Waveform(MeasuredFunction):
     ''' Typically used for time, voltage functions.
         This is very similar to what is referred to as a "signal."
 
+        Use the unit attribute to set units different than Volts.
+
         Has class methods for generating common time-domain signals
     '''
-    def __init__(self, t, v, unsafe=False):
+
+    unit = None
+
+    def __init__(self, t, v, unit='V', unsafe=False):
         super().__init__(t, v, unsafe=unsafe)
+        self.unit = unit
 
     @classmethod
     def pulse(cls, tArr, tOn, tOff):

@@ -117,7 +117,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         for i, c in enumerate(chans):
             vRaw = self.__transferData(c)
             t, v = self.__scaleData(vRaw)
-            wfms[i] = Waveform(t, v)
+            unit = self.__getUnit()
+            wfms[i] = Waveform(t, v, unit=unit)
 
         return wfms
 
@@ -213,6 +214,15 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         time = np.linspace(-1, 1, len(voltage)) / 2 * timeDivision * 10
 
         return time, voltage
+
+    def __getUnit(self):
+        ''' Gets the unit of the waveform as a string.
+
+            Normally, this will be '"V"', which can be converted to 'V'
+        '''
+
+        yunit_query = self.getConfigParam('WFMOUTPRE:YUNIT', forceHardware=True)
+        return yunit_query.replace('"', '')
 
     def wfmDb(self, chan, nWfms, untriggered=False):
         ''' Transfers a bundle of waveforms representing a signal database. Sample mode only.
