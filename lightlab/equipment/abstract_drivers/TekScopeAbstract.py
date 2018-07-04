@@ -205,9 +205,9 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 (ndarray): voltage in volts
         '''
         get = lambda param: float(self.getConfigParam('WFMOUTPRE:' + param, forceHardware=True))
-        voltage = (np.array(voltRaw) - get('YZERO')) \
+        voltage = (np.array(voltRaw) - get('YOFF')) \
             * get(self._yScaleParam) \
-            + get('YOFF')
+            + get('YZERO')
 
         timeDivision = float(self.getConfigParam('HORIZONTAL:MAIN:SCALE'))
         time = np.linspace(-1, 1, len(voltage)) / 2 * timeDivision * 10
