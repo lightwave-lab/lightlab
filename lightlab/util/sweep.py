@@ -700,9 +700,13 @@ class NdSweeper(Sweeper):
                 newObj.addActuationObject(actuName, actuObj)
         newObj._recalcSwpShape()  # pylint: disable=protected-access
 
-        # Restore parsers. Do not reparse them
         if functionSource is not None:
+            # Restore parsers. Do not reparse them
             newObj.parse = functionSource.parse
+
+            # Restore measurements functions
+            newObj.measure = functionSource.measure
+
         return newObj
 
     def load(self, savefile=None):
