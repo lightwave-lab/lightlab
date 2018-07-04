@@ -670,11 +670,14 @@ class NdSweeper(Sweeper):
         ''' savefile must have been saved with saveObj.
             It restores actuation names and domains to help with plotting.
 
-            Functions referring to equipment cannot be saved.
-            If you give it a functionSource, then those can be restored.
-            This is very useful if you have a parser such as live plot spectra,
-            or move stuff here or there. Also useful if you want to re-gather
-            for some reason.
+            Functions referring to actuation and measurement cannot be saved.
+
+            functionSource: an instantiated object of class `cls`
+                If you give it a functionSource, then those can be restored as well.
+                This is very useful if you have a parser such as live plot spectra,
+                or move stuff here or there. Also useful if you want to re-gather
+                for some reason.
+
         '''
         newObj = cls.fromFile(savefile)
         # Restore actuations
