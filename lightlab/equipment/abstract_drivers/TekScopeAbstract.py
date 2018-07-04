@@ -15,7 +15,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
 
             * `DPO 4034 <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`_
             * `DPO 4032 <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`_
-            * `DSA 8300 <http://www.tek.com/download?n=975655&f=190886&u=http%3A%2F%2Fdownload.tek.com%2Fsecure%2FDifferential-Channel-Alignment-Application-Online-Help.pdf%3Fnvb%3D20170404035703%26amp%3Bnva%3D20170404041203%26amp%3Btoken%3D0ccdfecc3859114d89c36>`_
+            * `DSA 8300 <http://download.tek.com/manual/DSA8300-Programmer-Manual-077057006.pdf>`_
             * `TDS 6154C <http://www.tek.com/sites/tek.com/files/media/media/resources/55W_14873_9.pdf>`_
 
         The main method is :meth:`acquire`, which takes and returns a :class:`~Waveform`.
