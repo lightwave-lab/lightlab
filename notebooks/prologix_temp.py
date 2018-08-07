@@ -32,6 +32,7 @@ class PrologixResourceManager(object):
             except socket.error:
                 s.close()
                 del s
+                print('Cannot connect to Prologix GPIB Controller.')
                 raise
             else:
                 self._socket = s
