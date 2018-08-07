@@ -177,6 +177,53 @@ class PrologixGPIBObject(object):
         # TODO: escape characters according to prologix manual. + ESC etc.
         return string
 
+    def _spoll(self):
+        '''Return status byte of the instrument.'''
+
+        gpib_addr = self._prologix_gpib_addr_formatted
+        spoll = self._prologix_rm.query('++spoll {}'.format(gpib_addr))
+        status_byte = int(spoll.rstrip())
+        return status_byte
+
+    def _LLO(self):
+        '''This command disables front panel operation of the currently addressed instrument.'''
+        self._prologix_rm.send('++llo')
+
+    def _LOC(self):
+        '''This command enables front panel operation of the currently addressed instrument.'''
+        self._prologix_rm.send('++loc')
+
+    @property
+    def termination(self):
+        '''Termination GPIB character. Options: '\r\n', '\r', '\n', ''. '''
+        eos = int(self._prologix_rm.query('++eos').rstrip())
+        if eos == 0:
+            return '\r\n'
+        elif eos == 1:
+            return '\r'
+        elif eos == 2:
+            return '\n'
+        elif eos == 3:
+            return ''
+        else:
+            raise RuntimeError('unknown termination.')
+
+    @termination.setter
+    def termination(self, value):
+        eos = None
+        if value == '\r\n':
+            eos = 0
+        elif value == '\r':
+            eos = 1
+        elif value == '\n':
+            eos = 2
+        elif value == '':
+            eos = 3
+        else:
+            print("Invalid termination: {}".format(repr(value)))
+        if eos is not None:
+            self._prologix_rm.send('++eos {}'.format(eos))
+
     def open(self):
         '''Open connection with instrument.'''
         # we need to connect to the prologix_rm
@@ -202,6 +249,19 @@ class PrologixGPIBObject(object):
             pconn.send(self._prologix_escape_characters(queryStr))
             retStr = pconn.query('++read eoi')
         return retStr.rstrip()
+
+    def clear(self):
+        '''This command sends the Selected Device Clear (SDC) message to the currently specified GPIB address.'''
+        with self._prologix_rm.connected() as pconn:
+            pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
+            pconn.send('++clr')
+
+    def query_raw_binary(self, queryStr, withTimeout=None):
+        '''Read the unmodified string sent from the instrument to the computer. In contrast to read(), no termination characters are stripped. Also no decoding.'''
+        with self._prologix_rm.connected() as pconn:
+            pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
+            retStr = pconn.query('++read eoi')
+        return retStr
 
     def instrID(self):
         r"""Returns the \*IDN? string"""
