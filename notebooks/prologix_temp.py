@@ -174,13 +174,20 @@ class PrologixGPIBObject(object):
             return f'{self.gpib_pad:d} {self.gpib_sad:d}'
 
     def _prologix_escape_characters(self, string):
-        # TODO: escape characters according to prologix manual. + ESC etc.
+        '''Escapes ESC, +, \n, \r characters with ESC. Refer to Prologix Manual.'''
+        def escape(string, char):
+            return string.replace(char, chr(17) + char)
+
+        string = escape(string, chr(17))  # this must come first
+        string = escape(string, '+')
+        string = escape(string, '\n')
+        string = escape(string, '\r')
         return string
 
     def _spoll(self):
         '''Return status byte of the instrument.'''
 
-        gpib_addr = self._prologix_gpib_addr_formatted
+        gpib_addr = self._prologix_gpib_addr_formatted()
         spoll = self._prologix_rm.query('++spoll {}'.format(gpib_addr))
         status_byte = int(spoll.rstrip())
         return status_byte
