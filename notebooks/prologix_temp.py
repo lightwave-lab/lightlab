@@ -1,7 +1,7 @@
 # prologix patch, to be inserted somewhere in visa_bases
 import socket
 from contextlib import contextmanager
-
+import time
 
 class PrologixResourceManager(object):
     '''Controls a Prologix GPIB-ETHERNET Controller v1.2
@@ -166,7 +166,7 @@ class PrologixGPIBObject(object):
         self.ip_address, self.gpib_pad, self.gpib_sad = _sanitize_address(address)
         self._prologix_rm = PrologixResourceManager(self.ip_address)
         self._open_retries = 0
-        self.__timeout = None
+        self.__timeout = 2  # 2 seconds is the default
 
     def _prologix_gpib_addr_formatted(self):
         if self.gpib_sad is None:
@@ -255,8 +255,21 @@ class PrologixGPIBObject(object):
         with self._prologix_rm.connected() as pconn:
             pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
             pconn.send(self._prologix_escape_characters(queryStr))
-            retStr = pconn.query('++read eoi')
-        return retStr.rstrip()
+        if withTimeout is None:
+            withTimeout = self.timeout
+        currenttime = time.time()
+        expirationtime = currenttime + withTimeout
+        while time.time() < expirationtime:
+            # self.timeout = newTimeout
+            status_byte = self._spoll()
+            # MAV indicates that the message is available
+            MAV = (status_byte >> 4) & 1
+            if MAV:
+                retStr = self._prologix_rm.query('++read eoi')
+                return retStr.rstrip()
+            # ask for the message in small increments
+            time.sleep(0.1)
+        raise RuntimeError('Query timed out')
 
     def clear(self):
         '''This command sends the Selected Device Clear (SDC) message to the currently specified GPIB address.'''
@@ -274,3 +287,18 @@ class PrologixGPIBObject(object):
     def instrID(self):
         r"""Returns the \*IDN? string"""
         return self.query('*IDN?')
+
+    # This timeout is between the user and the instrument. 
+    # For example, if we did a sweep that should take ~10 seconds
+    # but ends up taking longer, we set the timeout to 20 seconds.
+    @property
+    def timeout(self):
+        return self.__timeout
+
+    @timeout.setter
+    def timeout(self, newTimeout):
+        if newTimeout < 0:
+            raise ValueError("Timeouts cannot be negative")
+        self.__timeout = newTimeout
+
+    
