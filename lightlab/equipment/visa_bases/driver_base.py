@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 
 class InstrumentSessionBase(ABC):
+    ''' Base class for Instrument sessions, to be inherited and specialized
+    by VISAObject and PrologixGPIBObject'''
 
     @abstractmethod
     def spoll(self):
@@ -39,9 +41,9 @@ class InstrumentSessionBase(ABC):
     def query_raw_binary(self):
         pass
 
-    @abstractmethod
     def instrID(self):
-        pass
+        r"""Returns the \*IDN? string"""
+        return self.query('*IDN?')
 
     @property
     @abstractmethod

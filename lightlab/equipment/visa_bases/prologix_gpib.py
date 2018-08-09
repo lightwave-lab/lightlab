@@ -296,10 +296,6 @@ class PrologixGPIBObject(InstrumentSessionBase):
 
         raise RuntimeError('Query timed out')
 
-    def instrID(self):
-        r"""Returns the \*IDN? string"""
-        return self.query('*IDN?')
-
     # This timeout is between the user and the instrument.
     # For example, if we did a sweep that should take ~10 seconds
     # but ends up taking longer, we set the timeout to 20 seconds.

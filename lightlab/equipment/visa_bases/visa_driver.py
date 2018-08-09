@@ -19,6 +19,17 @@ class _AttrGetter(object):
 
 
 class InstrumentSession(_AttrGetter):
+    ''' This class is the interface between the higher levels of lightlab instruments
+    and the driver controlling the GPIB line. Its methods are specialized into
+    either PrologixGPIBObject or VISAObject.
+
+    This was mainly done because the Prologix GPIB Ethernet controller does
+    is not VISA compatible and does not provide a VISA interface.
+
+    If the address starts with 'prologix://', it will use PrologixGPIBObject's methods,
+    otherwise it will use VISAObject's methods (relying on pyvisa).
+
+    '''
 
     _session_object = None
 

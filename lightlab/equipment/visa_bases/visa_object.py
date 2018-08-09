@@ -151,10 +151,6 @@ class VISAObject(InstrumentSessionBase):
             pyvisa.constants.VI_ATTR_TMO_VALUE, newTimeout)
         self.__timeout = newTimeout
 
-    def reset(self):
-        r"""Writes \*RST"""
-        self.write('*RST')
-
     def wait(self, bigMsTimeout=10000):
         self.query('*OPC?', withTimeout=bigMsTimeout)
 
