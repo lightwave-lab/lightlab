@@ -16,7 +16,15 @@ class VISAObject(object):
         not a subclass; it is a wrapper. It only contains one (at at time).
         That means VISAObject can offer extra opening, closing,
         session management, and error reporting features.
+
+        This class relies on pyvisa to work
     '''
+
+    mbSession = None
+    resMan = None
+    _open_retries = 0
+    __timeout = None
+
     def __init__(self, address=None, tempSess=False):
         '''
             Args:
@@ -25,8 +33,8 @@ class VISAObject(object):
         '''
         self.tempSess = tempSess
         self.resMan = None
-        self.address = address
         self.mbSession = None
+        self.address = address
         self._open_retries = 0
         self.__timeout = None
 
@@ -54,7 +62,7 @@ class VISAObject(object):
                 self.open()
             else:
                 logger.error(err)
-                raise err
+                raise
         else:
             if self._open_retries != 0:
                 logger.warning('Found it!')
@@ -65,9 +73,9 @@ class VISAObject(object):
             return
         try:
             self.mbSession.close()
-        except pyvisa.VisaIOError as err:
+        except pyvisa.VisaIOError:
             logger.error('There was a problem closing the VISA %s', self.address)
-            raise err
+            raise
         self.mbSession = None
         if not self.tempSess:
             logger.debug('Closed %s', self.address)
@@ -77,9 +85,9 @@ class VISAObject(object):
             self.open()
             try:
                 self.mbSession.write(writeStr)
-            except Exception as err:
+            except Exception:
                 logger.error('Problem writing to %s', self.address)
-                raise err
+                raise
             logger.debug('%s - W - %s', self.address, writeStr)
         finally:
             if self.tempSess:
@@ -97,10 +105,10 @@ class VISAObject(object):
                 retStr = self.mbSession.query(queryStr)
                 if withTimeout is not None:
                     self.timeout = toutOrig
-            except Exception as err:
+            except Exception:
                 logger.error('Problem querying to %s', self.address)
                 # self.close()
-                raise err
+                raise
             retStr = retStr.rstrip()
             logger.debug('Query Read - %s', retStr)
         finally:

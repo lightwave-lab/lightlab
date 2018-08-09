@@ -1,4 +1,5 @@
 from .visa_object import VISAObject
+from .resource_manager import InstrumentSession
 from lightlab import logger
 import inspect
 
@@ -67,12 +68,13 @@ class DriverMeta(type):
                 else:
                     instrument_kwargs[k] = v
 
-            driver_obj = type.__call__(cls, *args,
-                                       name=name, address=address,
-                                       **driver_kwargs)
+            # print(driver_initArgNames, driver_kwargs)
+            # kwargs = dict(name=name, address=address)
+            # kwargs.update(**driver_kwargs)
+            driver_class = cls
             instrument_obj = type.__call__(cls.instrument_category,
                                            name=name, address=address,
-                                           driver_object=driver_obj,
+                                           driver_class=driver_class,
                                            driver_kwargs=driver_kwargs,
                                            **instrument_kwargs)
             return instrument_obj
@@ -80,7 +82,7 @@ class DriverMeta(type):
             return type.__call__(cls, *args, **kwargs)
 
 
-class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
+class VISAInstrumentDriver(InstrumentSession, metaclass=DriverMeta):
     ''' Generic (but not abstract) class for an instrument.
         Initialize using the literal visa address
 

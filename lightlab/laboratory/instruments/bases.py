@@ -424,9 +424,8 @@ class Instrument(Node):
         self.host = kwargs.pop("host", None)
         self.ports = kwargs.pop("ports", dict())
 
-        self.__driver_object = kwargs.pop("driver_object", None)
-        if self.__driver_object is not None:
-            self._driver_class = type(self.__driver_object)
+        self._driver_class = kwargs.pop("driver_class", DefaultDriver)
+        self.__driver_object = None
         self._name = name
         self._id_string = id_string
         self.address = address
@@ -464,7 +463,7 @@ class Instrument(Node):
         # set obj.__mangled_variable = 'something'
         try:
             return self.__dict__[mangle(attrName, self.__class__.__name__)]
-        except KeyError:
+        except KeyError as _:
             raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):

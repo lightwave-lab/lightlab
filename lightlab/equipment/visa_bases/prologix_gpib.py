@@ -3,10 +3,14 @@ import socket
 from contextlib import contextmanager
 import time
 
+
 class PrologixResourceManager(object):
     '''Controls a Prologix GPIB-ETHERNET Controller v1.2
     manual: http://prologix.biz/downloads/PrologixGpibEthernetManual.pdf'''
 
+
+    # TODO: make this class a singleton:
+    # https://howto.lintel.in/python-__new__-magic-method-explained/
     port = 1234
     _socket = None
 
@@ -185,7 +189,7 @@ class PrologixGPIBObject(object):
         string = escape(string, '\r')
         return string
 
-    def _spoll(self):
+    def spoll(self):
         '''Return status byte of the instrument.'''
 
         gpib_addr = self._prologix_gpib_addr_formatted()
@@ -203,7 +207,7 @@ class PrologixGPIBObject(object):
 
     @property
     def termination(self):
-        '''Termination GPIB character. Options: '\r\n', '\r', '\n', ''. '''
+        r'''Termination GPIB character. Options: '\r\n', '\r', '\n', ''. '''
         eos = int(self._prologix_rm.query('++eos').rstrip())
         if eos == 0:
             return '\r\n'
@@ -251,25 +255,11 @@ class PrologixGPIBObject(object):
             pconn.send(self._prologix_escape_characters(writeStr))
 
     def query(self, queryStr, withTimeout=None):
-        # Todo: implement withTimeout
-        with self._prologix_rm.connected() as pconn:
-            pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
-            pconn.send(self._prologix_escape_characters(queryStr))
-        if withTimeout is None:
-            withTimeout = self.timeout
-        currenttime = time.time()
-        expirationtime = currenttime + withTimeout
-        while time.time() < expirationtime:
-            # self.timeout = newTimeout
-            status_byte = self._spoll()
-            # MAV indicates that the message is available
-            MAV = (status_byte >> 4) & 1
-            if MAV:
-                retStr = self._prologix_rm.query('++read eoi')
-                return retStr.rstrip()
-            # ask for the message in small increments
-            time.sleep(0.1)
-        raise RuntimeError('Query timed out')
+        '''Read the unmodified string sent from the instrument to the
+           computer.
+        '''
+        retStr = self.query_raw_binary(queryStr, withTimeout)
+        return retStr.rstrip()
 
     def clear(self):
         '''This command sends the Selected Device Clear (SDC) message to the currently specified GPIB address.'''
@@ -278,17 +268,38 @@ class PrologixGPIBObject(object):
             pconn.send('++clr')
 
     def query_raw_binary(self, queryStr, withTimeout=None):
-        '''Read the unmodified string sent from the instrument to the computer. In contrast to read(), no termination characters are stripped. Also no decoding.'''
+        '''Read the unmodified string sent from the instrument to the
+           computer. In contrast to query(), no termination characters
+           are stripped. Also no decoding.'''
+
         with self._prologix_rm.connected() as pconn:
             pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
-            retStr = pconn.query('++read eoi')
-        return retStr
+            pconn.send(self._prologix_escape_characters(queryStr))
+
+        if withTimeout is None:
+            withTimeout = self.timeout
+
+        # checking if message is available in small increments
+        currenttime = time.time()
+        expirationtime = currenttime + withTimeout
+        while time.time() < expirationtime:
+            # self.timeout = newTimeout
+            status_byte = self.spoll()
+            # MAV indicates that the message is available
+            MAV = (status_byte >> 4) & 1
+            if MAV:
+                retStr = self._prologix_rm.query('++read eoi')
+                return retStr.rstrip()
+            # ask for the message in small increments
+            time.sleep(0.1)
+
+        raise RuntimeError('Query timed out')
 
     def instrID(self):
         r"""Returns the \*IDN? string"""
         return self.query('*IDN?')
 
-    # This timeout is between the user and the instrument. 
+    # This timeout is between the user and the instrument.
     # For example, if we did a sweep that should take ~10 seconds
     # but ends up taking longer, we set the timeout to 20 seconds.
     @property
@@ -300,5 +311,3 @@ class PrologixGPIBObject(object):
         if newTimeout < 0:
             raise ValueError("Timeouts cannot be negative")
         self.__timeout = newTimeout
-
-    
