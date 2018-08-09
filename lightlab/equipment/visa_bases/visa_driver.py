@@ -30,7 +30,7 @@ class InstrumentSession(object):
         return getattr(self._session_object, name)
 
     def __dir__(self):
-        dir_list = set(super().__dir__() + dir(_session_object))
+        return set(super().__dir__() + dir(self._session_object))
 
     def __setattr__(self, name, value):
         if name in ('_session_object'):
