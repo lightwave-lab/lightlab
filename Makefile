@@ -99,7 +99,7 @@ pip-freeze: devbuild
 	( \
 		source venv/bin/activate; \
 		pipdeptree -lf | grep -E '^\w+' | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U; \
-		pipdeptree -lf | grep -E '^\w+' | grep -v '^\-e' | grep -v '^#' > dev-requirements.txt; \
+		pipdeptree -lf | grep -E '^\w+' | grep -v '^\-e' | grep -v '^#' > dev-requirements-temp.txt; \
 	)
 
 pip-update: pip-freeze
