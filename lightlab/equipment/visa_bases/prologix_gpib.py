@@ -65,6 +65,7 @@ class PrologixResourceManager(object):
             self.send('++mode 1')  # controller mode
             self.send('++read_tmo_ms 2000')  # timeout in ms
             self.send('++eos 0')  # append CR+LF after every GPIB
+            self.send('++savecfg 0')  # Disable saving of configuration parameters in EPROM
 
     def send(self, value):
         if self._socket is not None:
