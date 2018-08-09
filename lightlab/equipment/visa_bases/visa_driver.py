@@ -68,13 +68,12 @@ class DriverMeta(type):
                 else:
                     instrument_kwargs[k] = v
 
-            # print(driver_initArgNames, driver_kwargs)
-            # kwargs = dict(name=name, address=address)
-            # kwargs.update(**driver_kwargs)
-            driver_class = cls
+            driver_obj = type.__call__(cls, *args,
+                                       name=name, address=address,
+                                       **driver_kwargs)
             instrument_obj = type.__call__(cls.instrument_category,
                                            name=name, address=address,
-                                           driver_class=driver_class,
+                                           driver_object=driver_obj,
                                            driver_kwargs=driver_kwargs,
                                            **instrument_kwargs)
             return instrument_obj

@@ -424,8 +424,9 @@ class Instrument(Node):
         self.host = kwargs.pop("host", None)
         self.ports = kwargs.pop("ports", dict())
 
-        self._driver_class = kwargs.pop("driver_class", DefaultDriver)
-        self.__driver_object = None
+        self.__driver_object = kwargs.pop("driver_object", None)
+        if self.__driver_object is not None:
+            self._driver_class = self.__driver_object.__class__
         self._name = name
         self._id_string = id_string
         self.address = address
