@@ -1,7 +1,7 @@
 jupyter==1.0.0
 mock==2.0.0
 nbstripout==0.3.1
-pipdeptree==0.11.0
+pipdeptree==0.13.0
 pyserial==3.4
 python-dateutil==2.6.1
 pytz==2017.3
