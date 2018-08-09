@@ -5,6 +5,9 @@ from .driver_base import InstrumentSessionBase
 
 OPEN_RETRIES = 5
 
+CR = '\r'
+LF = '\n'
+
 
 class VISAObject(InstrumentSessionBase):
     '''
@@ -21,9 +24,12 @@ class VISAObject(InstrumentSessionBase):
         This class relies on pyvisa to work
     '''
 
+
+
     mbSession = None
     resMan = None
     _open_retries = 0
+    _termination = CR + LF
     __timeout = None
 
     def __init__(self, address=None, tempSess=False):
@@ -51,6 +57,7 @@ class VISAObject(InstrumentSessionBase):
             self.resMan = pyvisa.ResourceManager()
         try:
             self.mbSession = self.resMan.open_resource(self.address)
+            self.mbSession.write_termination = self.termination
             if not self.tempSess:
                 logger.debug('Opened %s', self.address)
         except pyvisa.VisaIOError as err:
@@ -160,7 +167,14 @@ class VISAObject(InstrumentSessionBase):
         raise NotImplementedError()
 
     def clear(self):
-        raise NotImplementedError()
+        if self.mbSession is None:
+            try:
+                self.open()
+                self.mbSession.clear()
+            finally:
+                self.close()
+        else:
+            self.mbSession.clear()
 
     def query_raw_binary(self):
         raise NotImplementedError()
@@ -170,4 +184,15 @@ class VISAObject(InstrumentSessionBase):
 
     @property
     def termination(self):
-        raise NotImplementedError()
+        if self.mbSession is not None:
+            self._termination = self.mbSession.write_termination
+        return self._termination
+
+    @termination.setter
+    def termination(self, value):
+        if value in (CR, LF, CR + LF, ''):
+            self._termination = value
+        else:
+            raise ValueError("Termination must be one of these: CR, CRLF, LR, ''")
+        if self.mbSession is not None:
+            self.mbSession.write_termination = value
