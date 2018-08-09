@@ -24,8 +24,6 @@ class VISAObject(InstrumentSessionBase):
         This class relies on pyvisa to work
     '''
 
-
-
     mbSession = None
     resMan = None
     _open_retries = 0

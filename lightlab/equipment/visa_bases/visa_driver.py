@@ -12,33 +12,52 @@ class InstrumentIOError(RuntimeError):
     pass
 
 
-class InstrumentSession(object):
+class _AttrGetter(object):
+    # see https://stackoverflow.com/questions/28861064/super-object-has-no-attribute-getattr-in-python3
+    def __getattr__(self, name):
+        raise AttributeError("'{}' has no attribute '{}'".format(str(self), name))
+
+
+class InstrumentSession(_AttrGetter):
 
     _session_object = None
 
-    def __init__(self, address=None, tempSess=False):
+    def reinstantiate_session(self, address, tempSess):
         if address is not None and address.startswith('prologix://'):
-            if type(self._session_object) != PrologixGPIBObject:
-                self._session_object = PrologixGPIBObject(address=address, tempSess=tempSess)
+            self._session_object = PrologixGPIBObject(address=address, tempSess=tempSess)
         else:
-            if type(self._session_object) != VISAObject:
-                self._session_object = VISAObject(address=address, tempSess=tempSess)
+            self._session_object = VISAObject(address=address, tempSess=tempSess)
+
+    def __init__(self, address=None, tempSess=False):
+        self.reinstantiate_session(address, tempSess)
+        self.tempSess = tempSess
+        self.address = address
 
     def __getattr__(self, name):
         if name in ('_session_object'):
             return super().__getattr__(name)
-        return getattr(self._session_object, name)
+        else:
+            try:
+                return getattr(self._session_object, name)
+            except AttributeError:
+                return super().__getattr__(name)
 
     def __dir__(self):
-        return set(super().__dir__() + dir(self._session_object))
+        return set(super().__dir__() + list(InstrumentSessionBase.__abstractmethods__))
 
     def __setattr__(self, name, value):
         if name in ('_session_object'):
-            return super().__setattr__(name, value)
-        elif hasattr(self, name):
             super().__setattr__(name, value)
+        elif name in ('address'):
+            super().__setattr__(name, value)
+            if self._session_object is not None and self._session_object.address != value:
+                tempSess = self._session_object.tempSess
+                self.reinstantiate_session(address=value, tempSess=tempSess)
         elif hasattr(self._session_object, name):
             setattr(self._session_object, name, value)
+            # also change in local dictionary if possible
+            if name in self.__dict__:
+                self.__dict__[name] = value
         else:
             super().__setattr__(name, value)
 
