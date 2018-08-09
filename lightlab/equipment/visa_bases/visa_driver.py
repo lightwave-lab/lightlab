@@ -1,7 +1,46 @@
+from abc import ABCMeta
 from .visa_object import VISAObject
-from .resource_manager import InstrumentSession
 from lightlab import logger
 import inspect
+
+from .driver_base import InstrumentSessionBase
+from .prologix_gpib import PrologixGPIBObject
+from .visa_object import VISAObject
+
+
+class InstrumentIOError(RuntimeError):
+    pass
+
+
+class InstrumentSession(object):
+
+    _session_object = None
+
+    def __init__(self, address=None, tempSess=False):
+        if address is not None and address.startswith('prologix://'):
+            if type(self._session_object) != PrologixGPIBObject:
+                self._session_object = PrologixGPIBObject(address=address, tempSess=tempSess)
+        else:
+            if type(self._session_object) != VISAObject:
+                self._session_object = VISAObject(address=address, tempSess=tempSess)
+
+    def __getattr__(self, name):
+        if name in ('_session_object'):
+            return super().__getattr__(name)
+        return getattr(self._session_object, name)
+
+    def __dir__(self):
+        dir_list = set(super().__dir__() + dir(_session_object))
+
+    def __setattr__(self, name, value):
+        if name in ('_session_object'):
+            return super().__setattr__(name, value)
+        elif hasattr(self, name):
+            super().__setattr__(name, value)
+        elif hasattr(self._session_object, name):
+            setattr(self._session_object, name, value)
+        else:
+            super().__setattr__(name, value)
 
 
 class IncompleteClass(Exception):
@@ -89,8 +128,10 @@ class VISAInstrumentDriver(InstrumentSession, metaclass=DriverMeta):
     '''
     instrument_category = None
 
-    def __init__(self, name='Default Driver', address=None, directInit=False, **kwargs):  # pylint: disable=unused-argument
+    def __init__(self, name='Default Driver', address=None, **kwargs):  # pylint: disable=unused-argument
         self.name = name
+        self.address = address
+        kwargs.pop('directInit', False)
         if 'tempSess' not in kwargs.keys():
             kwargs['tempSess'] = True
         super().__init__(address=address, **kwargs)
@@ -104,7 +145,10 @@ class VISAInstrumentDriver(InstrumentSession, metaclass=DriverMeta):
         if not self.__started:
             self.__started = True
             self.startup()
-            super().open()
+
+    def close(self):
+        super().close()
+        self.__started = False
 
 
 DefaultDriver = VISAInstrumentDriver

@@ -423,13 +423,13 @@ class Instrument(Node):
         self.bench = kwargs.pop("bench", None)
         self.host = kwargs.pop("host", None)
         self.ports = kwargs.pop("ports", dict())
+        self.address = address
 
         self.__driver_object = kwargs.pop("driver_object", None)
         if self.__driver_object is not None:
             self._driver_class = self.__driver_object.__class__
         self._name = name
         self._id_string = id_string
-        self.address = address
         super().__init__(**kwargs)
 
     def __dir__(self):
@@ -456,7 +456,7 @@ class Instrument(Node):
         if attrName in self.optionalAttributes:
             errorText += '\nThis is an optional attribute of {} '.format(type(self).__name__)
             errorText += 'not implemented by this particular driver'
-        elif hasattr(self._driver_class, attrName):
+        elif hasattr(self._driver_class, attrName) or hasattr(self.__driver_object, attrName):
             errorText += '\nIt looks like you are trying to access a low-level attribute'
             errorText += '\nUse ".driver.{}" to get it'.format(attrName)
 

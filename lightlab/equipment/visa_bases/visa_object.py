@@ -1,11 +1,12 @@
 import visa as pyvisa
 import time
 from lightlab import visalogger as logger
+from .driver_base import InstrumentSessionBase
 
 OPEN_RETRIES = 5
 
 
-class VISAObject(object):
+class VISAObject(InstrumentSessionBase):
     '''
         Abstract class for something that communicates via messages
         (GPIB/USB/Serial/TCPIP/etc.). It handles message-based sessions
@@ -151,3 +152,22 @@ class VISAObject(object):
 
     def wait(self, bigMsTimeout=10000):
         self.query('*OPC?', withTimeout=bigMsTimeout)
+
+    def LLO(self):
+        raise NotImplementedError()
+
+    def LOC(self):
+        raise NotImplementedError()
+
+    def clear(self):
+        raise NotImplementedError()
+
+    def query_raw_binary(self):
+        raise NotImplementedError()
+
+    def spoll(self):
+        raise NotImplementedError()
+
+    @property
+    def termination(self):
+        raise NotImplementedError()

@@ -2,12 +2,12 @@
 import socket
 from contextlib import contextmanager
 import time
+from .driver_base import InstrumentSessionBase
 
 
 class PrologixResourceManager(object):
     '''Controls a Prologix GPIB-ETHERNET Controller v1.2
     manual: http://prologix.biz/downloads/PrologixGpibEthernetManual.pdf'''
-
 
     # TODO: make this class a singleton:
     # https://howto.lintel.in/python-__new__-magic-method-explained/
@@ -155,7 +155,7 @@ def _sanitize_address(address):
     return ip_address, gpib_pad, gpib_sad
 
 
-class PrologixGPIBObject(object):
+class PrologixGPIBObject(InstrumentSessionBase):
 
     def __init__(self, address=None, tempSess=False):
         '''
@@ -197,11 +197,11 @@ class PrologixGPIBObject(object):
         status_byte = int(spoll.rstrip())
         return status_byte
 
-    def _LLO(self):
+    def LLO(self):
         '''This command disables front panel operation of the currently addressed instrument.'''
         self._prologix_rm.send('++llo')
 
-    def _LOC(self):
+    def LOC(self):
         '''This command enables front panel operation of the currently addressed instrument.'''
         self._prologix_rm.send('++loc')
 
