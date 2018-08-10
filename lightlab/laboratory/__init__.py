@@ -249,6 +249,9 @@ class NamedList(MutableSequence, Hashable):
     def __str__(self):
         return str(self.list)
 
+    def __repr__(self):
+        return ('TypedList([{}])'.format('\n'.join(map(repr, self.list))))
+
 
 class TypedList(NamedList):
     """

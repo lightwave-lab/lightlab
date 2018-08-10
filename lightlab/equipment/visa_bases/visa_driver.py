@@ -99,7 +99,7 @@ class DriverMeta(type):
                                           'which is essential for {}'.format(inst_klass.__name__))
         super().__init__(name, bases, dct)
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, name=None, address=None, *args, **kwargs):
         r'''
             All \*args go to the driver.
             name and address go to both.
@@ -109,8 +109,6 @@ class DriverMeta(type):
         '''
         if (cls.instrument_category is not None and
                 not kwargs.pop('directInit', False)):
-            name = kwargs.pop('name', None)
-            address = kwargs.pop('address', None)
 
             # Split the kwargs into those needed by
             # 1) driver and its bases and 2) the leftovers
@@ -135,9 +133,8 @@ class DriverMeta(type):
                 else:
                     instrument_kwargs[k] = v
 
-            driver_obj = type.__call__(cls, *args,
-                                       name=name, address=address,
-                                       **driver_kwargs)
+            driver_obj = type.__call__(cls, name=name, address=address,
+                                       *args, **driver_kwargs)
             instrument_obj = type.__call__(cls.instrument_category,
                                            name=name, address=address,
                                            driver_object=driver_obj,
@@ -145,7 +142,7 @@ class DriverMeta(type):
                                            **instrument_kwargs)
             return instrument_obj
         else:
-            return type.__call__(cls, *args, **kwargs)
+            return type.__call__(cls, name=name, address=address, *args, **kwargs)
 
 
 class VISAInstrumentDriver(InstrumentSession, metaclass=DriverMeta):

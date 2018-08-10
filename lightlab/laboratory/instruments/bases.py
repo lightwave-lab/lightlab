@@ -583,6 +583,10 @@ class Instrument(Node):
     def __str__(self):
         return "{}".format(self.name)
 
+    def __repr__(self):
+        return "<{} name={}, address={}, id={}>".format(self.__class__.__name__,
+                                                        self.name, self.address, id(self))
+
     def display(self):
         """ Displays the instrument's info table in a nice format."""
         lines = ["{}".format(self)]
