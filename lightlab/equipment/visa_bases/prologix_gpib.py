@@ -2,6 +2,7 @@
 import socket
 from contextlib import contextmanager
 import time
+import re
 from .driver_base import InstrumentSessionBase
 
 
@@ -92,10 +93,6 @@ class PrologixResourceManager(object):
                 self._send(self._socket, query_msg)
                 recv = self._recv(self._socket, msg_length)
         return recv
-
-
-import re
-import socket
 
 
 def _is_valid_hostname(hostname):

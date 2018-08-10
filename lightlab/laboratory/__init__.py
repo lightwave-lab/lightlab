@@ -5,7 +5,7 @@ designed to be "hashable", i.e., easy to store and share.
 """
 
 import jsonpickle
-from collections import MutableSequence, Mapping
+from collections.abc import MutableSequence, Mapping
 
 __all__ = ["Node"]
 

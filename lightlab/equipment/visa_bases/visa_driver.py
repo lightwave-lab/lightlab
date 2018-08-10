@@ -1,5 +1,3 @@
-from abc import ABCMeta
-from .visa_object import VISAObject
 from lightlab import logger
 import inspect
 
