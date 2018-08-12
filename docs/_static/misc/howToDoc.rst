@@ -1,5 +1,5 @@
-How to set up this sweet docmentation workflow
-==============================================
+How to set up this sweet documentation workflow
+===============================================
 
 Purely for informing other projects in the future. Users and developers on this project do not have to do any of this. It is setup for you.
 

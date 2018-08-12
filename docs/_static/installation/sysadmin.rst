@@ -14,9 +14,19 @@ Host machines
 
 You first need to install NI-VISA in all machines, including the server, which can also play the dual role of a host, since it can also be connected to instruments. Download NI-VISA `here <http://www.ni.com/visa/>`_. Installing for MacOS, Windows, Linux (Fedora-like) was a matter of following NI's instructions. Installing in ubuntu machines was a little trickier, but here is what worked for us.
 
+Installing NI-visa on Windows
+"""""""""""""""""""""""""""""
+
+.. todo:: Include instructions.
+
+Installing NI-visa on Windows
+"""""""""""""""""""""""""""""
+
+.. warning:: Currently not supported.
+
 .. _ubuntu_installation:
 
-Installing NI-visa (32-bit) in Ubuntu (64-bit)
+Installing NI-visa (32-bit) on Ubuntu (64-bit)
 """"""""""""""""""""""""""""""""""""""""""""""
 
 Followed instructions `found here <http://forums.ni.com/t5/Linux-Users/Using-NI-VISA-with-Arch-Linux-or-Ubuntu-14-04/gpm-p/3462361#M2287>`_, but in computers with EFI secure boot, like all modern ones, we need to sign the kernel modules for and add the certificate to the EFI. For this, follow these `instructions <http://askubuntu.com/questions/762254/why-do-i-get-required-key-not-available-when-install-3rd-party-kernel-modules>`_.
