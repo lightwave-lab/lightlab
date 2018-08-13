@@ -69,9 +69,9 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
             pyvisa.constants.VI_ATTR_TERMCHAR_EN, pyvisa.constants.VI_TRUE)
         self.mbSession.set_visa_attribute(
             pyvisa.constants.VI_ATTR_IO_PROT, pyvisa.constants.VI_PROT_4882_STRS)
-        self.mbSession.write_termination = '\n'
+        self.termination = '\n'
         self.timeout = 25000
-        self.mbSession.clear()
+        self.clear()
 
     def write(self, writeStr):
         ''' The APEX does not deal with write; you have to query to clear the buffer '''
@@ -146,15 +146,15 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
                 (ndarray, ndarray): wavelength in nm, power in dBm
         """
         self.open()
-        self.mbSession.clear()
+        self.clear()
         try:
             # retStr = self.query('SPDATAD0')
             powerData = self.mbSession.query_ascii_values('SPDATAD0', separator=' ')
             # powerData = self.mbSession.query('SPDATAD0')
         except pyvisa.VisaIOError as e:
-            self.close()
             raise e
-        self.close()
+        finally:
+            self.close()
 
         dataLen = int(powerData[0])
         powerData = np.array(powerData[1:])
@@ -168,9 +168,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         for i in range(avgCnt):
             self.triggerAcquire()
             nm, dbm = self.transferData()
-            if self.mbSession is not None:
-                self.mbSession.close()
-                raise Exception('data transfer did not close OSA session. Very bad.')
+
             if i is 0:
                 dbmAvg = dbm / avgCnt
             else:

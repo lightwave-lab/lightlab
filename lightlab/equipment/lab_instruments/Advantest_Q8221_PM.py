@@ -31,8 +31,8 @@ class Advantest_Q8221_PM(VISAInstrumentDriver, PowerMeterAbstract):
 
     def open(self):
         super().open()
-        self.mbSession.write_termination = ''
-        self.mbSession.clear()
+        self.termination = ''
+        self.clear()
 
     def powerDbm(self, channel=1):
         ''' The detected optical power in dB on the specified channel

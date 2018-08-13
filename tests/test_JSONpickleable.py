@@ -13,7 +13,7 @@
 '''
 import pytest
 import lightlab.util.io as io
-from lightlab.util.io import JSONpickleable
+from lightlab.util.io.jsonpickleable import JSONpickleable
 from pathlib import Path
 from lightlab.equipment.visa_bases import VISAObject
 import numpy as np

@@ -145,7 +145,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         for i, lno in enumerate(lineNos):
             if debugEvery is not None and i % debugEvery == 0:
                 logger.debug('Transferring %s / %s', lno, lineNos[-1])
-            self.mbSession.write('TRAC:SGR:SEL:LINE {}'.format(lno))
+            self.write('TRAC:SGR:SEL:LINE {}'.format(lno))
             for _ in range(2):  # Sometimes the query just fails so we try again
                 rawLine = self.mbSession.query_binary_values('FETCH:SGR?')
                 if len(rawLine) > 0:

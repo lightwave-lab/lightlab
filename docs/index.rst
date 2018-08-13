@@ -33,6 +33,10 @@ Hardware
 
     In order to enjoy lightlab's experiment control capabilities, we assume that you have VISA compatible hardware: at least one computer with a GPIB card or USB-GPIB converter; one instrument; and your favorite VISA driver installed. Just kidding, there is a one-company monopoly on that (see :ref:`pyvisa-reference`).
 
+    There are other devices or GPIB controllers that are not VISA-compliant and do not need any driver installation, and can be used directly via a TCP socket. Prologix_, for example, offers a GPIB-ethernet controller with a built-in TCP socket server. We have included a driver for that in lightlab (see :ref:`creating_drivers`).
+
+    .. _Prologix: http://prologix.biz/gpib-ethernet-controller.html
+
 .. _pyvisa-reference:
 
 pyvisa
@@ -65,6 +69,8 @@ If you are new to python programming, jupyter notebooks, you might want to sit d
     git clone git@github.com:lightwave-lab/lightlab.git
 
 Your environment will be slightly different if you're developing, described :ref:`here <basic_environment>`.
+
+If you need more detailed installation instructions, they are available in :ref:`installation_instructions`.
 
 .. toctree::
    :maxdepth: 2
