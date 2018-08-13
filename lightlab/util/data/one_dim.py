@@ -157,6 +157,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
             Whatever is returned by ``pyplot.plot``
         '''
         curve = plt.plot(*(self.getData() + args), **kwargs)
+        plt.autoscale(enable=True, axis='x', tight=True)
         if 'label' in kwargs.keys():
             plt.legend()
         if livePlot:
