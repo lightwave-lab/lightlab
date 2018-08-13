@@ -1,4 +1,4 @@
-from lightlab import logger
+from lightlab import visalogger
 import inspect
 
 from .driver_base import InstrumentSessionBase
@@ -11,9 +11,15 @@ class InstrumentIOError(RuntimeError):
 
 
 class _AttrGetter(object):
-    # see https://stackoverflow.com/questions/28861064/super-object-has-no-attribute-getattr-in-python3
+    # see
+    # https://stackoverflow.com/questions/28861064/super-object-has-no-attribute-getattr-in-python3
+
     def __getattr__(self, name):
         raise AttributeError("'{}' has no attribute '{}'".format(str(self), name))
+
+
+_InstrumentSessionBase_methods = list(name for name, _ in inspect.getmembers(
+    InstrumentSessionBase, inspect.isfunction))
 
 
 class InstrumentSession(_AttrGetter):
@@ -47,12 +53,19 @@ class InstrumentSession(_AttrGetter):
             return super().__getattr__(name)
         else:
             try:
-                return getattr(self._session_object, name)
+                return_attr = getattr(self._session_object, name)
             except AttributeError:
-                return super().__getattr__(name)
+                return_attr = super().__getattr__(name)
+            else:
+                if name not in _InstrumentSessionBase_methods:
+                    visalogger.warning("Access to %s.%s will be deprecated soon. "
+                                       "Please include it in InstrumentSessionBase. "
+                                       "", type(self._session_object).__name__, name)
+
+            return return_attr
 
     def __dir__(self):
-        return set(super().__dir__() + list(InstrumentSessionBase.__abstractmethods__))
+        return set(super().__dir__() + list(_InstrumentSessionBase_methods))
 
     def __setattr__(self, name, value):
         if name in ('_session_object'):
@@ -163,7 +176,7 @@ class VISAInstrumentDriver(InstrumentSession, metaclass=DriverMeta):
         self.__started = False
 
     def startup(self):
-        logger.debug("%s.startup method empty", self.__class__.__name__)
+        visalogger.debug("%s.startup method empty", self.__class__.__name__)
 
     def open(self):
         super().open()
