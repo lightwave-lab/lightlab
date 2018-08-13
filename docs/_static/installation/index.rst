@@ -52,7 +52,7 @@ For more experienced users: install the lightlab package like any other python p
 If you are new to python programming, jupyter notebooks, you might want to sit down and patiently read the :ref:`getting-started` Pages.
 
 
-.. contents:: Advanced Installation
+.. contents:: More detailed installation instructions
     :depth: 4
 
 

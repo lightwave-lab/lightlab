@@ -5,7 +5,7 @@ designed to be "hashable", i.e., easy to store and share.
 """
 
 import jsonpickle
-from collections import MutableSequence, Mapping
+from collections.abc import MutableSequence, Mapping
 
 __all__ = ["Node"]
 
@@ -248,6 +248,9 @@ class NamedList(MutableSequence, Hashable):
 
     def __str__(self):
         return str(self.list)
+
+    def __repr__(self):
+        return ('TypedList([{}])'.format('\n'.join(map(repr, self.list))))
 
 
 class TypedList(NamedList):
