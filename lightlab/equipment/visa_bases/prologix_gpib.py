@@ -163,6 +163,9 @@ class PrologixGPIBObject(InstrumentSessionBase):
                     prologix://prologix_ip_address/gpib_primary_address:gpib_secondary_address
         '''
 
+        if type(address) != str:
+            raise RuntimeError("Invalid address: {}".format(address))
+
         self.tempSess = tempSess
         self.address = address
         self.ip_address, self.gpib_pad, self.gpib_sad = _sanitize_address(address)

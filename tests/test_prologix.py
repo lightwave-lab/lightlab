@@ -1,7 +1,10 @@
 """ Testing some functionality for the Prologix Resource manager. """
 
 import pytest
-from lightlab.equipment.visa_bases.prologix_gpib import _validate_hostname, _sanitize_address
+from lightlab.equipment.visa_bases.prologix_gpib import \
+    _validate_hostname, \
+    _sanitize_address, \
+    PrologixGPIBObject
 
 
 def test_valid_hostnames():
@@ -46,3 +49,8 @@ bad_addresses = ["prologix://princeton.edu/1:Z",
 def test_sanitize_bad_address(address):
     with pytest.raises(RuntimeError):
         _sanitize_address(address)
+
+
+def test_gpid_addr_format():
+    test_object = PrologixGPIBObject("prologix://valid.name.edu/12")
+    assert test_object._prologix_escape_characters('+11/.\x11\nlala\n\r') == '\x11+11/.\x11\x11\x11\nlala\x11\n\x11\r'
