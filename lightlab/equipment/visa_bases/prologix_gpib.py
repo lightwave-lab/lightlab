@@ -118,7 +118,7 @@ def _is_valid_ip_address(ip_address):
     '''Validates whether it is a true ip address, like 10.34.134.13'''
     try:
         return socket.gethostbyname(ip_address) == ip_address
-    except socket.gaierror:
+    except (socket.gaierror, UnicodeError):
         return False
     return False
 
@@ -138,7 +138,7 @@ def _sanitize_address(address):
         _, address = address.split('prologix://', maxsplit=1)
         ip_address, gpib_address = address.split('/', maxsplit=1)
         if not _validate_hostname(ip_address):
-            raise RuntimeError('invalid ip address: {}'.format(ip_address))
+            raise RuntimeError("invalid ip address: '{}'".format(ip_address))
         try:
             if ':' in gpib_address:
                 gpib_pad, gpib_sad = gpib_address.split(':', maxsplit=1)
@@ -147,7 +147,7 @@ def _sanitize_address(address):
                 gpib_pad, gpib_sad = int(gpib_address), None
         except ValueError:
             raise RuntimeError(
-                'invalid gpib format {}, should be like 10[:0]'.format(gpib_address))
+                "invalid gpib format '{}', should be like '10[:0]'".format(gpib_address))
     else:
         raise RuntimeError('invalid address: {}'.format(address))
     return ip_address, gpib_pad, gpib_sad
