@@ -17,7 +17,7 @@ default: help ;
 
 venv: venv/bin/activate
 venv/bin/activate:
-	test -d venv || virtualenv -p python3 --prompt "(lightlab-venv) " --distribute venv
+	test -e venv/bin/activate || virtualenv -p python3 --prompt "(lightlab-venv) " --distribute venv
 	touch venv/bin/activate
 
 devbuild: venvinfo/devreqs~
@@ -93,7 +93,7 @@ clean:
 	$(MAKE) -C docs clean
 
 purge: clean
-	rm -rf venv
+	rm -rf venv/*
 
 pip-freeze: devbuild
 	( \
