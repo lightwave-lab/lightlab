@@ -1,5 +1,12 @@
 # CHANGELOG
 
+1.0.4:
+    - compatibility with python 3.7
+    - Prologix gpib controller implemented (major feature #6)
+    - fixed major bug that caused wrong readings in waveform scales for Tektronix Scopes (bugfix)
+    - adding measure functions if functionSource is given (bugfix)
+    - fixed bug in electrical source unit conversions (critical bugfix)
+
 1.0.3:
     - added documentation for lightlab command line tool
     - added a driver for HP 8157A Optical Variable attenuator
