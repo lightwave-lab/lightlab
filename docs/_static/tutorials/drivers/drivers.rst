@@ -1,12 +1,25 @@
 .. _creating_drivers:
 
-Drivers
+Using and creating drivers for instruments
 ====================================================
 
 .. contents:: In this section
     :local:
 
 Drivers are the original impetus for sharing this project. Writing drivers can be fun (the first few times). It exercises the full range of electrical engineering knowledge. It can be a snap, or it can take multiple PhD students several days to realize which cable needed a jiggle. The reward is automated, remote lab control!
+
+The module page :py:mod:`~lightlab.equipment.lab_instruments` contains all the instruments necessary available in lightlab. If your equipment is available (e.g. a very common :py:class:`~lightlab.equipment.lab_instruments.Keithley_2400_SM`), then you can use it directly with:
+
+.. code-block:: python
+    
+    from lightlab.equipment.lab_instruments import Keithley_2400_SM
+    k = Keithley_2400_SM(name="My Keithley", address="visa://alice.school.edu/GPIB0::23::INSTR")
+    if k.isLive():
+        print("Connection is good")
+
+    help(k)  # should display all commands available to be used.
+
+The address format for the Instrument is either a `VISA-compatible resource name <http://pyvisa.readthedocs.io/en/stable/names.html#visa-resource-syntax-and-examples>`_ (parsed by `pyvisa`), or it can be written as ``prologix://prologix_ip_address/gpib_primary_address[:gpib_secondary_address]``, for use with the `Prologix GPIB-Ethernet controller <http://prologix.biz/gpib-ethernet-controller.html>`_.
 
 The instrument abstraction
 --------------------------
@@ -18,7 +31,7 @@ In ``lightlab``, there are two layers of abstraction for instrumentation
     * :py:class:`~Oscilloscope`
     * :py:class:`~Keithley`
 
-.. currentmodule:: lightlab.equipment.lab_instruments.visa_drivers
+.. currentmodule:: lightlab.equipment.lab_instruments
 
 2. :py:class:`~lightlab.equipment.lab_instruments.VISAInstrumentDriver`, such as
     * :py:class:`~Tektronix_DPO4032_Oscope`

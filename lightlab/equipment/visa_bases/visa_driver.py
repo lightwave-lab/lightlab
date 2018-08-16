@@ -1,6 +1,97 @@
-from .visa_object import VISAObject
-from lightlab import logger
+from lightlab import visalogger
 import inspect
+
+from .driver_base import InstrumentSessionBase
+from .prologix_gpib import PrologixGPIBObject
+from .visa_object import VISAObject
+
+
+class InstrumentIOError(RuntimeError):
+    pass
+
+
+class _AttrGetter(object):
+    # see
+    # https://stackoverflow.com/questions/28861064/super-object-has-no-attribute-getattr-in-python3
+
+    def __getattr__(self, name):
+        raise AttributeError("'{}' has no attribute '{}'".format(str(self), name))
+
+
+_InstrumentSessionBase_methods = list(name for name, _ in inspect.getmembers(
+    InstrumentSessionBase, inspect.isfunction))
+
+
+class InstrumentSession(_AttrGetter):
+    ''' This class is the interface between the higher levels of lightlab instruments
+    and the driver controlling the GPIB line. Its methods are specialized into
+    either PrologixGPIBObject or VISAObject.
+
+    This was mainly done because the Prologix GPIB Ethernet controller
+    is not VISA compatible and does not provide a VISA interface.
+
+    If the address starts with 'prologix://', it will use PrologixGPIBObject's methods,
+    otherwise it will use VISAObject's methods (relying on pyvisa).
+
+    .. warning:: Since this is a wrapper class to either :py:class:`PrologixGPIBObject`
+    or :py:class:`VISAObject`, avoid using super() in overloaded methods.
+    (see `this <https://stackoverflow.com/questions/12047847/super-object-not-calling-getattr>`_)
+
+    '''
+
+    _session_object = None
+
+    def reinstantiate_session(self, address, tempSess):
+        if address is not None and address.startswith('prologix://'):
+            self._session_object = PrologixGPIBObject(address=address, tempSess=tempSess)
+        else:
+            self._session_object = VISAObject(address=address, tempSess=tempSess)
+
+    def __init__(self, address=None, tempSess=False):
+        self.reinstantiate_session(address, tempSess)
+        self.tempSess = tempSess
+        self.address = address
+
+    def open(self):
+        return self._session_object.open()
+
+    def close(self):
+        return self._session_object.close()
+
+    def __getattr__(self, name):
+        if name in ('_session_object'):
+            return super().__getattr__(name)
+        else:
+            try:
+                return_attr = getattr(self._session_object, name)
+            except AttributeError:
+                return_attr = super().__getattr__(name)
+            else:
+                if name not in _InstrumentSessionBase_methods:
+                    visalogger.warning("Access to %s.%s will be deprecated soon. "
+                                       "Please include it in InstrumentSessionBase. "
+                                       "", type(self._session_object).__name__, name)
+
+            return return_attr
+
+    def __dir__(self):
+        return set(super().__dir__() + list(_InstrumentSessionBase_methods))
+
+    def __setattr__(self, name, value):
+        if name in ('_session_object'):
+            super().__setattr__(name, value)
+        elif name in ('address'):
+            super().__setattr__(name, value)
+            if self._session_object is not None and self._session_object.address != value:
+                tempSess = self._session_object.tempSess
+                self.reinstantiate_session(address=value, tempSess=tempSess)
+        elif hasattr(self._session_object, name):
+            setattr(self._session_object, name, value)
+            # also change in local dictionary if possible
+            if name in self.__dict__:
+                self.__dict__[name] = value
+        else:
+            super().__setattr__(name, value)
 
 
 class IncompleteClass(Exception):
@@ -31,7 +122,7 @@ class DriverMeta(type):
                                           'which is essential for {}'.format(inst_klass.__name__))
         super().__init__(name, bases, dct)
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, name=None, address=None, *args, **kwargs):
         r'''
             All \*args go to the driver.
             name and address go to both.
@@ -41,8 +132,6 @@ class DriverMeta(type):
         '''
         if (cls.instrument_category is not None and
                 not kwargs.pop('directInit', False)):
-            name = kwargs.pop('name', None)
-            address = kwargs.pop('address', None)
 
             # Split the kwargs into those needed by
             # 1) driver and its bases and 2) the leftovers
@@ -67,9 +156,8 @@ class DriverMeta(type):
                 else:
                     instrument_kwargs[k] = v
 
-            driver_obj = type.__call__(cls, *args,
-                                       name=name, address=address,
-                                       **driver_kwargs)
+            driver_obj = type.__call__(cls, name=name, address=address,
+                                       *args, **driver_kwargs)
             instrument_obj = type.__call__(cls.instrument_category,
                                            name=name, address=address,
                                            driver_object=driver_obj,
@@ -77,10 +165,10 @@ class DriverMeta(type):
                                            **instrument_kwargs)
             return instrument_obj
         else:
-            return type.__call__(cls, *args, **kwargs)
+            return type.__call__(cls, name=name, address=address, *args, **kwargs)
 
 
-class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
+class VISAInstrumentDriver(InstrumentSession, metaclass=DriverMeta):
     ''' Generic (but not abstract) class for an instrument.
         Initialize using the literal visa address
 
@@ -88,22 +176,27 @@ class VISAInstrumentDriver(VISAObject, metaclass=DriverMeta):
     '''
     instrument_category = None
 
-    def __init__(self, name='Default Driver', address=None, directInit=False, **kwargs):  # pylint: disable=unused-argument
+    def __init__(self, name='Default Driver', address=None, **kwargs):  # pylint: disable=unused-argument
         self.name = name
+        self.address = address
+        kwargs.pop('directInit', False)
         if 'tempSess' not in kwargs.keys():
             kwargs['tempSess'] = True
         super().__init__(address=address, **kwargs)
         self.__started = False
 
     def startup(self):
-        logger.debug("%s.startup method empty", self.__class__.__name__)
+        visalogger.debug("%s.startup method empty", self.__class__.__name__)
 
     def open(self):
         super().open()
         if not self.__started:
             self.__started = True
             self.startup()
-            super().open()
+
+    def close(self):
+        super().close()
+        self.__started = False
 
 
 DefaultDriver = VISAInstrumentDriver

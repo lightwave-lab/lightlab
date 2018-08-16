@@ -27,6 +27,9 @@ def pprintFileDir():
     ''' Prints the contents of io.fileDir.
         If the file can be loaded by this module,
         it gives the command to do so.
+
+        Returns:
+            A sorted list of files
     '''
     maxStrLen = 0
     for child in _getFileDir().iterdir():
@@ -38,24 +41,25 @@ def pprintFileDir():
         if child.is_dir():
             print(child.name.rjust(maxStrLen), '** directory')
     # Print files
-    children = []
+    childrenFiles = []
     for child in _getFileDir().iterdir():
         if child.name in ['.', '..', '.DS_Store']:
             continue
         if child.is_file():
-            children.append(child)
-    childNames = list(map(lambda x: x.name, children))
-    sortedChildren = [x for _, x in sorted(zip(childNames, children))]
+            childrenFiles.append(child)
+    childNames = list(map(lambda x: x.name, childrenFiles))
+    sortedChildren = [x for _, x in sorted(zip(childNames, childrenFiles))]
     for child in sortedChildren:
         justified = child.name.rjust(maxStrLen) + '   '
         if child.name.endswith('.pkl'):
-            print(justified, f'loadPickle({child.stem})')
+            print(justified, f'io.loadPickle(\'{child.stem}\')')
         elif child.name.endswith('.gz'):
-            print(justified, f'loadPickleGzip({child.stem})')
+            print(justified, f'io.loadPickleGzip(\'{child.stem}\')')
         elif child.name.endswith('.mat'):
-            print(justified, f'loadMat({child.stem})')
+            print(justified, f'io.loadMat(\'{child.stem}\')')
         else:
             print(justified)
+    return sortedChildren
 
 
 def _endingWith(filerootname, suffix):

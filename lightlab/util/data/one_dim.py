@@ -157,6 +157,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
             Whatever is returned by ``pyplot.plot``
         '''
         curve = plt.plot(*(self.getData() + args), **kwargs)
+        plt.autoscale(enable=True, axis='x', tight=True)
         if 'label' in kwargs.keys():
             plt.legend()
         if livePlot:
@@ -213,6 +214,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
             Returns:
                 MeasuredFunction: new object
         '''
+        # TODO not extrapolate values out of bounds
         dx = abs(np.diff(self.absc[0:2])[0])
         newAbsc = np.arange(*(tuple(segment) + (dx,)))
         return self.__newOfSameSubclass(newAbsc, self(newAbsc))
@@ -732,10 +734,16 @@ class Waveform(MeasuredFunction):
     ''' Typically used for time, voltage functions.
         This is very similar to what is referred to as a "signal."
 
+        Use the unit attribute to set units different than Volts.
+
         Has class methods for generating common time-domain signals
     '''
-    def __init__(self, t, v, unsafe=False):
+
+    unit = None
+
+    def __init__(self, t, v, unit='V', unsafe=False):
         super().__init__(t, v, unsafe=unsafe)
+        self.unit = unit
 
     @classmethod
     def pulse(cls, tArr, tOn, tOff):

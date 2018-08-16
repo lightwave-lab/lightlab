@@ -32,4 +32,4 @@ from .saveload import (pprintFileDir,  # noqa
                        saveFigure)  # noqa
 from .progress import printWait, printProgress, ProgressWriter  # noqa
 from .errors import ChannelError, RangeError  # noqa
-from .jsonpickleable import JSONpickleable  # noqa
+# from .jsonpickleable import JSONpickleable  # TODO this triggers a major pylint crash

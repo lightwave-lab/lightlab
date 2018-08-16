@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import interpolate
 import matplotlib.cm as cm
+from functools import wraps
+from itertools import repeat
 
 from .one_dim import MeasuredFunction, Waveform
 
@@ -22,11 +24,15 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
             * operated on with other ``FunctionBundles``
             * plotted with :meth`simplePlot` and :meth:`multiAxisPlot`
 
+        Feeds through **callable** signal processing methods to its members (type MeasuredFunction),
+        If the method is not found in the FunctionBundle, and it is in it's member,
+        it will be mapped to every function in the bundle, returning a new bundle.
+
         Distinct from a :class:`MeasuredSurface` because
         the additional axis does not represent a continuous thing.
         It is discrete and sometimes unordered.
 
-        Distince from a :class:`FunctionalBasis` because
+        Distinct from a :class:`FunctionalBasis` because
         it does not support most linear algebra-like stuff
         (e.g. decomposision, matrix multiplication, etc.).
         This is not a strict rule.
@@ -60,15 +66,25 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
         self.nDims += 1
 
     def __getitem__(self, index):
-        ''' Iterator that gives out individual measured functions of the type used
+        ''' Gives out individual measured functions of the type used, or
+            If it gets a slice, it returns a function bundle,
+            just like a sliced numpy array returns a numpy array.
 
-            Todo:
-                This should handle slices.
-                If it gets a slice, it should return a function bundle
+            Args:
+                index (int or slice): which of the function(s) do you want to get
+
+            Returns:
+                (MeasuredFunction or FunctionBundle): depending on type of index
         '''
-        theOrdi = self.ordiMat[
-            index, :].A1  # A1 is a special numpy thing that converts from matrix to 1-d array
-        return self.memberType(self.absc, theOrdi)
+        if type(index) is int:
+            theOrdi = self.ordiMat[index, :].A1  # A1 is a special numpy thing that converts from matrix to 1-d array
+            return self.memberType(self.absc, theOrdi)
+        elif type(index) is slice:
+            newBundle = self.copy()
+            newOrdiMat = self.ordiMat[index, :]
+            newBundle.ordiMat = newOrdiMat
+            newBundle.nDims = np.shape(newOrdiMat)[0]
+            return newBundle
 
     def __len__(self):
         return self.ordiMat.shape[0]
@@ -79,23 +95,32 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
                 self.ordiMat == other.ordiMat)
 
     def __add__(self, other):
-        if np.isscalar(other):
-            other = np.ones(self.nDims) * other
-        newObj = self.copy()
-        for iDim in range(self.nDims):
-            newObj.ordiMat[iDim] = self.ordiMat[iDim] + other[iDim]
-        return newObj
+        ''' This works with scalars, vectors, MeasuredFunctions, and FunctionBundles
+        '''
+        if np.isscalar(other) or isinstance(other, MeasuredFunction):
+            other = repeat(other, self.nDims)
+        newBundle = type(self)()
+        for selfItem, otherItem in zip(self, other):
+            newItem = selfItem + otherItem
+            newBundle.addDim(newItem)
+        return newBundle
 
     def __radd__(self, other):
         return self.__add__(other)
 
+    def __sub__(self, other):
+        return self.__add__(-1 * other)
+
     def __mul__(self, other):
-        if np.isscalar(other):
-            other = np.ones(self.nDims) * other
-        newObj = self.copy()
-        for iDim in range(self.nDims):
-            newObj.ordiMat[iDim] = self.ordiMat[iDim] * other[iDim]
-        return newObj
+        ''' This works with scalars, vectors, MeasuredFunctions, and FunctionBundles
+        '''
+        if np.isscalar(other) or isinstance(other, MeasuredFunction):
+            other = repeat(other, self.nDims)
+        newBundle = type(self)()
+        for selfItem, otherItem in zip(self, other):
+            newItem = selfItem * otherItem
+            newBundle.addDim(newItem)
+        return newBundle
 
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -103,11 +128,72 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
     def __truediv__(self, other):
         return self * (1 / other)
 
+    def __getattr__(self, attrName):
+        ''' Feeds through **callable** methods to its members (type MeasuredFunction),
+            if the attribute is not found in the FunctionBundle.
+            If it finds it there, then applies it to every function in the bundle.
+            With binary operator math, it only works with scalars.
+
+            For example, starting with::
+
+            .. code-block:: python
+
+                spct1 = Spectrum([0, 1, 2], [2, 5, 3])
+                spct2 = Spectrum([0, 1, 2], [4, 4, 1])
+                funBun = FunctionBundle([spct1, spct2])
+
+            You can do
+
+            .. code-block:: python
+
+                croppedFunBund = FunctionBundle([
+                                      spct1.crop([0, 1]),
+                                      spct2.crop([0, 1]))
+                                      ])
+                funBun.crop([0, 1]) == croppedFunBund
+
+            Note:
+                Be careful about "overloading" a MeasuredFunction method in FunctionBundle.
+                It can have a different meaning than what would happen if not overloaded.
+                For example ``MeasuredFunction.__mul__(nonscalar)`` is function multiplication,
+                while ``FunctionBundle.__mul__(nonscalar)`` means vector dot product.
+
+            Todo:
+                This only works with :class:`~lightlab.util.data.one_dim.SignalProcessingMixin`
+                methods that are MF-in/MF-out. How should we handle characteristic-type methods,
+                such as ``centerOfMass``, or ``getRange``?
+        '''
+        if attrName == 'memberType':
+            raise RuntimeError('Missed "memberType"')
+        try:
+            memberClassFunc = getattr(self.memberType, attrName)
+        except AttributeError as err:
+            betterErrStr = err.args[0] + ', neither does \'{}\' object'.format(type(self).__name__)
+            err.args = tuple([betterErrStr, err.args[1:]])
+            raise
+        if not callable(memberClassFunc):
+            raise TypeError(f'{memberClassFunc} in'
+                            ' {} of {}'.format(type(self).__name__, self.memberType.__name__) + ' '
+                            'is not callable')
+
+        @wraps(memberClassFunc)
+        def fakeFun(*args, **kwargs):
+            newBundle = type(self)()
+            for item in self:
+                newItem = memberClassFunc(item, *args, **kwargs)
+                newBundle.addDim(newItem)
+            return newBundle
+        return fakeFun
+
     def copy(self):
         newObj = type(self)()
         newObj.__dict__ = self.__dict__.copy()
         newObj.ordiMat = self.ordiMat.copy()
         return newObj
+
+    def extend(self, otherFunctionBund):
+        for func in otherFunctionBund:
+            self.addDim(func)
 
     def max(self):
         ''' Returns a single MeasuredFunction(subclass) that is the maximum of all in this bundle
@@ -123,52 +209,6 @@ class FunctionBundle(object):  # pylint: disable=eq-without-hash
         ''' Returns a single MeasuredFunction(subclass) that is the mean of all in this bundle
         '''
         return self.memberType(self.absc, np.mean(self.ordiMat, axis=0).A1)
-
-    def crop(self, segment):
-        ''' Crop abscissa to segment domain
-
-            Args:
-                segment (list[float,float]): the span of the new abscissa domain
-
-            Returns:
-                MeasuredFunction: new object
-        '''
-        newObj = type(self)()
-        for iFun in range(len(self)):
-            fun = self[iFun].crop(segment)
-            newObj.addDim(fun)
-        return newObj
-
-    def reverse(self):
-        self.ordiMat = self.ordiMat[::-1]
-
-    def debias(self):
-        ''' Returns a bundle with each waveform in unit variance '''
-        newBundle = type(self)()
-        for wfm in self:
-            newBundle.addDim(wfm.debias())
-        return newBundle
-
-    def unitRms(self):
-        ''' Returns a bundle with each waveform in unit variance '''
-        newBundle = type(self)()
-        for wfm in self:
-            newBundle.addDim(wfm.unitRms())
-        return newBundle
-
-    def resample(self, nsamp=100):
-        ''' Resample over the same domain span, but with a different number of points.
-
-            Args:
-                nsamp (int): number of samples in the new object
-
-            Returns:
-                FunctionBundle: new object
-        '''
-        newBundle = type(self)()
-        for item in self:
-            newBundle.addDim(item.resample(nsamp))
-        return newBundle
 
     def _putInTimebase(self, testFun):
         ''' Makes sure signal type is correct and time basis is the same

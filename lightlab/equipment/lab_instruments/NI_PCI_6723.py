@@ -49,7 +49,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
 
     def open(self):
         VISAInstrumentDriver.open(self)
-        self.mbSession.write_termination = '\r\n'
+        self.termination = '\r\n'
         self.mbSession.set_visa_attribute(
             pyvisa.constants.VI_ATTR_TERMCHAR_EN, pyvisa.constants.VI_TRUE)
         # use the faster protocol

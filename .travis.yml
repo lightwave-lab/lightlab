@@ -4,6 +4,7 @@ python:
 install:
 - pip install -U virtualenv pip
 - python --version
+- echo $TRAVIS_BRANCH
 script:
 - DOCKER=1 make test-unit-all
 - make test-lint-errors

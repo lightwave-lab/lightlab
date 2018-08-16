@@ -15,7 +15,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
 
             * `DPO 4034 <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`_
             * `DPO 4032 <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`_
-            * `DSA 8300 <http://www.tek.com/download?n=975655&f=190886&u=http%3A%2F%2Fdownload.tek.com%2Fsecure%2FDifferential-Channel-Alignment-Application-Online-Help.pdf%3Fnvb%3D20170404035703%26amp%3Bnva%3D20170404041203%26amp%3Btoken%3D0ccdfecc3859114d89c36>`_
+            * `DSA 8300 <http://download.tek.com/manual/DSA8300-Programmer-Manual-077057006.pdf>`_
             * `TDS 6154C <http://www.tek.com/sites/tek.com/files/media/media/resources/55W_14873_9.pdf>`_
 
         The main method is :meth:`acquire`, which takes and returns a :class:`~Waveform`.
@@ -117,7 +117,9 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         for i, c in enumerate(chans):
             vRaw = self.__transferData(c)
             t, v = self.__scaleData(vRaw)
-            wfms[i] = Waveform(t, v)
+            # Optical modules might produce 'W' instead of 'V'
+            unit = self.__getUnit()
+            wfms[i] = Waveform(t, v, unit=unit)
 
         return wfms
 
@@ -203,16 +205,31 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             Returns:
                 (ndarray): time in seconds, centered at t=0 regardless of timebase position
                 (ndarray): voltage in volts
+
+            Notes:
+                The formula for real voltage should be (Y - YOFF) * YSCALE + YZERO.
+                The Y represents the position of the sampled point on-screen,
+                YZERO, the reference voltage, YOFF, the offset position, and
+                YSCALE, the conversion factor between position and voltage.
         '''
         get = lambda param: float(self.getConfigParam('WFMOUTPRE:' + param, forceHardware=True))
-        voltage = (np.array(voltRaw) - get('YZERO')) \
+        voltage = (np.array(voltRaw) - get('YOFF')) \
             * get(self._yScaleParam) \
-            + get('YOFF')
+            + get('YZERO')
 
         timeDivision = float(self.getConfigParam('HORIZONTAL:MAIN:SCALE'))
         time = np.linspace(-1, 1, len(voltage)) / 2 * timeDivision * 10
 
         return time, voltage
+
+    def __getUnit(self):
+        ''' Gets the unit of the waveform as a string.
+
+            Normally, this will be '"V"', which can be converted to 'V'
+        '''
+
+        yunit_query = self.getConfigParam('WFMOUTPRE:YUNIT', forceHardware=True)
+        return yunit_query.replace('"', '')
 
     def wfmDb(self, chan, nWfms, untriggered=False):
         ''' Transfers a bundle of waveforms representing a signal database. Sample mode only.

@@ -53,6 +53,7 @@ def test_driver_init():
     with pytest.raises(AttributeError):
         pm.driver.extra
 
+
 def test_change_of_address():
     ''' Change of address should kill the connection and change driver's address
     '''
@@ -62,7 +63,7 @@ def test_change_of_address():
         self.mbSession = 'opened'
 
     def close_fake(self):
-        self.mbSession = 'closed'
+        self._close_called = True
 
     with patch.object(HP_8152A_PM, 'open', open_fake), \
             patch.object(HP_8152A_PM, 'close', close_fake):
@@ -71,7 +72,7 @@ def test_change_of_address():
         assert driver.mbSession == 'opened'
         pm.address = 'new_address'
         assert pm.driver is driver
-        assert driver.mbSession is 'closed'
+        assert driver._close_called is True
         assert pm.driver.address == pm.address
 
 

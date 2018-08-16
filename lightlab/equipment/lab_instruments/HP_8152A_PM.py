@@ -26,8 +26,8 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
 
     def open(self):
         super().open()
-        self.mbSession.write_termination = ''
-        self.mbSession.clear()
+        self.termination = ''
+        self.clear()
 
     @staticmethod
     def proccessWeirdRead(readString):
