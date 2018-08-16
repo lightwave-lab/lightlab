@@ -15,7 +15,7 @@ class PrologixResourceManager(object):
 
     .. code-block:: python
 
-        p = PrologixResourceManager('lightwave-lab-prologix1.princeton.edu')
+        p = PrologixResourceManager('prologix.school.edu')
 
         p.connect()  # connects to socket and leaves it open
         p.startup()  # configures prologix to communicate via gpib
@@ -30,7 +30,7 @@ class PrologixResourceManager(object):
 
     .. code-block:: python
 
-        p = PrologixResourceManager('lightwave-lab-prologix1.princeton.edu')
+        p = PrologixResourceManager('prologix.school.edu')
 
         with p.connected():
             p.startup()
@@ -42,7 +42,7 @@ class PrologixResourceManager(object):
 
     .. code-block:: python
 
-        p = PrologixResourceManager('lightwave-lab-prologix1.princeton.edu')
+        p = PrologixResourceManager('prologix.school.edu')
 
         p.send('++addr 23')  # opens and close socket automatically
 
