@@ -27,7 +27,7 @@ class InstrumentSession(_AttrGetter):
     and the driver controlling the GPIB line. Its methods are specialized into
     either PrologixGPIBObject or VISAObject.
 
-    This was mainly done because the Prologix GPIB Ethernet controller does
+    This was mainly done because the Prologix GPIB Ethernet controller
     is not VISA compatible and does not provide a VISA interface.
 
     If the address starts with 'prologix://', it will use PrologixGPIBObject's methods,

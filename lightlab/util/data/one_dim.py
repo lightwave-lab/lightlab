@@ -214,6 +214,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
             Returns:
                 MeasuredFunction: new object
         '''
+        # TODO not extrapolate values out of bounds
         dx = abs(np.diff(self.absc[0:2])[0])
         newAbsc = np.arange(*(tuple(segment) + (dx,)))
         return self.__newOfSameSubclass(newAbsc, self(newAbsc))
