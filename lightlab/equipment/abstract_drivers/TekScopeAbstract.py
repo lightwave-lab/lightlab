@@ -117,6 +117,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         for i, c in enumerate(chans):
             vRaw = self.__transferData(c)
             t, v = self.__scaleData(vRaw)
+            # Optical modules might produce 'W' instead of 'V'
             unit = self.__getUnit()
             wfms[i] = Waveform(t, v, unit=unit)
 
@@ -204,6 +205,12 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             Returns:
                 (ndarray): time in seconds, centered at t=0 regardless of timebase position
                 (ndarray): voltage in volts
+
+            Notes:
+                The formula for real voltage should be (Y - YOFF) * YSCALE + YZERO.
+                The Y represents the position of the sampled point on-screen,
+                YZERO, the reference voltage, YOFF, the offset position, and
+                YSCALE, the conversion factor between position and voltage.
         '''
         get = lambda param: float(self.getConfigParam('WFMOUTPRE:' + param, forceHardware=True))
         voltage = (np.array(voltRaw) - get('YOFF')) \
