@@ -8,14 +8,66 @@ from .driver_base import InstrumentSessionBase
 
 class PrologixResourceManager(object):
     '''Controls a Prologix GPIB-ETHERNET Controller v1.2
-    manual: http://prologix.biz/downloads/PrologixGpibEthernetManual.pdf'''
+    manual: http://prologix.biz/downloads/PrologixGpibEthernetManual.pdf
+
+
+    Basic usage:
+
+    .. code-block:: python
+
+        p = PrologixResourceManager('lightwave-lab-prologix1.princeton.edu')
+
+        p.connect()  # connects to socket and leaves it open
+        p.startup()  # configures prologix to communicate via gpib
+        p.send('++addr 23')  # talks to address 23
+        p.send('command value')  # sends the command and does not expect to read anything
+        p.query('command')  # sends a command but reads stuff back, this might hang if buffer is empty
+        p.disconnect()
+
+    The problem with the above is that if there is any error with startup, send or
+    query, the disconnect method will not be called. So we coded a decorator called ``connected``,
+    to be used as such:
+
+    .. code-block:: python
+
+        p = PrologixResourceManager('lightwave-lab-prologix1.princeton.edu')
+
+        with p.connected():
+            p.startup()
+            p.send('++addr 23')  # talks to address 23
+            p.send('command value')  # sends the command and does not expect to read anything
+            p.query('command')  # sends a command but reads stuff back
+
+    If we try to send a message without the decorator, then we should connect and disconnect right before.
+
+    .. code-block:: python
+
+        p = PrologixResourceManager('lightwave-lab-prologix1.princeton.edu')
+
+        p.send('++addr 23')  # opens and close socket automatically
+
+    .. warning::
+
+        If a second socket is opened from the same computer while the first was online,
+        the first socket will stop responding and Prologix will send data to the just-opened socket.
+
+    .. todo:: Make this class a singleton to mitigate the issue above.
+
+    '''
 
     # TODO: make this class a singleton:
     # https://howto.lintel.in/python-__new__-magic-method-explained/
-    port = 1234
+
+    port = 1234  #: port that the Prologix GPIB-Ethernet controller listens to.
     _socket = None
 
-    def __init__(self, ip_address, timeout=5):
+    def __init__(self, ip_address, timeout=2):
+        """
+        Args:
+            ip_address (str): hostname or ip address of the controller
+            timeout (float): timeout in seconds for establishing socket
+                connection to controller, default 2.
+        """
         self.timeout = timeout
         self.ip_address = ip_address
 
@@ -29,6 +81,12 @@ class PrologixResourceManager(object):
         return received_value.decode('ascii')
 
     def connect(self):
+        ''' Connects to the controller via socket and leaves the connection open.
+        If already connected, does nothing.
+
+        Returns:
+            socket object.
+        '''
         if self._socket is None:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
             try:
@@ -46,12 +104,29 @@ class PrologixResourceManager(object):
             return self._socket
 
     def disconnect(self):
+        ''' If connected, disconnects and kills the socket.'''
         if self._socket is not None:
             self._socket.close()
             self._socket = None
 
     @contextmanager
     def connected(self):
+        ''' Context manager for ensuring that the socket is connected while
+        sending and receiving commands to controller.
+        This is safe to use everywhere, even if the socket is previously connected.
+        It can also be nested.
+        This is useful to bundle multiple commands that you desired to be
+        executed together in a single socket connection, for example:
+
+        .. code-block:: python
+
+            def query(self, query_msg, msg_length=2048):
+                with self.connected():
+                    self._send(self._socket, query_msg)
+                    recv = self._recv(self._socket, msg_length)
+                return recv
+
+        '''
         previously_connected = (self._socket is not None)
         self.connect()
         try:
@@ -61,6 +136,9 @@ class PrologixResourceManager(object):
                 self.disconnect()
 
     def startup(self):
+        ''' Sends the startup configuration to the controller.
+            Just in case it was misconfigured.
+        '''
         with self.connected():
             self.send('++auto 0')  # do not read-after-write
             self.send('++mode 1')  # controller mode
@@ -69,29 +147,35 @@ class PrologixResourceManager(object):
             self.send('++savecfg 0')  # Disable saving of configuration parameters in EPROM
 
     def send(self, value):
-        if self._socket is not None:
+        ''' Sends an ASCII string to the controller via socket. Auto-connects if necessary.
+
+        Args:
+            value (str): value to be sent
+        '''
+        with self.connected():
             sent = self._send(self._socket, value)
-        else:
-            with self.connected():
-                sent = self._send(self._socket, value)
         return sent
 
-    def recv(self, msg_length=1024):
-        if self._socket is not None:
+    def recv(self, msg_length=2048):
+        ''' Receives an ASCII string from the controller via socket. Auto-connects if necessary.
+
+        Args:
+            msg_length (int): maximum message length.
+        '''
+        with self.connected():
             recv = self._recv(self._socket, msg_length)
-        else:
-            with self.connected():
-                recv = self._recv(self._socket, msg_length)
         return recv
 
     def query(self, query_msg, msg_length=2048):
-        if self._socket is not None:
+        ''' Sends a query and receives a string from the controller. Autoconnects if necessary.
+
+        Args:
+            query_msg (str): query message.
+            msg_length (int): maximum message length.
+        '''
+        with self.connected():
             self._send(self._socket, query_msg)
             recv = self._recv(self._socket, msg_length)
-        else:
-            with self.connected():
-                self._send(self._socket, query_msg)
-                recv = self._recv(self._socket, msg_length)
         return recv
 
 
@@ -208,7 +292,7 @@ class PrologixGPIBObject(InstrumentSessionBase):
 
     @property
     def termination(self):
-        r'''Termination GPIB character. Options: '\r\n', '\r', '\n', ''. '''
+        r'''Termination GPIB character. Valid options: '\\r\\n', '\\r', '\\n', ''. '''
         eos = int(self._prologix_rm.query('++eos').rstrip())
         if eos == 0:
             return '\r\n'
@@ -238,15 +322,17 @@ class PrologixGPIBObject(InstrumentSessionBase):
             self._prologix_rm.send('++eos {}'.format(eos))
 
     def open(self):
-        '''Open connection with instrument.'''
-        # we need to connect to the prologix_rm
+        ''' Open connection with instrument.
+        If ``tempSess`` is set to False, please remember to close after use.
+        '''
         if not self.tempSess:
             self._prologix_rm.connect()
-        else:
-            with self._prologix_rm.connected() as pconn:
-                pconn.startup()
+        with self._prologix_rm.connected() as pconn:
+            pconn.startup()
 
     def close(self):
+        ''' Closes the connection with the instrument.
+        Side effect: disconnects prologix socket controller'''
         self._prologix_rm.disconnect()
         return
 
@@ -296,11 +382,12 @@ class PrologixGPIBObject(InstrumentSessionBase):
 
         raise RuntimeError('Query timed out')
 
-    # This timeout is between the user and the instrument.
-    # For example, if we did a sweep that should take ~10 seconds
-    # but ends up taking longer, we set the timeout to 20 seconds.
     @property
     def timeout(self):
+        ''' This timeout is between the user and the instrument.
+            For example, if we did a sweep that should take ~10 seconds
+            but ends up taking longer, you can set the timeout to 20 seconds.
+        '''
         return self.__timeout
 
     @timeout.setter

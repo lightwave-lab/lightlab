@@ -1,5 +1,6 @@
 ## Things that you use but do not track
 #######################################
+dev-requirements-temp.txt
 test*.json
 labstate*.json
 

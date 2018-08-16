@@ -33,6 +33,10 @@ class InstrumentSession(_AttrGetter):
     If the address starts with 'prologix://', it will use PrologixGPIBObject's methods,
     otherwise it will use VISAObject's methods (relying on pyvisa).
 
+    .. warning:: Since this is a wrapper class to either :py:class:`PrologixGPIBObject`
+    or :py:class:`VISAObject`, avoid using super() in overloaded methods.
+    (see `this <https://stackoverflow.com/questions/12047847/super-object-not-calling-getattr>`_)
+
     '''
 
     _session_object = None
@@ -47,6 +51,12 @@ class InstrumentSession(_AttrGetter):
         self.reinstantiate_session(address, tempSess)
         self.tempSess = tempSess
         self.address = address
+
+    def open(self):
+        return self._session_object.open()
+
+    def close(self):
+        return self._session_object.close()
 
     def __getattr__(self, name):
         if name in ('_session_object'):
