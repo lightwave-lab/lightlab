@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 import socket
+import time
 from lightlab import visalogger as logger
 
 
@@ -104,15 +105,20 @@ class TCPSocketConnection(object):
         if self._socket is None:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
             try:
+                logger.debug("Attempting new connection (timeout = %s)", str(self.timeout))
+                init_time = time.time()
                 s.settimeout(self.timeout)
                 s.connect((self.ip_address, self.port))
             except socket.error:
-                s.shutdown(socket.SHUT_RDWR)
+                s.shutdown(socket.SHUT_WR)
                 s.close()
                 del s
                 logger.error('Cannot connect to resource.')
                 raise
             else:
+                final_time = time.time()
+                elapsed_time_ms = 1e3 * (final_time - init_time)
+                logger.debug("Connected. Time elapsed: %s msec", '{:.2f}'.format(elapsed_time_ms))
                 self._socket = s
             return self._socket
         else:
@@ -121,7 +127,7 @@ class TCPSocketConnection(object):
     def disconnect(self):
         ''' If connected, disconnects and kills the socket.'''
         if self._socket is not None:
-            self._socket.shutdown(socket.SHUT_RDWR)
+            self._socket.shutdown(socket.SHUT_WR)
             self._socket.close()
             self._socket = None
 

@@ -1,4 +1,5 @@
 from . import VISAInstrumentDriver
+from lightlab.equipment.visa_bases.driver_base import TCPSocketConnection
 from lightlab.laboratory.instruments import OpticalSpectrumAnalyzer
 
 import numpy as np
@@ -34,48 +35,81 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
 
     """
     instrument_category = OpticalSpectrumAnalyzer
+    _tcpsocket = None
     __wlRange = None
 
     def __init__(self, name='The OSA', address=None, **kwargs):
-        # def __init__(self, host='128.112.48.148', port=6500):
-        """The TCPIP address can change if it renews the lease with DNS
-        This has only happened once in the past. To initialize the optical spectrum analyzer,
-        we need to set the host address, and the port.
+        """Initializes a fake VISA connection to the OSA.
         """
         kwargs['tempSess'] = kwargs.pop('tempSess', True)
         super().__init__(name=name, address=address, **kwargs)
+        self.reinstantiate_session(address, kwargs['tempSess'])
+
+    def reinstantiate_session(self, address, tempSess):
+        if address is not None:
+            # should be something like ['TCPIP0', 'xxx.xxx.xxx.xxx', '6501', 'SOCKET']
+            address_array = address.split("::")
+            self._tcpsocket = TCPSocketConnection(ip_address=address_array[1],
+                                                  port=int(address_array[2]),
+                                                  timeout=10)
 
     def startup(self):
         ''' Checks if it is alive, sets up standard OSA parameters
         '''
-        self.instrID()
-        self.write('SPTRACESWP0')
-        # x-axis mode to wavelength
-        # resolution to 0.80
+        with self._tcpsocket.connected():
+            self.instrID()
+            self.write('SPTRACESWP0', 'SP_SWEEP_TRACE_0')  # select trace 0
+            self.write('SPXUNT1', 'SP_WAVELENGTH')  # x-axis mode to wavelength
+            self.write('SPLINSC1', 'SP_LOG')  # y-axis to log scale
+            self.write('SPSWPRES0', 'SP_RESOLUTION_100MHz')  # resolution to 0.80 pm
+
         # others?
 
     def open(self):
         if self.address is None:
             raise RuntimeError("Attempting to open connection to unknown address.")
-        # Check if ip port is open
-        address_array = self.address.split("::")  # should be something like ['TCPIP0', 'xxx.xxx.xxx.xxx', '6501', 'SOCKET']
-        if address_array[0] == 'TCPIP0':
-            port_open = check_socket(address_array[1], int(address_array[2]))
-        if not port_open:
-            raise RuntimeError('The VISA port is not reachable. Instrument offline.')
-        super().open()
-        # special features for communicating with the OSA
-        self.mbSession.set_visa_attribute(
-            pyvisa.constants.VI_ATTR_TERMCHAR_EN, pyvisa.constants.VI_TRUE)
-        self.mbSession.set_visa_attribute(
-            pyvisa.constants.VI_ATTR_IO_PROT, pyvisa.constants.VI_PROT_4882_STRS)
-        self.termination = '\n'
-        self.timeout = 25000
-        self.clear()
+        try:
+            self._tcpsocket.connect()
+        except socket.error:
+            self._tcpsocket.disconnect()
+            raise
 
-    def write(self, writeStr):
+    def close(self):
+        self._tcpsocket.disconnect()
+
+    def _query(self, queryStr):
+        with self._tcpsocket.connected() as s:
+            s.send(queryStr)
+
+            i = 0
+            old_timeout = s.timeout
+            s.timeout = 30
+            received_msg = ''
+            while i < 1024:  # avoid infinite loop
+                recv_str = s.recv(1024)
+                received_msg += recv_str
+                if recv_str.endswith('\n'):
+                    break
+                s.timeout = 1
+                i += 1
+            s.timeout = old_timeout
+            return received_msg.rstrip()
+
+    def query(self, queryStr, expected_talker=None):
+        ret = self._query(queryStr)
+        if expected_talker is not None:
+            if ret != expected_talker:
+                log_function = logger.warning
+            else:
+                log_function = logger.debug
+            log_function("'%s' returned '%s', expected '%s'", queryStr, ret, str(expected_talker))
+        else:
+            logger.debug("'%s' returned '%s'", queryStr, ret)
+        return ret
+
+    def write(self, writeStr, expected_talker=None):
         ''' The APEX does not deal with write; you have to query to clear the buffer '''
-        self.query(writeStr)
+        self.query(writeStr, expected_talker)
         time.sleep(0.2)
 
     def instrID(self):
@@ -84,10 +118,11 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         """
         try:
             self.write('SPSWPMSK?')
-        except pyvisa.VisaIOError as err:
-            print('OSA communication test failed. Sent: \'SPSWPMSK?\'')
-            raise err
-        return 'Apex AP2440A'
+        except socket.error:
+            logger.error('OSA communication test failed. Sent: \'SPSWPMSK?\'')
+            raise
+        else:
+            return 'Apex AP2440A'
 
     def getWLrangeFromHardware(self):
         theRange = [0] * 2
@@ -145,16 +180,12 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
             Returns:
                 (ndarray, ndarray): wavelength in nm, power in dBm
         """
-        self.open()
-        self.clear()
-        try:
-            # retStr = self.query('SPDATAD0')
-            powerData = self.mbSession.query_ascii_values('SPDATAD0', separator=' ')
-            # powerData = self.mbSession.query('SPDATAD0')
-        except pyvisa.VisaIOError as e:
-            raise e
-        finally:
-            self.close()
+
+        retStr = self._query('SPDATAD0')
+        powerData = pyvisa.util.from_ascii_block(retStr,
+                                                 converter='f',
+                                                 separator=' ',
+                                                 container=list)
 
         dataLen = int(powerData[0])
         powerData = np.array(powerData[1:])
