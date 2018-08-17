@@ -110,7 +110,9 @@ class TCPSocketConnection(object):
                 s.settimeout(self.timeout)
                 s.connect((self.ip_address, self.port))
             except socket.error:
-                s.shutdown(socket.SHUT_WR)
+                # avoiding shutdown to prevent sending any data to remote socket
+                # https://stackoverflow.com/questions/13109899/does-socket-become-unusable-after-connect-fails
+                # s.shutdown(socket.SHUT_WR)
                 s.close()
                 del s
                 logger.error('Cannot connect to resource.')
