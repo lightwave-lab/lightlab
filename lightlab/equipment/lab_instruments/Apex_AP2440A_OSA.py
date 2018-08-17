@@ -37,6 +37,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
     instrument_category = OpticalSpectrumAnalyzer
     _tcpsocket = None
     __wlRange = None
+    MAGIC_TIMEOUT = 30
 
     def __init__(self, name='The OSA', address=None, **kwargs):
         """Initializes a fake VISA connection to the OSA.
@@ -51,7 +52,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
             address_array = address.split("::")
             self._tcpsocket = TCPSocketConnection(ip_address=address_array[1],
                                                   port=int(address_array[2]),
-                                                  timeout=10)
+                                                  timeout=self.MAGIC_TIMEOUT)
 
     def startup(self):
         ''' Checks if it is alive, sets up standard OSA parameters
@@ -83,7 +84,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
 
             i = 0
             old_timeout = s.timeout
-            s.timeout = 30
+            s.timeout = self.MAGIC_TIMEOUT
             received_msg = ''
             while i < 1024:  # avoid infinite loop
                 recv_str = s.recv(1024)
