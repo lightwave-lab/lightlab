@@ -75,9 +75,9 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     def _configCurrent(self, currAmps):
         currAmps = float(currAmps)
         if currAmps >= 0:
-            currAmps = np.clip(currAmps, a_min=1e-6, a_max=1.)
+            currAmps = np.clip(currAmps, a_min=1e-9, a_max=1.)
         else:
-            currAmps = np.clip(currAmps, a_min=-1, a_max=-1e-6)
+            currAmps = np.clip(currAmps, a_min=-1, a_max=-1e-9)
         if currAmps != 0:
             needRange = 10 ** np.ceil(np.log10(abs(currAmps)))
             self.setConfigParam('SOURCE:CURR:RANGE', needRange)
