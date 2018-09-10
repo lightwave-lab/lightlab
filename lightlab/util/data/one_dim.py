@@ -145,6 +145,22 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         ordi = dataDict['ordi']
         return cls(absc, ordi)
 
+    def cast(self, mfChildClass, *initArgs, **initKwargs):
+        ''' Gives this measured function as a different type that must inherit MeasuredFunction
+
+            Args:
+                mfChildClass (type): the target class
+                initArgs (*args): passed to init of the child constructor
+                initKwargs (**kwargs): passed to init of the child constructor
+
+            Returns:
+                (MeasuredFunction subclass): new object with same abscissa and ordinate
+        '''
+        if not issubclass(mfChildClass, MeasuredFunction):
+            raise TypeError('{} must be a subclass of MeasuredFunction.'.format(mfChildClass.__name__))
+        new_mf = mfChildClass(self.absc, self.ordi, *initArgs, **initKwargs)
+        return new_mf
+
     def simplePlot(self, *args, livePlot=False, **kwargs):
         r''' Plots on the current axis
 
@@ -502,6 +518,31 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
             resonances[iPk] = ResonanceFeature(
                 pkLambdas[iPk], pkWids[iPk], pkAmps[iPk], isPeak=isPeak)
         return resonances
+
+    def fourierTransform(self, paddingFactor=0.):
+        ''' Fast Fourier transform.
+            Assumes that this function is real, so it takes the real FFT.
+            This results in a complex spectrum. What is returned is the magnitude of that.
+
+            Args:
+                paddingFactor (float): fill outside of the function with zeros. This can be used for higher resolution.
+                    0: no padding, 1: double span of the abscissa
+
+            Returns:
+                (MeasuredFunction): the fft magnitude
+        '''
+        self_proc = self.uniformlySample()
+        # Put in padding
+        span = self_proc.getSpan()
+        padded_span = np.mean(span) + (span - np.mean(span)) * (1 + paddingFactor/2)
+        self_proc = self_proc.crop(padded_span)
+        # Figure out domain of the spectrum.
+        # Here "t" refers to the abscissa units of whatever self is.
+        dt = self_proc.absc[1] - self_proc.absc[0]
+        fft_cmplx = np.fft.rfft(self_proc.ordi) / len(self_proc)
+        fft_mag = np.abs(fft_cmplx)
+        freq_domain = np.linspace(0, 1 / 2 / dt, len(fft_mag))
+        return MeasuredFunction(freq_domain, fft_mag)
 
     # Mathematics
 
