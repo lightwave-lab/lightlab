@@ -1,5 +1,6 @@
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import MultiModalSource, MultiChannelSource
+from lightlab.equipment.visa_bases.driver_base import TCPSocketConnection
 from lightlab.laboratory.instruments import CurrentSource
 
 import numpy as np
