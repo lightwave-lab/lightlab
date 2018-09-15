@@ -60,6 +60,10 @@ class InstrumentSessionBase(ABC):
         pass
 
 
+CR = '\r'
+LF = '\n'
+
+
 class TCPSocketConnection(object):
     ''' Opens a TCP socket connection, much like netcat.
 
@@ -73,8 +77,9 @@ class TCPSocketConnection(object):
 
     port = None  #: socket server's port number
     _socket = None
+    _termination = None
 
-    def __init__(self, ip_address, port, timeout=2):
+    def __init__(self, ip_address, port, timeout=2, termination=LF):
         """
         Args:
             ip_address (str): hostname or ip address of the socket server
@@ -85,9 +90,10 @@ class TCPSocketConnection(object):
         self.timeout = timeout
         self.port = port
         self.ip_address = ip_address
+        self._termination = termination
 
     def _send(self, socket, value):
-        encoded_value = ('%s\n' % value).encode('ascii')
+        encoded_value = (('%s' % value) + self._termination).encode('ascii')
         sent = socket.sendall(encoded_value)
         return sent
 

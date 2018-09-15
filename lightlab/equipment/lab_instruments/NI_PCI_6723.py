@@ -1,10 +1,11 @@
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import MultiModalSource, MultiChannelSource
+from lightlab.equipment.visa_bases.driver_base import TCPSocketConnection
 from lightlab.laboratory.instruments import CurrentSource
 
 import numpy as np
 import time
-import visa as pyvisa
+import socket
 from lightlab.util.io import RangeError
 from lightlab import visalogger as logger
 
@@ -37,24 +38,74 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
     targetPort = 16022  # TCPIP server port; charge of an electron (Coulombs)
     waitMsOnWrite = 500  # Time to settle after tuning
 
+    _tcpsocket = None
+    MAGIC_TIMEOUT = 30
+
     def __init__(self, name='The current source', address=None, useChans=None, **kwargs):
         kwargs['tempSess'] = kwargs.get('tempSess', True)
         if 'elChans' in kwargs.keys():
             useChans = kwargs.pop('elChans')
-        VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
+        self.reinstantiate_session(address, kwargs['tempSess'])
         MultiChannelSource.__init__(self, useChans=useChans)
+
+    def reinstantiate_session(self, address, tempSess):
+        if address is not None:
+            # should be something like ['TCPIP0', 'xxx.xxx.xxx.xxx', '6501', 'SOCKET']
+            address_array = address.split("::")
+            self._tcpsocket = TCPSocketConnection(ip_address=address_array[1],
+                                                  port=int(address_array[2]),
+                                                  timeout=self.MAGIC_TIMEOUT,
+                                                  termination='\r\n')
 
     def startup(self):
         self.off()
 
     def open(self):
-        VISAInstrumentDriver.open(self)
-        self.termination = '\r\n'
-        self.mbSession.set_visa_attribute(
-            pyvisa.constants.VI_ATTR_TERMCHAR_EN, pyvisa.constants.VI_TRUE)
-        # use the faster protocol
-        self.mbSession.set_visa_attribute(
-            pyvisa.constants.VI_ATTR_IO_PROT, pyvisa.constants.VI_PROT_4882_STRS)
+        if self.address is None:
+            raise RuntimeError("Attempting to open connection to unknown address.")
+        try:
+            self._tcpsocket.connect()
+        except socket.error:
+            self._tcpsocket.disconnect()
+            raise
+
+    def close(self):
+        self._tcpsocket.disconnect()
+
+    def _query(self, queryStr):
+        with self._tcpsocket.connected() as s:
+            s.send(queryStr)
+
+            i = 0
+            old_timeout = s.timeout
+            s.timeout = self.MAGIC_TIMEOUT
+            received_msg = ''
+            while i < 1024:  # avoid infinite loop
+                recv_str = s.recv(1024)
+                received_msg += recv_str
+                if recv_str.endswith('\n'):
+                    break
+                s.timeout = 1
+                i += 1
+            s.timeout = old_timeout
+            return received_msg.rstrip()
+
+    def query(self, queryStr, expected_talker=None):
+        ret = self._query(queryStr)
+        if expected_talker is not None:
+            if ret != expected_talker:
+                log_function = logger.warning
+            else:
+                log_function = logger.debug
+            log_function("'%s' returned '%s', expected '%s'", queryStr, ret, str(expected_talker))
+        else:
+            logger.debug("'%s' returned '%s'", queryStr, ret)
+        return ret
+
+    def write(self, writeStr, expected_talker=None):
+        ''' The APEX does not deal with write; you have to query to clear the buffer '''
+        self.query(writeStr, expected_talker)
+        time.sleep(0.2)
 
     def instrID(self):
         r''' There is no "\*IDN?" command. Instead, test if it is alive,
