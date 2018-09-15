@@ -5,7 +5,7 @@ from lightlab.laboratory.instruments import CurrentSource
 
 import numpy as np
 import time
-import visa as pyvisa
+import socket
 from lightlab.util.io import RangeError
 from lightlab import visalogger as logger
 
