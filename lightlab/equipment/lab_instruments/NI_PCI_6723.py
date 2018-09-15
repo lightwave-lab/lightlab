@@ -54,7 +54,8 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
             address_array = address.split("::")
             self._tcpsocket = TCPSocketConnection(ip_address=address_array[1],
                                                   port=int(address_array[2]),
-                                                  timeout=self.MAGIC_TIMEOUT)
+                                                  timeout=self.MAGIC_TIMEOUT,
+                                                  termination='\r\n')
 
     def startup(self):
         self.off()
