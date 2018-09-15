@@ -59,8 +59,10 @@ class InstrumentSessionBase(ABC):
     def termination(self, newTimeout):
         pass
 
+
 CR = '\r'
 LF = '\n'
+
 
 class TCPSocketConnection(object):
     ''' Opens a TCP socket connection, much like netcat.
