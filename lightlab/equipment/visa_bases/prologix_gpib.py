@@ -69,6 +69,7 @@ class PrologixResourceManager(TCPSocketConnection):
         """
         self.timeout = timeout
         self.ip_address = ip_address
+        super().__init__(ip_address, self.port, timeout=timeout, termination='\n')
 
     def startup(self):
         ''' Sends the startup configuration to the controller.
