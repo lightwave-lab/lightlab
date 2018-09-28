@@ -95,6 +95,13 @@ API
 
     This documentation contains ipython notebooks. It is possible to open them with a jupyter kernel and run them interactively to play with knobs and see more plotting features.
 
+Citing
+------
+
+.. image:: https://zenodo.org/badge/131508614.svg
+   :target: https://zenodo.org/badge/latestdoi/131508614
+
+Then you can download as BibTeX.
 
 * :ref:`genindex`
 * :ref:`modindex`
