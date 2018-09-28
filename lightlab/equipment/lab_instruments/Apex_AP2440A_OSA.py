@@ -168,8 +168,8 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         :rtype: array
         """
         logger.debug('The OSA is sweeping')
-        self.write('SPTRACESWP0')  # activate trace 0
-        self.write('SPSWP1')  # Initiates a sweep
+        self.write('SPTRACESWP0', 'SP_SWEEP_TRACE_0')  # activate trace 0
+        self.write('SPSWP1', 'SP_SINGLE_SWEEP')  # Initiates a sweep
         # self.write('*WAI') # Bus and entire program stall until sweep completes.
         logger.debug('Done')
 
@@ -194,17 +194,22 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
 
         return wavelengthData[::-1], powerData[::-1]
 
-    def spectrum(self, avgCnt=1):
+    def spectrum(self, average_count=1):
         """Take a new sweep and return the new data. This is the primary user function of this class
         """
-        for i in range(avgCnt):
+
+        if not (type(average_count) == int and average_count > 0):
+            raise RuntimeError('average_count must be positive integer, used {}'.format(average_count))
+
+        for i in range(average_count):
             self.triggerAcquire()
             nm, dbm = self.transferData()
 
             if i is 0:
-                dbmAvg = dbm / avgCnt
+                dbmAvg = dbm / average_count
             else:
-                dbmAvg = dbmAvg + dbm / avgCnt
+                dbmAvg = dbmAvg + dbm / average_count
+
         return Spectrum(nm, dbmAvg, inDbm=True)
 
     # TLS access methods currently not implemented
