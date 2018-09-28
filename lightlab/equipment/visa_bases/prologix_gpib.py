@@ -1,12 +1,11 @@
 # prologix patch, to be inserted somewhere in visa_bases
 import socket
-from contextlib import contextmanager
 import time
 import re
-from .driver_base import InstrumentSessionBase
+from .driver_base import InstrumentSessionBase, TCPSocketConnection
 
 
-class PrologixResourceManager(object):
+class PrologixResourceManager(TCPSocketConnection):
     '''Controls a Prologix GPIB-ETHERNET Controller v1.2
     manual: http://prologix.biz/downloads/PrologixGpibEthernetManual.pdf
 
@@ -64,76 +63,12 @@ class PrologixResourceManager(object):
     def __init__(self, ip_address, timeout=2):
         """
         Args:
-            ip_address (str): hostname or ip address of the controller
+            ip_address (str): hostname or ip address of the Prologix controller
             timeout (float): timeout in seconds for establishing socket
-                connection to controller, default 2.
+                connection to socket server, default 2.
         """
         self.timeout = timeout
         self.ip_address = ip_address
-
-    def _send(self, socket, value):
-        encoded_value = ('%s\n' % value).encode('ascii')
-        sent = socket.sendall(encoded_value)
-        return sent
-
-    def _recv(self, socket, msg_length=2048):
-        received_value = socket.recv(msg_length)
-        return received_value.decode('ascii')
-
-    def connect(self):
-        ''' Connects to the controller via socket and leaves the connection open.
-        If already connected, does nothing.
-
-        Returns:
-            socket object.
-        '''
-        if self._socket is None:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
-            try:
-                s.settimeout(self.timeout)
-                s.connect((self.ip_address, self.port))
-            except socket.error:
-                s.close()
-                del s
-                print('Cannot connect to Prologix GPIB Controller.')
-                raise
-            else:
-                self._socket = s
-            return self._socket
-        else:
-            return self._socket
-
-    def disconnect(self):
-        ''' If connected, disconnects and kills the socket.'''
-        if self._socket is not None:
-            self._socket.close()
-            self._socket = None
-
-    @contextmanager
-    def connected(self):
-        ''' Context manager for ensuring that the socket is connected while
-        sending and receiving commands to controller.
-        This is safe to use everywhere, even if the socket is previously connected.
-        It can also be nested.
-        This is useful to bundle multiple commands that you desired to be
-        executed together in a single socket connection, for example:
-
-        .. code-block:: python
-
-            def query(self, query_msg, msg_length=2048):
-                with self.connected():
-                    self._send(self._socket, query_msg)
-                    recv = self._recv(self._socket, msg_length)
-                return recv
-
-        '''
-        previously_connected = (self._socket is not None)
-        self.connect()
-        try:
-            yield self
-        finally:
-            if not previously_connected:
-                self.disconnect()
 
     def startup(self):
         ''' Sends the startup configuration to the controller.
@@ -146,28 +81,8 @@ class PrologixResourceManager(object):
             self.send('++eos 0')  # append CR+LF after every GPIB
             self.send('++savecfg 0')  # Disable saving of configuration parameters in EPROM
 
-    def send(self, value):
-        ''' Sends an ASCII string to the controller via socket. Auto-connects if necessary.
-
-        Args:
-            value (str): value to be sent
-        '''
-        with self.connected():
-            sent = self._send(self._socket, value)
-        return sent
-
-    def recv(self, msg_length=2048):
-        ''' Receives an ASCII string from the controller via socket. Auto-connects if necessary.
-
-        Args:
-            msg_length (int): maximum message length.
-        '''
-        with self.connected():
-            recv = self._recv(self._socket, msg_length)
-        return recv
-
     def query(self, query_msg, msg_length=2048):
-        ''' Sends a query and receives a string from the controller. Autoconnects if necessary.
+        ''' Sends a query and receives a string from the controller. Auto-connects if necessary.
 
         Args:
             query_msg (str): query message.
@@ -259,9 +174,9 @@ class PrologixGPIBObject(InstrumentSessionBase):
 
     def _prologix_gpib_addr_formatted(self):
         if self.gpib_sad is None:
-            return f'{self.gpib_pad:d}'
+            return '{:d}'.format(self.gpib_pad)
         else:
-            return f'{self.gpib_pad:d} {self.gpib_sad:d}'
+            return '{:d} {:d}'.format(self.gpib_pad, self.gpib_sad)
 
     def _prologix_escape_characters(self, string):
         '''Escapes ESC, +, \n, \r characters with ESC. Refer to Prologix Manual.'''

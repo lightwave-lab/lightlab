@@ -11,9 +11,10 @@ from functools import wraps
 from itertools import repeat
 
 from .one_dim import MeasuredFunction, Waveform
+from lightlab.laboratory import Hashable
 
 
-class FunctionBundle(object):  # pylint: disable=eq-without-hash
+class FunctionBundle(Hashable):  # pylint: disable=eq-without-hash
     ''' A bundle of :class:`~lightlab.util.data.one_dim.MeasuredFunction`'s: "z" vs. "x", "i"
 
         The key is that they have the same abscissa base.

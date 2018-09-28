@@ -31,7 +31,7 @@ def test_instantiate_instrum(instrum):
 from lightlab.equipment.lab_instruments import NI_PCI_6723, ILX_7900B_LS
 from lightlab.util.io import ChannelError
 def test_instrums_withChannels():
-    cs = NI_PCI_6723(name='a CS', address='NULL', useChans=[1, 2])
+    cs = NI_PCI_6723(name='a CS', address=None, useChans=[1, 2])
     with pytest.raises(ChannelError):
-        cs = NI_PCI_6723(name='a CS', address='NULL', useChans=[50])
-    ls = ILX_7900B_LS(name='a LS', address='NULL', useChans=[1, 2])
+        cs = NI_PCI_6723(name='a CS', address=None, useChans=[50])
+    ls = ILX_7900B_LS(name='a LS', address=None, useChans=[1, 2])
