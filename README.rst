@@ -1,6 +1,9 @@
 Lightlab
 ========
 
+.. image:: https://travis-ci.org/lightwave-lab/lightlab.svg?branch=development
+    :target: https://travis-ci.org/lightwave-lab/lightlab
+
 A python library for remote laboratory control. Laboratory remoting facilitates experimental research:
 
 * access from anywhere
