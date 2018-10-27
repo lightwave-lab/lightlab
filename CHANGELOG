@@ -1,5 +1,11 @@
 # CHANGELOG
 
+1.0.5:
+    - added new driver for APEX OSA, which use TCP sockets directly, refactored from the Prologix controller (PR #8)
+    - refactored NI_PCI_6723's driver, and added the the example labview programs that go with it (PR #9)
+    - minimum current to 1nA in keithleys, down from 1uA (minor change 8b1527b)
+    - bugfix in keithley: not sourcing negative currents correctly (bugfix 2268980)
+
 1.0.4:
     - compatibility with python 3.7
     - Prologix gpib controller implemented (major feature #6)

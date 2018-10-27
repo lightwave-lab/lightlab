@@ -2,6 +2,7 @@ Lightlab
 ========
 
 A python library for remote laboratory control. Laboratory remoting facilitates experimental research:
+
 * access from anywhere
 * large dataset gathering, storage, and analysis
 * repeatability
@@ -9,6 +10,7 @@ A python library for remote laboratory control. Laboratory remoting facilitates 
 * intra- and inter-group collaboration
 
 This package includes:
+
 * A shared library of instrument drivers
 * Representation of state for labs of multiple users
 * Driver-independent abstractions of instruments
@@ -38,11 +40,11 @@ From source:
 Getting started
 ---------------
 
-1. Configure GPIB/ethernet communication on an `instrumentation server <http://lightlab.readthedocs.io/en/latest/_static/gettingStarted/sysadmin.html>`__
+1. Configure GPIB/ethernet communication on a `personal computer or instrumentation server <https://lightlab.readthedocs.io/en/latest/_static/installation/index.html>`__
 2. Initialize the representation of your `lab state <http://lightlab.readthedocs.io/en/latest/_static/developers/labState.html>`__
 3. `Write a driver <http://lightlab.readthedocs.io/en/latest/_static/tutorials/drivers/drivers.html>`__ or use an existing one
 4. Read about advanced features and `tutorials <http://lightlab.readthedocs.io/en/latest/_static/tutorials/index.html>`__
-5. Get going!
+5. Get going! Need more help? Have suggestions? File an `issue <https://github.com/lightwave-lab/lightlab/issues>`__
 
 Readthedocs: `lightlab.readthedocs.io <http://lightlab.readthedocs.io/en/latest/>`_
 
