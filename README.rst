@@ -32,13 +32,13 @@ From PyPI:
 
     pip install lightlab
 
-From source:
+From source (developer mode):
 
 ::
 
-    git clone git@github.com:lightwave-lab/lightlab.git
+    git clone https://github.com/lightwave-lab/lightlab.git
     cd lightlab
-    make venv
+    pip install -e .  # install in editable mode.
 
 Getting started
 ---------------
