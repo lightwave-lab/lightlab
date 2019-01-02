@@ -7,7 +7,7 @@ stage: test
 language: python
 python:
 - '3.6'
-- '3.7'
+- '3.7-dev'
 install:
 - pip install -U virtualenv pip
 - python --version
