@@ -1,5 +1,10 @@
 # CHANGELOG
 
+1.0.6:
+    - Major bug in Prologix driver
+    - Minor improvement to APEX driver
+    - Some documentation improvements
+
 1.0.5:
     - added new driver for APEX OSA, which use TCP sockets directly, refactored from the Prologix controller (PR #8)
     - refactored NI_PCI_6723's driver, and added the the example labview programs that go with it (PR #9)
