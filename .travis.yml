@@ -2,21 +2,23 @@ stages:
   - test
   - name: deploy
     if: branch = master AND tag IS present
+
+stage: test
+language: python
+python:
+- '3.6'
+- '3.7'
+install:
+- pip install -U virtualenv pip
+- python --version
+- echo $TRAVIS_BRANCH
+script:
+- DOCKER=1 make test-unit-all
+- make test-lint-errors
+- if [ "$TRAVIS_BRANCH" = "master" ]; then make test-lint; fi
+
 jobs:
   include:
-    - stage: test
-      language: python
-      python:
-      - '3.6'
-      - '3.7'
-      install:
-      - pip install -U virtualenv pip
-      - python --version
-      - echo $TRAVIS_BRANCH
-      script:
-      - DOCKER=1 make test-unit-all
-      - make test-lint-errors
-      - if [ "$TRAVIS_BRANCH" = "master" ]; then make test-lint; fi
     - stage: deploy
       deploy:
         provider: pypi
