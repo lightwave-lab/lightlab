@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 LABSTATE_FILENAME = "labstate.json"
 JUPYTER_GROUP = "jupyter"
 
-assert sys.version_info >= (3, 5), "Use python >= 3.5 - We are living in the __future__!"
+# assert sys.version_info >= (3, 6), "Use python >= 3.6 - We are living in the __future__!"
 
 
 def touch(fname, times=None):
@@ -36,6 +36,7 @@ def main():
         description='Lightwave Lab instrument automation tools',
         long_description=readme,
         license=license_text.split('\n')[0],
+        python_requires='>=3.6',
         packages=find_packages(exclude=('tests', 'docs', 'data')),
         url="https://github.com/lightwave-lab/lightlab",
         author="Alex Tait <atait@ieee.org>, Thomas Ferreira de Lima <tlima@princeton.edu>",
