@@ -464,7 +464,7 @@ class Instrument(Node):
         # set obj.__mangled_variable = 'something'
         try:
             return self.__dict__[mangle(attrName, self.__class__.__name__)]
-        except KeyError as _:
+        except KeyError:
             raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):

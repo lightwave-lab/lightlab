@@ -1,6 +1,9 @@
 Lightlab
 ========
 
+.. image:: https://travis-ci.org/lightwave-lab/lightlab.svg?branch=development
+    :target: https://travis-ci.org/lightwave-lab/lightlab
+
 A python library for remote laboratory control. Laboratory remoting facilitates experimental research:
 
 * access from anywhere
@@ -29,13 +32,13 @@ From PyPI:
 
     pip install lightlab
 
-From source:
+From source (developer mode):
 
 ::
 
-    git clone git@github.com:lightwave-lab/lightlab.git
+    git clone https://github.com/lightwave-lab/lightlab.git
     cd lightlab
-    make venv
+    pip install -e .  # install in editable mode.
 
 Getting started
 ---------------

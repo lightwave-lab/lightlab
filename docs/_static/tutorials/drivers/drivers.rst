@@ -13,13 +13,15 @@ The module page :py:mod:`~lightlab.equipment.lab_instruments` contains all the i
 .. code-block:: python
     
     from lightlab.equipment.lab_instruments import Keithley_2400_SM
-    k = Keithley_2400_SM(name="My Keithley", address="visa://alice.school.edu/GPIB0::23::INSTR")
+    k = Keithley_2400_SM(name="My Keithley", address="GPIB0::23::INSTR")
     if k.isLive():
         print("Connection is good")
 
     help(k)  # should display all commands available to be used.
 
-The address format for the Instrument is either a `VISA-compatible resource name <http://pyvisa.readthedocs.io/en/stable/names.html#visa-resource-syntax-and-examples>`_ (parsed by `pyvisa`), or it can be written as ``prologix://prologix_ip_address/gpib_primary_address[:gpib_secondary_address]``, for use with the `Prologix GPIB-Ethernet controller <http://prologix.biz/gpib-ethernet-controller.html>`_.
+The address format for the Instrument is either a `VISA-compatible resource name <http://pyvisa.readthedocs.io/en/stable/names.html#visa-resource-syntax-and-examples>`_ (parsed by `pyvisa`). In this example, the Keithley instrument is configured to have the address 23, and it is plugged directly to the host. Alternatively, it can be connected to a computer with an instance of the NI Visa Server, in which case the address would be ``visa://alice.school.edu/GPIB0::23::INSTR``, where ``alice.school.edu`` is the hostname of the computer hosting the Visa Server.
+
+Alternatively, it can be written as ``prologix://prologix_ip_address/gpib_primary_address[:gpib_secondary_address]``, e.g. ``prologix://alice.school.edu/23``, for use with the `Prologix GPIB-Ethernet controller <http://prologix.biz/gpib-ethernet-controller.html>`_.
 
 The instrument abstraction
 --------------------------

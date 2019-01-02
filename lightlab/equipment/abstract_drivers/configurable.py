@@ -83,14 +83,14 @@ class TekConfig(object):
         if success != 1:  # it doesn't exist yet
             try:
                 dpath.util.new(self.dico, *cmd, separator=self.separator)
-            except ValueError as e:
+            except ValueError:
                 # We probably have an integer leaf where we would also like to have a directory
                 parent = self.separator.join(cmd[0].split(self.separator)[:-1])
                 try:
                     oldV = self.get(parent, asCmd=False)
-                except KeyError as e:
+                except KeyError:
                     print('dpath did not take ' + str(cmd))
-                    raise e
+                    raise
                 dpath.util.set(self.dico, parent, {'&': oldV}, separator=self.separator)
                 dpath.util.new(self.dico, *cmd, separator=self.separator)
 

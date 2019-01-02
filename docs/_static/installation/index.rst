@@ -45,7 +45,7 @@ Regular users can install lightlab with pip::
 
     $ pip install lightlab
 
-For more experienced users: install the lightlab package like any other python package::
+For more experienced users: install the lightlab package like any other python package, after having downloaded the project from github.::
 
     $ python3 install setup.py
 
