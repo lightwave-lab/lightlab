@@ -364,7 +364,7 @@ class FunctionBundle(Hashable):  # pylint: disable=eq-without-hash
                 for jDim, sSig in enumerate(self):
                     if jDim not in usedPermInds:
                         permCorrs[jDim] = (sSig * oSig).getMean()
-                permInd = np.argmax(np.abs(permCorrs))
+                permInd = int(np.argmax(np.abs(permCorrs)))
                 permSign = int(np.sign(permCorrs[permInd]))
                 newWfm = permSign * self[permInd]
                 usedPermInds.append(permInd)
