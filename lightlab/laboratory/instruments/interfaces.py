@@ -126,6 +126,9 @@ class OpticalSpectrumAnalyzer(Instrument):
     essentialProperties = Instrument.essentialProperties + \
         ['wlRange']
 
+    def hardware_warmup(self):
+        self.startup()
+
 
 class Oscilloscope(Instrument):
     ''' Usage: :ref:`/ipynbs/Hardware/Oscilloscope.ipynb` '''
