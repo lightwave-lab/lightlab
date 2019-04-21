@@ -217,7 +217,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             * get(self._yScaleParam) \
             + get('YZERO')
 
-        timeDivision = float(self.getConfigParam('HORIZONTAL:MAIN:SCALE'))
+        timeDivision = float(self.getConfigParam('HORIZONTAL:MAIN:SCALE', forceHardware=True))
         time = np.linspace(-1, 1, len(voltage)) / 2 * timeDivision * 10
 
         return time, voltage
