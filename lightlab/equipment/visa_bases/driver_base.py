@@ -3,6 +3,7 @@ from contextlib import contextmanager
 import socket
 import time
 from lightlab import visalogger as logger
+from pyvisa.util import from_ascii_block
 
 
 class InstrumentSessionBase(ABC):
@@ -38,12 +39,23 @@ class InstrumentSessionBase(ABC):
         pass
 
     @abstractmethod
+    def wait(self):
+        pass
+
+    @abstractmethod
     def clear(self):
         pass
 
     @abstractmethod
     def query_raw_binary(self):
         pass
+
+    def query_ascii_values(self, message, converter='f', separator=',',
+                           container=list):
+        ''' Taken from pvisa.'''
+
+        block = self.query(message)
+        return from_ascii_block(block, converter, separator, container)
 
     def instrID(self):
         r"""Returns the \*IDN? string"""
@@ -56,7 +68,7 @@ class InstrumentSessionBase(ABC):
 
     @timeout.setter
     @abstractmethod
-    def termination(self, newTimeout):
+    def timeout(self, newTimeout):
         pass
 
 

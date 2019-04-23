@@ -180,17 +180,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         chStr = 'CH' + str(chan)
         self.setConfigParam('DATA:ENCDG', 'ASCII')
         self.setConfigParam('DATA:SOURCE', chStr)
-        self.open()
-        try:
-            voltRaw = self.mbSession.query_ascii_values('CURV?')
-        except pyvisa.VisaIOError as err:
-            logger.error('Problem during query_ascii_values(\'CURV?\')')
-            try:
-                self.close()
-            except pyvisa.VisaIOError:
-                logger.error('Failed to close! %s', self.address)
-            raise err
-        self.close()
+
+        voltRaw = self.query_ascii_values('CURV?')
         return voltRaw
 
     def __scaleData(self, voltRaw):
