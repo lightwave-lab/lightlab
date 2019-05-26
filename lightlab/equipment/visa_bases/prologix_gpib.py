@@ -2,6 +2,7 @@
 import socket
 import time
 import re
+from lightlab import visalogger as logger
 from .driver_base import InstrumentSessionBase, TCPSocketConnection
 
 
@@ -87,11 +88,15 @@ class PrologixResourceManager(TCPSocketConnection):
 
         Args:
             query_msg (str): query message.
-            msg_length (int): maximum message length.
+            msg_length (int): maximum message length. If the received
+                message does not contain a '\n', it triggers another
+                socket recv command with the same message length.
         '''
         with self.connected():
             self._send(self._socket, query_msg)
             recv = self._recv(self._socket, msg_length)
+            while not recv.endswith('\n'):
+                recv += self._recv(self._socket, msg_length)
         return recv
 
 
@@ -261,8 +266,13 @@ class PrologixGPIBObject(InstrumentSessionBase):
         '''Read the unmodified string sent from the instrument to the
            computer.
         '''
+        logger.debug('%s - Q - %s', self.address, queryStr)
         retStr = self.query_raw_binary(queryStr, withTimeout)
+        logger.debug('Query Read - %s', repr(retStr))
         return retStr.rstrip()
+
+    def wait(self, bigMsTimeout=10000):
+        self.query('*OPC?', withTimeout=bigMsTimeout)
 
     def clear(self):
         '''This command sends the Selected Device Clear (SDC) message to the currently specified GPIB address.'''
@@ -290,7 +300,7 @@ class PrologixGPIBObject(InstrumentSessionBase):
             status_byte = self.spoll()
             # MAV indicates that the message is available
             MAV = (status_byte >> 4) & 1
-            if MAV:
+            if MAV == 1:
                 retStr = self._prologix_rm.query('++read eoi')
                 return retStr.rstrip()
             # ask for the message in small increments

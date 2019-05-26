@@ -19,7 +19,7 @@ class _AttrGetter(object):
 
 
 _InstrumentSessionBase_methods = list(name for name, _ in inspect.getmembers(
-    InstrumentSessionBase, inspect.isfunction))
+    InstrumentSessionBase, lambda o: inspect.isfunction(o) or isinstance(o, property)))
 
 
 class InstrumentSession(_AttrGetter):
