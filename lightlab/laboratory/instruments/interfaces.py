@@ -206,3 +206,19 @@ class ArduinoInstrument(Instrument):
     essentialMethods = Instrument.essentialMethods + \
         ['write',
          'query']
+
+
+class PatternGenerator(Instrument):
+    essentialMethods = Instrument.essentialMethods + \
+        ['setDataRate',
+         'setMainParam',
+         'setDataMemory',
+         'setHexDataMemory',
+         'setClockDivider',
+         'channelOn',
+         'channelOff',
+         'getAmplitude',
+         'getOffset',
+         'getDataRate',
+         'getPatternType',
+         'getClockDivider']
