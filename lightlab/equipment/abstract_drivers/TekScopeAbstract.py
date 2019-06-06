@@ -1,5 +1,4 @@
 import numpy as np
-import pyvisa
 
 from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
