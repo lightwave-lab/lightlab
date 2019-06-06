@@ -108,7 +108,6 @@ class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
         else:
             logger.exception('Please choose Channel 1 or 2!')
 
-
     def getAmplitude(self, chan=None):
         if chan is not None and chan in self.__channels:
             return self.query(':VOLT' + str(chan) + ':POS?')
