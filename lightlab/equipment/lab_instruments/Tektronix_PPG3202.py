@@ -8,8 +8,12 @@ from lightlab import visalogger as logger
 
 
 class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
-
-    ''' Python driver for Tektronix PPG 3202
+    ''' Python driver for Tektronix PPG 3202.
+	
+		Basic functionality includes setting all parameters on the main pannel and specifying data rate.
+		Other functionality includes setting output data pattern on specifies channel.
+		
+		`Manual <https://www.tek.com/bit-error-rate-tester/patternpro-ppg-series-pattern-generator-manual/ppg1600-ppg3000-ppg3200-0>`
     '''
 
     instrument_category = PatternGenerator
@@ -19,6 +23,7 @@ class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
     __waitTime = 0        # May be needed to prevent Timeout error
 
     def __init__(self, name='Pattern Generator', address=None, **kwargs):
+		# Address should be something like 'USB0::0xXXXX::0xXXXX::XXXXXXX::INSTR' when using USB connection
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         Configurable.__init__(self)
 
