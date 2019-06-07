@@ -9,10 +9,10 @@ from lightlab import visalogger as logger
 
 class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
     ''' Python driver for Tektronix PPG 3202.
-	
+
 		Basic functionality includes setting all parameters on the main pannel and specifying data rate.
 		Other functionality includes setting output data pattern on specifies channel.
-		
+
 		`Manual <https://www.tek.com/bit-error-rate-tester/patternpro-ppg-series-pattern-generator-manual/ppg1600-ppg3000-ppg3200-0>`
     '''
 
