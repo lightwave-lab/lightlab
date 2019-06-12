@@ -24,7 +24,7 @@ if(len(log.handlers) == 0): # check if the logger already exists
     log.addHandler(ch)
 
 class Aragon_BOSA_400 (VISAInstrumentDriver):
-    
+
     __apps = np.array(['BOSA', 'TLS', 'CA', 'MAIN'])
     __wlRange = None
     MAGIC_TIMEOUT = 30
@@ -67,7 +67,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         log.debug("All data readed!")
         log.debug("Data received: " + message)
         return message
-        
+
     def ask(self, command):
 
         """ writes and reads data"""
@@ -76,7 +76,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         self.write(command)
         data = self.read()
         return data
-        
+
     def application(self, app=None):
         if app is not None and app in self.__apps:
             try:
@@ -122,7 +122,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         self.write("TRAC?")
         data = self.read_TRACE_ASCII()
         return data
-        
+
     def read_TRACE_ASCII(self):
 
         """ read something from device"""
@@ -138,7 +138,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
                 print(e)
                 raise e
         return Byte_data
-        
+
     def spectrum(self):
         data = self.ask_TRACE_ASCII()
         x=list()
