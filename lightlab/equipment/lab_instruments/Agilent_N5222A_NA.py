@@ -198,7 +198,7 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 
         self.setConfigParam('FORM', 'ASC')
         self.open()
-        dbm = self.mbSession.query_ascii_values('CALC{}:DATA? FDATA'.format(self.chanNum))
+        dbm = self.query_ascii_values('CALC{}:DATA? FDATA'.format(self.chanNum))
         self.close()
 
         fStart = float(self.getConfigParam('SENS:FREQ:STAR'))
