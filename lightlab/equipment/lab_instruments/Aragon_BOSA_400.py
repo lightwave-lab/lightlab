@@ -5,6 +5,7 @@ from lightlab.util.data import Spectrum
 import visa
 import time
 import logging
+import struct
 WIDEST_WLRANGE = [1525, 1565]
 
 # create logger
@@ -108,10 +109,9 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         newRangeClipped = np.clip(newRange, a_min=1525, a_max=1565)
         if np.any(newRange != newRangeClipped):
             print('Warning: Requested OSA wlRange out of range. Got', newRange)
-        self.write("SENS:WAV:STAR " + str(np.max(newRangeClipped)) + " NM")
-        self.write("SENS:WAV:STOP " + str(np.min(newRangeClipped)) + " NM")
-        self.write("SENS:WAV:RES HIGH")
-        self.__wlRange = newRangeClipped
+        self.write("SENS:WAV:CENT " + str((np.max(newRangeClipped)+np.min(newRangeClipped))/2) + " NM")
+        self.write("SENS:WAV:SPAN " + str(np.max(newRangeClipped)-np.min(newRangeClipped)) + " NM")
+        self.__wlRange = self.getWLrangeFromHardware()
 
     def ask_TRACE_ASCII(self):
 
@@ -123,10 +123,18 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         data = self.read_TRACE_ASCII()
         return data
 
+    def ask_TRACE_REAL(self):
+        data = ""
+        self.write("FORM REAL")
+        NumPoints = int(self.ask("TRACE:DATA:COUNT?"))
+        self.write("TRAC?")
+        data = self.read_TRACE_REAL_GPIB(NumPoints)
+        return data
+
     def read_TRACE_ASCII(self):
 
         """ read something from device"""
-        
+
         log.debug("Reading data using GPIB interface...")
         while(1):
             try:
@@ -139,11 +147,40 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
                 raise e
         return Byte_data
 
-    def spectrum(self):
-        data = self.ask_TRACE_ASCII()
+    def read_TRACE_REAL_GPIB(self,numPoints):
+
+        """ read something from device"""
+        log.debug("Reading data using GPIB interface...")
+        while(1):
+            try:
+                msgLength = int(numPoints*2*8)
+                Byte_data = self.interface.read_bytes(msgLength, chunk_size=None, break_on_termchar=False)
+                c, r = 2, int(numPoints)
+                Trace= [[0 for x in range(c)] for x in range(r)]
+                for x in range(0,int(numPoints)):
+                   Trace[x][0]=struct.unpack('d', Byte_data[(x)*16:(x)*16+8])
+                   Trace[x][1] = struct.unpack('d', Byte_data[(x) * 16+8:(x+1) * 16 ])
+                if((Byte_data != '')):
+                    break
+            except Exception as e:
+                log.exception("Could not read data")
+                print(e)
+                raise e
+        return Trace
+
+    def spectrum(self, form):
         x=list()
         y=list()
-        for i in range(0,len(data),2):
-            x.append(data[i])
-            y.append(data[i+1])
+        if(form=='REAL'):
+            data = self.ask_TRACE_ASCII()
+            for i in range(0,len(data),2):
+                x.append(data[i])
+                y.append(data[i+1])
+        elif(form=='ASCII'):
+            data = self.ask_TRACE_REAL()
+            for i in range(0,len(data),1):
+                x.append(data[i][0])
+                y.append(data[i][1])
+        else:
+            log.exception("Please choose form 'REAL' or 'ASCII'")
         return Spectrum(x, y, inDbm=True)
