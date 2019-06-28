@@ -1,7 +1,6 @@
 stages:
   - test
-  - name: deploy
-    if: branch = master AND tag IS present
+  - deploy
 
 stage: test
 language: python
