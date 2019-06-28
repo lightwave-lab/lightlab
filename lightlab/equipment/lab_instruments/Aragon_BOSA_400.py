@@ -28,6 +28,11 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
 
     __apps = np.array(['BOSA', 'TLS', 'CA', 'MAIN'])
     __wlRange = None
+    __currApp = None
+    __avg = np.array(['4', '8', '12', '32', 'CONT'])
+    __sMode = np.array(['HR', 'HS'])
+    __CAmeasurement = np.array(['IL', 'RL', 'IL&RL'])
+    __CAPolarization = np.array(['1', '2', 'INDEP', 'SIMUL'])
     MAGIC_TIMEOUT = 30
 
     def __init__(self, name='BOSA 400 OSA', address=None, **kwargs):
@@ -87,6 +92,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
                 else:
                     self.write('INST:STAT:RUN 0')
                     self.write('INST:STAT:MODE ' + str(app))
+                self.__currApp = str(app)
             except Exception as e:
                 log.exception("Could not choose the application")
                 print(e)
@@ -184,3 +190,44 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         else:
             log.exception("Please choose form 'REAL' or 'ASCII'")
         return Spectrum(x, y, inDbm=True)
+
+    def CAParam(self, avgCount='CONT', sMode='HR', noiseZero=False):
+        if self.__currApp == 'CA' and avgCount in self.__avg and sMode in self.__sMode:
+            try:
+                self.write('SENS:AVER:COUN '+avgCount)
+                self.write('SENS:AVER:STAT ON')
+                self.write('SENS:WAV:SMOD '+sMode)
+                if noiseZero:
+                    self.write('SENS:NOIS')
+            except Exception as e:
+                log.exception("Could not set CA parameter")
+                print(e)
+                raise e
+        else:
+            log.exception("For average count, please choose from ['4','8','12','32','CONT']\nFor speed mode, please choose from ['HR','HS']")
+
+    def CAInput(self, meas='IL', pol='1'):
+        if meas in self.__CAmeasurement and pol in self.__CAPolarization:
+            try:
+                self.write('INP:SPAR '+meas)
+                self.write('INP:POL '+pol)
+            except Exception as e:
+                log.exception("Could not set input parameters to CA")
+                print(e)
+                raise e
+        else:
+            print("For measurement type, please choose from ['IL', 'RL', 'IL&RL']\nFor polarization, please choose from ['1', '2', 'INDEP', 'SIMUL']")
+
+    '''
+    def TLSwavelength(self, waveLength=None):
+        if waveLength is not None and self.__currApp == 'TLS':
+            try:
+                self.write('SENS:SWITCH ON')
+                self.write('SENS:WAV:STAT '+str(waveLength)+' NM')
+            except Exception as e:
+                log.exception("Could not set the wavelength for TLS")
+                print(e)
+                raise e
+        else:
+            print("Please specify the wavelength and choose application TLS")
+    '''

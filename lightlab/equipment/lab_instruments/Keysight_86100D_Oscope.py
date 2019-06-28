@@ -13,7 +13,7 @@ class Keysight_86100D_Oscope (kf.VisaManager):
         self.FlexDCA.write(':SYSTem:GTLocal')
         self.FlexDCA.close()
 
-    def configure_FlexDCA_eye(self, channel):
+    def configure_FlexDCA_eye(self, channel, scale=None):
         """ Installs a simulated module and prepares self.FlexDCA for
         measurements.
         """
@@ -24,9 +24,13 @@ class Keysight_86100D_Oscope (kf.VisaManager):
         self.FlexDCA.write(':CHAN' + channel + ':DISPlay ON')
         self.FlexDCA.write(':ACQuire:RUN')
         self.FlexDCA.write(':SYSTem:MODE EYE')
-        self.FlexDCA.query(':SYSTem:AUToscale;*OPC?')
+        if scale is None:
+            self.FlexDCA.query(':SYSTem:AUToscale;*OPC?')
+        else:
+            self.magnifier(scale[0], scale[1], channel)
+            self.FlexDCA.query('*OPC?')
 
-    def configure_FlexDCA_pattern(self, channel):
+    def configure_FlexDCA_pattern(self, channel, scale=None):
         """ Installs a simulated module and prepares FlexDCA for
         measurements.
         """
@@ -46,7 +50,11 @@ class Keysight_86100D_Oscope (kf.VisaManager):
         while True:
             if self.FlexDCA.query(':WAVeform:PATTern:COMPlete?'):
                 break
-        self.FlexDCA.query(':SYSTem:AUToscale;*OPC?')
+        if scale is None:
+            self.FlexDCA.query(':SYSTem:AUToscale;*OPC?')
+        else:
+            self.magnifier(scale[0], scale[1], channel)
+            self.FlexDCA.query('*OPC?')
         self.FlexDCA.write(':TIMebase:UNIT UINTerval')
         pattern_length = self.FlexDCA.query(':TRIGger:PLENgth?')
         self.FlexDCA.write(':TIMebase:UIRange ' + pattern_length)
@@ -238,15 +246,29 @@ class Keysight_86100D_Oscope (kf.VisaManager):
         plt.show()
         # print('File saved in script folder: ', PLOTFILE, flush=True)
 
-    def acquire_eye(self, channel):
-        self.configure_FlexDCA_eye(channel)
+    def magnifier(self, xScale=None, yScale=None, channel=None):
+        if xScale is not None:
+            try:
+                self.FlexDCA.write(':TIMebase:SCALe '+xScale)
+            except Exception as e:
+                print(e)
+                raise e
+        if yScale is not None and channel is not None:
+            try:
+                self.FlexDCA.write(':CHANnel'+str(channel)+'YSCale '+str(yScale))
+            except Exception as e:
+                print(e)
+                raise e
+
+    def acquire_eye(self, channel, scale=None):
+        self.configure_FlexDCA_eye(channel, scale)
         kf.waveform_acquisition(self.FlexDCA, 100)
         plot_labels = self.get_eye_info(channel)
         eyedata = self.get_binary_eye_data(channel)
         self.draw_graph_eye(eyedata, plot_labels, channel)
         
-    def acquire_pattern(self, channel):
-        self.configure_FlexDCA_pattern(channel)
+    def acquire_pattern(self, channel, scale=None):
+        self.configure_FlexDCA_pattern(channel, scale)
         values = self.get_pattern_info(channel)
         x_data = self.get_waveform_x_data()
         y_data = self.get_waveform_y_data()
