@@ -126,6 +126,9 @@ class OpticalSpectrumAnalyzer(Instrument):
     essentialProperties = Instrument.essentialProperties + \
         ['wlRange']
 
+    def hardware_warmup(self):
+        self.startup()
+
 
 class Oscilloscope(Instrument):
     ''' Usage: :ref:`/ipynbs/Hardware/Oscilloscope.ipynb` '''
@@ -203,3 +206,19 @@ class ArduinoInstrument(Instrument):
     essentialMethods = Instrument.essentialMethods + \
         ['write',
          'query']
+
+
+class PatternGenerator(Instrument):
+    essentialMethods = Instrument.essentialMethods + \
+        ['setDataRate',
+         'setMainParam',
+         'setDataMemory',
+         'setHexDataMemory',
+         'setClockDivider',
+         'channelOn',
+         'channelOff',
+         'getAmplitude',
+         'getOffset',
+         'getDataRate',
+         'getPatternType',
+         'getClockDivider']
