@@ -99,8 +99,13 @@ def savePickleGzip(filename, dataTuple):
             filename (str, Path): file to write to
             dataTuple (tuple): tuple containing almost anything
     '''
+    filename = str(filename)
 
-    pklfilename = _endingWith(filename, suffix='.pkl')
+    # If user indicated .gz extension, then skip .pkl.gz extension addition
+    if filename.endswith('.gz'):
+        pklfilename = filename
+    else:
+        pklfilename = _endingWith(filename, suffix='.pkl')
     rp = _makeFileExist(_endingWith(pklfilename, suffix='.gz'))
     with gzip.open(rp, 'wb') as fx:
         pickle.dump(dataTuple, fx)
@@ -108,7 +113,12 @@ def savePickleGzip(filename, dataTuple):
 
 def loadPickleGzip(filename):
     ''' Uses pickle and then gzips the file'''
-    pklfilename = _endingWith(filename, suffix='.pkl')
+    filename = str(filename)
+
+    if filename.endswith('.gz'):
+        pklfilename = filename
+    else:
+        pklfilename = _endingWith(filename, suffix='.pkl')
     rp = _getFileDir(_endingWith(pklfilename, suffix='.gz'))
     with gzip.open(rp, 'rb') as fx:
         return pickle.load(fx)

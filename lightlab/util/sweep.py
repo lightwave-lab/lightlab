@@ -14,6 +14,21 @@ import lightlab.util.io as io
 from lightlab import logger
 
 
+def savePickle(savefile, data, compress=True):
+    if compress:
+        io.savePickleGzip(savefile, data)
+    else:
+        io.savePickle(savefile, data)
+
+
+def loadPickle(savefile):
+    try:
+        data = io.loadPickleGzip(savefile)
+    except FileNotFoundError:
+        data = io.loadPickle(savefile)
+    return data
+
+
 class Sweeper(object):
     plotOptions = None
     monitorOptions = None
@@ -27,7 +42,7 @@ class Sweeper(object):
     def gather(self):
         print('gather method must be overloaded in subclass')
 
-    def save(self, savefile=None, compress=False):
+    def save(self, savefile=None):
         ''' Save data only
 
             Args:
@@ -38,10 +53,7 @@ class Sweeper(object):
                 savefile = self.savefile
             else:
                 raise ValueError('No save file specified')
-        if compress:
-            io.savePickleGzip(savefile, self.data)
-        else:
-            io.savePickle(savefile, self.data)
+        return savePickle(savefile, self.data)
 
     def load(self, savefile=None):
         ''' This is basically make it so that gather() and load() have the same effect.
@@ -56,10 +68,7 @@ class Sweeper(object):
                 savefile = self.savefile
             else:
                 raise ValueError('No save file specified')
-        try:
-            self.data = io.loadPickleGzip(savefile)
-        except FileNotFoundError:
-            self.data = io.loadPickle(savefile)
+        self.data = loadPickle(savefile)
 
     def setPlotOptions(self, **kwargs):
         ''' Valid options for NdSweeper
@@ -806,7 +815,7 @@ class CommandControlSweeper(Sweeper):
                 raise ValueError('No save file specified')
         tempEvalRef = self.evaluate
         self.evaluate = None
-        io.savePickle(savefile, self)
+        savePickle(savefile, self)
         self.evaluate = tempEvalRef
 
     @classmethod
@@ -815,7 +824,7 @@ class CommandControlSweeper(Sweeper):
 
             It does not keep actuation or measurement members, only whatever was put in self.data
         '''
-        return io.loadPickle(savefile)
+        return loadPickle(savefile)
 
     def gather(self, autoSave=False, randomize=False):  # pylint: disable=arguments-differ
         ''' Executes the sweep
