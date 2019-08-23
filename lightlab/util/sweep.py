@@ -27,7 +27,7 @@ class Sweeper(object):
     def gather(self):
         print('gather method must be overloaded in subclass')
 
-    def save(self, savefile=None):
+    def save(self, savefile=None, compress=False):
         ''' Save data only
 
             Args:
@@ -38,7 +38,10 @@ class Sweeper(object):
                 savefile = self.savefile
             else:
                 raise ValueError('No save file specified')
-        io.savePickle(savefile, self.data)
+        if compress:
+            io.savePickleGzip(savefile, self.data)
+        else:
+            io.savePickle(savefile, self.data)
 
     def load(self, savefile=None):
         ''' This is basically make it so that gather() and load() have the same effect.
@@ -53,7 +56,10 @@ class Sweeper(object):
                 savefile = self.savefile
             else:
                 raise ValueError('No save file specified')
-        self.data = io.loadPickle(savefile)
+        try:
+            self.data = io.loadPickleGzip(savefile)
+        except FileNotFoundError:
+            self.data = io.loadPickle(savefile)
 
     def setPlotOptions(self, **kwargs):
         ''' Valid options for NdSweeper

@@ -99,14 +99,17 @@ def savePickleGzip(filename, dataTuple):
             filename (str, Path): file to write to
             dataTuple (tuple): tuple containing almost anything
     '''
-    rp = _makeFileExist(_endingWith(filename, suffix='.gz'))
+
+    pklfilename = _endingWith(filename, suffix='.pkl')
+    rp = _makeFileExist(_endingWith(pklfilename, suffix='.gz'))
     with gzip.open(rp, 'wb') as fx:
         pickle.dump(dataTuple, fx)
 
 
 def loadPickleGzip(filename):
     ''' Uses pickle and then gzips the file'''
-    rp = _getFileDir(_endingWith(filename, suffix='.gz'))
+    pklfilename = _endingWith(filename, suffix='.pkl')
+    rp = _getFileDir(_endingWith(pklfilename, suffix='.gz'))
     with gzip.open(rp, 'rb') as fx:
         return pickle.load(fx)
 
