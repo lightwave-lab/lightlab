@@ -595,6 +595,9 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
             return np.all(self.absc == other.absc) and np.all(self.ordi == other.ordi)
         return False
 
+    def __repr__(self):
+        return "{}({:d} pts)".format(self.__class__.__qualname__, len(self))
+
 
 class Spectrum(MeasuredFunction):
     ''' Adds handling of linear/dbm units.
