@@ -10,7 +10,7 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
     ''' ANRITSU MP1761A PulsePatternGenerator
         The PPG MP1763B at Alex's bench, which also support MP1761A (by Hsuan-Tung 07/27/2017)
 
-        Manual?
+        Manual (MP1763C):  http://www.otntech.com/modules/catalogue/download.php?id=52&mode=download&file_name=MP1763C.pdf
 
         Usage: :any:`/ipynbs/Hardware/PulsePatternGenerator.ipynb`
 
@@ -206,3 +206,54 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
             plt.legend()
 
         return pattern
+
+    @classmethod
+    def PRBS_pattern(cls, order, mark_ratio=0.5):
+        # Documentation present in poage 5-1 of the manual.
+        if mark_ratio != 0.5:
+            raise NotImplementedError("Only mark ratio of 1/2 is implemented so far.")
+
+        # The seed corresponds to the first digits in the bit sequence
+        # presented on the PPG (inverted order)
+        if order == 7:
+            polynomial = 0b10000011  # 1 + X^6 + X^7
+            seed =       0b1000000
+        elif order == 9:
+            polynomial = 0b1000010001  # 1 + X^5 + X^9
+            seed =       0b111100000
+        elif order == 11:
+            polynomial = 0b100000000101  # 1+X9+X11
+            seed =       0b11000000000
+        elif order == 15:
+            polynomial = 0b1000000000000011  # 1+X14+X15
+            seed =       0b000000000000001
+        elif order == 20:
+            polynomial = (1 << 20) + (1 << 20 - 3) + (1 << 20 - 20)  # 1+X3+X20
+            seed =       0b00111000111000111000
+        elif order == 23:
+            polynomial = (1 << 23) + (1 << 23 - 18) + (1 << 23 - 23)  # 1+X18+X23
+            seed =       0b1111100 << 16
+        elif order == 31:
+            polynomial = (1 << 31) + (1 << 31 - 28) + (1 << 31 - 31)  # 1+X28+X31
+            seed =       0b1110000 << 24
+        else:
+            raise NotImplementedError("PRBS{} not implemented.".format(order))
+
+        def prbs_generator(characteristic, state):
+            def compute_parity(n):
+                parity = False
+                while n > 0:
+                    parity ^= (n & 1)
+                    n >>= 1
+
+                return parity  # odd means True
+
+            while True:
+                result = state & 1
+                state += (compute_parity(state & characteristic) << order)
+                state >>= 1
+                yield result
+
+        from itertools import islice
+        prbs_pattern = list(islice(iter(prbs_generator(polynomial, seed)), 2 ** order - 1))
+        return np.array(prbs_pattern, dtype=np.bool)
