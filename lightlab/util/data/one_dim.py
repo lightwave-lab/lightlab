@@ -206,7 +206,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         return [min(self.ordi), max(self.ordi)]
 
     def crop(self, segment):
-        ''' Crop abscissa to segment domain
+        ''' Crop abscissa to segment domain.
 
             Args:
                 segment (list[float,float]): the span of the new abscissa domain
@@ -214,9 +214,13 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
             Returns:
                 MeasuredFunction: new object
         '''
-        # TODO not extrapolate values out of bounds
-        dx = abs(np.diff(self.absc[0:2])[0])
-        newAbsc = np.arange(*(tuple(segment) + (dx,)))
+        min_segment, max_segment = min(segment), max(segment)
+        absc_span = self.getSpan()
+        if min_segment <= absc_span[0] and max_segment >= absc_span[1]:
+            # do nothing
+            return self.copy()
+        dx = np.mean(np.diff(np.sort(self.absc)))
+        newAbsc = np.arange(min_segment, max_segment, dx)
         return self.__newOfSameSubclass(newAbsc, self(newAbsc))
 
     def clip(self, amin, amax):
@@ -322,6 +326,32 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         self.ordi = np.insert(self.ordi, i, y)
 
     # Signal processing stuff
+
+    def correlate(self, other):
+        ''' Correlate signals with scipy.signal.correlate.
+
+            Only full mode and direct method is supported for now.
+        '''
+        new_abscissa = type(self).__maxAbsc(self, other)
+
+        # ensure that they are uniformly sampled
+        dxes = np.diff(new_abscissa)
+        dx = dxes[0]
+        assert all(dxes == dx)
+
+        N = len(new_abscissa)
+
+        from scipy.signal import correlate
+        self_ordi, other_ordi = self(new_abscissa), other(new_abscissa)
+        self_ordi_norm = (self_ordi - np.mean(self_ordi)) / np.std(self_ordi)
+        self_ordi_norm /= np.linalg.norm(self_ordi_norm)
+        other_ordi_norm = (other_ordi - np.mean(other_ordi))
+        other_ordi_norm /= np.linalg.norm(other_ordi_norm)
+
+        correlated_ordi = correlate(self_ordi_norm,
+            other_ordi_norm, mode="full", method="direct")
+        offset_abscissa = np.arange(-N + 1, N, 1) * dx
+        return self.__newOfSameSubclass(offset_abscissa, correlated_ordi)
 
     def lowPass(self, windowWidth=None, mode='valid'):
         ''' Low pass filter performed by convolving a moving average window.
@@ -548,15 +578,42 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         raise TypeError('Unsupported types for binary math: ' +
                         type(self).__name__ + ', ' + type(other).__name__)
 
+    def norm(self, ord=None):
+        # TODO recompute norm taking into account the possibility that the
+        # abscissa is not uniformly sampled.
+        return np.linalg.norm(self.ordi - np.mean(self.ordi), ord=ord)
+
     @staticmethod
     def __minAbsc(fa, fb):
-        ''' Get the shorter abscissa '''
-        selfRange = abs(fa.absc[0] - fa.absc[-1])
-        otherRange = abs(fb.absc[0] - fb.absc[-1])
-        if selfRange < otherRange:
-            newAbsc = fa.absc.copy()
-        else:
-            newAbsc = fb.absc.copy()
+        ''' Get the overlapping abscissa of two MeasuredFunctions.
+        '''
+        fa_span = fa.getSpan()
+        fb_span = fb.getSpan()
+
+        min_absc, max_absc = [max(fa_span[0], fb_span[0]), min(fa_span[1], fb_span[1])]
+        dxa = np.mean(np.abs(np.diff(np.sort(fa.absc))))
+        dxb = np.mean(np.abs(np.diff(np.sort(fb.absc))))
+        new_dx = min(dxa, dxb)
+
+        newAbsc = np.arange(min_absc, max_absc + new_dx, new_dx)
+        return newAbsc
+
+    @staticmethod
+    def __maxAbsc(fa, fb):
+        """ Gets a compact abscissa that includes the domains of both fa and fb.
+
+            Assumes that the returned abscissa is uniformly sampled.
+            self.correlate depends on this assumption.
+        """
+        fa_span = fa.getSpan()
+        fb_span = fb.getSpan()
+
+        min_absc, max_absc = [min(fa_span[0], fb_span[0]), max(fa_span[1], fb_span[1])]
+        dxa = np.mean(np.abs(np.diff(np.sort(fa.absc))))
+        dxb = np.mean(np.abs(np.diff(np.sort(fb.absc))))
+        new_dx = min(dxa, dxb)
+
+        newAbsc = np.arange(min_absc, max_absc + new_dx, new_dx)
         return newAbsc
 
     def __sub__(self, other):
