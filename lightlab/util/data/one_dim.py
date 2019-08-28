@@ -641,6 +641,20 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         newAbsc, ords = self.__binMathHelper(other)
         return self.__newOfSameSubclass(newAbsc, ords[0] * ords[1])
 
+    def __pow__(self, power):
+        ''' Returns the result of exponentiation. Can only exponentiate
+        with a float number.
+        '''
+
+        absc = self.absc.copy()
+        ordi = self.ordi.copy()
+        try:
+            new_ordi = ordi ** power  # uses numpy's power overload
+        except ValueError as err:
+            raise ValueError("Invalid power {} (not a number)".format(power)) from err
+
+        return self.__newOfSameSubclass(absc, new_ordi)
+
     def __rmul__(self, other):
         return self.__mul__(other)
 
