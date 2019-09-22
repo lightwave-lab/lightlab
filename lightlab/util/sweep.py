@@ -731,6 +731,54 @@ class NdSweeper(Sweeper):
         super().load(savefile)
         self._recalcSwpShape()
 
+    def __repr__(self):
+        retstr = ("NdSweeper object\n"
+                  "----------------\n")
+
+        retstr += "Measurements:\t"
+        if self.measure:
+            retstr += ", ".join("\"{}\"".format(k) for k in self.measure.keys())
+        else:
+            retstr += "None"
+        retstr += "\n"
+
+        retstr += "Actuations:\t"
+        if self.actuate:
+            retstr += ", ".join("\"{}\"".format(k) for k in self.actuate.keys())
+        else:
+            retstr += "None"
+        retstr += "\n"
+
+        retstr += "Parse:\t\t"
+        if self.parse:
+            retstr += ", ".join("\"{}\"".format(k) for k in self.parse.keys())
+        else:
+            retstr += "None"
+        retstr += "\n"
+
+        retstr += "Static:\t\t"
+        if self.static:
+            retstr += ", ".join("\"{}\"".format(k) for k in self.static.keys())
+        else:
+            retstr += "None"
+        retstr += "\n"
+
+        retstr += "Monitor Opt.:\t:" + str(self.monitorOptions) + "\n"
+        retstr += "Plot Options:\t" + str(self.plotOptions) + "\n"
+
+        retstr += "Data:\t\t"
+
+        data_str = []
+        for data_key, data_val in self.data.items():
+            data_str.append("<{} {}> \"{}\"".format(data_val.shape, data_val.dtype, data_key))
+
+        if data_str:
+            retstr += "\n\t\t".join(data_str)
+        else:
+            retstr += "None"
+
+        return retstr
+
 
 def simpleSweep(actuate, domain, measure=None):
     ''' Basic sweep in one dimension, without function keys, parsing, or plotting.
