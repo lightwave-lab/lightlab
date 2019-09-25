@@ -668,6 +668,14 @@ class Instrument(Node):
     #     return cls(id_string, gpib_address=gpib_address)
 
 
+class MockInstrument(Instrument):
+
+    def __getattr__(self, attrName):
+        def noop(*args, **kwargs):
+            raise RuntimeError("Attempted to call a method of a mock Instrument.")
+        return noop
+
+
 class NotFoundError(RuntimeError):
     """ Error thrown when instrument is not found
     """

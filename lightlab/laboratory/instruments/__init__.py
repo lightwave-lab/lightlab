@@ -3,5 +3,5 @@
 All classes are imported into this namespace.
 """
 
-from .bases import Host, LocalHost, Bench, Instrument, Device  # noqa
+from .bases import Host, LocalHost, Bench, Instrument, Device, MockInstrument  # noqa
 from .interfaces import *  # pylint: disable=wildcard-import;  # noqa
