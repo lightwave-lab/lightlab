@@ -28,7 +28,7 @@ class ResonanceFeature(object):
         self.isPeak = isPeak
 
     def __repr__(self):
-        return "{Class}(λ={lam:.3f}, Δλ={fwhm:.3f}, ampl.={amp:.3g}, {peak})".format(
+        return "{Class}(λ={lam:.3f}nm, Δλ={fwhm:.3e}nm, ampl.={amp:.3g}, {peak})".format(
             Class=self.__class__.__qualname__,
             lam=self.lam,
             fwhm=self.fwhm,
@@ -173,11 +173,20 @@ def findPeaks(
                 yArr, blanked, indOfMax + sepInds, "right", absThresh
             )
             hmInds = [indL, indR + 1]
+
             isValidPeak = validL and validR
             # throw out data around this peak by minimizing yArr and recording as blank
             yArr[hmInds[0] : hmInds[1]] = np.amin(yArr)
             blanked[hmInds[0] : hmInds[1]] = True
         logger.debug("Successfully found a peak")
-        pkInds[iPk] = int(np.mean(hmInds))
-        pkWids[iPk] = np.diff(hmInds)[0]
+        pkInds[iPk] = indOfMax
+
+        # In the case that the peak is too narrow, the discrete x-axis
+        # steps might not capture the FWHM (width) accurately. Because
+        # of this, we should interpolate the indices.
+        logger.debug("half-max indices: %s", hmInds)
+        hmIndL, hmIndR = indL, indR
+        hm_left = (yArrOrig[hmIndL + 1] - absThresh) / (yArrOrig[hmIndL + 1] - yArrOrig[hmIndL])
+        hm_right = (yArrOrig[hmIndR - 1] - absThresh) / (yArrOrig[hmIndR - 1] - yArrOrig[hmIndR])
+        pkWids[iPk] = hm_right + hm_left + (hmIndR - hmIndL - 2)
     return pkInds, pkWids
