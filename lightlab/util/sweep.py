@@ -763,7 +763,7 @@ class NdSweeper(Sweeper):
             retstr += "None"
         retstr += "\n"
 
-        retstr += "Monitor Opt.:\t:" + str(self.monitorOptions) + "\n"
+        retstr += "Monitor Opt.:\t" + str(self.monitorOptions) + "\n"
         retstr += "Plot Options:\t" + str(self.plotOptions) + "\n"
 
         retstr += "Data:\t\t"
