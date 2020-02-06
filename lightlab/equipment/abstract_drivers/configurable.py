@@ -1,7 +1,7 @@
 from lightlab import visalogger as logger
 from pyvisa import VisaIOError
 from contextlib import contextmanager
-import dpath
+import dpath.util
 import json
 from numpy import floor
 from pathlib import Path
@@ -149,6 +149,7 @@ class TekConfig(object):
             raise Exception('Invalid source for transfer. Got ' + str(type(source)))
         commands = sCon.getList(subgroup=subgroup)
         self.setList(commands)
+        return self
 
     @classmethod
     def fromFile(cls, fname, subgroup=''):

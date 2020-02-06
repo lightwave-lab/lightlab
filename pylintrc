@@ -129,6 +129,7 @@ disable=blacklisted-name,
         dict-items-not-iterating,
         dict-keys-not-iterating,
         dict-values-not-iterating,
+        too-many-function-args,
         inconsistent-return-statements
 
 # Enable the message, report, category or checker with the given id(s). You can
@@ -193,7 +194,6 @@ enable=syntax-error,
        not-callable,
        assignment-from-no-return,
        no-value-for-parameter,
-       too-many-function-args,
        unexpected-keyword-arg,
        redundant-keyword-arg,
        missing-kwoa,

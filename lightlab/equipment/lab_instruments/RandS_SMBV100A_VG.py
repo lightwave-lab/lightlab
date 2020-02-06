@@ -193,10 +193,10 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
         if typMod is None:
             if enaState is None:
                 raise Exception('Nothing to do here for parameter setting typMod=None')
-            elif enaState:
+            if enaState:
                 raise Exception('Modulation type must be selected with typMod= to enable')
-            else:
-                typMod = allMods[0]  # Could be any since they are all deactivated later
+            typMod = allMods[0]  # Could be any since they are all deactivated later
+
         typMod = typMod.upper()
         if typMod not in allMods:
             raise Exception(typMod + ' is not a valid kind of carrier modulation: am, fm, or pm')
