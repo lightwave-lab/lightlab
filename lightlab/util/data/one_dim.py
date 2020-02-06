@@ -283,6 +283,9 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
     def getMean(self):
         return np.mean(self.ordi)
 
+    def getMedian(self):
+        return np.median(self.ordi)
+
     def resample(self, nsamp=100):
         ''' Resample over the same domain span, but with a different number of points.
 
@@ -337,7 +340,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         # ensure that they are uniformly sampled
         dxes = np.diff(new_abscissa)
         dx = dxes[0]
-        assert all(dxes == dx)
+        assert np.allclose(dxes, dx)  # sometimes there are numerical errors in floats
 
         N = len(new_abscissa)
 
@@ -547,7 +550,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
                 newAbsc = self.absc
                 ords = (self.ordi, other.ordi)
             else:
-                newAbsc = type(self).__minAbsc(self, other)
+                newAbsc = type(self)._minAbsc(self, other)
                 ords = (self(newAbsc), other(newAbsc))
             return newAbsc, ords
 
@@ -584,7 +587,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         return np.linalg.norm(self.ordi - np.mean(self.ordi), ord=ord)
 
     @staticmethod
-    def __minAbsc(fa, fb):
+    def _minAbsc(fa, fb):
         ''' Get the overlapping abscissa of two MeasuredFunctions.
         '''
         fa_span = fa.getSpan()
