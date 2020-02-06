@@ -8,13 +8,13 @@ Interactive tutorials are in notebooks. A full "experiment" in the lab is contai
 Jupyter notebooks have two sections: inputs (code, markdown) and outputs (stdout, plots, images). Interactive python notebook files embed compiled outputs. This is good if you want to restart a kernel but still see the output, or if you close the file, etc.
 
 ### Solution 1 and Problem 2: The nbstripout filter
-This is a cool thing that is integrated within the git commands. It basically ignores all of the outputs and metadata of `.ipynb` files. When you commit and push, it only pushes the inputs. It is installed via the requirements.txt, but there is also some interesting [discussion](https://stackoverflow.com/questions/18734739/using-ipython-notebooks-under-version-control/20844506) and [documentation](https://github.com/toobaz/ipynb_output_filter)
+`nbstripout` is a Git filter and "hides" the output and some metadata in `.ipynb` files from Git such that it does not get committed. This allows only tracking the actual input code cells in Git. It is installed via the `requirements.txt`, but there is also some interesting [discussion](https://stackoverflow.com/questions/18734739/using-ipython-notebooks-under-version-control/20844506) and [documentation](https://github.com/kynan/nbstripout)
 
 #### There are three downsides:
 1. What if you liked keeping those outputs without rerunning every commit?
 2. It has to strip evvverything, including all those high-quality graphics, every single time you `git status`.
 3. It crashes your essential commands. Very easy to get into a chicken-and-egg hole where you can't `diff` anything because __some__thing isn't JSON -- causing a crash -- but you can't figure out what isn't JSON because you can't see which files just changed.
-4. It corrupts your files. That's why we made cleannbline.
+4. It can corrupt files. That's why we made `cleannbline`.
 
 ### Solution 2. Deactivate the nbstripout filter
 
@@ -75,13 +75,13 @@ Run
     
     git status
 
-It takes some time. What is that error? It means that some of the notebooks are not sufficiently JSON for the nbstripout filter. 
+It takes some time. What is that error? It means that some of the notebooks are not valid JSON and cannot be parsed by the `nbstripout` filter. 
 
 In the crash log, it should point to a certain file, let's say `notebooks/Test.ipynb` First, clean it with
 
     ./cleannbline notebooks/Test.ipynb
 
-Then, open that file in Sublime and search for `<<<<`. Sometimes conflicts in your stash can get hidden in a way that does not show up in Jupyter. nbstripout will crash. You can find it in Sublime.
+Then, open that file in Sublime and search for `<<<<`. Sometimes conflicts in your stash can get hidden in a way that does not show up in Jupyter. `nbstripout` will crash. You can find it in Sublime.
 
 Return to running `git status` until it completes without error. It should show a ton of modifications: those are the effects of stripping. Add those and commit
 
@@ -95,13 +95,13 @@ Your filter is currently active, so when you try
 
 it will automatically crash. As above though, it will point to a file. Keep going until `git status` completes. Add those and commit.
 
-Side note: even though `git status` shows a ton of modifications, you should get a clean `git diff` (Although sometimes it will just crash, NBD). Both commands are applying the ipynb filter... in some way.
+Side note: even though `git status` shows a ton of modifications, you should get a clean `git diff` (Although sometimes it will just crash, NBD). Both commands are applying the `.ipynb` filter... in some way.
 
 #### Do the merge
     git checkout test_merge_cool-feature-into-development
     git merge cool-feature
 
-You will get conflicts in two categories: notebooks and other. Since there are `<<<<` things everywhere, your `git diff` will crash while you're in the merge. It also doesn't point you to an offending file. Here is where you'll really appreciate Sublime. 
+You will get conflicts in two categories: notebooks and other. Since there are `<<<<` conflict markers everywhere, your `git diff` will crash while you're in the merge. It also doesn't point you to an offending file. Here is where you'll really appreciate Sublime. 
 
 Make sure Sublime opens the entire `notebooks` _directory_. That way Find All will search all the files. 
 
@@ -116,7 +116,7 @@ Repeat for all the notebooks. Then do the same for all the regular code files. W
     
     git commit
 
-If for some reason, you want to escape the merge while keeping the test_merge branch stripped, you can run `git reset --hard`
+If for some reason, you want to abandon the merge while keeping the test_merge branch stripped, you can run `git reset --hard`
 
 #### Finalize
 Double check that everything went well (i.e. open some notebooks in Jupyter). If something screwed up in your merging _or_ stripping, you can just delete the test_merge branch and start over.
