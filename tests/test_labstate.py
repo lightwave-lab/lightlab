@@ -68,13 +68,13 @@ def test_insert(lab):
     Bench1.addInstrument(instrument1, instrument2)
     assert instrument1 in Bench1
     assert instrument2 in Bench1
-    with pytest.raises(TypeError, message="failed to detect wrong instrument type"):
+    with pytest.raises(TypeError):
         Bench1.addInstrument(device1)
 
 
 def test_duplicate_insert(lab):
     instrument2bis = Instrument(name="instrument2", bench=Bench2, host=Host1, ports=["port11", "channel"])
-    with pytest.raises(RuntimeError, message="duplicate insertion not detected"):
+    with pytest.raises(RuntimeError):
         lab.insertInstrument(instrument2bis)  # does not allow insertion of duplicate!
 
 
@@ -229,8 +229,8 @@ def test_corruptreload_extratext(lab):
     with open(filename, 'a') as file:
         file.write("extra text")
 
-    with pytest.raises(json.decoder.JSONDecodeError, message="fail to detect extraneous words outside JSON"):
-        labstate.LabState.loadState(filename)
+    with pytest.raises(json.decoder.JSONDecodeError):
+        labstate.LabState.loadState(filename)  # , message="fail to detect extraneous words outside JSON"
 
 
 def test_corruptreload_changecontent(lab):
@@ -245,8 +245,8 @@ def test_corruptreload_changecontent(lab):
         refrozen_json = json.dumps(json_state, sort_keys=True, indent=4)
         with open(filename, 'w') as file:
             file.write(refrozen_json)
-    with pytest.raises(json.decoder.JSONDecodeError, message="corruption within file was not detected"):
-        labstate.LabState.loadState(filename)
+    with pytest.raises(json.decoder.JSONDecodeError):
+        labstate.LabState.loadState(filename)  # , message="corruption within file was not detected"
 
 
 def test_update(lab):
@@ -285,7 +285,7 @@ def test_update_connections(lab):
 
     # Using invalid port (behavior: do not effect any change and throw error.)
     change_connections = [{device1: "output", instrument1: "front_sourcez"}]
-    with pytest.raises(RuntimeError, message="unidentified port not detected"):
+    with pytest.raises(RuntimeError):  # , message="unidentified port not detected")
         lab.updateConnections(*change_connections)
     assert {device1: "output", instrument1: "front_sourcez"} not in lab.connections
     assert {device1: "output", instrument1: "front_source"} in lab.connections
@@ -382,7 +382,7 @@ def test_overwriting(lab):
 
 def test_readonly(lab):
     instrument3 = Instrument(name="instrument3", bench=None, host=None, ports=["port11", "channel"])
-    with pytest.raises(RuntimeError):        
+    with pytest.raises(RuntimeError):
         Host2.instruments.append(instrument3)
         Bench2.instruments.append(instrument3)
         Host1.instruments.dict['instrument1'] = instrument3

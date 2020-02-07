@@ -65,7 +65,7 @@ class InstrumentSession(_AttrGetter):
             try:
                 return_attr = getattr(self._session_object, name)
             except AttributeError:
-                return_attr = super().__getattr__(name)
+                return_attr = super().__getattr__(name)  # pylint: disable=assignment-from-no-return
             else:
                 if name not in _InstrumentSessionBase_methods:
                     visalogger.warning("Access to %s.%s will be deprecated soon. "

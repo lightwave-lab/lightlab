@@ -135,12 +135,12 @@ def test_private_variable(Klass):
 @pytest.mark.parametrize("Klass", klasses)
 def test_superprivate_variable(Klass):
     d = Klass()
-    with pytest.raises(AttributeError, message='should not be able to access __variable'):
+    with pytest.raises(AttributeError):  # , message='should not be able to access __variable'
         assert d.__superprivate_variable == 'default_superprivate'
     d.__superprivate_variable = 123
     assert d.__superprivate_variable == 123
     del d.__superprivate_variable
-    with pytest.raises(AttributeError, message='should not be able to access __variable'):
+    with pytest.raises(AttributeError):  # , message='should not be able to access __variable'
         assert d.__superprivate_variable == 'default_superprivate'
 
 
@@ -150,7 +150,7 @@ def test_unknownsuperprivate_variable(Klass):
     d.__unknownsuperprivate_variable = 123
     assert d.__unknownsuperprivate_variable == 123
     del d.__unknownsuperprivate_variable
-    with pytest.raises(AttributeError, message='should not be able to access __variable'):
+    with pytest.raises(AttributeError):  # , message='should not be able to access __variable'
         assert print(d.__unknownsuperprivate_variable)
 
 
