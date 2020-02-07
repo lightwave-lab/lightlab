@@ -713,7 +713,7 @@ class NdSweeper(Sweeper):
                 # Extract one vector along the right direction to serve as domain
                 sliceOneDim = [0] * len(actuationKeys)
                 sliceOneDim[iAct] = slice(None)
-                actuObj.domain = actData[sliceOneDim]
+                actuObj.domain = actData[tuple(sliceOneDim)]
                 # Do the full add
                 newObj.addActuationObject(actuName, actuObj)
         newObj._recalcSwpShape()  # pylint: disable=protected-access
