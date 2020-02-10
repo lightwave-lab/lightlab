@@ -54,6 +54,11 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
     channel = None
 
     MAGIC_TIMEOUT = 10
+    _latestCurrentVal = 0
+    _latestVoltageVal = 0
+    currStep = None
+    voltStep = None
+    rampStepTime = 0.01  # in seconds.
 
     def __init__(
         self,
@@ -211,11 +216,14 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
     def smu_defaults(self):
         self.write("{smuX}.source.offmode = 2".format(smuX=self.smu_full_string))  # 2 or smuX.OUTPUT_HIGH_Z: Opens the output relay when the output is turned of
         self.write("{smuX}.sense = 0".format(smuX=self.smu_full_string))  # 0 or smuX.SENSE_LOCAL: Selects local sense (2-wire)
+        self.write("{smuX}.source.highc = 1".format(smuX=self.smu_full_string))  # 1 or smuX.ENABLE: Enables high-capacitance mode
 
     def startup(self):
         self.tsp_startup()
         self.smu_reset()
+        self.smu_defaults()
         self.write("waitcomplete()")
+        time.sleep(0.01)
         self.query_print('"startup complete."', expected_talker="startup complete.")
 
     # SourceMeter Essential methods
@@ -314,8 +322,11 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
         '''
         if newState is not None:
             self.write("{smuX}.source.output = {on_off}".format(smuX=self.smu_full_string, on_off=1 if newState else 0))
+            self.write("waitcomplete()")
+            time.sleep(0.01)
+            self.query_print("\"output enabled\"", expected_talker="output enabled")
         retVal = self.query_print("{smuX}.source.output".format(smuX=self.smu_full_string))
-        return retVal == "1"
+        return float(retVal) == 1
 
     def __setSourceMode(self, isCurrentSource):
         if isCurrentSource:
