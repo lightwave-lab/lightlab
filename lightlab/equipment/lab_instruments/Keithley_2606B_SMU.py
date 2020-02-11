@@ -56,9 +56,9 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
     MAGIC_TIMEOUT = 10
     _latestCurrentVal = 0
     _latestVoltageVal = 0
-    currStep = None
-    voltStep = None
-    rampStepTime = 0.01  # in seconds.
+    currStep = 0.1e-3
+    voltStep = 0.3
+    rampStepTime = 0.05  # in seconds.
 
     def __init__(
         self,
@@ -109,6 +109,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
             raise RuntimeError("Attempting to open connection to unknown address.")
         try:
             self._tcpsocket.connect()
+            super().open()
         except socket.error:
             self._tcpsocket.disconnect()
             raise
@@ -150,7 +151,9 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
 
     def write(self, writeStr):
         with self._tcpsocket.connected() as s:
+            logger.debug("Sending '%s'", writeStr)
             s.send(writeStr)
+        time.sleep(0.05)
 
     ## END TCPSOCKET METHODS
 
@@ -170,6 +173,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
         return "node[{N}].{smuX}".format(N=self.tsp_node, smuX=self.smu_string)
 
     def query_print(self, query_string, expected_talker=None):
+        time.sleep(0.01)
         query_string = "print(" + query_string + ")"
         return self.query(query_string, expected_talker=expected_talker)
 
@@ -209,11 +213,12 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
         if state == "online" and not restart:
             return True
         elif state == "offline":
-            nodes = int(self.query_print("tsplink.reset()"))
+            nodes = int(float(self.query_print("tsplink.reset()")))
             logger.debug("%s TSP nodes found.", nodes)
             return True
 
     def smu_defaults(self):
+        self.write("{smuX}.source.offfunc = 0".format(smuX=self.smu_full_string))  # 0 or smuX.OUTPUT_DCAMPS: Source 0 A
         self.write("{smuX}.source.offmode = 2".format(smuX=self.smu_full_string))  # 2 or smuX.OUTPUT_HIGH_Z: Opens the output relay when the output is turned of
         self.write("{smuX}.sense = 0".format(smuX=self.smu_full_string))  # 0 or smuX.SENSE_LOCAL: Selects local sense (2-wire)
         self.write("{smuX}.source.highc = 1".format(smuX=self.smu_full_string))  # 1 or smuX.ENABLE: Enables high-capacitance mode
@@ -253,7 +258,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
             self._configCurrent(currAmps)
         else:
             nSteps = int(np.floor(abs(currTemp - currAmps) / self.currStep))
-            for curr in np.linspace(currTemp, currAmps, 1 + nSteps)[1:]:
+            for curr in np.linspace(currTemp, currAmps, 2 + nSteps)[1:]:
                 self._configCurrent(curr)
                 time.sleep(self.rampStepTime)
 
@@ -263,7 +268,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
             self._configVoltage(voltVolts)
         else:
             nSteps = int(np.floor(abs(voltTemp - voltVolts) / self.voltStep))
-            for volt in np.linspace(voltTemp, voltVolts, 1 + nSteps)[1:]:
+            for volt in np.linspace(voltTemp, voltVolts, 2 + nSteps)[1:]:
                 self._configVoltage(volt)
                 time.sleep(self.rampStepTime)
 
@@ -321,12 +326,18 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
         ''' get/set enable state
         '''
         if newState is not None:
-            self.write("{smuX}.source.output = {on_off}".format(smuX=self.smu_full_string, on_off=1 if newState else 0))
-            self.write("waitcomplete()")
-            time.sleep(0.01)
-            self.query_print("\"output enabled\"", expected_talker="output enabled")
-        retVal = self.query_print("{smuX}.source.output".format(smuX=self.smu_full_string))
-        return float(retVal) == 1
+            while True:
+                self.write("{smuX}.source.output = {on_off}".format(smuX=self.smu_full_string, on_off=1 if newState else 0))
+                time.sleep(0.1)
+                self.query_print("\"output configured\"", expected_talker="output configured")
+                retVal = self.query_print("{smuX}.source.output".format(smuX=self.smu_full_string))
+                is_on = float(retVal) == 1
+                if bool(newState) == is_on:
+                    break
+        else:
+            retVal = self.query_print("{smuX}.source.output".format(smuX=self.smu_full_string))
+            is_on = float(retVal) == 1
+        return is_on
 
     def __setSourceMode(self, isCurrentSource):
         if isCurrentSource:

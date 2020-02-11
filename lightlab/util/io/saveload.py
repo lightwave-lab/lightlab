@@ -112,7 +112,11 @@ def savePickleGzip(filename, dataTuple):
 
 
 def loadPickleGzip(filename):
-    ''' Uses pickle and then gzips the file'''
+    ''' Uses pickle and then gzips the file.
+
+        If it is named file.abc.gz, loads as file.abc.gz
+        If it is named file.abc, loads as file.abc.pkl
+    '''
     filename = str(filename)
 
     if filename.endswith('.gz'):
