@@ -23,7 +23,7 @@ def _makeFileExist(filename):
     return rp
 
 
-def pprintFileDir():
+def pprintFileDir(*, generate=False):
     ''' Prints the contents of io.fileDir.
         If the file can be loaded by this module,
         it gives the command to do so.
@@ -31,6 +31,10 @@ def pprintFileDir():
         Returns:
             A sorted list of files
     '''
+
+    if generate:
+        os.makedirs(_getFileDir(), mode=0o775, exist_ok=True)
+
     maxStrLen = 0
     for child in _getFileDir().iterdir():
         maxStrLen = max(maxStrLen, len(child.name))
