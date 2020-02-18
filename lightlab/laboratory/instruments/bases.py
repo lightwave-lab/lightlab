@@ -17,7 +17,7 @@ import pyvisa
 class Host(Node):
     """ Computer host, from which GPIB/VISA commands are issued.
     """
-    name = None
+    _name = None
     hostname = None
     mac_address = None
     os = "linux-ubuntu"  # linux-ubuntu, linux-centos, windows, mac etc.
@@ -30,8 +30,12 @@ class Host(Node):
             logger.warning("Hostname not set. isLive and list_resources not functional.")
 
         self.hostname = hostname
-        self.name = name
+        self._name = name
         super().__init__(**kwargs)
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def instruments(self):
@@ -666,6 +670,14 @@ class Instrument(Node):
     #     # TODO untreated error when there is no device with that address!
     #     id_string = visa_object.instrID()
     #     return cls(id_string, gpib_address=gpib_address)
+
+
+class MockInstrument(Instrument):
+
+    def __getattr__(self, attrName):
+        def noop(*args, **kwargs):
+            raise RuntimeError("Attempted to call a method of a mock Instrument.")
+        return noop
 
 
 class NotFoundError(RuntimeError):

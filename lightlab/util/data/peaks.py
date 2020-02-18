@@ -1,9 +1,9 @@
-''' Implementation of core peak finding algorithm.
+""" Implementation of core peak finding algorithm.
     It is wrapped to be more user-friendly by :meth:`~lightlab.util.data.one_dim.MeasuredFunction.findResonanceFeatures`.
 
     :class:`ResonanceFeature` is a data storage class
     returned by :meth:`~lightlab.util.data.one_dim.MeasuredFunction.findResonanceFeatures`
-'''
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 from lightlab import logger
@@ -12,14 +12,14 @@ from .function_inversion import descend
 
 
 class ResonanceFeature(object):
-    ''' A data holder for resonance features (i.e. peaks or dips)
+    """ A data holder for resonance features (i.e. peaks or dips)
 
         Attributes:
             lam (float): center wavelength
             fwhm (float): full width half maximum -- can be less if the extinction depth is less than half
             amp (float): peak amplitude
             isPeak (float): is it a peak or a dip
-    '''
+    """
 
     def __init__(self, lam, fwhm, amp, isPeak=True):
         self.lam = lam
@@ -27,32 +27,46 @@ class ResonanceFeature(object):
         self.amp = amp
         self.isPeak = isPeak
 
+    def __repr__(self):
+        return "{Class}(λ={lam:.3f}nm, Δλ={fwhm:.3e}nm, ampl.={amp:.3g}, {peak})".format(
+            Class=self.__class__.__qualname__,
+            lam=self.lam,
+            fwhm=self.fwhm,
+            amp=self.amp,
+            peak="Peak" if self.isPeak else "Valley",
+        )
+
     def copy(self):
-        ''' Simple copy so you can modify without side effect
+        """ Simple copy so you can modify without side effect
 
             Returns:
                 ResonanceFeature: new object
-        '''
-        return ResonanceFeature(self.lam.copy(), self.fwhm.copy(), self.amp.copy(), self.isPeak)
+        """
+        return ResonanceFeature(
+            self.lam.copy(), self.fwhm.copy(), self.amp.copy(), self.isPeak
+        )
 
     def __plottingData(self):
-        ''' Gives a polygon represented by 5 points
+        """ Gives a polygon represented by 5 points around the resonance feature
 
             Returns:
                 list[tuple]: 5-element list of (x,y) tuples representing points of a polygon
-        '''
+        """
+        # x is the left edge's x-coordinate
+        # y is the bottom edge's y-coordinate
+
         w = self.fwhm
         x = self.lam - w / 2
         if self.isPeak:
-            h = 6
-            y = self.amp - h / 2
+            h = 3
+            y = self.amp - h
         else:
             h = -self.amp
             y = self.amp - 3
         return type(self).__box2polygon(x, y, w, h)
 
     def simplePlot(self, *args, **kwargs):
-        r''' Plots a box to visualize the resonance feature
+        r""" Plots a box to visualize the resonance feature
 
             The box is centered on the peak ``lam`` and ``amp`` with a width of ``fwhm``.
 
@@ -62,7 +76,7 @@ class ResonanceFeature(object):
 
             Returns:
                 whatever ``pyplot.plot`` returns
-        '''
+        """
         return plt.plot(*(self.__plottingData() + args), **kwargs)
 
     @staticmethod
@@ -80,8 +94,10 @@ class PeakFinderError(RuntimeError):
     pass
 
 
-def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, descendMax=3, minSep=0):
-    '''Takes an array and finds a specified number of peaks
+def findPeaks(
+    yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, descendMax=3, minSep=0
+):
+    """Takes an array and finds a specified number of peaks
 
         Looks for maxima/minima that are separated from others, and
         stops after finding ``expectedCnt``
@@ -98,7 +114,7 @@ def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, desc
 
         Raises:
             Exception: if not enough peaks found. This plots on fail, so you can see what's going on
-    '''
+    """
     xArr = np.arange(len(yArrIn))
     yArr = yArrIn.copy()
     sepInds = int(np.floor(minSep))
@@ -115,45 +131,62 @@ def findPeaks(yArrIn, isPeak=True, isDb=False, expectedCnt=1, descendMin=1, desc
     yArrOrig = yArr.copy()
 
     for iPk in range(expectedCnt):  # Loop over peaks
-        logger.debug('--iPk = %s', iPk)
+        logger.debug("--iPk = %s", iPk)
         isValidPeak = False
-        for iAttempt in range(1000):  # Loop through falsities like edges and previously found peaks
+        for iAttempt in range(
+            1000
+        ):  # Loop through falsities like edges and previously found peaks
             if isValidPeak:
                 break
-            logger.debug('Attempting to find actual')
+            logger.debug("Attempting to find actual")
             indOfMax = yArr.argmax()
             peakAmp = yArr[indOfMax]
             if isPeak or not isDb:
                 absThresh = peakAmp - descendBy
             else:
                 absThresh = min(descendBy, peakAmp - descendBy)
-            logger.debug('absThresh = %s', absThresh)
+            logger.debug("absThresh = %s", absThresh)
 
             # Didn't find a peak anywhere
             if blanked.all() or absThresh <= np.amin(yArr) or iAttempt == 999:
-                descendBy -= .5                             # Try reducing the selectivity
+                descendBy -= 0.5  # Try reducing the selectivity
                 if descendBy >= descendMin:
-                    logger.debug('Reducing required descent to %s', descendBy)
+                    logger.debug("Reducing required descent to %s", descendBy)
                     continue
                 else:
                     # plot a debug view of the spectrum that throws an error when exited
-                    logger.warning('Found %s of %s peaks. Look at the plot.', iPk, expectedCnt)
+                    logger.warning(
+                        "Found %s of %s peaks. Look at the plot.", iPk, expectedCnt
+                    )
                     plt.plot(yArr)
                     plt.plot(yArrOrig)
                     plt.show(block=True)
-                    raise PeakFinderError('Did not find enough peaks exceeding threshold')
+                    raise PeakFinderError(
+                        "Did not find enough peaks exceeding threshold"
+                    )
 
             # descend data down by a threshold amount
-            logger.debug('-Left side')
-            indL, validL = descend(yArr, blanked, indOfMax - sepInds, 'left', absThresh)
-            logger.debug('-Right side')
-            indR, validR = descend(yArr, blanked, indOfMax + sepInds, 'right', absThresh)
+            logger.debug("-Left side")
+            indL, validL = descend(yArr, blanked, indOfMax - sepInds, "left", absThresh)
+            logger.debug("-Right side")
+            indR, validR = descend(
+                yArr, blanked, indOfMax + sepInds, "right", absThresh
+            )
             hmInds = [indL, indR + 1]
+
             isValidPeak = validL and validR
             # throw out data around this peak by minimizing yArr and recording as blank
             yArr[hmInds[0]:hmInds[1]] = np.amin(yArr)
             blanked[hmInds[0]:hmInds[1]] = True
-        logger.debug('Successfully found a peak')
-        pkInds[iPk] = int(np.mean(hmInds))
-        pkWids[iPk] = np.diff(hmInds)[0]
+        logger.debug("Successfully found a peak")
+        pkInds[iPk] = indOfMax
+
+        # In the case that the peak is too narrow, the discrete x-axis
+        # steps might not capture the FWHM (width) accurately. Because
+        # of this, we should interpolate the indices.
+        logger.debug("half-max indices: %s", hmInds)
+        hmIndL, hmIndR = indL, indR
+        hm_left = (yArrOrig[hmIndL + 1] - absThresh) / (yArrOrig[hmIndL + 1] - yArrOrig[hmIndL])
+        hm_right = (yArrOrig[hmIndR - 1] - absThresh) / (yArrOrig[hmIndR - 1] - yArrOrig[hmIndR])
+        pkWids[iPk] = hm_right + hm_left + (hmIndR - hmIndL - 2)
     return pkInds, pkWids

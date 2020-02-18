@@ -14,6 +14,21 @@ import lightlab.util.io as io
 from lightlab import logger
 
 
+def savePickle(savefile, data, compress=True):
+    if compress:
+        io.savePickleGzip(savefile, data)
+    else:
+        io.savePickle(savefile, data)
+
+
+def loadPickle(savefile):
+    try:
+        data = io.loadPickleGzip(savefile)
+    except FileNotFoundError:
+        data = io.loadPickle(savefile)
+    return data
+
+
 class Sweeper(object):
     plotOptions = None
     monitorOptions = None
@@ -38,7 +53,7 @@ class Sweeper(object):
                 savefile = self.savefile
             else:
                 raise ValueError('No save file specified')
-        io.savePickle(savefile, self.data)
+        return savePickle(savefile, self.data)
 
     def load(self, savefile=None):
         ''' This is basically make it so that gather() and load() have the same effect.
@@ -53,7 +68,7 @@ class Sweeper(object):
                 savefile = self.savefile
             else:
                 raise ValueError('No save file specified')
-        self.data = io.loadPickle(savefile)
+        self.data = loadPickle(savefile)
 
     def setPlotOptions(self, **kwargs):
         ''' Valid options for NdSweeper
@@ -698,7 +713,7 @@ class NdSweeper(Sweeper):
                 # Extract one vector along the right direction to serve as domain
                 sliceOneDim = [0] * len(actuationKeys)
                 sliceOneDim[iAct] = slice(None)
-                actuObj.domain = actData[sliceOneDim]
+                actuObj.domain = actData[tuple(sliceOneDim)]
                 # Do the full add
                 newObj.addActuationObject(actuName, actuObj)
         newObj._recalcSwpShape()  # pylint: disable=protected-access
@@ -715,6 +730,54 @@ class NdSweeper(Sweeper):
     def load(self, savefile=None):
         super().load(savefile)
         self._recalcSwpShape()
+
+    def __repr__(self):
+        retstr = ("NdSweeper object\n"
+                  "----------------\n")
+
+        retstr += "Measurements:\t"
+        if self.measure:
+            retstr += ", ".join("\"{}\"".format(k) for k in self.measure.keys())
+        else:
+            retstr += "None"
+        retstr += "\n"
+
+        retstr += "Actuations:\t"
+        if self.actuate:
+            retstr += ", ".join("\"{}\"".format(k) for k in self.actuate.keys())
+        else:
+            retstr += "None"
+        retstr += "\n"
+
+        retstr += "Parse:\t\t"
+        if self.parse:
+            retstr += ", ".join("\"{}\"".format(k) for k in self.parse.keys())
+        else:
+            retstr += "None"
+        retstr += "\n"
+
+        retstr += "Static:\t\t"
+        if self.static:
+            retstr += ", ".join("\"{}\"".format(k) for k in self.static.keys())
+        else:
+            retstr += "None"
+        retstr += "\n"
+
+        retstr += "Monitor Opt.:\t" + str(self.monitorOptions) + "\n"
+        retstr += "Plot Options:\t" + str(self.plotOptions) + "\n"
+
+        retstr += "Data:\t\t"
+
+        data_str = []
+        for data_key, data_val in self.data.items():
+            data_str.append("<{} {}> \"{}\"".format(data_val.shape, data_val.dtype, data_key))
+
+        if data_str:
+            retstr += "\n\t\t".join(data_str)
+        else:
+            retstr += "None"
+
+        return retstr
 
 
 def simpleSweep(actuate, domain, measure=None):
@@ -800,7 +863,7 @@ class CommandControlSweeper(Sweeper):
                 raise ValueError('No save file specified')
         tempEvalRef = self.evaluate
         self.evaluate = None
-        io.savePickle(savefile, self)
+        savePickle(savefile, self)
         self.evaluate = tempEvalRef
 
     @classmethod
@@ -809,7 +872,7 @@ class CommandControlSweeper(Sweeper):
 
             It does not keep actuation or measurement members, only whatever was put in self.data
         '''
-        return io.loadPickle(savefile)
+        return loadPickle(savefile)
 
     def gather(self, autoSave=False, randomize=False):  # pylint: disable=arguments-differ
         ''' Executes the sweep

@@ -23,7 +23,7 @@ def _makeFileExist(filename):
     return rp
 
 
-def pprintFileDir():
+def pprintFileDir(*, generate=False):
     ''' Prints the contents of io.fileDir.
         If the file can be loaded by this module,
         it gives the command to do so.
@@ -31,6 +31,10 @@ def pprintFileDir():
         Returns:
             A sorted list of files
     '''
+
+    if generate:
+        os.makedirs(_getFileDir(), mode=0o775, exist_ok=True)
+
     maxStrLen = 0
     for child in _getFileDir().iterdir():
         maxStrLen = max(maxStrLen, len(child.name))
@@ -99,14 +103,31 @@ def savePickleGzip(filename, dataTuple):
             filename (str, Path): file to write to
             dataTuple (tuple): tuple containing almost anything
     '''
-    rp = _makeFileExist(_endingWith(filename, suffix='.gz'))
+    filename = str(filename)
+
+    # If user indicated .gz extension, then skip .pkl.gz extension addition
+    if filename.endswith('.gz'):
+        pklfilename = filename
+    else:
+        pklfilename = _endingWith(filename, suffix='.pkl')
+    rp = _makeFileExist(_endingWith(pklfilename, suffix='.gz'))
     with gzip.open(rp, 'wb') as fx:
         pickle.dump(dataTuple, fx)
 
 
 def loadPickleGzip(filename):
-    ''' Uses pickle and then gzips the file'''
-    rp = _getFileDir(_endingWith(filename, suffix='.gz'))
+    ''' Uses pickle and then gzips the file.
+
+        If it is named file.abc.gz, loads as file.abc.gz
+        If it is named file.abc, loads as file.abc.pkl
+    '''
+    filename = str(filename)
+
+    if filename.endswith('.gz'):
+        pklfilename = filename
+    else:
+        pklfilename = _endingWith(filename, suffix='.pkl')
+    rp = _getFileDir(_endingWith(pklfilename, suffix='.gz'))
     with gzip.open(rp, 'rb') as fx:
         return pickle.load(fx)
 
