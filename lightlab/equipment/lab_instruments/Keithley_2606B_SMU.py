@@ -75,18 +75,22 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
             channel: 'A' or 'B'
         """
 
-        if channel not in ("A", "B", "a", "b"):
+        if channel is None:
+            logger.warning("Forgot to select a channel: either 'A', or 'B'")
+        elif channel not in ("A", "B", "a", "b"):
             raise RuntimeError("Select a channel: either 'A', or 'B'")
+        else:
+            self.channel = channel.upper()
 
-        if not isinstance(tsp_node, int):
+        if tsp_node is None:
+            logger.warning("Forgot to specify a tsp_node integer number between 1 and 64.")
+        elif not isinstance(tsp_node, int):
             raise RuntimeError(
                 "Please specify a tsp_node integer number between 1 and 64."
             )
-
-        if not 1 <= tsp_node <= 64:
+        elif not 1 <= tsp_node <= 64:
             raise RuntimeError("Invalid tsp_node. Valid numbers between 1 and 64.")
 
-        self.channel = channel.upper()
         self.tsp_node = tsp_node
 
         visa_kwargs["tempSess"] = visa_kwargs.pop("tempSess", True)
