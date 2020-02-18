@@ -28,9 +28,8 @@ smua.source.output = smua.OUTPUT_OFF
 
 """
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.equipment.visa_bases.driver_base import TCPSocketConnection
-from lightlab.laboratory.instruments import Keithley, Instrument
+from lightlab.laboratory.instruments import Keithley
 
 import socket
 import numpy as np
@@ -83,7 +82,9 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
             self.channel = channel.upper()
 
         if tsp_node is None:
-            logger.warning("Forgot to specify a tsp_node integer number between 1 and 64.")
+            logger.warning(
+                "Forgot to specify a tsp_node integer number between 1 and 64."
+            )
         elif not isinstance(tsp_node, int):
             raise RuntimeError(
                 "Please specify a tsp_node integer number between 1 and 64."
@@ -97,7 +98,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **visa_kwargs)
         self.reinstantiate_session(address, visa_kwargs["tempSess"])
 
-    ## BEGIN TCPSOCKET METHODS
+    # BEGIN TCPSOCKET METHODS
     def reinstantiate_session(self, address, tempSess):
         if address is not None:
             # should be something like ['TCPIP0', 'xxx.xxx.xxx.xxx', '6501', 'SOCKET']
@@ -159,7 +160,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
             s.send(writeStr)
         time.sleep(0.05)
 
-    ## END TCPSOCKET METHODS
+    # END TCPSOCKET METHODS
 
     @property
     def smu_string(self):
@@ -222,10 +223,18 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
             return True
 
     def smu_defaults(self):
-        self.write("{smuX}.source.offfunc = 0".format(smuX=self.smu_full_string))  # 0 or smuX.OUTPUT_DCAMPS: Source 0 A
-        self.write("{smuX}.source.offmode = 2".format(smuX=self.smu_full_string))  # 2 or smuX.OUTPUT_HIGH_Z: Opens the output relay when the output is turned of
-        self.write("{smuX}.sense = 0".format(smuX=self.smu_full_string))  # 0 or smuX.SENSE_LOCAL: Selects local sense (2-wire)
-        self.write("{smuX}.source.highc = 1".format(smuX=self.smu_full_string))  # 1 or smuX.ENABLE: Enables high-capacitance mode
+        self.write(
+            "{smuX}.source.offfunc = 0".format(smuX=self.smu_full_string)
+        )  # 0 or smuX.OUTPUT_DCAMPS: Source 0 A
+        self.write(
+            "{smuX}.source.offmode = 2".format(smuX=self.smu_full_string)
+        )  # 2 or smuX.OUTPUT_HIGH_Z: Opens the output relay when the output is turned of
+        self.write(
+            "{smuX}.sense = 0".format(smuX=self.smu_full_string)
+        )  # 0 or smuX.SENSE_LOCAL: Selects local sense (2-wire)
+        self.write(
+            "{smuX}.source.highc = 1".format(smuX=self.smu_full_string)
+        )  # 1 or smuX.ENABLE: Enables high-capacitance mode
 
     def startup(self):
         self.tsp_startup()
@@ -277,85 +286,138 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
                 time.sleep(self.rampStepTime)
 
     def getCurrent(self):
-        curr = self.query_print("{smuX}.source.leveli".format(smuX=self.smu_full_string))
+        curr = self.query_print(
+            "{smuX}.source.leveli".format(smuX=self.smu_full_string)
+        )
         return float(curr)
 
     def getVoltage(self):
-        volt = self.query_print("{smuX}.source.levelv".format(smuX=self.smu_full_string))
+        volt = self.query_print(
+            "{smuX}.source.levelv".format(smuX=self.smu_full_string)
+        )
         return float(volt)
 
     def setProtectionVoltage(self, protectionVoltage):
         protectionVoltage = float(protectionVoltage)
         self.write(
-            "{smuX}.source.limitv = {v}".format(smuX=self.smu_full_string, v=protectionVoltage)
+            "{smuX}.source.limitv = {v}".format(
+                smuX=self.smu_full_string, v=protectionVoltage
+            )
         )
 
     def setProtectionCurrent(self, protectionCurrent):
         protectionCurrent = float(protectionCurrent)
         self.write(
-            "{smuX}.source.limiti = {c}".format(smuX=self.smu_full_string, c=protectionCurrent)
+            "{smuX}.source.limiti = {c}".format(
+                smuX=self.smu_full_string, c=protectionCurrent
+            )
         )
 
     @property
     def compliance(self):
-        return (self.query_print("{smuX}.source.compliance".format(smuX=self.smu_full_string)) == "true")
+        return (
+            self.query_print(
+                "{smuX}.source.compliance".format(smuX=self.smu_full_string)
+            )
+            == "true"
+        )
 
     def measVoltage(self):
-        retStr = self.query_print("{smuX}.measure.v()".format(smuX=self.smu_full_string))
+        retStr = self.query_print(
+            "{smuX}.measure.v()".format(smuX=self.smu_full_string)
+        )
         v = float(retStr)
         if self.compliance:
-            logger.warning('Keithley compliance voltage of %s reached', self.protectionVoltage)
-            logger.warning('You are sourcing %smW into the load.', v * self._latestCurrentVal * 1e-3)
+            logger.warning(
+                "Keithley compliance voltage of %s reached", self.protectionVoltage
+            )
+            logger.warning(
+                "You are sourcing %smW into the load.",
+                v * self._latestCurrentVal * 1e-3,
+            )
         return v
 
     def measCurrent(self):
-        retStr = self.query_print("{smuX}.measure.i()".format(smuX=self.smu_full_string))
+        retStr = self.query_print(
+            "{smuX}.measure.i()".format(smuX=self.smu_full_string)
+        )
         i = float(retStr)  # second number is current always
         if self.compliance:
-            logger.warning('Keithley compliance current of %s reached', self.protectionCurrent)
-            logger.warning('You are sourcing %smW into the load.', i * self._latestVoltageVal * 1e-3)
+            logger.warning(
+                "Keithley compliance current of %s reached", self.protectionCurrent
+            )
+            logger.warning(
+                "You are sourcing %smW into the load.",
+                i * self._latestVoltageVal * 1e-3,
+            )
         return i
 
     @property
     def protectionVoltage(self):
-        volt = self.query_print("{smuX}.source.limitv".format(smuX=self.smu_full_string))
+        volt = self.query_print(
+            "{smuX}.source.limitv".format(smuX=self.smu_full_string)
+        )
         return float(volt)
 
     @property
     def protectionCurrent(self):
-        curr = self.query_print("{smuX}.source.limiti".format(smuX=self.smu_full_string))
+        curr = self.query_print(
+            "{smuX}.source.limiti".format(smuX=self.smu_full_string)
+        )
         return float(curr)
 
     def enable(self, newState=None):
-        ''' get/set enable state
-        '''
+        """ get/set enable state
+        """
         if newState is not None:
             while True:
-                self.write("{smuX}.source.output = {on_off}".format(smuX=self.smu_full_string, on_off=1 if newState else 0))
+                self.write(
+                    "{smuX}.source.output = {on_off}".format(
+                        smuX=self.smu_full_string, on_off=1 if newState else 0
+                    )
+                )
                 time.sleep(0.1)
-                self.query_print("\"output configured\"", expected_talker="output configured")
-                retVal = self.query_print("{smuX}.source.output".format(smuX=self.smu_full_string))
+                self.query_print(
+                    '"output configured"', expected_talker="output configured"
+                )
+                retVal = self.query_print(
+                    "{smuX}.source.output".format(smuX=self.smu_full_string)
+                )
                 is_on = float(retVal) == 1
                 if bool(newState) == is_on:
                     break
         else:
-            retVal = self.query_print("{smuX}.source.output".format(smuX=self.smu_full_string))
+            retVal = self.query_print(
+                "{smuX}.source.output".format(smuX=self.smu_full_string)
+            )
             is_on = float(retVal) == 1
         return is_on
 
     def __setSourceMode(self, isCurrentSource):
         if isCurrentSource:
             source_mode_code = 0
-            source_mode_letter = 'i'
-            measure_mode_letter = 'v'
+            source_mode_letter = "i"
+            measure_mode_letter = "v"
         else:
             source_mode_code = 1
-            source_mode_letter = 'v'
-            measure_mode_letter = 'i'
+            source_mode_letter = "v"
+            measure_mode_letter = "i"
 
-        self.write("{smuX}.source.func = {code}".format(smuX=self.smu_full_string, code=source_mode_code))
-        self.write("{smuX}.source.autorange{Y} = 1".format(smuX=self.smu_full_string, Y=source_mode_letter))
-        self.write("{smuX}.measure.autorange{Y} = 1".format(smuX=self.smu_full_string, Y=measure_mode_letter))
+        self.write(
+            "{smuX}.source.func = {code}".format(
+                smuX=self.smu_full_string, code=source_mode_code
+            )
+        )
+        self.write(
+            "{smuX}.source.autorange{Y} = 1".format(
+                smuX=self.smu_full_string, Y=source_mode_letter
+            )
+        )
+        self.write(
+            "{smuX}.measure.autorange{Y} = 1".format(
+                smuX=self.smu_full_string, Y=measure_mode_letter
+            )
+        )
 
     def setVoltageMode(self, protectionCurrent=0.05):
         self.enable(False)

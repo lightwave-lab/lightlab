@@ -8,7 +8,7 @@ from lightlab import logger
 
 
 class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
-    ''' A Keithley 2400 driver.
+    """ A Keithley 2400 driver.
 
         `Manual: <http://research.physics.illinois.edu/bezryadin/labprotocol/Keithley2400Manual.pdf>`__
 
@@ -17,7 +17,8 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         Capable of sourcing current and measuring voltage, such as a Keithley
 
         Also provides interface methods for measuring resistance and measuring power
-    '''
+    """
+
     instrument_category = Keithley
     autoDisable = None  # in seconds. NOT IMPLEMENTED
     _latestCurrentVal = 0
@@ -27,12 +28,12 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     rampStepTime = 0.01  # in seconds.
 
     def __init__(self, name=None, address=None, **kwargs):
-        '''
+        """
             Args:
                 currStep (float): amount to step if ramping in current mode. Default (None) is no ramp
                 voltStep (float): amount to step if ramping in voltage mode. Default (None) is no ramp
                 rampStepTime (float): time to wait on each ramp step point
-        '''
+        """
         self.currStep = kwargs.pop("currStep", None)
         self.voltStep = kwargs.pop("voltStep", None)
         self.rampStepTime = kwargs.pop("rampStepTime", 0.01)
@@ -40,25 +41,25 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
         Configurable.__init__(self, headerIsOptional=False, verboseIsOptional=False)
 
     def startup(self):
-        self.write('*RST')
+        self.write("*RST")
 
     def setPort(self, port):
-        if port == 'Front':
-            self.setConfigParam('ROUT:TERM', 'FRON')
-        elif port == 'Rear':
-            self.setConfigParam('ROUT:TERM', 'REAR')
+        if port == "Front":
+            self.setConfigParam("ROUT:TERM", "FRON")
+        elif port == "Rear":
+            self.setConfigParam("ROUT:TERM", "REAR")
 
     def __setSourceMode(self, isCurrentSource):
         if isCurrentSource:
-            sourceStr, meterStr = ('CURR', 'VOLT')
+            sourceStr, meterStr = ("CURR", "VOLT")
         else:
-            sourceStr, meterStr = ('VOLT', 'CURR')
-        self.setConfigParam('SOURCE:FUNC', sourceStr)
-        self.setConfigParam('SOURCE:{}:MODE'.format(sourceStr), 'FIXED')
-        self.setConfigParam('SENSE:FUNCTION:OFF:ALL')
-        self.setConfigParam('SENSE:FUNCTION:ON', '"{}"'.format(meterStr))
-        self.setConfigParam('SENSE:{}:RANGE:AUTO'.format(meterStr), 'ON')
-        self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
+            sourceStr, meterStr = ("VOLT", "CURR")
+        self.setConfigParam("SOURCE:FUNC", sourceStr)
+        self.setConfigParam("SOURCE:{}:MODE".format(sourceStr), "FIXED")
+        self.setConfigParam("SENSE:FUNCTION:OFF:ALL")
+        self.setConfigParam("SENSE:FUNCTION:ON", '"{}"'.format(meterStr))
+        self.setConfigParam("SENSE:{}:RANGE:AUTO".format(meterStr), "ON")
+        self.setConfigParam("RES:MODE", "MAN")  # Manual resistance ranging
 
     def setVoltageMode(self, protectionCurrent=0.05):
         self.enable(False)
@@ -75,25 +76,25 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
     def _configCurrent(self, currAmps):
         currAmps = float(currAmps)
         if currAmps >= 0:
-            currAmps = np.clip(currAmps, a_min=1e-9, a_max=1.)
+            currAmps = np.clip(currAmps, a_min=1e-9, a_max=1.0)
         else:
             currAmps = np.clip(currAmps, a_min=-1, a_max=-1e-9)
         if currAmps != 0:
             needRange = 10 ** np.ceil(np.log10(abs(currAmps)))
-            self.setConfigParam('SOURCE:CURR:RANGE', needRange)
-        self.setConfigParam('SOURCE:CURR', currAmps)
+            self.setConfigParam("SOURCE:CURR:RANGE", needRange)
+        self.setConfigParam("SOURCE:CURR", currAmps)
         self._latestCurrentVal = currAmps
 
     def _configVoltage(self, voltVolts):
         voltVolts = float(voltVolts)
         if voltVolts != 0:
             needRange = 10 ** np.ceil(np.log10(np.abs(voltVolts)))
-            self.setConfigParam('SOURCE:VOLT:RANGE', needRange)
-        self.setConfigParam('SOURCE:VOLT', voltVolts)
+            self.setConfigParam("SOURCE:VOLT:RANGE", needRange)
+        self.setConfigParam("SOURCE:VOLT", voltVolts)
         self._latestVoltageVal = voltVolts
 
     def setCurrent(self, currAmps):
-        ''' This leaves the output on indefinitely '''
+        """ This leaves the output on indefinitely """
         currTemp = self._latestCurrentVal
         if not self.enable() or self.currStep is None:
             self._configCurrent(currAmps)
@@ -114,56 +115,66 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
                 time.sleep(self.rampStepTime)
 
     def getCurrent(self):
-        currGlob = self.getConfigParam('SOURCE:CURR')
+        currGlob = self.getConfigParam("SOURCE:CURR")
         if type(currGlob) is dict:
-            currGlob = currGlob['&']
+            currGlob = currGlob["&"]
         return currGlob
 
     def getVoltage(self):
-        voltGlob = self.getConfigParam('SOURCE:VOLT')
+        voltGlob = self.getConfigParam("SOURCE:VOLT")
         if type(voltGlob) is dict:
-            voltGlob = voltGlob['&']
+            voltGlob = voltGlob["&"]
         return voltGlob
 
     def setProtectionVoltage(self, protectionVoltage):
-        self.setConfigParam('VOLT:PROT', protectionVoltage)
+        self.setConfigParam("VOLT:PROT", protectionVoltage)
 
     def setProtectionCurrent(self, protectionCurrent):
-        self.setConfigParam('CURR:PROT', protectionCurrent)
+        self.setConfigParam("CURR:PROT", protectionCurrent)
 
     @property
     def protectionVoltage(self):
-        return self.getConfigParam('VOLT:PROT')
+        return self.getConfigParam("VOLT:PROT")
 
     @property
     def protectionCurrent(self):
-        return self.getConfigParam('CURR:PROT')
+        return self.getConfigParam("CURR:PROT")
 
     def measVoltage(self):
-        retStr = self.query('MEASURE:VOLT?')
-        v = float(retStr.split(',')[0])  # first number is voltage always
+        retStr = self.query("MEASURE:VOLT?")
+        v = float(retStr.split(",")[0])  # first number is voltage always
         if v >= self.protectionVoltage:
-            logger.warning('Keithley compliance voltage of %s reached', self.protectionVoltage)
-            logger.warning('You are sourcing %smW into the load.', v * self._latestCurrentVal * 1e-3)
+            logger.warning(
+                "Keithley compliance voltage of %s reached", self.protectionVoltage
+            )
+            logger.warning(
+                "You are sourcing %smW into the load.",
+                v * self._latestCurrentVal * 1e-3,
+            )
         return v
 
     def measCurrent(self):
-        retStr = self.query('MEASURE:CURR?')
-        i = float(retStr.split(',')[1])  # second number is current always
+        retStr = self.query("MEASURE:CURR?")
+        i = float(retStr.split(",")[1])  # second number is current always
         if i >= self.protectionCurrent:
-            logger.warning('Keithley compliance current of %s reached', self.protectionCurrent)
-            logger.warning('You are sourcing %smW into the load.', i * self._latestVoltageVal * 1e-3)
+            logger.warning(
+                "Keithley compliance current of %s reached", self.protectionCurrent
+            )
+            logger.warning(
+                "You are sourcing %smW into the load.",
+                i * self._latestVoltageVal * 1e-3,
+            )
         return i
 
     def enable(self, newState=None):
-        ''' get/set enable state
-        '''
+        """ get/set enable state
+        """
         if newState is False:
-            if self.getConfigParam('SOURCE:FUNC') == 'CURR':
+            if self.getConfigParam("SOURCE:FUNC") == "CURR":
                 self.setCurrent(0)
             else:
                 self.setVoltage(0)
         if newState is not None:
-            self.setConfigParam('OUTP:STATE', 1 if newState else 0, forceHardware=True)
-        retVal = self.getConfigParam('OUTP:STATE', forceHardware=True)
-        return retVal in ['ON', 1, '1']
+            self.setConfigParam("OUTP:STATE", 1 if newState else 0, forceHardware=True)
+        retVal = self.getConfigParam("OUTP:STATE", forceHardware=True)
+        return retVal in ["ON", 1, "1"]

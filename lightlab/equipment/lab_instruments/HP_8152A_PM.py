@@ -4,7 +4,7 @@ from lightlab.laboratory.instruments import PowerMeter
 
 
 class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
-    ''' HP8152A power meter
+    """ HP8152A power meter
 
         `Manual <http://www.lightwavestore.com/product_datasheet/OTI-OPM-L-030C_pdf4.pdf>`__
 
@@ -12,26 +12,27 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
 
         Todo:
             Maybe allow a rapid continuous mode that just spits out numbers ('T0')
-    '''
+    """
+
     instrument_category = PowerMeter
-    channelDescriptions = {1: 'A', 2: 'B', 3: 'A/B'}
+    channelDescriptions = {1: "A", 2: "B", 3: "A/B"}
     doReadDoubleCheck = False
 
-    def __init__(self, name='The HP power meter', address=None, **kwargs):
+    def __init__(self, name="The HP power meter", address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
 
     def startup(self):
         self.close()
-        self.write('T1')  # single shot mode to make sure averaging occurs correctly
+        self.write("T1")  # single shot mode to make sure averaging occurs correctly
 
     def open(self):
         super().open()
-        self.termination = ''
+        self.termination = ""
         self.clear()
 
     @staticmethod
     def proccessWeirdRead(readString):
-        ''' The HP 8152 *sometimes* sends double characters.
+        """ The HP 8152 *sometimes* sends double characters.
             This tries to fix it based on reasonable value ranges.
 
             We assume that the values encountered have a decimal point
@@ -42,34 +43,39 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
 
             Returns:
                 (str): checked string
-        '''
+        """
         # is there a negative sign?
-        unsignStrArr = readString.split('-')
+        unsignStrArr = readString.split("-")
         minus = len(unsignStrArr) > 1
         try:
-            decSplit = unsignStrArr[-1].split('.')
+            decSplit = unsignStrArr[-1].split(".")
             onesHundredthsStrs = [decSplit[0], decSplit[-1]]
         except ValueError:
-            raise ValueError('Power meter did not find a decimal point in return string')
+            raise ValueError(
+                "Power meter did not find a decimal point in return string"
+            )
         # There are now several options for when we expect two digits
         # there is an ambiguity when there are two digits, so we assume they are both intended
         onesHundredthsVals = [0] * 2
         for i, s in enumerate(onesHundredthsStrs):
             if len(s) in [1, 2]:
                 onesHundredthsVals[i] = float(s)
-            elif len(s) in [3, 4]:  # at least one has been repeated, so skip the middle (3) or seconds (4)
+            elif len(s) in [
+                3,
+                4,
+            ]:  # at least one has been repeated, so skip the middle (3) or seconds (4)
                 onesHundredthsVals[i] = float(s[::2])
             else:
-                raise ValueError('Too many digits one one side of the decimal point')
+                raise ValueError("Too many digits one one side of the decimal point")
         # reconstitute from floats
-        val = onesHundredthsVals[0] + .01 * onesHundredthsVals[1]
+        val = onesHundredthsVals[0] + 0.01 * onesHundredthsVals[1]
         if minus:
             val *= -1
         return str(val)
 
     def robust_query(self, *args, **kwargs):  # pylint: disable=arguments-differ
-        ''' Conditionally check for read character doubling
-        '''
+        """ Conditionally check for read character doubling
+        """
         retRaw = self.query(*args, **kwargs)  # pylint: disable=arguments-differ
         if self.doReadDoubleCheck:
             return self.proccessWeirdRead(retRaw)
@@ -77,19 +83,21 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
             return retRaw
 
     def powerDbm(self, channel=1):
-        ''' The detected optical power in dB on the specified channel
+        """ The detected optical power in dB on the specified channel
 
             Args:
                 channel (int): Power Meter channel
 
             Returns:
                 (double): Power in dB or dBm
-        '''
+        """
         self.validateChannel(channel)
         trial = 0
-        while trial < 10:  # Sometimes it gets out of range, so we have to try a few times
-            self.write('CH' + str(channel))
-            powStr = self.robust_query('TRG')
+        while (
+            trial < 10
+        ):  # Sometimes it gets out of range, so we have to try a few times
+            self.write("CH" + str(channel))
+            powStr = self.robust_query("TRG")
             v = float(powStr)
             if abs(v) < 999:  # check if it's reasonable
                 break
@@ -97,6 +105,5 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
                 # continue
                 trial += 1
         else:
-            raise Exception('Power meter values are unreasonable.'
-                            ' Got {}'.format(v))
+            raise Exception("Power meter values are unreasonable." " Got {}".format(v))
         return v

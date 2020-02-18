@@ -1,4 +1,4 @@
-'''
+"""
 This module contains classes responsible to maintain a record of the
 current state of the lab.
 
@@ -19,7 +19,7 @@ Warning:
         device = function_that_returns_device()
         bench = labstate.lab.findBenchFromInstrument(device)
 
-'''
+"""
 from lightlab.laboratory import Hashable, TypedList
 from lightlab.laboratory.instruments import Host, LocalHost, Bench, Instrument, Device
 import hashlib
@@ -41,8 +41,9 @@ def timestamp_string():
 
 json = jsonpickle.json
 # _filename = Path("/home/jupyter/labstate.json")
-_filename = os.path.expanduser(config.get_config_param(
-    'labstate.filepath'))  # resolve '~' to home folder
+_filename = os.path.expanduser(
+    config.get_config_param("labstate.filepath")
+)  # resolve '~' to home folder
 
 
 try:
@@ -60,27 +61,30 @@ try:
     else:
         # file exists
         # can open? if not, error!
-        with open(_filename, 'r'):
+        with open(_filename, "r"):
             pass
         # can write? warning
         can_write = os.access(_filename, os.W_OK)
     if can_write:
         _filename.touch()  # this empty file will trigger a warning the first time labstate is loaded
     else:
-        logger.warning("Write permission to existing %s denied. "
-                       "You will not be able to use lab.saveState().", _filename)
+        logger.warning(
+            "Write permission to existing %s denied. "
+            "You will not be able to use lab.saveState().",
+            _filename,
+        )
 except OSError as error:
     if isinstance(error, FileNotFoundError):
         logger.warning("%s was not found.", _filename)
     if isinstance(error, PermissionError):
         logger.warning("You don't have permission to read/access %s.", _filename)
-    new_filename = 'labstate-local.json'
+    new_filename = "labstate-local.json"
     logger.warning("%s not available. Fallback to local %s.", _filename, new_filename)
     _filename = Path(new_filename)
 
 
 def hash_sha256(string):
-    ''' Returns the hash of string encoded via the SHA-256 algorithm from hashlib'''
+    """ Returns the hash of string encoded via the SHA-256 algorithm from hashlib"""
     return hashlib.sha256(string.encode()).hexdigest()
 
 
@@ -88,6 +92,7 @@ class LabState(Hashable):
     """ Represents the set of objects and connections present in lab,
     with the ability to safely save and load to and from a ``.json`` file.
     """
+
     __version__ = 2
     __sha256__ = None
     __user__ = None
@@ -142,29 +147,34 @@ class LabState(Hashable):
             old_hostnames.append(old_host.name)
             if isinstance(old_host, LocalHost):
                 if localhost_name is not None:
-                    logger.warning('Duplicate localhost found in lab.hosts')
+                    logger.warning("Duplicate localhost found in lab.hosts")
                 localhost_name = old_host.name
         for new_host in hosts:
             # Updating localhost
-            if (isinstance(new_host, LocalHost) and localhost_name is not None):
+            if isinstance(new_host, LocalHost) and localhost_name is not None:
                 # Check for localhost clash
                 if new_host.name != localhost_name:
-                    logger.warning('Localhost is already present: ' +
-                                   '%s\n' +
-                                   'Not updating host %s!', localhost_name, new_host.name)
+                    logger.warning(
+                        "Localhost is already present: "
+                        + "%s\n"
+                        + "Not updating host %s!",
+                        localhost_name,
+                        new_host.name,
+                    )
                     continue
                 else:
                     localhost_name = new_host.name
             # Will an update happen?
             if new_host.name in old_hostnames:
-                logger.info('Overwriting host: %s', new_host.name)
+                logger.info("Overwriting host: %s", new_host.name)
                 # Will it end up removing the localhost?
-                if (new_host.name == localhost_name and
-                        not isinstance(new_host, LocalHost)):
+                if new_host.name == localhost_name and not isinstance(
+                    new_host, LocalHost
+                ):
                     localhost_name = None
             self.hosts[new_host.name] = new_host
         if localhost_name is None:
-            logger.warning('Localhost not yet present')
+            logger.warning("Localhost not yet present")
 
     def updateBench(self, *benches):
         """ Updates benches in the benches list.
@@ -194,8 +204,7 @@ class LabState(Hashable):
             name (str): Instrument name
 
         """
-        matching_instruments = list(filter(lambda x: x.name == name,
-                                           self.instruments))
+        matching_instruments = list(filter(lambda x: x.name == name, self.instruments))
         assert len(matching_instruments) == 1
         del self.instruments[name]
 
@@ -262,7 +271,9 @@ class LabState(Hashable):
             for k1, v1 in connection.items():
                 if v1 not in k1.ports:
                     logger.error("Port '%s' is not in '%s: %s'", v1, k1, k1.ports)
-                    raise RuntimeError("Port '{}' is not in '{}: {}'".format(v1, k1, k1.ports))
+                    raise RuntimeError(
+                        "Port '{}' is not in '{}: {}'".format(v1, k1, k1.ports)
+                    )
 
         # Remove old conflicting connections
         def check_if_port_is_not_connected(connection, k1, v1):
@@ -271,11 +282,15 @@ class LabState(Hashable):
                     logger.warning("Deleting existing connection %s.", connection)
                     return False
             return True
+
         for connection in connections:
             for k1, v1 in connection.items():
                 connectioncheck2 = lambda connection: check_if_port_is_not_connected(
-                    connection, k1, v1)
-                self.connections[:] = [x for x in self.connections if connectioncheck2(x)]
+                    connection, k1, v1
+                )
+                self.connections[:] = [
+                    x for x in self.connections if connectioncheck2(x)
+                ]
 
         # Add new connections
         for connection in connections:
@@ -359,7 +374,7 @@ class LabState(Hashable):
         if filename is None:
             filename = _filename
 
-        with open(filename, 'r') as file:
+        with open(filename, "r") as file:
             frozen_json = file.read()
         json_state = json.decode(frozen_json)
 
@@ -368,10 +383,15 @@ class LabState(Hashable):
 
         # Check integrity of stored version
         sha256 = json_state.pop("__sha256__")
-        jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)
+        jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
         if validateHash and sha256 != hash_sha256(json.encode(json_state)):
-            raise JSONDecodeError("Labstate is corrupted. expected: {} vs actual: {}.".format(
-                sha256, hash_sha256(json.encode(json_state))), str(filename), 0)
+            raise JSONDecodeError(
+                "Labstate is corrupted. expected: {} vs actual: {}.".format(
+                    sha256, hash_sha256(json.encode(json_state))
+                ),
+                str(filename),
+                0,
+            )
 
         # Compare versions of file vs. class
         version = json_state.pop("__version__")
@@ -379,7 +399,8 @@ class LabState(Hashable):
             logger.warning("Loading older version of Labstate.")
         elif version > cls.__version__:
             raise RuntimeError(
-                "Stored Labstate version is newer than current software. Update package lightlab.")
+                "Stored Labstate version is newer than current software. Update package lightlab."
+            )
 
         context = jsonpickle.unpickler.Unpickler(backend=json, safe=True, keys=True)
 
@@ -404,7 +425,7 @@ class LabState(Hashable):
         context = jsonpickle.pickler.Pickler(unpicklable=True, warn=True, keys=True)
         json_state = context.flatten(self, reset=True)
 
-        jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)
+        jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
 
         # Add version and hash of dictionary json_state
         json_state["__version__"] = self.__version__
@@ -480,7 +501,9 @@ class LabState(Hashable):
             self._saveState(fname, save_backup)
         else:
             logger.error(
-                "%s's hash does not match with the one loaded in memory. Aborting save.", fname)
+                "%s's hash does not match with the one loaded in memory. Aborting save.",
+                fname,
+            )
 
     def _saveState(self, fname=None, save_backup=True):
         """ Saves the file without checking hash """
@@ -493,13 +516,14 @@ class LabState(Hashable):
             if filepath.exists():  # pylint: disable=no-member
                 # gets folder/filename.* and transforms into folder/filename_{timestamp}.json
                 filepath_backup = Path(filepath).with_name(
-                    "{}_{}.json".format(filepath.stem, timestamp_string()))
+                    "{}_{}.json".format(filepath.stem, timestamp_string())
+                )
                 logger.debug("Backup %s to %s", filepath, filepath_backup)
                 shutil.copy2(filepath, filepath_backup)
 
         # save to filepath, overwriting
         filepath.touch()  # pylint: disable=no-member
-        with open(filepath, 'w') as file:
+        with open(filepath, "w") as file:
             json_state = self.__toJSON()
             file.write(json.encode(json_state))
             self.__sha256__ = json_state["__sha256__"]
@@ -522,8 +546,10 @@ def init_module(module):
         empty_lab = True
 
     if empty_lab:
-        logger.warning("Starting fresh new LabState(). "
-                       "Save for the first time with lab._saveState()")
+        logger.warning(
+            "Starting fresh new LabState(). "
+            "Save for the first time with lab._saveState()"
+        )
         module.lab = module.LabState()
 
 
@@ -531,6 +557,7 @@ def init_module(module):
 # The problem is that instantiating the variable lab causes some modules
 # that depend on this module to be imported, creating a cyclical dependence.
 # The solution is to instantiate the variable lab only when it is truly called.
+
 
 class _Sneaky(object):
     """ Lazy loading of state.lab. """
@@ -591,7 +618,7 @@ def patch_labstate(from_version, old_lab):
             # can't access directly. Need to use __dict__
             # here we move bench.instruments into a global instruments
 
-            for instrument in old_bench.__dict__['instruments']:
+            for instrument in old_bench.__dict__["instruments"]:
                 instrument.bench = new_bench
                 # if there is a duplicate name, update instrument
                 if instrument.name in instruments.dict.keys():
@@ -600,7 +627,7 @@ def patch_labstate(from_version, old_lab):
                     instruments.append(instrument)
 
             # same for devices
-            for device in old_bench.__dict__['devices']:
+            for device in old_bench.__dict__["devices"]:
                 device.bench = new_bench
                 if device.name in devices.dict.keys():
                     devices[device.name].__dict__.update(device.__dict__)
@@ -609,12 +636,14 @@ def patch_labstate(from_version, old_lab):
 
         # Same code as above
         for old_host in old_hosts.values():
-            new_host = Host(name=old_host.name,
-                            mac_address=old_host.mac_address,
-                            hostname=old_host.hostname,
-                            os=old_host.os)
+            new_host = Host(
+                name=old_host.name,
+                mac_address=old_host.mac_address,
+                hostname=old_host.hostname,
+                os=old_host.os,
+            )
             hosts.append(new_host)
-            for instrument in old_host.__dict__['instruments']:
+            for instrument in old_host.__dict__["instruments"]:
                 instrument.host = new_host
                 if instrument.name in instruments.dict.keys():
                     instruments[instrument.name].__dict__.update(instrument.__dict__)
@@ -627,7 +656,7 @@ def patch_labstate(from_version, old_lab):
         patched_lab.benches.extend(benches)
         patched_lab.devices.extend(devices)
         patched_lab.hosts.extend(hosts)
-        patched_lab.hosts['cassander'] = LocalHost(name='cassander')
+        patched_lab.hosts["cassander"] = LocalHost(name="cassander")
         patched_lab.connections = old_connections
 
         patched_lab.__sha256__ = old_lab.__sha256__
