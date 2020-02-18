@@ -1,14 +1,14 @@
-""" Argument sanitizing and very basic array operations """
+''' Argument sanitizing and very basic array operations '''
 import numpy as np
 
 # Argument sanitizing
 
 
 def verifyListOfType(arg, checkType):
-    """ Checks to see if the argument is a list or a single object of the checkType
+    ''' Checks to see if the argument is a list or a single object of the checkType
     Returns a list, even if it is length one
     If arg is None, it returns None
-    """
+    '''
     if arg is None:
         return None
     if isinstance(arg, checkType):
@@ -16,17 +16,13 @@ def verifyListOfType(arg, checkType):
     if isinstance(arg, (list, tuple)):
         for a in arg:
             if not isinstance(a, checkType):
-                raise Exception(
-                    "Incorrect type, expecting "
-                    + str(checkType)
-                    + ". Got "
-                    + str(type(a))
-                )
+                raise Exception('Incorrect type, expecting ' + str(checkType) +
+                                '. Got ' + str(type(a)))
     return arg
 
 
 def argFlatten(*argLists, typs=(list, tuple, set)):
-    """ Takes a combination of multiple arguments and flattens the ones of type typs.
+    ''' Takes a combination of multiple arguments and flattens the ones of type typs.
         None arguments are ignored, no error.
 
         Args:
@@ -45,7 +41,7 @@ def argFlatten(*argLists, typs=(list, tuple, set)):
             dUtil.argFlatten(1, [3, 4], np.zeros(2))                  # == (1, 3, 4, ndarray([0,0]))
             dUtil.argFlatten(1, [3, 4], np.zeros(2), typs=tuple)      # == (1, [3, 4], ndarray([0,0]))
             dUtil.argFlatten(1, [3, 4], np.zeros(2), typs=np.ndarray) # == (1, [3, 4], 0., 0.)
-    """
+    '''
     flatList = []
     for arg in argLists:
         if arg is None:
@@ -60,7 +56,7 @@ MANGLE_LEN = 256  # magic constant from compile.c
 
 
 def mangle(name, klass):
-    """ Sanitizes attribute names that might be "hidden,"
+    ''' Sanitizes attribute names that might be "hidden,"
         denoted by leading '__'. In :py:class:`~lightlab.laboratory.Hashable` objects,
         attributes with this kind of name can only be class attributes.
 
@@ -73,16 +69,16 @@ def mangle(name, klass):
             mangle('__a__', 'B') == '__a__'
             mangle('__a', 'B') == '_B__a'
             mangle('__a', '_B') == '_B__a'
-    """
-    if not name.startswith("__"):
+    '''
+    if not name.startswith('__'):
         return name
     if len(name) + 2 >= MANGLE_LEN:
         return name
-    if name.endswith("__"):
+    if name.endswith('__'):
         return name
     try:
         i = 0
-        while klass[i] == "_":
+        while klass[i] == '_':
             i = i + 1
     except IndexError:
         return name
@@ -90,18 +86,17 @@ def mangle(name, klass):
 
     tlen = len(klass) + len(name)
     if tlen > MANGLE_LEN:
-        klass = klass[: MANGLE_LEN - tlen]
+        klass = klass[:MANGLE_LEN - tlen]
 
     return "_%s%s" % (klass, name)
 
 
 # Simple common array operations
 
-
 def rms(diffArr, axis=0):
     return np.sqrt(np.mean(diffArr ** 2, axis=axis))
 
 
 def minmax(arr):
-    """ Returns a list of [min and max] of the array """
+    ''' Returns a list of [min and max] of the array '''
     return np.array([np.min(arr), np.max(arr)])

@@ -7,8 +7,8 @@ from pyvisa.util import from_ascii_block
 
 
 class InstrumentSessionBase(ABC):
-    """ Base class for Instrument sessions, to be inherited and specialized
-    by VISAObject and PrologixGPIBObject"""
+    ''' Base class for Instrument sessions, to be inherited and specialized
+    by VISAObject and PrologixGPIBObject'''
 
     @abstractmethod
     def spoll(self):
@@ -50,15 +50,16 @@ class InstrumentSessionBase(ABC):
     def query_raw_binary(self):
         pass
 
-    def query_ascii_values(self, message, converter="f", separator=",", container=list):
-        """ Taken from pvisa."""
+    def query_ascii_values(self, message, converter='f', separator=',',
+                           container=list):
+        ''' Taken from pvisa.'''
 
         block = self.query(message)
         return from_ascii_block(block, converter, separator, container)
 
     def instrID(self):
         r"""Returns the \*IDN? string"""
-        return self.query("*IDN?")
+        return self.query('*IDN?')
 
     @property
     @abstractmethod
@@ -71,12 +72,12 @@ class InstrumentSessionBase(ABC):
         pass
 
 
-CR = "\r"
-LF = "\n"
+CR = '\r'
+LF = '\n'
 
 
 class TCPSocketConnection(object):
-    """ Opens a TCP socket connection, much like netcat.
+    ''' Opens a TCP socket connection, much like netcat.
 
     Usage:
         s = TCPSocketConnection('socket-server.school.edu', 1111)
@@ -84,7 +85,7 @@ class TCPSocketConnection(object):
         s.send('command')  # sends the command through the socket
         r = s.recv(1000)  # receives a message of up to 1000 bytes
         s.disconnect()  # shuts down connection
-    """
+    '''
 
     port = None  #: socket server's port number
     _socket = None
@@ -104,27 +105,25 @@ class TCPSocketConnection(object):
         self._termination = termination
 
     def _send(self, socket, value):
-        encoded_value = (("%s" % value) + self._termination).encode("ascii")
+        encoded_value = (('%s' % value) + self._termination).encode('ascii')
         sent = socket.sendall(encoded_value)
         return sent
 
     def _recv(self, socket, msg_length=2048):
         received_value = socket.recv(msg_length)
-        return received_value.decode("ascii")
+        return received_value.decode('ascii')
 
     def connect(self):
-        """ Connects to the socket and leaves the connection open.
+        ''' Connects to the socket and leaves the connection open.
         If already connected, does nothing.
 
         Returns:
             socket object.
-        """
+        '''
         if self._socket is None:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
             try:
-                logger.debug(
-                    "Attempting new connection (timeout = %s)", str(self.timeout)
-                )
+                logger.debug("Attempting new connection (timeout = %s)", str(self.timeout))
                 init_time = time.time()
                 s.settimeout(self.timeout)
                 s.connect((self.ip_address, self.port))
@@ -134,21 +133,19 @@ class TCPSocketConnection(object):
                 # s.shutdown(socket.SHUT_WR)
                 s.close()
                 del s
-                logger.error("Cannot connect to resource.")
+                logger.error('Cannot connect to resource.')
                 raise
             else:
                 final_time = time.time()
                 elapsed_time_ms = 1e3 * (final_time - init_time)
-                logger.debug(
-                    "Connected. Time elapsed: %s msec", "{:.2f}".format(elapsed_time_ms)
-                )
+                logger.debug("Connected. Time elapsed: %s msec", '{:.2f}'.format(elapsed_time_ms))
                 self._socket = s
             return self._socket
         else:
             return self._socket
 
     def disconnect(self):
-        """ If connected, disconnects and kills the socket."""
+        ''' If connected, disconnects and kills the socket.'''
         if self._socket is not None:
             self._socket.shutdown(socket.SHUT_WR)
             self._socket.close()
@@ -156,7 +153,7 @@ class TCPSocketConnection(object):
 
     @contextmanager
     def connected(self):
-        """ Context manager for ensuring that the socket is connected while
+        ''' Context manager for ensuring that the socket is connected while
         sending and receiving commands to remote socket.
         This is safe to use everywhere, even if the socket is previously connected.
         It can also be nested.
@@ -171,8 +168,8 @@ class TCPSocketConnection(object):
                     recv = self._recv(self._socket, msg_length)
                 return recv
 
-        """
-        previously_connected = self._socket is not None
+        '''
+        previously_connected = (self._socket is not None)
         self.connect()
         try:
             yield self
@@ -184,21 +181,21 @@ class TCPSocketConnection(object):
         raise NotImplementedError
 
     def send(self, value):
-        """ Sends an ASCII string to the socket server. Auto-connects if necessary.
+        ''' Sends an ASCII string to the socket server. Auto-connects if necessary.
 
         Args:
             value (str): value to be sent
-        """
+        '''
         with self.connected():
             sent = self._send(self._socket, value)
         return sent
 
     def recv(self, msg_length=2048):
-        """ Receives an ASCII string from the socket server. Auto-connects if necessary.
+        ''' Receives an ASCII string from the socket server. Auto-connects if necessary.
 
         Args:
             msg_length (int): maximum message length.
-        """
+        '''
         with self.connected():
             recv = self._recv(self._socket, msg_length)
         return recv

@@ -1,11 +1,9 @@
-""" This module provides an interface for instruments, hosts and benches in the lab.
-"""
+''' This module provides an interface for instruments, hosts and benches in the lab.
+'''
 
 import os
 import platform
-from uuid import (
-    getnode as get_mac,
-)  # https://stackoverflow.com/questions/159137/getting-mac-address
+from uuid import getnode as get_mac  # https://stackoverflow.com/questions/159137/getting-mac-address
 from contextlib import contextmanager
 
 from lightlab.laboratory import Node, typed_property, TypedList
@@ -19,7 +17,6 @@ import pyvisa
 class Host(Node):
     """ Computer host, from which GPIB/VISA commands are issued.
     """
-
     _name = None
     hostname = None
     mac_address = None
@@ -28,11 +25,9 @@ class Host(Node):
     __cached_list_resources_info = None
     __cached_gpib_instrument_list = None
 
-    def __init__(self, name="Unnamed Host", hostname=None, **kwargs):
+    def __init__(self, name='Unnamed Host', hostname=None, **kwargs):
         if hostname is None:
-            logger.warning(
-                "Hostname not set. isLive and list_resources not functional."
-            )
+            logger.warning("Hostname not set. isLive and list_resources not functional.")
 
         self.hostname = hostname
         self._name = name
@@ -45,12 +40,7 @@ class Host(Node):
     @property
     def instruments(self):
         from lightlab.laboratory.state import lab
-
-        return TypedList(
-            Instrument,
-            *list(filter(lambda x: x.host == self, lab.instruments)),
-            read_only=True,
-        )
+        return TypedList(Instrument, *list(filter(lambda x: x.host == self, lab.instruments)), read_only=True)
 
     def __contains__(self, item):
         instrument_search = item in self.instruments
@@ -59,8 +49,8 @@ class Host(Node):
         return instrument_search
 
     def isLive(self):
-        """ Pings the system and returns if it is alive.
-        """
+        ''' Pings the system and returns if it is alive.
+        '''
         if self.hostname is not None:
             logger.debug("Pinging %s...", self.hostname)
             response = os.system("ping -c 1 {}".format(self.hostname))
@@ -72,25 +62,25 @@ class Host(Node):
             return False
 
     def _visa_prefix(self):
-        """ The prefix necessary for connecting to remote visa servers.
+        ''' The prefix necessary for connecting to remote visa servers.
 
         Ex. 'visa://remote-server.university.edu/'
 
             Returns:
                 (str)
-        """
-        return "visa://{}/".format(self.hostname)
+        '''
+        return 'visa://{}/'.format(self.hostname)
 
     def gpib_port_to_address(self, port, board=0):
-        """
+        '''
             Args:
                 port (int): The port on the GPIB bus of this host
                 board (int): For hosts with multiple GPIB busses
 
             Returns:
                 (str): the address that can be used in an initializer
-        """
-        localSerialStr = "GPIB{}::{}::INSTR".format(board, port)
+        '''
+        localSerialStr = 'GPIB{}::{}::INSTR'.format(board, port)
         return self._visa_prefix() + localSerialStr
 
     def list_resources_info(self, use_cached=True):
@@ -112,7 +102,8 @@ class Host(Node):
             list_query = self._visa_prefix() + "?*::INSTR"
             rm = pyvisa.ResourceManager()
             logger.debug("Caching resource list in %s", self)
-            self.__cached_list_resources_info = rm.list_resources_info(query=list_query)
+            self.__cached_list_resources_info = rm.list_resources_info(
+                query=list_query)
             return self.__cached_list_resources_info
 
     def list_gpib_resources_info(self, use_cached=True):
@@ -126,13 +117,9 @@ class Host(Node):
             (list): list of ``pyvisa.highlevel.ResourceInfo`` named tuples.
 
         """
-        return {
-            resource_name: resource
-            for resource_name, resource in self.list_resources_info(
-                use_cached=use_cached
-            ).items()
-            if resource.interface_type == pyvisa.constants.InterfaceType.gpib
-        }
+        return {resource_name: resource
+                for resource_name, resource in self.list_resources_info(use_cached=use_cached).items()
+                if resource.interface_type == pyvisa.constants.InterfaceType.gpib}
 
     def get_all_gpib_id(self, use_cached=True):
         """ Queries the host for all connected GPIB instruments, and
@@ -186,7 +173,8 @@ class Host(Node):
                 logger.info("Found %s in %s.", id_string_search, gpib_address)
                 return gpib_address
         logger.warning("%s not found in %s", id_string_search, self)
-        raise NotFoundError("{} not found in {}".format(id_string_search, self))
+        raise NotFoundError(
+            "{} not found in {}".format(id_string_search, self))
 
     def addInstrument(self, *instruments):
         r""" Adds an instrument to lab.instruments if it is not already present.
@@ -196,7 +184,6 @@ class Host(Node):
 
         """
         from lightlab.laboratory.state import lab
-
         for instrument in instruments:
             if instrument not in lab.instruments:
                 lab.instruments.append(instrument)
@@ -213,7 +200,7 @@ class Host(Node):
         """
         for instrument in instruments:
             if type(instrument) is str:
-                logger.warning("Cannot remove by name string. Use the object")
+                logger.warning('Cannot remove by name string. Use the object')
             instrument.host = None
 
     def checkInstrumentsLive(self):
@@ -244,12 +231,8 @@ class Host(Node):
         lines.append("Instruments")
         lines.append("===========")
         if len(self.instruments) > 0:
-            lines.extend(
-                [
-                    "   {} ({})".format(str(instrument), str(instrument.host))
-                    for instrument in self.instruments
-                ]
-            )
+            lines.extend(["   {} ({})".format(str(instrument), str(instrument.host))
+                          for instrument in self.instruments])
         else:
             lines.append("   No instruments.")
         lines.append("***")
@@ -257,23 +240,24 @@ class Host(Node):
 
 
 class LocalHost(Host):
+
     def __init__(self, name=None):
         if name is None:
-            name = "localhost"
+            name = 'localhost'
         super().__init__(name=name, hostname=platform.node())
         mac = get_mac()
         # converts 90520734586583 to 52:54:00:3A:D6:D7
-        self.mac_address = ":".join(("%012X" % mac)[i : i + 2] for i in range(0, 12, 2))
+        self.mac_address = ':'.join(("%012X" % mac)[i:i + 2] for i in range(0, 12, 2))
         self.os = platform.system()
 
     def _visa_prefix(self):
-        """ How the visa server is specified. If this is a local host,
+        ''' How the visa server is specified. If this is a local host,
         then there is no visa:// prefix
 
             Returns:
                 (str)
-        """
-        return ""
+        '''
+        return ''
 
     def isLive(self):
         return True
@@ -283,7 +267,6 @@ class Bench(Node):
     """ Represents an experiment bench for the purpose of facilitating
     its location in lab.
     """
-
     name = None
 
     def __init__(self, name, *args, **kwargs):
@@ -309,17 +292,11 @@ class Bench(Node):
     @property
     def instruments(self):
         from lightlab.laboratory.state import lab
-
-        return TypedList(
-            Instrument,
-            *list(filter(lambda x: x.bench == self, lab.instruments)),
-            read_only=True,
-        )
+        return TypedList(Instrument, *list(filter(lambda x: x.bench == self, lab.instruments)), read_only=True)
 
     @property
     def devices(self):
         from lightlab.laboratory.state import lab
-
         return TypedList(Device, *list(filter(lambda x: x.bench == self, lab.devices)))
 
     def addInstrument(self, *instruments):
@@ -331,7 +308,6 @@ class Bench(Node):
 
         """
         from lightlab.laboratory.state import lab
-
         for instrument in instruments:
             if instrument not in lab.instruments:
                 lab.instruments.append(instrument)
@@ -348,7 +324,7 @@ class Bench(Node):
         """
         for instrument in instruments:
             if type(instrument) is str:
-                raise TypeError("Cannot remove by name string. Use the object")
+                raise TypeError('Cannot remove by name string. Use the object')
             instrument.bench = None
 
     def addDevice(self, *devices):
@@ -360,7 +336,6 @@ class Bench(Node):
 
         """
         from lightlab.laboratory.state import lab
-
         for device in devices:
             if not isinstance(device, Device):
                 raise TypeError(f"{device} is not an instance of Device.")
@@ -380,7 +355,7 @@ class Bench(Node):
         # TODO Remove all connections
         for device in devices:
             if type(device) is str:
-                raise TypeError("Cannot remove by name string. Use the object")
+                raise TypeError('Cannot remove by name string. Use the object')
             device.bench = None
 
     def display(self):
@@ -390,12 +365,8 @@ class Bench(Node):
         lines.append("Instruments")
         lines.append("===========")
         if len(self.instruments) > 0:
-            lines.extend(
-                [
-                    "   {} ({})".format(str(instrument), str(instrument.host))
-                    for instrument in self.instruments
-                ]
-            )
+            lines.extend(["   {} ({})".format(str(instrument), str(instrument.host))
+                          for instrument in self.instruments])
         else:
             lines.append("   No instruments.")
         lines.append("=======")
@@ -437,7 +408,6 @@ class Instrument(Node):
         Detailed testing
             :py:func:`~tests.test_abstractDrivers.test_driver_init`
     """
-
     _driver_class = None
     __driver_object = None
     #: Complete Visa address of the instrument (e.g. :literal:`visa\://hostname/GPIB0::1::INSTR`)
@@ -449,13 +419,11 @@ class Instrument(Node):
     _host = None
     ports = None  #: list(str) Port names of instruments. To be used with labstate connections.
 
-    essentialMethods = ["startup"]  #: list of methods to be fed through the driver
+    essentialMethods = ['startup']  #: list of methods to be fed through the driver
     essentialProperties = []  #: list of properties to be fed through the driver
     optionalAttributes = []  #: list of optional attributes to be fed through the driver
 
-    def __init__(
-        self, name="Unnamed Instrument", id_string=None, address=None, **kwargs
-    ):
+    def __init__(self, name="Unnamed Instrument", id_string=None, address=None, **kwargs):
         self.bench = kwargs.pop("bench", None)
         self.host = kwargs.pop("host", None)
         self.ports = kwargs.pop("ports", dict())
@@ -469,13 +437,9 @@ class Instrument(Node):
         super().__init__(**kwargs)
 
     def __dir__(self):
-        """ For autocompletion in ipython """
-        return (
-            super().__dir__()
-            + self.essentialProperties
-            + self.essentialMethods
-            + self.implementedOptionals
-        )
+        ''' For autocompletion in ipython '''
+        return super().__dir__() + self.essentialProperties \
+            + self.essentialMethods + self.implementedOptionals
 
     @property
     def implementedOptionals(self):
@@ -488,25 +452,16 @@ class Instrument(Node):
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
         errorText = f"'{str(self)}' has no attribute '{attrName}'"
-        if (
-            attrName
-            in self.essentialProperties
-            + self.essentialMethods
-            + self.implementedOptionals
-        ):
+        if attrName in self.essentialProperties \
+                + self.essentialMethods \
+                + self.implementedOptionals:
             return getattr(self.driver, attrName)
         # Time to fail
         if attrName in self.optionalAttributes:
-            errorText += "\nThis is an optional attribute of {} ".format(
-                type(self).__name__
-            )
-            errorText += "not implemented by this particular driver"
-        elif hasattr(self._driver_class, attrName) or hasattr(
-            self.__driver_object, attrName
-        ):
-            errorText += (
-                "\nIt looks like you are trying to access a low-level attribute"
-            )
+            errorText += '\nThis is an optional attribute of {} '.format(type(self).__name__)
+            errorText += 'not implemented by this particular driver'
+        elif hasattr(self._driver_class, attrName) or hasattr(self.__driver_object, attrName):
+            errorText += '\nIt looks like you are trying to access a low-level attribute'
             errorText += '\nUse ".driver.{}" to get it'.format(attrName)
 
         # This was put here to match normal behavior while trying to
@@ -517,15 +472,12 @@ class Instrument(Node):
             raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
-        if (
-            attrName
-            in self.essentialProperties
-            + self.essentialMethods
-            + self.implementedOptionals
-        ):
+        if attrName in self.essentialProperties \
+                + self.essentialMethods \
+                + self.implementedOptionals:
             setattr(self.driver, attrName, newVal)
         else:
-            if attrName == "address":  # Reinitialize the driver
+            if attrName == 'address':  # Reinitialize the driver
                 if self.__driver_object is not None:
                     self.__driver_object.close()
                     self.__driver_object.address = newVal
@@ -558,7 +510,7 @@ class Instrument(Node):
 
     @contextmanager
     def warmedUp(self):
-        """ A context manager that warms up and cools down in a "with" block
+        ''' A context manager that warms up and cools down in a "with" block
 
         Usage:
 
@@ -569,7 +521,7 @@ class Instrument(Node):
                 raise Exception("Interrupting experiment")
             # cools down instrument, even in the event of exception
 
-        """
+        '''
         try:
             self.hardware_warmup()
             yield self
@@ -599,21 +551,14 @@ class Instrument(Node):
                 kwargs = self.driver_kwargs
             except AttributeError:  # Fall back to the jank version where we try to guess what is important
                 kwargs = dict()
-                for kwarg in [
-                    "useChans",
-                    "elChans",
-                    "dfbChans",
-                    "stateDict",
-                    "sourceMode",
-                ]:
+                for kwarg in ["useChans", "elChans", "dfbChans", "stateDict", "sourceMode"]:
                     try:
                         kwargs[kwarg] = getattr(self, kwarg)
                     except AttributeError:
                         pass
-            kwargs["directInit"] = True
+            kwargs['directInit'] = True
             self.__driver_object = self.driver_class(  # pylint: disable=not-callable
-                name=self.name, address=self.address, **kwargs
-            )
+                name=self.name, address=self.address, **kwargs)
         return self.__driver_object
 
     @property
@@ -643,9 +588,8 @@ class Instrument(Node):
         return "{}".format(self.name)
 
     def __repr__(self):
-        return "<{} name={}, address={}, id={}>".format(
-            self.__class__.__name__, self.name, self.address, id(self)
-        )
+        return "<{} name={}, address={}, id={}>".format(self.__class__.__name__,
+                                                        self.name, self.address, id(self))
 
     def display(self):
         """ Displays the instrument's info table in a nice format."""
@@ -655,12 +599,10 @@ class Instrument(Node):
         lines.append("address: {}".format(self.address))
         lines.append("id_string: {}".format(self.id_string))
         if not self.id_string:
-            lines.append(
-                "The id_string should match the value returned by"
-                " self.driver.instrID(), and is checked by the command"
-                " self.isLive() in order to authenticate that the intrument"
-                " in that address is the intended one."
-            )
+            lines.append("The id_string should match the value returned by"
+                         " self.driver.instrID(), and is checked by the command"
+                         " self.isLive() in order to authenticate that the intrument"
+                         " in that address is the intended one.")
         lines.append("driver_class: {}".format(self.driver_class.__name__))
         lines.append("=====")
         lines.append("Ports")
@@ -669,7 +611,7 @@ class Instrument(Node):
             lines.extend(["   {}".format(str(port)) for port in self.ports])
         else:
             lines.append("   No ports.")
-        if hasattr(self, "driver_kwargs"):
+        if hasattr(self, 'driver_kwargs'):
             lines.append("=====")
             lines.append("Driver kwargs")
             lines.append("=====")
@@ -697,12 +639,12 @@ class Instrument(Node):
                     logger.info("id_string of %s is accurate", self.name)
                     return True
                 else:
-                    logger.warning(
-                        "%s: %s, expected %s", self.address, query_id, self.id_string
-                    )
+                    logger.warning("%s: %s, expected %s", self.address,
+                                   query_id, self.id_string)
                     return False
             else:
-                logger.debug("Cannot authenticate %s in %s.", self.name, self.address)
+                logger.debug("Cannot authenticate %s in %s.",
+                             self.name, self.address)
                 return True
         except pyvisa.VisaIOError as err:
             logger.warning(err)
@@ -731,17 +673,16 @@ class Instrument(Node):
 
 
 class MockInstrument(Instrument):
+
     def __getattr__(self, attrName):
         def noop(*args, **kwargs):
             raise RuntimeError("Attempted to call a method of a mock Instrument.")
-
         return noop
 
 
 class NotFoundError(RuntimeError):
     """ Error thrown when instrument is not found
     """
-
     pass
 
 
@@ -763,7 +704,7 @@ class Device(Node):
         self.bench = kwargs.pop("bench", None)
         super().__init__(**kwargs)
 
-    bench = typed_property(Bench, "_bench")
+    bench = typed_property(Bench, '_bench')
 
     def __str__(self):
         return "Device {}".format(self.name)

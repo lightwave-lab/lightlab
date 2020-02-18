@@ -186,11 +186,7 @@ def findPeaks(
         # of this, we should interpolate the indices.
         logger.debug("half-max indices: %s", hmInds)
         hmIndL, hmIndR = indL, indR
-        hm_left = (yArrOrig[hmIndL + 1] - absThresh) / (
-            yArrOrig[hmIndL + 1] - yArrOrig[hmIndL]
-        )
-        hm_right = (yArrOrig[hmIndR - 1] - absThresh) / (
-            yArrOrig[hmIndR - 1] - yArrOrig[hmIndR]
-        )
+        hm_left = (yArrOrig[hmIndL + 1] - absThresh) / (yArrOrig[hmIndL + 1] - yArrOrig[hmIndL])
+        hm_right = (yArrOrig[hmIndR - 1] - absThresh) / (yArrOrig[hmIndR - 1] - yArrOrig[hmIndR])
         pkWids[iPk] = hm_right + hm_left + (hmIndR - hmIndL - 2)
     return pkInds, pkWids

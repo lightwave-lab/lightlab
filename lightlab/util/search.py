@@ -1,6 +1,6 @@
-""" Searching with actuate-measure functions,
+''' Searching with actuate-measure functions,
     usually around peaks and monotonic functions
-"""
+'''
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython import display
@@ -11,30 +11,29 @@ from lightlab import logger
 
 
 class SearchRangeError(RangeError):
-    """ The first argument is direction, the second is a best guess
-    """
-
+    ''' The first argument is direction, the second is a best guess
+    '''
     pass
 
 
 def plotAfterPointMeasurement(trackerMF, yTarget=None):
-    """ This mutates trackerMF
+    ''' This mutates trackerMF
 
         Args:
             trackerMF (MeasuredFunction): function that will be plotted
             yTarget (float): plotted as dashed line if not None
-    """
+    '''
     display.clear_output(wait=True)
     plt.cla()
-    trackerMF.simplePlot(".-")
+    trackerMF.simplePlot('.-')
     if yTarget is not None:
         targLineSpan = plt.xlim()
-        plt.plot(targLineSpan, 2 * [yTarget], "--k", lw=0.5)
+        plt.plot(targLineSpan, 2 * [yTarget], '--k', lw=.5)
     display.display(plt.gcf())
 
 
-def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0.0, yTol=0.0, livePlot=False):
-    """ Returns the optimal input that gives you the peak, and the peak value
+def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=False):
+    ''' Returns the optimal input that gives you the peak, and the peak value
 
         You must set either xTol or yTol.
         Be careful with yTol! It is best used with a big swarm.
@@ -58,17 +57,16 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0.0, yTol=0.0, livePlot
 
         Returns:
             (float, float): best (x,y) point of the peak
-    """
+    '''
     # Argument checking
     if xTol is None and yTol is None:
-        raise ValueError(
-            "Must specify either xTol or yTol, " + "or peak search will never converge."
-        )
+        raise ValueError('Must specify either xTol or yTol, ' +
+                         'or peak search will never converge.')
 
     nSwarm += (nSwarm + 1) % 2
     tracker = MeasuredFunction([], [])
 
-    def shrinkAround(arr, bestInd, shrinkage=0.6):
+    def shrinkAround(arr, bestInd, shrinkage=.6):
         fulcrumVal = 2 * arr[bestInd] - np.mean(arr)
         return fulcrumVal + (arr - fulcrumVal) * shrinkage
 
@@ -87,14 +85,12 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0.0, yTol=0.0, livePlot
         bestInd = np.argmax(measuredVals)
         # print('iter =', iIter, '; offArr =', offsToMeasure, '; best =', np.max(measuredVals))
         worstInd = np.argmin(measuredVals)
-        if (
-            measuredVals[bestInd] - measuredVals[worstInd] < yTol
-            or offsToMeasure[-1] - offsToMeasure[0] < xTol
-        ):
+        if measuredVals[bestInd] - measuredVals[worstInd] < yTol \
+                or offsToMeasure[-1] - offsToMeasure[0] < xTol:
             # logger.debug('Converged on peak')
             break
         if worstInd == float(nSwarm - 1) / 2:
-            logger.debug("Detected positive curvature")
+            logger.debug('Detected positive curvature')
             # break
         offsToMeasure = shrinkAround(offsToMeasure, bestInd)
     return (offsToMeasure[bestInd], measuredVals[bestInd])
@@ -103,18 +99,16 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0.0, yTol=0.0, livePlot
 def doesMFbracket(targetY, twoPointMF):
     yRange = twoPointMF.getRange()
     if targetY < yRange[0]:
-        outOfRangeDirection = "low"
+        outOfRangeDirection = 'low'
     elif targetY > yRange[1]:
-        outOfRangeDirection = "high"
+        outOfRangeDirection = 'high'
     else:
-        outOfRangeDirection = "in-range"
+        outOfRangeDirection = 'in-range'
     return outOfRangeDirection
 
 
-def bracketSearch(
-    evalPointFun, targetY, startBounds, xTol, hardConstrain=False, livePlot=False
-):
-    """
+def bracketSearch(evalPointFun, targetY, startBounds, xTol, hardConstrain=False, livePlot=False):
+    '''
         Searches outwards until it finds two X values
         whose Y values are above and below the targetY.
 
@@ -132,7 +126,7 @@ def bracketSearch(
 
         Returns:
             ([float, float]): the bracketing range
-    """
+    '''
     startBounds = sorted(startBounds)
     if hardConstrain is True:
         constrainBounds = startBounds
@@ -158,13 +152,12 @@ def bracketSearch(
 
     # Did it start bracketed?
     outOfRangeDirection = doesMFbracket(targetY, tracker)
-    if outOfRangeDirection == "in-range":
+    if outOfRangeDirection == 'in-range':
         return startBounds
 
     # Which way to go? We know that tracker has 2 points in it right now
-    if (isIncreasing and outOfRangeDirection == "high") or (
-        not isIncreasing and outOfRangeDirection == "low"
-    ):
+    if ((isIncreasing and outOfRangeDirection == 'high') or
+            (not isIncreasing and outOfRangeDirection == 'low')):
         searchDirection = 1
     else:
         searchDirection = 0
@@ -181,20 +174,17 @@ def bracketSearch(
     for iIter in range(100):  # pylint: disable=unused-variable
         # Case -2: went outside of constraints, fail
         if newX < constrainBounds[0]:
-            constraintViolation = "low" if isIncreasing else "high"
+            constraintViolation = 'low' if isIncreasing else 'high'
         elif newX > constrainBounds[1]:
-            constraintViolation = "high" if isIncreasing else "low"
+            constraintViolation = 'high' if isIncreasing else 'low'
         if constraintViolation is not None:
-            raise SearchRangeError(
-                "Violated domain constraints", constraintViolation, lastX
-            )
+            raise SearchRangeError('Violated domain constraints',
+                                   constraintViolation, lastX)
         # Case -1: step is too small, fail
         if abs(signedStep) < xTol:
-            raise SearchRangeError(
-                "Target value out of range! " + "This is the best guess.",
-                outOfRangeDirection,
-                newX,
-            )
+            raise SearchRangeError('Target value out of range! ' +
+                                   'This is the best guess.',
+                                   outOfRangeDirection, newX)
 
         # ### Do the actual measurement ####
         newErr = measureError(newX)
@@ -218,19 +208,11 @@ def bracketSearch(
             lastErr = twoAgoErr
             signedStep /= 2
         newX = lastX + signedStep
-    raise Exception("Bracket search did 100 iterations and still did not converge")
+    raise Exception('Bracket search did 100 iterations and still did not converge')
 
 
-def binarySearch(
-    evalPointFun,
-    targetY,
-    startBounds,
-    hardConstrain=False,
-    xTol=0,
-    yTol=0,
-    livePlot=False,
-):
-    """
+def binarySearch(evalPointFun, targetY, startBounds, hardConstrain=False, xTol=0, yTol=0, livePlot=False):
+    '''
         Gives the x where ``evalPointFun(x) == targetY``, approximately.
         The final call to evalPointFun will be of this value,
         so no need to call it again, if your goal is to set to the target.
@@ -253,13 +235,11 @@ def binarySearch(
 
         Returns:
             (float): the optimal X value
-    """
+    '''
     # Argument checking
     if xTol is None and yTol is None:
-        raise ValueError(
-            "Must specify either xTol or yTol, "
-            + "or binary search will never converge."
-        )
+        raise ValueError('Must specify either xTol or yTol, ' +
+                         'or binary search will never converge.')
 
     startBounds = sorted(startBounds)
     tracker = MeasuredFunction([], [])
@@ -278,52 +258,40 @@ def binarySearch(
     isIncreasing = tracker.ordi[1] > tracker.ordi[0]
 
     outOfRangeDirection = doesMFbracket(targetY, tracker)
-    if outOfRangeDirection != "in-range":
+    if outOfRangeDirection != 'in-range':
         # Case 1: we won't tolerate it
         if hardConstrain is True:
-            if outOfRangeDirection == "high":
+            if outOfRangeDirection == 'high':
                 bestGuess = tracker.absc[np.argmax(tracker.ordi)]
             else:
                 bestGuess = tracker.absc[np.argmin(tracker.ordi)]
-            raise SearchRangeError(
-                "binarySearch function value "
-                + "outside of hard constraints! "
-                + "Results invalid.",
-                outOfRangeDirection,
-                bestGuess,
-            )
+            raise SearchRangeError('binarySearch function value ' +
+                                   'outside of hard constraints! ' +
+                                   'Results invalid.',
+                                   outOfRangeDirection, bestGuess)
         # Case 2: try to get it in range
         else:
             try:
-                newStartBounds = bracketSearch(
-                    evalPointFun=evalPointFun,
-                    targetY=targetY,
-                    startBounds=startBounds,
-                    xTol=xTol,
-                    hardConstrain=hardConstrain,
-                    livePlot=livePlot,
-                )
+                newStartBounds = bracketSearch(evalPointFun=evalPointFun,
+                                               targetY=targetY,
+                                               startBounds=startBounds,
+                                               xTol=xTol,
+                                               hardConstrain=hardConstrain,
+                                               livePlot=livePlot)
             except SearchRangeError as err:
-                logger.debug(
-                    "Failed to bracket targetY=%s. Returning best guess", targetY
-                )
+                logger.debug('Failed to bracket targetY=%s. Returning best guess', targetY)
                 return err.args[2]
             try:
-                return binarySearch(
-                    evalPointFun=evalPointFun,
-                    targetY=targetY,
-                    startBounds=newStartBounds,  # important change
-                    xTol=xTol,
-                    yTol=yTol,
-                    hardConstrain=True,  # important change
-                    livePlot=livePlot,
-                )
+                return binarySearch(evalPointFun=evalPointFun,
+                                    targetY=targetY,
+                                    startBounds=newStartBounds,  # important change
+                                    xTol=xTol, yTol=yTol,
+                                    hardConstrain=True,  # important change
+                                    livePlot=livePlot)
             except SearchRangeError as err:
-                raise SearchRangeError(
-                    "It was in range and then not, " + "so probably noise.",
-                    err.args[1],
-                    err.args[2],
-                )
+                raise SearchRangeError('It was in range and then not, ' +
+                                       'so probably noise.',
+                                       err.args[1], err.args[2])
 
     # By now we are certain that the target is bounded by the start points
     thisX = np.mean(startBounds)
@@ -341,4 +309,4 @@ def binarySearch(
         else:
             thisX += np.sign(newErr) * absStep
         absStep /= 2
-    raise Exception("Binary search did 30 iterations and still did not converge")
+    raise Exception('Binary search did 30 iterations and still did not converge')

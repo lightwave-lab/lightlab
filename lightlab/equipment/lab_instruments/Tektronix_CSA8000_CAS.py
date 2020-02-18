@@ -2,7 +2,7 @@ from .Tektronix_DSA8300_Oscope import Tektronix_DSA8300_Oscope
 
 
 class Tektronix_CSA8000_CAS(Tektronix_DSA8300_Oscope):
-    """ Communication analyzer scope
+    ''' Communication analyzer scope
 
         Note:
 
@@ -13,6 +13,5 @@ class Tektronix_CSA8000_CAS(Tektronix_DSA8300_Oscope):
 
         Usage: :any:`/ipynbs/Hardware/Oscilloscope.ipynb`
 
-    """
-
+    '''
     pass

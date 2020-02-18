@@ -9,7 +9,7 @@ from . import AbstractDriver
 
 # pylint: disable=no-member
 class TekScopeAbstract(Configurable, AbstractDriver):
-    """
+    '''
         General class for several Tektronix scopes, including
 
             * `DPO 4034 <http://websrv.mece.ualberta.ca/electrowiki/images/8/8b/MSO4054_Programmer_Manual.pdf>`_
@@ -28,8 +28,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 acquire([1], avgCnt=1)
 
             Does DPO support sample mode at all?
-    """
-
+    '''
     # This should be overloaded by the particular driver
     totalChans = None
 
@@ -46,7 +45,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         self.acquire(nPts=initNpts)
 
     def timebaseConfig(self, avgCnt=None, duration=None, position=None, nPts=None):
-        """ Timebase and acquisition configure
+        ''' Timebase and acquisition configure
 
             Args:
                 avgCnt (int): averaging done by the scope
@@ -56,35 +55,27 @@ class TekScopeAbstract(Configurable, AbstractDriver):
 
             Returns:
                 (dict) The present values of all settings above
-        """
+        '''
         if avgCnt is not None and avgCnt > 1:
-            self.setConfigParam("ACQUIRE:NUMAVG", avgCnt, forceHardware=True)
+            self.setConfigParam('ACQUIRE:NUMAVG', avgCnt, forceHardware=True)
         if duration is not None:
-            self.setConfigParam("HORIZONTAL:MAIN:SCALE", duration / 10)
+            self.setConfigParam('HORIZONTAL:MAIN:SCALE', duration / 10)
         if position is not None:
-            self.setConfigParam("HORIZONTAL:MAIN:POSITION", position)
+            self.setConfigParam('HORIZONTAL:MAIN:POSITION', position)
         if nPts is not None:
             self.setConfigParam(self._recLenParam, nPts)
-            self.setConfigParam("DATA:START", 1)
-            self.setConfigParam("DATA:STOP", nPts)
+            self.setConfigParam('DATA:START', 1)
+            self.setConfigParam('DATA:STOP', nPts)
 
         presentSettings = dict()
-        presentSettings["avgCnt"] = self.getConfigParam(
-            "ACQUIRE:NUMAVG", forceHardware=True
-        )
-        presentSettings["duration"] = self.getConfigParam(
-            "HORIZONTAL:MAIN:SCALE", forceHardware=True
-        )
-        presentSettings["position"] = self.getConfigParam(
-            "HORIZONTAL:MAIN:POSITION", forceHardware=True
-        )
-        presentSettings["nPts"] = self.getConfigParam(
-            self._recLenParam, forceHardware=True
-        )
+        presentSettings['avgCnt'] = self.getConfigParam('ACQUIRE:NUMAVG', forceHardware=True)
+        presentSettings['duration'] = self.getConfigParam('HORIZONTAL:MAIN:SCALE', forceHardware=True)
+        presentSettings['position'] = self.getConfigParam('HORIZONTAL:MAIN:POSITION', forceHardware=True)
+        presentSettings['nPts'] = self.getConfigParam(self._recLenParam, forceHardware=True)
         return presentSettings
 
     def acquire(self, chans=None, timeout=None, **kwargs):
-        """ Get waveforms from the scope.
+        ''' Get waveforms from the scope.
 
             If chans is None, it won't actually trigger, but it will configure.
 
@@ -103,26 +94,22 @@ class TekScopeAbstract(Configurable, AbstractDriver):
 
             Returns:
                 list[Waveform]: recorded signals
-        """
+        '''
         self.timebaseConfig(**kwargs)
         if chans is None:
             return
 
         for c in chans:
             if c > self.totalChans:
-                raise Exception(
-                    "Received channel: "
-                    + str(c)
-                    + ". Max channels of this scope is "
-                    + str(self.totalChans)
-                )
+                raise Exception('Received channel: ' + str(c) +
+                                '. Max channels of this scope is ' + str(self.totalChans))
 
         # Channel select
         for ich in range(1, 1 + self.totalChans):
             thisState = 1 if ich in chans else 0
-            self.setConfigParam("SELECT:CH" + str(ich), thisState)
+            self.setConfigParam('SELECT:CH' + str(ich), thisState)
 
-        isSampling = kwargs.get("avgCnt", 0) == 1
+        isSampling = kwargs.get('avgCnt', 0) == 1
         self._setupSingleShot(isSampling)
         self._triggerAcquire(timeout=timeout)
         wfms = [None] * len(chans)
@@ -136,7 +123,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         return wfms
 
     def _setupSingleShot(self, isSampling, forcing=False):
-        """ Set up a single shot acquisition.
+        ''' Set up a single shot acquisition.
 
                 Not running continuous, and
                 acquire mode set SAMPLE/AVERAGE
@@ -151,35 +138,35 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 Missing DPO trigger source setting.
                 Should we force it when averaging?
                 Probably not because it could be CH1, CH2, AUX.
-        """
+        '''
         self.run(False)
-        self.setConfigParam(
-            "ACQUIRE:MODE", "SAMPLE" if isSampling else "AVERAGE", forceHardware=forcing
-        )
+        self.setConfigParam('ACQUIRE:MODE',
+                            'SAMPLE' if isSampling else 'AVERAGE',
+                            forceHardware=forcing)
 
     def _triggerAcquire(self, timeout=None):
-        """ Sends a signal to the scope to wait for a trigger event.
+        ''' Sends a signal to the scope to wait for a trigger event.
             Waits until acquisition completes or timeout (in seconds).
 
             If timeout is very long, it will try a test first
-        """
+        '''
         if timeout is None:
             timeout = self.timeout / 1e3
         if timeout > 60:
-            logger.warning("Long timeout %s specified, testing", timeout)
-            old_avgCnt = self.timebaseConfig()["avgCnt"]
+            logger.warning('Long timeout %s specified, testing', timeout)
+            old_avgCnt = self.timebaseConfig()['avgCnt']
             self.timebaseConfig(avgCnt=2)
             self._triggerAcquire(timeout=10)
-            logger.warning("Test succeeded. Doing long average now")
+            logger.warning('Test succeeded. Doing long average now')
             self.timebaseConfig(avgCnt=old_avgCnt)
         if self._clearBeforeAcquire:
-            self.write("ACQUIRE:DATA:CLEAR")  # clear out average history
-        self.write("ACQUIRE:STATE 1")  # activate the trigger listener
+            self.write('ACQUIRE:DATA:CLEAR')  # clear out average history
+        self.write('ACQUIRE:STATE 1')  # activate the trigger listener
         # Bus and entire program stall until acquisition completes. Maximum of 30 seconds
         self.wait(int(timeout * 1e3))
 
     def __transferData(self, chan):
-        """ Returns the raw data pulled from the scope as time (seconds) and voltage (Volts)
+        ''' Returns the raw data pulled from the scope as time (seconds) and voltage (Volts)
             Args:
                 chan (int): one channel at a time
 
@@ -188,16 +175,16 @@ class TekScopeAbstract(Configurable, AbstractDriver):
 
             Todo:
                 Make this binary transfer to go even faster
-        """
-        chStr = "CH" + str(chan)
-        self.setConfigParam("DATA:ENCDG", "ASCII")
-        self.setConfigParam("DATA:SOURCE", chStr)
+        '''
+        chStr = 'CH' + str(chan)
+        self.setConfigParam('DATA:ENCDG', 'ASCII')
+        self.setConfigParam('DATA:SOURCE', chStr)
 
-        voltRaw = self.query_ascii_values("CURV?")
+        voltRaw = self.query_ascii_values('CURV?')
         return voltRaw
 
     def __scaleData(self, voltRaw):
-        """ Scale to second and voltage units.
+        ''' Scale to second and voltage units.
 
             DSA and DPO are very annoying about treating ymult and yscale differently.
             TDS uses ymult not yscale
@@ -214,32 +201,28 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 The Y represents the position of the sampled point on-screen,
                 YZERO, the reference voltage, YOFF, the offset position, and
                 YSCALE, the conversion factor between position and voltage.
-        """
-        get = lambda param: float(
-            self.getConfigParam("WFMOUTPRE:" + param, forceHardware=True)
-        )
-        voltage = (np.array(voltRaw) - get("YOFF")) * get(self._yScaleParam) + get(
-            "YZERO"
-        )
+        '''
+        get = lambda param: float(self.getConfigParam('WFMOUTPRE:' + param, forceHardware=True))
+        voltage = (np.array(voltRaw) - get('YOFF')) \
+            * get(self._yScaleParam) \
+            + get('YZERO')
 
-        timeDivision = float(
-            self.getConfigParam("HORIZONTAL:MAIN:SCALE", forceHardware=True)
-        )
+        timeDivision = float(self.getConfigParam('HORIZONTAL:MAIN:SCALE', forceHardware=True))
         time = np.linspace(-1, 1, len(voltage)) / 2 * timeDivision * 10
 
         return time, voltage
 
     def __getUnit(self):
-        """ Gets the unit of the waveform as a string.
+        ''' Gets the unit of the waveform as a string.
 
             Normally, this will be '"V"', which can be converted to 'V'
-        """
+        '''
 
-        yunit_query = self.getConfigParam("WFMOUTPRE:YUNIT", forceHardware=True)
-        return yunit_query.replace('"', "")
+        yunit_query = self.getConfigParam('WFMOUTPRE:YUNIT', forceHardware=True)
+        return yunit_query.replace('"', '')
 
     def wfmDb(self, chan, nWfms, untriggered=False):
-        """ Transfers a bundle of waveforms representing a signal database. Sample mode only.
+        ''' Transfers a bundle of waveforms representing a signal database. Sample mode only.
 
             Configuration such as position, duration are unchanged, so use an acquire(None, ...) call to set them up
 
@@ -250,70 +233,63 @@ class TekScopeAbstract(Configurable, AbstractDriver):
 
             Returns:
                 (FunctionBundle(Waveform)): all waveforms acquired
-        """
+        '''
         bundle = FunctionBundle()
-        with self.tempConfig(
-            "TRIGGER:SOURCE", "FREERUN" if untriggered else "EXTDIRECT"
-        ):
+        with self.tempConfig('TRIGGER:SOURCE',
+                             'FREERUN' if untriggered else 'EXTDIRECT'):
             for _ in range(nWfms):
-                bundle.addDim(
-                    self.acquire([chan], avgCnt=1)[0]
-                )  # avgCnt=1 sets it to sample mode
+                bundle.addDim(self.acquire([chan], avgCnt=1)[0])  # avgCnt=1 sets it to sample mode
         return bundle
 
     def run(self, continuousRun=True):
-        """ Sets the scope to continuous run mode, so you can look at it in lab,
+        ''' Sets the scope to continuous run mode, so you can look at it in lab,
             or to single-shot mode, so that data can be acquired
 
             Args:
                 continuousRun (bool)
-        """
-        self.setConfigParam(
-            self._runModeParam,
-            "RUNSTOP" if continuousRun else self._runModeSingleShot,
-            forceHardware=True,
-        )
+        '''
+        self.setConfigParam(self._runModeParam,
+                            'RUNSTOP' if continuousRun else self._runModeSingleShot,
+                            forceHardware=True)
         if continuousRun:
-            self.setConfigParam("ACQUIRE:STATE", 1, forceHardware=True)
+            self.setConfigParam('ACQUIRE:STATE', 1, forceHardware=True)
 
     def setMeasurement(self, measIndex, chan, measType):
-        """
+        '''
             Args:
                 measIndex (int): used to refer to this measurement itself. 1-indexed
                 chan (int): the channel source of the measurement.
                 measType (str): can be 'PK2PK', 'MEAN', etc.
-        """
+        '''
         if measIndex == 0:
-            raise ValueError("measIndex is 1-indexed")
-        measSubmenu = "MEASUREMENT:MEAS" + str(measIndex) + ":"
-        self.setConfigParam(
-            measSubmenu + self._measurementSourceParam, "CH" + str(chan)
-        )
-        self.setConfigParam(measSubmenu + "TYPE", measType.upper())
-        self.setConfigParam(measSubmenu + "STATE", 1)
+            raise ValueError('measIndex is 1-indexed')
+        measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
+        self.setConfigParam(measSubmenu + self._measurementSourceParam, 'CH' + str(chan))
+        self.setConfigParam(measSubmenu + 'TYPE', measType.upper())
+        self.setConfigParam(measSubmenu + 'STATE', 1)
 
     def measure(self, measIndex):
-        """
+        '''
             Args:
                 measIndex (int): used to refer to this measurement itself. 1-indexed
 
             Returns:
                 (float)
-        """
-        measSubmenu = "MEASUREMENT:MEAS" + str(measIndex) + ":"
-        return float(self.getConfigParam(measSubmenu + "VALUE", forceHardware=True))
+        '''
+        measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
+        return float(self.getConfigParam(measSubmenu + 'VALUE', forceHardware=True))
 
     def autoAdjust(self, chans):
-        """ Adjusts offsets and scaling so that waveforms are not clipped """
+        ''' Adjusts offsets and scaling so that waveforms are not clipped '''
         # Save the current measurement status. They will be restored at the end.
-        self.saveConfig(dest="+autoAdjTemp", subgroup="MEASUREMENT")
+        self.saveConfig(dest='+autoAdjTemp', subgroup='MEASUREMENT')
 
         for ch in chans:
-            chStr = "CH" + str(ch)
+            chStr = 'CH' + str(ch)
 
             # Set up measurements
-            self.setMeasurement(1, ch, "pk2pk")
-            self.setMeasurement(2, ch, "mean")
+            self.setMeasurement(1, ch, 'pk2pk')
+            self.setMeasurement(2, ch, 'mean')
 
             for _ in range(100):
                 # Acquire new data
@@ -323,8 +299,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 pk2pk = self.measure(1)
                 mean = self.measure(2)
 
-                span = float(self.getConfigParam(chStr + ":SCALE"))
-                offs = float(self.getConfigParam(chStr + ":OFFSET"))
+                span = float(self.getConfigParam(chStr + ':SCALE'))
+                offs = float(self.getConfigParam(chStr + ':OFFSET'))
 
                 # Check if scale is correct within the tolerance
                 newSpan = None
@@ -334,9 +310,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 elif pk2pk > 0.8 * span:
                     newSpan = 2 * span
                 if newSpan < 0.1 or newSpan > 100:
-                    raise Exception(
-                        "Scope channel " + chStr + " could not be adjusted."
-                    )
+                    raise Exception('Scope channel ' + chStr + ' could not be adjusted.')
 
                 # Check if offset is correct within the tolerance
                 if abs(mean) > 0.05 * span:
@@ -347,12 +321,11 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                     break
 
                 # Adjust settings
-                self.setConfigParam(chStr + ":SCALE", newSpan / 10)
-                self.setConfigParam(chStr + ":OFFSET", newOffs)
+                self.setConfigParam(chStr + ':SCALE', newSpan / 10)
+                self.setConfigParam(chStr + ':OFFSET', newOffs)
 
         # Recover the measurement setup from before adjustment
-        self.loadConfig(source="+autoAdjTemp", subgroup="MEASUREMENT")
-        self.config.pop("autoAdjTemp")
-
+        self.loadConfig(source='+autoAdjTemp', subgroup='MEASUREMENT')
+        self.config.pop('autoAdjTemp')
 
 # pylint: enable=no-member

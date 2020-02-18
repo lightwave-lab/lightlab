@@ -5,12 +5,12 @@ from .driver_base import InstrumentSessionBase
 
 OPEN_RETRIES = 5
 
-CR = "\r"
-LF = "\n"
+CR = '\r'
+LF = '\n'
 
 
 class VISAObject(InstrumentSessionBase):
-    """
+    '''
         Abstract class for something that communicates via messages
         (GPIB/USB/Serial/TCPIP/etc.). It handles message-based sessions
         in a way that provides a notion of object permanence to the
@@ -22,7 +22,7 @@ class VISAObject(InstrumentSessionBase):
         session management, and error reporting features.
 
         This class relies on pyvisa to work
-    """
+    '''
 
     mbSession = None
     resMan = None
@@ -31,11 +31,11 @@ class VISAObject(InstrumentSessionBase):
     __timeout = None
 
     def __init__(self, address=None, tempSess=False):
-        """
+        '''
             Args:
                 tempSess (bool): If True, the session is opened and closed every time there is a command
                 address (str): The full visa address
-        """
+        '''
         self.tempSess = tempSess
         self.resMan = None
         self.mbSession = None
@@ -44,9 +44,9 @@ class VISAObject(InstrumentSessionBase):
         self.__timeout = None
 
     def open(self):
-        """
+        '''
             Open connection with 5 retries.
-        """
+        '''
         if self.mbSession is not None:
             return
         if self.address is None:
@@ -57,26 +57,21 @@ class VISAObject(InstrumentSessionBase):
             self.mbSession = self.resMan.open_resource(self.address)
             self.mbSession.write_termination = self.termination
             if not self.tempSess:
-                logger.debug("Opened %s", self.address)
+                logger.debug('Opened %s', self.address)
         except pyvisa.VisaIOError as err:
-            logger.warning(
-                "There was a problem opening the VISA %s... Error code: %s",
-                self.address,
-                err.error_code,
-            )
+            logger.warning('There was a problem opening the VISA %s... Error code: %s',
+                           self.address, err.error_code)
             if self._open_retries < OPEN_RETRIES:
                 self._open_retries += 1
                 time.sleep(0.5 * self._open_retries)
-                logger.warning(
-                    "Trying again... (try = %s/%s)", self._open_retries, OPEN_RETRIES
-                )
+                logger.warning('Trying again... (try = %s/%s)', self._open_retries, OPEN_RETRIES)
                 self.open()
             else:
                 logger.error(err)
                 raise
         else:
             if self._open_retries != 0:
-                logger.warning("Found it!")
+                logger.warning('Found it!')
             self._open_retries = 0
 
     def close(self):
@@ -85,11 +80,11 @@ class VISAObject(InstrumentSessionBase):
         try:
             self.mbSession.close()
         except pyvisa.VisaIOError:
-            logger.error("There was a problem closing the VISA %s", self.address)
+            logger.error('There was a problem closing the VISA %s', self.address)
             raise
         self.mbSession = None
         if not self.tempSess:
-            logger.debug("Closed %s", self.address)
+            logger.debug('Closed %s', self.address)
 
     def write(self, writeStr):
         try:
@@ -97,9 +92,9 @@ class VISAObject(InstrumentSessionBase):
             try:
                 self.mbSession.write(writeStr)
             except Exception:
-                logger.error("Problem writing to %s", self.address)
+                logger.error('Problem writing to %s', self.address)
                 raise
-            logger.debug("%s - W - %s", self.address, writeStr)
+            logger.debug('%s - W - %s', self.address, writeStr)
         finally:
             if self.tempSess:
                 self.close()
@@ -108,7 +103,7 @@ class VISAObject(InstrumentSessionBase):
         retStr = None
         try:
             self.open()
-            logger.debug("%s - Q - %s", self.address, queryStr)
+            logger.debug('%s - Q - %s', self.address, queryStr)
             toutOrig = self.timeout
             try:
                 if withTimeout is not None:
@@ -117,11 +112,11 @@ class VISAObject(InstrumentSessionBase):
                 if withTimeout is not None:
                     self.timeout = toutOrig
             except Exception:
-                logger.error("Problem querying to %s", self.address)
+                logger.error('Problem querying to %s', self.address)
                 # self.close()
                 raise
             retStr = retStr.rstrip()
-            logger.debug("Query Read - %s", retStr)
+            logger.debug('Query Read - %s', retStr)
         finally:
             if self.tempSess:
                 self.close()
@@ -129,7 +124,7 @@ class VISAObject(InstrumentSessionBase):
 
     def instrID(self):
         r"""Returns the \*IDN? string"""
-        return self.query("*IDN?")
+        return self.query('*IDN?')
 
     @property
     def timeout(self):
@@ -138,30 +133,26 @@ class VISAObject(InstrumentSessionBase):
                 try:
                     self.open()
                     self.__timeout = self.mbSession.get_visa_attribute(
-                        pyvisa.constants.VI_ATTR_TMO_VALUE
-                    )  # None means default
+                        pyvisa.constants.VI_ATTR_TMO_VALUE)  # None means default
                 finally:
                     if self.tempSess:
                         self.close()
             else:
                 self.__timeout = self.mbSession.get_visa_attribute(
-                    pyvisa.constants.VI_ATTR_TMO_VALUE
-                )  # None means default
+                    pyvisa.constants.VI_ATTR_TMO_VALUE)  # None means default
         return self.__timeout
 
     @timeout.setter
     def timeout(self, newTimeout):
         if self.mbSession is None:
             raise Exception(
-                "This mbSession is None. Perhaps you are setting timeout when the session is closed temporarily"
-            )
+                'This mbSession is None. Perhaps you are setting timeout when the session is closed temporarily')
         self.mbSession.set_visa_attribute(
-            pyvisa.constants.VI_ATTR_TMO_VALUE, newTimeout
-        )
+            pyvisa.constants.VI_ATTR_TMO_VALUE, newTimeout)
         self.__timeout = newTimeout
 
     def wait(self, bigMsTimeout=10000):
-        self.query("*OPC?", withTimeout=bigMsTimeout)
+        self.query('*OPC?', withTimeout=bigMsTimeout)
 
     def LLO(self):
         raise NotImplementedError()
@@ -193,7 +184,7 @@ class VISAObject(InstrumentSessionBase):
 
     @termination.setter
     def termination(self, value):
-        if value in (CR, LF, CR + LF, ""):
+        if value in (CR, LF, CR + LF, ''):
             self._termination = value
         else:
             raise ValueError("Termination must be one of these: CR, CRLF, LR, ''")

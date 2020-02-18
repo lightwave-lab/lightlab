@@ -1,7 +1,6 @@
 import logging
-
-logger = logging.getLogger("lightlab")
-visalogger = logging.getLogger("lightlab.visa")  # This is a child of logger.
+logger = logging.getLogger('lightlab')
+visalogger = logging.getLogger('lightlab.visa')  # This is a child of logger.
 
 # logging levels, increasing in order of severity.
 NOTSET = logging.NOTSET
@@ -15,11 +14,8 @@ CRITICAL = logging.CRITICAL
 def log_to_screen(level=INFO):
     logger.setLevel(level)
 
-    stream_handlers = [
-        handler
-        for handler in logger.handlers
-        if isinstance(handler, logging.StreamHandler)
-    ]
+    stream_handlers = [handler for handler in logger.handlers if isinstance(
+        handler, logging.StreamHandler)]
 
     if len(stream_handlers) <= 0:
         ch = logging.StreamHandler()
@@ -27,9 +23,7 @@ def log_to_screen(level=INFO):
     else:
         ch = stream_handlers[0]
     ch.setLevel(NOTSET)  # Print all events
-    formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s - %(name)s:\n\t%(message)s"
-    )
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s:\n\t%(message)s')
     ch.setFormatter(formatter)
 
 

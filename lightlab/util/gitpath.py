@@ -7,16 +7,16 @@ import os.path
 
 @lru_cache(maxsize=1)
 def root():
-    """ returns the absolute path of the repository root """
+    ''' returns the absolute path of the repository root '''
     try:
-        base = check_output(["git", "rev-parse", "--show-toplevel"])
+        base = check_output(['git', 'rev-parse', '--show-toplevel'])
     except CalledProcessError:
         raise IOError(f"'{os.getcwd()}' is not a git repository")
-    return base.decode("utf-8").strip()
+    return base.decode('utf-8').strip()
 
 
 def abspath(relpath):
-    """ returns the absolute path for a path given relative to the root of
+    ''' returns the absolute path for a path given relative to the root of
     the git repository
-    """
+    '''
     return os.path.join(root(), relpath)

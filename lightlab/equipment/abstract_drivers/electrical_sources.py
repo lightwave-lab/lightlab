@@ -5,14 +5,13 @@ from lightlab import logger
 
 
 class MultiModalSource(object):
-    """ Checks modes for sources with multiple ways to specify.
+    ''' Checks modes for sources with multiple ways to specify.
 
         Also checks ranges
 
         Default class constants come from NI PCI source array
-    """
-
-    supportedModes = {"milliamp", "amp", "mwperohm", "wattperohm", "volt", "baseunit"}
+    '''
+    supportedModes = {'milliamp', 'amp', 'mwperohm', 'wattperohm', 'volt', 'baseunit'}
     baseUnitBounds = [0, 1]  # Scaled voltage
     baseToVoltCoef = 10  # This ends up setting the volt bounds
     v2maCoef = 4  # current (milliamps) = v2maCoef * voltage (volts)
@@ -20,39 +19,30 @@ class MultiModalSource(object):
 
     @classmethod
     def enforceRange(cls, val, mode):
-        """ Returns clipped value. Raises RangeError
-        """
+        ''' Returns clipped value. Raises RangeError
+        '''
         bnds = [cls.baseUnit2val(vBnd, mode) for vBnd in cls.baseUnitBounds]
         enforcedValue = np.clip(val, *bnds)
         if enforcedValue != val:
-            logger.warning(
-                "Warning: value out of range was constrained.\n"
-                "Requested %s."
-                "Allowed range is %s in %s s.",
-                val,
-                bnds,
-                mode,
-            )
+            logger.warning('Warning: value out of range was constrained.\n'
+                           'Requested %s.'
+                           'Allowed range is %s in %s s.', val, bnds, mode)
             if cls.exceptOnRangeError:
                 if val < min(bnds):
-                    violation_direction = "low"
+                    violation_direction = 'low'
                 elif val > max(bnds):
-                    violation_direction = "high"
+                    violation_direction = 'high'
                 else:
                     violation_direction = None
-                raise RangeError(
-                    "Current sources requested out of range.", violation_direction
-                )
+                raise RangeError('Current sources requested out of range.', violation_direction)
         return enforcedValue
 
     @classmethod
     def _checkMode(cls, mode):
-        """ Returns mode in lower case
-        """
+        ''' Returns mode in lower case
+        '''
         if mode not in cls.supportedModes:
-            raise TypeError(
-                "Invalid mode: " + str(mode) + ". Valid: " + str(cls.supportedModes)
-            )
+            raise TypeError('Invalid mode: ' + str(mode) + '. Valid: ' + str(cls.supportedModes))
 
         return mode.lower()
 
@@ -70,18 +60,18 @@ class MultiModalSource(object):
             value = {-1: value}
         baseVal = dict()
         for ch, vEl in value.items():
-            if mode == "baseunit":
+            if mode == 'baseunit':
                 baseVal[ch] = vEl
-            if mode == "volt":
+            if mode == 'volt':
                 baseVal[ch] = vEl / cls.baseToVoltCoef
-            elif mode == "milliamp":
-                baseVal[ch] = cls.val2baseUnit(vEl / cls.v2maCoef, "volt")
-            elif mode == "amp":
-                baseVal[ch] = cls.val2baseUnit(vEl * 1e3, "milliamp")
-            elif mode == "wattperohm":
-                baseVal[ch] = cls.val2baseUnit(np.sign(vEl) * np.sqrt(abs(vEl)), "amp")
-            elif mode == "mwperohm":
-                baseVal[ch] = cls.val2baseUnit(vEl / 1e3, "wattperohm")
+            elif mode == 'milliamp':
+                baseVal[ch] = cls.val2baseUnit(vEl / cls.v2maCoef, 'volt')
+            elif mode == 'amp':
+                baseVal[ch] = cls.val2baseUnit(vEl * 1e3, 'milliamp')
+            elif mode == 'wattperohm':
+                baseVal[ch] = cls.val2baseUnit(np.sign(vEl) * np.sqrt(abs(vEl)), 'amp')
+            elif mode == 'mwperohm':
+                baseVal[ch] = cls.val2baseUnit(vEl / 1e3, 'wattperohm')
         if valueWasDict:
             return baseVal
         else:
@@ -101,18 +91,18 @@ class MultiModalSource(object):
             baseVal = {-1: baseVal}
         value = dict()
         for ch, bvEl in baseVal.items():
-            if mode == "baseunit":
+            if mode == 'baseunit':
                 value[ch] = bvEl
-            elif mode == "volt":
+            elif mode == 'volt':
                 value[ch] = bvEl * cls.baseToVoltCoef
-            elif mode == "milliamp":
-                value[ch] = cls.baseUnit2val(bvEl, "volt") * cls.v2maCoef
-            elif mode == "amp":
-                value[ch] = cls.baseUnit2val(bvEl, "milliamp") * 1e-3
-            elif mode == "wattperohm":
-                value[ch] = np.sign(bvEl) * (cls.baseUnit2val(bvEl, "amp")) ** 2
-            elif mode == "mwperohm":
-                value[ch] = cls.baseUnit2val(bvEl, "wattperohm") * 1e3
+            elif mode == 'milliamp':
+                value[ch] = cls.baseUnit2val(bvEl, 'volt') * cls.v2maCoef
+            elif mode == 'amp':
+                value[ch] = cls.baseUnit2val(bvEl, 'milliamp') * 1e-3
+            elif mode == 'wattperohm':
+                value[ch] = np.sign(bvEl) * (cls.baseUnit2val(bvEl, 'amp')) ** 2
+            elif mode == 'mwperohm':
+                value[ch] = cls.baseUnit2val(bvEl, 'wattperohm') * 1e3
         if baseValWasDict:
             return value
         else:
@@ -126,12 +116,11 @@ class MultiChannelSource(object):
 
         Checks for channel compliance. Handles range exceptions
     """
-
     maxChannel = None  # number of dimensions that the current sources are expecting
 
     def __init__(self, useChans=None, **kwargs):
         if useChans is None:
-            logger.warning("No useChans specified for MultichannelSource")
+            logger.warning('No useChans specified for MultichannelSource')
             useChans = list()
         self.useChans = useChans
         self.stateDict = dict([ch, 0] for ch in self.useChans)
@@ -139,16 +128,17 @@ class MultiChannelSource(object):
         # Check that the requested channels are available to be blocked out
         if self.maxChannel is not None:
             if any(ch > self.maxChannel - 1 for ch in self.useChans):
-                raise ChannelError("Requested channel is more than there are available")
+                raise ChannelError(
+                    'Requested channel is more than there are available')
         super().__init__(**kwargs)
 
     @property
     def elChans(self):
-        """ Returns the blocked out channels as a list """
+        ''' Returns the blocked out channels as a list '''
         return self.useChans
 
     def setChannelTuning(self, chanValDict):
-        """ Sets a number of channel values and updates hardware
+        ''' Sets a number of channel values and updates hardware
 
             Args:
                 chanValDict (dict): A dictionary specifying {channel: value}
@@ -156,33 +146,30 @@ class MultiChannelSource(object):
 
             Returns:
                 (bool): was there a change in value
-        """
+        '''
         if type(chanValDict) is not dict:
-            raise TypeError("The argument for setChannelTuning must be a dictionary")
+            raise TypeError(
+                'The argument for setChannelTuning must be a dictionary')
 
         # Check channels
         for chan in chanValDict.keys():
             if chan not in self.stateDict.keys():
-                raise ChannelError(
-                    "Channel index not blocked out. "
-                    + "Requested "
-                    + str(chan)
-                    + ", Available "
-                    + str(self.stateDict.keys())
-                )
+                raise ChannelError('Channel index not blocked out. ' +
+                                   'Requested ' + str(chan) +
+                                   ', Available ' + str(self.stateDict.keys()))
 
         # Change our *internal* state
         self.stateDict.update(chanValDict)
 
     def getChannelTuning(self):
-        """ The inverse of setChannelTuning
+        ''' The inverse of setChannelTuning
 
             Args:
                 mode (str): units of the value in ('mwperohm', 'milliamp', 'volt')
 
             Returns:
                 (dict): the full state of blocked out channels in units determined by mode argument
-        """
+        '''
         return self.stateDict.copy()
 
     def off(self, *setArgs):

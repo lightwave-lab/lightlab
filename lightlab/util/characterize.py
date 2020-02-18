@@ -1,6 +1,6 @@
-""" Timing is pretty important. These functions monitor behavior in various ways with timing considered.
+''' Timing is pretty important. These functions monitor behavior in various ways with timing considered.
     Included is strobeTest which sweeps the delay between actuate and sense, and monitorVariable for drift
-"""
+'''
 
 import matplotlib.pyplot as plt
 from cycler import cycler
@@ -11,10 +11,8 @@ from IPython import display
 from .data import FunctionBundle
 
 
-def strobeTest(
-    fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=True
-):  # pylint: disable=W0613
-    """ Looks at a sense variable at different delays after calling an actuate function.
+def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=True):  # pylint: disable=W0613
+    ''' Looks at a sense variable at different delays after calling an actuate function.
         Good for determining the time needed to wait for settling.
         Calls each function once per delay point to construct a picture like the strobe experiment, or a sampling scope
 
@@ -25,7 +23,7 @@ def strobeTest(
 
         Returns:
             (FunctionBundle): fSense values vs. delay
-    """
+    '''
     fi, ax = plt.subplots(figsize=(12, 7))
     delays = np.linspace(0, maxDelay, nPts)
 
@@ -49,7 +47,7 @@ def strobeTest(
         v[it, :] = fWrapped()
         display.clear_output(wait=True)
         ax.cla()
-        ax.plot(t[: it + 1], v[: it + 1])
+        ax.plot(t[:it + 1], v[:it + 1])
         display.display(fi)
         bund = FunctionBundle()
         bund.absc = t
@@ -58,7 +56,7 @@ def strobeTest(
 
 
 def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
-    """ Takes in a NdSweeper and looks at the effect of delaying between actuation from measurement. Does the gathering.
+    ''' Takes in a NdSweeper and looks at the effect of delaying between actuation from measurement. Does the gathering.
 
         Starts by taking start and end baselines, for ease of visualization.
 
@@ -73,11 +71,10 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
 
         Todo:
             It would be nice to provide timeconstant analysis, perhaps by looking at 50%, or by fitting an exponential
-    """
+    '''
     if len(varSwp.actuate) > 1:
         raise NotImplementedError(
-            "Since sweeper does not do well with >2 dimensions, you can only strobe a 1-D sweep"
-        )
+            'Since sweeper does not do well with >2 dimensions, you can only strobe a 1-D sweep')
     aKey, actu = list(varSwp.actuate.items())[0]
     varFun = actu.function
     varDom = actu.domain
@@ -104,7 +101,7 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
     startValSwp.gather()
     startValData = {}
     for mpKey in measParseKeys:
-        startValData[mpKey + "-start"] = startValSwp.data[mpKey][0]
+        startValData[mpKey + '-start'] = startValSwp.data[mpKey][0]
     for sdKey, sdVal in startValData.items():
         strobeSwp.addStaticData(sdKey, sdVal)
 
@@ -119,35 +116,32 @@ def sweptStrobe(varSwp, resetArg, nPts=10, maxDelay=1):
     endValSwp.gather()
     endValData = {}
     for mpKey in measParseKeys:
-        endValData[mpKey + "-end"] = endValSwp.data[mpKey]
+        endValData[mpKey + '-end'] = endValSwp.data[mpKey]
     for edKey, edVal in endValData.items():
         strobeSwp.addStaticData(edKey, edVal)
 
     # Adding actuation following reset: the default actuation, then a delay
     # associated with the strobe
-    strobeSwp.addActuation("strobeDelay", time.sleep, np.linspace(0, maxDelay, nPts))
+    strobeSwp.addActuation('strobeDelay', time.sleep, np.linspace(0, maxDelay, nPts))
 
     # Provides normalized parsers for plotting
-    strobeSwp.plotOptions["xKey"] = "strobeDelay"
-    strobeSwp.plotOptions["yKey"] = ()
+    strobeSwp.plotOptions['xKey'] = ('strobeDelay')
+    strobeSwp.plotOptions['yKey'] = ()
     for mpKey in measParseKeys:
-        strobeSwp.addParser(
-            mpKey + "-normalized",
-            lambda dat: (dat[mpKey] - dat[mpKey + "-start"])
-            / (dat[mpKey + "-end"] - dat[mpKey + "-start"]),
-        )
-        strobeSwp.plotOptions["yKey"] += (mpKey + "-normalized",)
+        strobeSwp.addParser(mpKey + '-normalized',
+                            lambda dat: (dat[mpKey] - dat[mpKey + '-start']) / (dat[mpKey + '-end'] - dat[mpKey + '-start']))
+        strobeSwp.plotOptions['yKey'] += (mpKey + '-normalized', )
 
     return strobeSwp
 
 
 def monitorVariable(fValue, sleepSec=0, nReps=100, plotEvery=1):
-    """ Monitors some process over time. Good for observing drift.
+    ''' Monitors some process over time. Good for observing drift.
 
         Args:
             valueFun (function): called at each timestep with no arguments. Must return a scalar or a 1-D np.array
             sleepSec (scalar): time in seconds to sleep between calls
-    """
+    '''
     curves = None
 
     testV = fValue()
@@ -160,9 +154,9 @@ def monitorVariable(fValue, sleepSec=0, nReps=100, plotEvery=1):
     timeFun = lambda: time.time() - t0
 
     _, ax = plt.subplots(figsize=(12, 7))
-    cycleDefault = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    cycleDefault = plt.rcParams['axes.prop_cycle'].by_key()['color']
     cycleContrained = cycleDefault[:w]
-    ax.set_prop_cycle(cycler("color", cycleContrained))
+    ax.set_prop_cycle(cycler('color', cycleContrained))
 
     t = np.zeros((nReps, 1))
     v = np.zeros((nReps, w))
@@ -176,7 +170,7 @@ def monitorVariable(fValue, sleepSec=0, nReps=100, plotEvery=1):
                 except ValueError:
                     # it was probably an old one
                     pass
-            curves = ax.plot(t[: it + 1], v[: it + 1])
+            curves = ax.plot(t[:it + 1], v[:it + 1])
             display.clear_output(wait=True)
             display.display(plt.gcf())
         time.sleep(sleepSec)

@@ -45,17 +45,17 @@ class Hashable(object):
 
     No instance variables starting with "__" will be serialized.
     """
-
-    context = jsonpickle.pickler.Pickler(unpicklable=True, warn=True, keys=True)
+    context = jsonpickle.pickler.Pickler(
+        unpicklable=True, warn=True, keys=True)
 
     def __eq__(self, other):
-        jsonpickle.set_encoder_options("json", sort_keys=True)
+        jsonpickle.set_encoder_options('json', sort_keys=True)
         json_self = self.context.flatten(self, reset=True)
         json_other = self.context.flatten(other, reset=True)
         return json_self == json_other
 
     def __hash__(self):
-        jsonpickle.set_encoder_options("json", sort_keys=True)
+        jsonpickle.set_encoder_options('json', sort_keys=True)
         json_self = self.context.flatten(self, reset=True)
         return hash(jsonpickle.json.encode(json_self))
 
@@ -65,16 +65,16 @@ class Hashable(object):
         super().__init__()
 
     def __getstate__(self):
-        """
+        '''
         This method removes all variables starting with "__" during
         serialization. Variables named as such are actually stored
         different in self.__dict__. Check PEP 8.
-        """
+        '''
         klassnames = []
-        klassnames.append(self.__class__.__name__.lstrip("_"))
+        klassnames.append(self.__class__.__name__.lstrip('_'))
 
         for base in self.__class__.mro():
-            klassnames.append(base.__name__.lstrip("_"))
+            klassnames.append(base.__name__.lstrip('_'))
 
         state = self.__dict__.copy()
         keys_to_delete = set()
@@ -95,7 +95,7 @@ class Hashable(object):
     def _toJSON(self):
         context = jsonpickle.pickler.Pickler(unpicklable=True, warn=True)
         json_state = context.flatten(self, reset=True)
-        jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
+        jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)
         return jsonpickle.json.encode(json_state)
 
 
@@ -169,11 +169,12 @@ class NamedList(MutableSequence, Hashable):
         return self.dict.items()
 
     def check(self, value):
-        if not hasattr(value, "name"):
+        if not hasattr(value, 'name'):
             raise TypeError(f"{type(value)} does not have name.")
 
     def check_presence(self, name):
-        matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == name]
+        matching_idxs = [idx for idx, elem in enumerate(
+            self) if elem.name == name]
         return matching_idxs
 
     def __len__(self):
@@ -188,7 +189,8 @@ class NamedList(MutableSequence, Hashable):
         if self.read_only:
             raise RuntimeError("attempting to delete item from read-only list")
         if isinstance(i, str):
-            matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
+            matching_idxs = [idx for idx,
+                             elem in enumerate(self) if elem.name == i]
             for idx in matching_idxs:
                 del self.list[idx]
         else:
@@ -200,7 +202,8 @@ class NamedList(MutableSequence, Hashable):
         self.check(v)
         if isinstance(i, str):
             if i in self.dict.keys():
-                matching_idxs = [idx for idx, elem in enumerate(self) if elem.name == i]
+                matching_idxs = [idx for idx,
+                                 elem in enumerate(self) if elem.name == i]
                 assert len(matching_idxs) == 1
                 idx = matching_idxs[0]
                 self.list[idx] = v  # update current entry
@@ -247,7 +250,7 @@ class NamedList(MutableSequence, Hashable):
         return str(self.list)
 
     def __repr__(self):
-        return "TypedList([{}])".format("\n".join(map(repr, self.list)))
+        return ('TypedList([{}])'.format('\n'.join(map(repr, self.list))))
 
 
 class TypedList(NamedList):
