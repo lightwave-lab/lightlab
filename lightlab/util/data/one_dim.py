@@ -352,7 +352,8 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         other_ordi_norm /= np.linalg.norm(other_ordi_norm)
 
         correlated_ordi = correlate(self_ordi_norm,
-            other_ordi_norm, mode="full", method="direct")
+                                    other_ordi_norm,
+                                    mode="full", method="direct")
         offset_abscissa = np.arange(-N + 1, N, 1) * dx
         return self.__newOfSameSubclass(offset_abscissa, correlated_ordi)
 

@@ -28,9 +28,8 @@ smua.source.output = smua.OUTPUT_OFF
 
 """
 from . import VISAInstrumentDriver
-from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.equipment.visa_bases.driver_base import TCPSocketConnection
-from lightlab.laboratory.instruments import Keithley, Instrument
+from lightlab.laboratory.instruments import Keithley
 
 import socket
 import numpy as np
@@ -97,7 +96,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **visa_kwargs)
         self.reinstantiate_session(address, visa_kwargs["tempSess"])
 
-    ## BEGIN TCPSOCKET METHODS
+    # BEGIN TCPSOCKET METHODS
     def reinstantiate_session(self, address, tempSess):
         if address is not None:
             # should be something like ['TCPIP0', 'xxx.xxx.xxx.xxx', '6501', 'SOCKET']
@@ -159,7 +158,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
             s.send(writeStr)
         time.sleep(0.05)
 
-    ## END TCPSOCKET METHODS
+    # END TCPSOCKET METHODS
 
     @property
     def smu_string(self):

@@ -176,8 +176,8 @@ def findPeaks(
 
             isValidPeak = validL and validR
             # throw out data around this peak by minimizing yArr and recording as blank
-            yArr[hmInds[0] : hmInds[1]] = np.amin(yArr)
-            blanked[hmInds[0] : hmInds[1]] = True
+            yArr[hmInds[0]:hmInds[1]] = np.amin(yArr)
+            blanked[hmInds[0]:hmInds[1]] = True
         logger.debug("Successfully found a peak")
         pkInds[iPk] = indOfMax
 

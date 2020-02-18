@@ -182,7 +182,8 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
                 # delay channel (D=0) outputs the (P=N) set of pulses, the second min. delay channel (D=1)
                 # outputs the (P=N-1) set of pulses, etc.
                 # As a result, each pulse receives an inverse channel delay: K - current_delay + pulsePosition, for some K.
-                # We set K to max(delay) since that sets the last channel [max(delay)] at the beginning of the pattern.
+                # We set K to max(delay) since that sets the last channel [max(delay)] at
+                # the beginning of the pattern.
 
                 pIndex = int(np.round((max(chpulses.keys()) - delay + pulsePos) * clockfreq))
                 # add pulse to pattern at correct delay
@@ -217,25 +218,25 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
         # presented on the PPG (inverted order)
         if order == 7:
             polynomial = 0b10000011  # 1 + X^6 + X^7
-            seed =       0b1000000
+            seed = 0b1000000
         elif order == 9:
             polynomial = 0b1000010001  # 1 + X^5 + X^9
-            seed =       0b111100000
+            seed = 0b111100000
         elif order == 11:
             polynomial = 0b100000000101  # 1+X9+X11
-            seed =       0b11000000000
+            seed = 0b11000000000
         elif order == 15:
             polynomial = 0b1000000000000011  # 1+X14+X15
-            seed =       0b000000000000001
+            seed = 0b000000000000001
         elif order == 20:
             polynomial = (1 << 20) + (1 << 20 - 3) + (1 << 20 - 20)  # 1+X3+X20
-            seed =       0b00111000111000111000
+            seed = 0b00111000111000111000
         elif order == 23:
             polynomial = (1 << 23) + (1 << 23 - 18) + (1 << 23 - 23)  # 1+X18+X23
-            seed =       0b1111100 << 16
+            seed = 0b1111100 << 16
         elif order == 31:
             polynomial = (1 << 31) + (1 << 31 - 28) + (1 << 31 - 31)  # 1+X28+X31
-            seed =       0b1110000 << 24
+            seed = 0b1110000 << 24
         else:
             raise NotImplementedError("PRBS{} not implemented.".format(order))
 
