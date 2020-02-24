@@ -1,6 +1,7 @@
 from . import VISAInstrumentDriver
 from lightlab.equipment.abstract_drivers import Configurable
 from lightlab.laboratory.instruments import PulsePatternGenerator
+from lightlab.util.data.one_dim import prbs_pattern
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
@@ -210,7 +211,7 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
 
     @classmethod
     def PRBS_pattern(cls, order, mark_ratio=0.5):
-        # Documentation present in poage 5-1 of the manual.
+        # Documentation present in page 5-1 of the manual.
         if mark_ratio != 0.5:
             raise NotImplementedError("Only mark ratio of 1/2 is implemented so far.")
 
@@ -240,21 +241,4 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
         else:
             raise NotImplementedError("PRBS{} not implemented.".format(order))
 
-        def prbs_generator(characteristic, state):
-            def compute_parity(n):
-                parity = False
-                while n > 0:
-                    parity ^= (n & 1)
-                    n >>= 1
-
-                return parity  # odd means True
-
-            while True:
-                result = state & 1
-                state += (compute_parity(state & characteristic) << order)
-                state >>= 1
-                yield result
-
-        from itertools import islice
-        prbs_pattern = list(islice(iter(prbs_generator(polynomial, seed)), 2 ** order - 1))
-        return np.array(prbs_pattern, dtype=np.bool)
+        return prbs_pattern(polynomial, seed)

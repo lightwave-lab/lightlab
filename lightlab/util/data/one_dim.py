@@ -2,12 +2,58 @@
 '''
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import signal
+from lightlab import logger
 from IPython import display
 import lightlab.util.io as io
 
 from .peaks import findPeaks, ResonanceFeature
 from .basic import rms
 from .function_inversion import interpInverse
+
+
+def prbs_generator(characteristic, state):
+    ''' Generator of PRBS bits.
+
+        Example:
+        polynomial = 0b1000010001  # 1 + X^5 + X^9
+        seed = 0b111100000
+
+        The above parameters will give you a PRBS9 bit sequence.
+        Note: it might be inverted compared to the official definition,
+        i.e., 1s are 0s and vice versa.
+    '''
+
+    def compute_parity(n):
+        parity = False
+        while n > 0:
+            parity ^= (n & 1)
+            n >>= 1
+
+        return parity  # odd means True
+
+    order = characteristic.bit_length() - 1
+    while True:
+        result = state & 1
+        state += (compute_parity(state & characteristic) << order)
+        state >>= 1
+        yield result
+
+
+def prbs_pattern(polynomial, seed, length=None):
+    ''' Returns an array containing a sequence of a PRBS pattern.
+
+    If length is not set, the sequence will be 2^n-1 long, corresponding
+    to the repeating pattern of the PRBS sequence.
+    '''
+    order = polynomial.bit_length() - 1
+
+    if length is None:
+        length = 2 ** order - 1
+
+    from itertools import islice
+    prbs_pattern = list(islice(iter(prbs_generator(polynomial, seed)), length))
+    return ~np.array(prbs_pattern, dtype=np.bool)
 
 
 class MeasuredFunction(object):  # pylint: disable=eq-without-hash
@@ -47,6 +93,9 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         8. Others (:meth:`deleteSegment`, :meth:`splice`)
             see method docstrings
     '''
+
+    # https://stackoverflow.com/questions/14619449/how-can-i-override-comparisons-between-numpys-ndarray-and-my-type
+    __array_priority__ = 100  # have numpy call the __*add__ functions first instead of trying to iterate
 
     absc = None  #: abscissa, a.k.a. the x-values or domain
     ordi = None  #: ordinate, a.k.a. the y-values
@@ -100,6 +149,9 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
 
     def __len__(self):
         return len(self.absc)
+
+    def __iter__(self):
+        raise TypeError("{} is not iterable".format(self.__class__.__qualname__))
 
     def __getitem__(self, sl):
         ''' Slice this function.
@@ -197,6 +249,30 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         '''
         return [min(self.absc), max(self.absc)]
 
+    def abs(self):
+        ''' Computes the absolute value of the measured function.
+        '''
+        return abs(self)
+
+    def mean(self):
+        return self.getMean()
+
+    def max(self):
+        ''' Returns the maximum value of the ordinate axis, ignoring NaNs.'''
+        return np.nanmax(self.ordi)
+
+    def argmax(self):
+        ''' Returns the abscissa value at which the ordinate is maximum. '''
+        return self.absc[np.argmax(self.ordi)]
+
+    def min(self):
+        ''' Returns the minimum value of the ordinate axis, ignoring NaNs.'''
+        return np.nanmin(self.ordi)
+
+    def argmin(self):
+        ''' Returns the abscissa value at which the ordinate is minimum. '''
+        return self.absc[np.argmin(self.ordi)]
+
     def getRange(self):
         ''' The span of the ordinate
 
@@ -286,6 +362,12 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
     def getMedian(self):
         return np.median(self.ordi)
 
+    def getVariance(self):
+        return np.var(self.ordi)
+
+    def getStd(self):
+        return np.std(self.ordi)
+
     def resample(self, nsamp=100):
         ''' Resample over the same domain span, but with a different number of points.
 
@@ -357,7 +439,12 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         offset_abscissa = np.arange(-N + 1, N, 1) * dx
         return self.__newOfSameSubclass(offset_abscissa, correlated_ordi)
 
-    def lowPass(self, windowWidth=None, mode='valid'):
+    def lowPass(self, windowWidth=None, mode=None):
+        if mode is not None:
+            logger.warn("lowPass was renamed to movingAverage. Now it is an actual Butterworth low-pass filter.")
+        return self.lowPassButterworth(1 / windowWidth)
+
+    def movingAverage(self, windowWidth=None, mode='valid'):
         ''' Low pass filter performed by convolving a moving average window.
 
             The convolutional ``mode`` can be one of the following string tokens
@@ -392,6 +479,81 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
             newOrdi = self.ordi.copy()
             newOrdi[invalidIndeces:-invalidIndeces] = np.convolve(filt, self.ordi, mode='valid')
         return self.__newOfSameSubclass(newAbsc, newOrdi)
+
+    def butterworthFilter(self, fc, order, btype):
+        ''' Applies a Butterworth filter to the signal.
+
+        Side effects: the waveform will be resampled to have equally-sampled points.
+
+        Args:
+            fc (float): cutoff frequency of the filter (cf. input to signal.butter)
+
+        Returns:
+            New object containing the filtered waveform
+        '''
+
+        uniformly_sampled = self.uniformlySample()
+        x, y = uniformly_sampled.absc, uniformly_sampled.ordi
+        dxes = np.diff(x)
+        sampling_rate = 1 / dxes[0]
+
+        b, a = signal.butter(order, fc, btype, fs=sampling_rate)  # construct the filter
+        # compute initial condition such that the filtered y starts with the same value as y
+        zi = signal.lfilter_zi(b, a)
+
+        # applies the filter to the ordinate y if it is a low pass filter
+        if btype.startswith('low'):
+            ordi_filtered, _ = signal.lfilter(b, a, y, zi=zi * y[0])
+        # cheat and debias the signal prior to high pass filtering
+        # this prevents the initial filtered signal to start from zero
+        else:
+            mean_y = np.mean(y)
+            ordi_filtered, _ = signal.lfilter(b, a, y - mean_y, zi=zi * 0)
+
+        uniformly_sampled.ordi = ordi_filtered
+        return uniformly_sampled
+
+    def lowPassButterworth(self, fc, order=2):
+        ''' Applies a low-pass Butterworth filter to the signal.
+
+        Side effects: the waveform will be resampled to have equally-sampled points.
+
+        Args:
+            fc (float): cutoff frequency of the filter
+
+        Returns:
+            New object containing the filtered waveform
+        '''
+
+        return self.butterworthFilter(fc, order, 'lowpass')
+
+    def highPassButterworth(self, fc, order=2):
+        ''' Applies a high-pass Butterworth filter to the signal.
+
+        Side effects: the waveform will be resampled to have equally-sampled points.
+
+        Args:
+            fc (float): cutoff frequency of the filter
+
+        Returns:
+            New object containing the filtered waveform
+        '''
+
+        return self.butterworthFilter(fc, order, 'highpass')
+
+    def bandPassButterworth(self, fc, order=2):
+        ''' Applies a high-pass Butterworth filter to the signal.
+
+        Side effects: the waveform will be resampled to have equally-sampled points.
+
+        Args:
+            fc (length-2 float sequence): cutoff frequency of the filter
+
+        Returns:
+            New object containing the filtered waveform
+        '''
+
+        return self.butterworthFilter(fc, order, 'bandpass')
 
     def deleteSegment(self, segment):
         ''' Removes the specified segment from the abscissa.
@@ -636,6 +798,12 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         newAbsc, ords = self.__binMathHelper(other)
         return self.__newOfSameSubclass(newAbsc, ords[0] + ords[1])
 
+    def __abs__(self):
+        ''' Returns a new object where the abscissa contains the absolute value of the old one.
+        '''
+        abs_ordi = np.abs(self.ordi)
+        return self.__newOfSameSubclass(self.absc, abs_ordi)
+
     def __radd__(self, other):
         return self.__add__(other)
 
@@ -668,10 +836,13 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
     def __eq__(self, other):
         if isinstance(self, type(other)):
             return np.all(self.absc == other.absc) and np.all(self.ordi == other.ordi)
-        return False
+        return self.ordi == other
 
     def __repr__(self):
-        return "{}({:d} pts)".format(self.__class__.__qualname__, len(self))
+        try:
+            return "{}({:d} pts)".format(self.__class__.__qualname__, len(self))
+        except TypeError:  # len(self fails)
+            return "{}({:f},{:f})".format(self.__class__.__qualname__, self.absc, self.ordi)
 
 
 class Spectrum(MeasuredFunction):
