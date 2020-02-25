@@ -241,6 +241,12 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
                 newObj.__dict__[attr] = val
         return newObj
 
+    def subsample(self, newAbscissa):
+        ''' Returns a new MeasuredFunction sampled at given points.
+        '''
+        new_ordi = self.__call__(newAbscissa)
+        return self.__newOfSameSubclass(newAbscissa, new_ordi)
+
     def getSpan(self):
         ''' The span of the domain
 
