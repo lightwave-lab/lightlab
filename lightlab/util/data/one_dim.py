@@ -496,8 +496,9 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         x, y = uniformly_sampled.absc, uniformly_sampled.ordi
         dxes = np.diff(x)
         sampling_rate = 1 / dxes[0]
+        fc = np.array(fc)
 
-        b, a = signal.butter(order, fc, btype, fs=sampling_rate)  # construct the filter
+        b, a = signal.butter(order, fc * 2, btype, fs=sampling_rate)  # construct the filter
         # compute initial condition such that the filtered y starts with the same value as y
         zi = signal.lfilter_zi(b, a)
 
@@ -513,7 +514,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         uniformly_sampled.ordi = ordi_filtered
         return uniformly_sampled
 
-    def lowPassButterworth(self, fc, order=2):
+    def lowPassButterworth(self, fc, order=1):
         ''' Applies a low-pass Butterworth filter to the signal.
 
         Side effects: the waveform will be resampled to have equally-sampled points.
@@ -527,7 +528,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
 
         return self.butterworthFilter(fc, order, 'lowpass')
 
-    def highPassButterworth(self, fc, order=2):
+    def highPassButterworth(self, fc, order=1):
         ''' Applies a high-pass Butterworth filter to the signal.
 
         Side effects: the waveform will be resampled to have equally-sampled points.
@@ -541,7 +542,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
 
         return self.butterworthFilter(fc, order, 'highpass')
 
-    def bandPassButterworth(self, fc, order=2):
+    def bandPassButterworth(self, fc, order=1):
         ''' Applies a high-pass Butterworth filter to the signal.
 
         Side effects: the waveform will be resampled to have equally-sampled points.
