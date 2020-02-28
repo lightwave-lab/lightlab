@@ -276,9 +276,8 @@ class NdSweeper(Sweeper):
                 prog.update()
             # End of the main loop
 
-        except Exception:
-            logger.error('Error while sweeping. Reloading old data')
-            self.data = oldData
+        except Exception as err:
+            logger.error('Error while sweeping. Keeping data. %s', err)
             raise
 
         if returnToStart:
