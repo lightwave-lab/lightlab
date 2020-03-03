@@ -433,7 +433,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
 
             Only full mode and direct method is supported for now.
         '''
-        new_abscissa = type(self).__maxAbsc(self, other)
+        new_abscissa = type(self)._maxAbsc(self, other)
 
         # ensure that they are uniformly sampled
         dxes = np.diff(new_abscissa)
