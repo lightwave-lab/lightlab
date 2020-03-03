@@ -296,8 +296,18 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
             Returns:
                 MeasuredFunction: new object
         '''
-        min_segment, max_segment = min(segment), max(segment)
+        min_segment, max_segment = segment
         absc_span = self.getSpan()
+
+        if min_segment is None:
+            min_segment = absc_span[0]
+
+        if max_segment is None:
+            max_segment = absc_span[1]
+
+        # Just in case the user accidentally flipped the segment order
+        min_segment, max_segment = min(min_segment, max_segment), max(min_segment, max_segment)
+
         if min_segment <= absc_span[0] and max_segment >= absc_span[1]:
             # do nothing
             return self.copy()
@@ -772,7 +782,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         return newAbsc
 
     @staticmethod
-    def __maxAbsc(fa, fb):
+    def _maxAbsc(fa, fb):
         """ Gets a compact abscissa that includes the domains of both fa and fb.
 
             Assumes that the returned abscissa is uniformly sampled.
