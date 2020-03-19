@@ -877,7 +877,7 @@ class Spectrum(MeasuredFunction):
                 inDbm (bool): is the ``power`` in linear or dbm units?
         '''
         super().__init__(nm, power, unsafe=unsafe)
-        self.__inDbm = inDbm
+        self._inDbm = inDbm
 
     @property
     def inDbm(self):
@@ -886,7 +886,11 @@ class Spectrum(MeasuredFunction):
             Returns:
                 bool:
         '''
-        return self.__inDbm
+        try:
+            return self._inDbm
+        except AttributeError:
+            self._inDbm = self._Spectrum__inDbm
+            return self._inDbm
 
     def lin(self):
         ''' The spectrum in linear units
@@ -994,6 +998,43 @@ class Spectrum(MeasuredFunction):
         '''
         kwargs['isDb'] = True
         return MeasuredFunction.findResonanceFeatures(self.db(), **kwargs)
+
+    def GHz(self):
+        ''' Convert to SpectrumGHz '''
+        GHz = 299_792_458 / self.absc
+        ordi = np.copy(self.ordi)
+        return SpectrumGHz(GHz, ordi, inDbm=self.inDbm)
+
+
+class SpectrumGHz(Spectrum):
+    ''' Spectrum with GHz units in the abscissa
+
+    Use :meth:`lin` and :meth:`dbm` to make sure what you're getting
+    what you expect for things like binary math and peakfinding, etc.
+    '''
+
+    def __init__(self, GHz, power, inDbm=True, unsafe=False):
+        '''
+            Args:
+                GHz (array): abscissa
+                power (array): ordinate
+                inDbm (bool): is the ``power`` in linear or dbm units?
+        '''
+        MeasuredFunction.__init__(self, GHz, power, unsafe=unsafe)
+        self._inDbm = inDbm
+
+    def simplePlot(self, *args, livePlot=False, **kwargs):
+        ''' More often then not, this is db vs. wavelength, so label it
+        '''
+        super().simplePlot(*args, livePlot=livePlot, **kwargs)
+        plt.xlabel('Frequency (GHz)')
+        plt.ylabel('Transmission ({})'.format('dB' if self.inDbm else 'lin'))
+
+    def nm(self):
+        ''' Convert to Spectrum'''
+        nm = 299_792_458 / self.absc
+        ordi = np.copy(self.ordi)
+        return Spectrum(nm, ordi, inDbm=self.inDbm)
 
 
 class Waveform(MeasuredFunction):
