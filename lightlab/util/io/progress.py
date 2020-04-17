@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import time
 import socket
+import tempfile
 from pathlib import Path
 
 from .paths import projectDir, monitorDir
@@ -91,6 +92,20 @@ class ProgressWriter(object):
 
         self.startTime = time.time()  # In seconds since the epoch
 
+        def print_string():
+            prntStr = self.name + "\n"
+            for iterDim, _ in enumerate(self.size):
+                prntStr += 'Dim-' + str(iterDim) + '...'
+            return prntStr
+
+        if True:
+            monitorDir.mkdir(exist_ok=True)  # pylint: disable=no-member
+            self.tempfile = tempfile.NamedTemporaryFile("w+", dir=str(monitorDir), prefix='swp_prog')
+            print("Printing progress in tempfile {}".format(self.tempfile.name))
+            self.tempfile.write(print_string() + "\n")
+            self.tempfile.write(self._get_std_string() + "\n")
+            self.tempfile.flush()
+
         if self.serving:
             print('See sweep progress online at')
             print(self.getUrl())
@@ -101,11 +116,7 @@ class ProgressWriter(object):
             self.__writeHtml()
 
         if self.printing:
-            print(self.name)
-            prntStr = ''
-            for iterDim, _ in enumerate(self.size):
-                prntStr += 'Dim-' + str(iterDim) + '...'
-            print(prntStr)
+            print(print_string())
             self.__writeStdio()
 
     @staticmethod
@@ -155,12 +166,15 @@ class ProgressWriter(object):
         with self.filePath.open('w') as fx:  # pylint: disable=no-member
             fx.write(htmlText)
 
-    def __writeStdio(self):
+    def _get_std_string(self):
         prntStr = ''
         for iterDim, dimSize in enumerate(self.size):
             of = (self.currentPnt[iterDim] + 1, dimSize)
             prntStr += '/'.join((str(v) for v in of)) + '...'
-        print(prntStr)
+        return prntStr
+
+    def __writeStdio(self):
+        print(self._get_std_string())
 
     def __writeHtml(self):
         # Write lines for progress in each dimension
@@ -204,11 +218,17 @@ class ProgressWriter(object):
                 self.__writeHtml()
             if self.printing:
                 self.__writeStdio()
+            if True:
+                self.tempfile.write(self._get_std_string() + "\n")
+                self.tempfile.flush()
         else:
             if self.serving:
                 self.__writeHtmlEnd()
             if self.printing:
                 self.__writeStdioEnd()
+            if True:
+                self.tempfile.write("End." + "\n")
+                self.tempfile.flush()
 
     def __updateOneInternal(self):
         for i in range(len(self.size)):
