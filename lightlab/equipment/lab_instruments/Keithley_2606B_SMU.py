@@ -222,9 +222,10 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
 
     def smu_defaults(self):
         self.write("{smuX}.source.offfunc = 0".format(smuX=self.smu_full_string))  # 0 or smuX.OUTPUT_DCAMPS: Source 0 A
-        self.write("{smuX}.source.offmode = 2".format(smuX=self.smu_full_string))  # 2 or smuX.OUTPUT_HIGH_Z: Opens the output relay when the output is turned of
-        self.write("{smuX}.sense = 0".format(smuX=self.smu_full_string))  # 0 or smuX.SENSE_LOCAL: Selects local sense (2-wire)
+        self.write("{smuX}.source.offmode = 0".format(smuX=self.smu_full_string))  # 0 or smuX.OUTPUT_NORMAL: Configures the source function according to smuX.source.offfunc attribute
         self.write("{smuX}.source.highc = 1".format(smuX=self.smu_full_string))  # 1 or smuX.ENABLE: Enables high-capacitance mode
+        # self.write("{smuX}.sense = 0".format(smuX=self.smu_full_string))  # 0 or smuX.SENSE_LOCAL: Selects local sense (2-wire)
+        self.set_sense_mode(sense_mode="local")
 
     def startup(self):
         self.tsp_startup()
@@ -233,6 +234,17 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
         self.write("waitcomplete()")
         time.sleep(0.01)
         self.query_print('"startup complete."', expected_talker="startup complete.")
+
+    def set_sense_mode(self, sense_mode="local"):
+        ''' Set sense mode. Defaults to local sensing. '''
+        if sense_mode == "remote":
+            sense_mode = 1  # 1 or smuX.SENSE_REMOTE: Selects remote sense (4-wire)
+        elif sense_mode == "local":
+            sense_mode = 0  # 0 or smuX.SENSE_LOCAL: Selects local sense (2-wire)
+        else:
+            sense_mode = 0  # 0 or smuX.SENSE_LOCAL: Selects local sense (2-wire)
+
+        self.write("{smuX}.sense = {sense_mode}".format(smuX=self.smu_full_string, sense_mode=sense_mode))
 
     # SourceMeter Essential methods
 
