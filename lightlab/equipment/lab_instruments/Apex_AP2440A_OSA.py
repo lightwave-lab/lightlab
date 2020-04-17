@@ -190,7 +190,14 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
 
         dataLen = int(powerData[0])
         powerData = np.array(powerData[1:])
-        wavelengthData = np.linspace(self.wlRange[1], self.wlRange[0], dataLen)
+        retStr = self._query('SPDATAWL0')
+        wavelengthData = pyvisa.util.from_ascii_block(retStr,
+                                                 converter='f',
+                                                 separator=' ',
+                                                 container=list)
+        assert dataLen == wavelengthData[0]
+        wavelengthData = np.array(wavelengthData[1:])
+        # wavelengthData = np.linspace(self.wlRange[1], self.wlRange[0], dataLen)
 
         return wavelengthData[::-1], powerData[::-1]
 
