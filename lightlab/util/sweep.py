@@ -540,6 +540,7 @@ class NdSweeper(Sweeper):
             axArr = self.plotOptions['axArr']
         else:
             _, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1],
+                                    sharex='col',
                                     figsize=(10, plotArrShape[0] * 2.5))  # pylint: disable=unused-variable
 
         axArr = np.array(axArr)
