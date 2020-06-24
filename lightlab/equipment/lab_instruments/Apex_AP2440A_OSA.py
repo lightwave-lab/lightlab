@@ -212,7 +212,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
             self.triggerAcquire()
             nm, dbm = self.transferData()
 
-            if i is 0:
+            if i == 0:
                 dbmAvg = dbm / average_count
             else:
                 dbmAvg = dbmAvg + dbm / average_count
