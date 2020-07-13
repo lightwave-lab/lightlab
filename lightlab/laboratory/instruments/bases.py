@@ -676,7 +676,7 @@ class MockInstrument(Instrument):
 
     def __getattr__(self, attrName):
         def noop(*args, **kwargs):
-            raise RuntimeError("Attempted to call a method of a mock Instrument.")
+            raise AttributeError("Attempted to call method ('{}') of a mock Instrument.".format(attrName))
         return noop
 
 

@@ -197,10 +197,10 @@ class NdSweeper(Sweeper):
         '''
         # Initialize builders that start off with None grids
         if self.data is None:
-            oldData = None
+            # oldData = None
             self.data = OrderedDict()
         else:
-            oldData = self.data.copy()
+            # oldData = self.data.copy()
             for dKeySrc in (self.actuate, self.measure, self.parse):
                 for dKey in dKeySrc.keys():
                     try:
@@ -276,9 +276,8 @@ class NdSweeper(Sweeper):
                 prog.update()
             # End of the main loop
 
-        except Exception:
-            logger.error('Error while sweeping. Reloading old data')
-            self.data = oldData
+        except Exception as err:
+            logger.error('Error while sweeping. Keeping data. %s', err)
             raise
 
         if returnToStart:
@@ -541,6 +540,7 @@ class NdSweeper(Sweeper):
             axArr = self.plotOptions['axArr']
         else:
             _, axArr = plt.subplots(nrows=plotArrShape[0], ncols=plotArrShape[1],
+                                    sharex='col',
                                     figsize=(10, plotArrShape[0] * 2.5))  # pylint: disable=unused-variable
 
         axArr = np.array(axArr)
