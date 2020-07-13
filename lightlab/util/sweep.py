@@ -197,10 +197,10 @@ class NdSweeper(Sweeper):
         '''
         # Initialize builders that start off with None grids
         if self.data is None:
-            oldData = None
+            # oldData = None
             self.data = OrderedDict()
         else:
-            oldData = self.data.copy()
+            # oldData = self.data.copy()
             for dKeySrc in (self.actuate, self.measure, self.parse):
                 for dKey in dKeySrc.keys():
                     try:
