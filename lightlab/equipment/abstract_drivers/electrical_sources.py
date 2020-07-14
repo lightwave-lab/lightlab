@@ -43,8 +43,8 @@ class MultiModalSource(object):
         '''
         if mode not in cls.supportedModes:
             raise TypeError('Invalid mode: ' + str(mode) + '. Valid: ' + str(cls.supportedModes))
-        else:
-            return mode.lower()
+
+        return mode.lower()
 
     @classmethod
     def val2baseUnit(cls, value, mode):
