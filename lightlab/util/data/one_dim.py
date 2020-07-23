@@ -848,7 +848,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         return self.__mul__(other)
 
     def __truediv__(self, other):
-        return self * (1 / other)
+        return self * other ** (-1)
 
     def __eq__(self, other):
         if isinstance(self, type(other)):
