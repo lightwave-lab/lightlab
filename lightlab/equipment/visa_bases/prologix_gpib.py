@@ -288,24 +288,38 @@ class PrologixGPIBObject(InstrumentSessionBase):
             pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
             pconn.send(self._prologix_escape_characters(queryStr))
 
-        if withTimeout is None:
-            withTimeout = self.timeout
+        if withTimeout is not None:
+            logger.warn("withTimeout option is deprecated: no effect")
+        
+        # TODO guard against socket error and throw nice error message
+        retStr = self._prologix_rm.query('++read eoi')
+        return retStr.rstrip()
 
-        # checking if message is available in small increments
-        currenttime = time.time()
-        expirationtime = currenttime + withTimeout
-        while time.time() < expirationtime:
-            # self.timeout = newTimeout
-            status_byte = self.spoll()
-            # MAV indicates that the message is available
-            MAV = (status_byte >> 4) & 1
-            if MAV == 1:
-                retStr = self._prologix_rm.query('++read eoi')
-                return retStr.rstrip()
-            # ask for the message in small increments
-            time.sleep(0.1)
+        ## WARNING
+        # The code below is for instruments that implement the message available
+        # assert bit in the STATUS BYTE. Not all instruments implement it.
+        # So it is best to deactivate it here for now.
+        # That means that if you query something and the instrument doesn't send anything,
+        # you will receive a cryptic socket timeout error.
 
-        raise RuntimeError('Query timed out')
+        # if withTimeout is None:
+        #     withTimeout = self.timeout
+
+        # # checking if message is available in small increments
+        # currenttime = time.time()
+        # expirationtime = currenttime + withTimeout
+        # while time.time() < expirationtime:
+        #     # self.timeout = newTimeout
+        #     status_byte = self.spoll()
+        #     # MAV indicates that the message is available
+        #     MAV = (status_byte >> 4) & 1
+        #     if MAV == 1:
+        #         retStr = self._prologix_rm.query('++read eoi')
+        #         return retStr.rstrip()
+        #     # ask for the message in small increments
+        #     time.sleep(0.1)
+
+        # raise RuntimeError('Query timed out')
 
     @property
     def timeout(self):
