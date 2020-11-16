@@ -122,6 +122,16 @@ class VISAObject(InstrumentSessionBase):
                 self.close()
         return retStr
 
+    # def query_binary(self, queryStr):
+    #     ret_bytes = None
+    #     try:
+    #         self.mbSession = self.resMan.open_resource(self.address)
+    #         ret_bytes = self.mbSession.query_binary_values(queryStr)
+    #     finally:
+    #         self.mbSession.close()
+    #         self.mbSession = None
+    #     return ret_bytes
+
     def instrID(self):
         r"""Returns the \*IDN? string"""
         return self.query('*IDN?')
