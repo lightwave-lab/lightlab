@@ -1,4 +1,4 @@
-import visa as pyvisa
+import pyvisa
 import time
 from lightlab import visalogger as logger
 from .driver_base import InstrumentSessionBase
