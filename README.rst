@@ -60,3 +60,7 @@ Server: Mac OS and Linux running ≥python3.6; not tested on Windows (to do).
 
 Auxiliary hosts: Mac OS, Linux, Windows
 
+Acknowledgements
+----------------
+
+This  material  is  based  in part upon  work  supported  by  the  National Science Foundation under Grant Number E2CDA-1740262. Any  opinions,  findings,  and  conclusions  or  recommendations expressed  in  this  material  are  those  of  the  author(s)  and  do  not necessarily reflect the views of the National Science Foundation.
