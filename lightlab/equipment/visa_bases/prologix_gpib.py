@@ -93,10 +93,20 @@ class PrologixResourceManager(TCPSocketConnection):
                 socket recv command with the same message length.
         '''
         with self.connected():
-            self._send(self._socket, query_msg)
-            recv = self._recv(self._socket, msg_length)
-            while not recv.endswith('\n'):
-                recv += self._recv(self._socket, msg_length)
+            recv = ""
+            try:
+                n_read = 0
+                self._send(self._socket, query_msg)
+                recv = self._recv(self._socket, msg_length)
+                n_read += 1
+#                 print(n_read, end=' ')
+                while not recv.endswith('\n'):
+                    recv += self._recv(self._socket, msg_length)
+                    n_read += 1
+#                     print(n_read, end=' ')
+            except:
+#                 print(recv)
+                print(n_read)
         return recv
 
 
@@ -260,6 +270,13 @@ class PrologixGPIBObject(InstrumentSessionBase):
         with self._prologix_rm.connected() as pconn:
             pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
             pconn.send(self._prologix_escape_characters(writeStr))
+    
+#     def read(self, withTimeout=None):
+#         logger.debug('%s - Q - %s', self.address, queryStr)
+#         retStr = self.query_raw_binary(queryStr, withTimeout)
+#         logger.debug('Query Read - %s', repr(retStr))
+#         return retStr.rstrip()
+        
 
     def query(self, queryStr, withTimeout=None):
         '''Read the unmodified string sent from the instrument to the
@@ -278,7 +295,7 @@ class PrologixGPIBObject(InstrumentSessionBase):
         with self._prologix_rm.connected() as pconn:
             pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
             pconn.send('++clr')
-
+            
     def query_raw_binary(self, queryStr, withTimeout=None):
         '''Read the unmodified string sent from the instrument to the
            computer. In contrast to query(), no termination characters
