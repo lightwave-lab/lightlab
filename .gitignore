@@ -3,6 +3,7 @@
 dev-requirements-temp.txt
 test*.json
 labstate*.json
+.vscode
 
 # compiled data
 data/*

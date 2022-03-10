@@ -164,6 +164,6 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             else:
                 self.setVoltage(0)
         if newState is not None:
-            self.setConfigParam('OUTP:STATE', 1 if newState else 0)
+            self.setConfigParam('OUTP:STATE', 1 if newState else 0, forceHardware=True)
         retVal = self.getConfigParam('OUTP:STATE', forceHardware=True)
         return retVal in ['ON', 1, '1']

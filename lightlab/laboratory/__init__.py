@@ -212,7 +212,7 @@ class NamedList(MutableSequence, Hashable):
                     # Renaming instrument to conform to the dict's key
                     # named_list['name1'] = Instrument('name2')
                     # Instrument will be renamed to name1 prior to insertion
-                    v.name = i
+                    v._name = i  # pylint: disable=protected-access
 
                 # special case when v is already in the list, in
                 # which case one must do nothing.

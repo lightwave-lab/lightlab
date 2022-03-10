@@ -1,5 +1,4 @@
 import numpy as np
-import pyvisa
 
 from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
@@ -154,7 +153,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         if timeout is None:
             timeout = self.timeout / 1e3
         if timeout > 60:
-            logger.warning(f'Long timeout {timeout} specified, testing')
+            logger.warning('Long timeout %s specified, testing', timeout)
             old_avgCnt = self.timebaseConfig()['avgCnt']
             self.timebaseConfig(avgCnt=2)
             self._triggerAcquire(timeout=10)

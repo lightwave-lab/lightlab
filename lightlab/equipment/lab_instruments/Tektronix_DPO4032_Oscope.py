@@ -1,6 +1,9 @@
 import numpy as np
 from lightlab.util.data import Waveform
 from .Tektronix_DPO4034_Oscope import Tektronix_DPO4034_Oscope
+import pyvisa
+from lightlab import visalogger as logger
+
 
 class Tektronix_DPO4032_Oscope(Tektronix_DPO4034_Oscope):
     '''
@@ -29,14 +32,13 @@ class Tektronix_DPO4032_Oscope(Tektronix_DPO4034_Oscope):
             self.setConfigParam('DATA:START', 1)
             self.setConfigParam('DATA:STOP', int(duration * 2.5e9))
 
-
         presentSettings = dict()
         presentSettings['avgCnt'] = self.getConfigParam('ACQUIRE:NUMAVG', forceHardware=True)
-        presentSettings['duration'] = self.getConfigParam('HORIZONTAL:MAIN:SCALE', forceHardware=True)
+        presentSettings['duration'] = self.getConfigParam(
+            'HORIZONTAL:MAIN:SCALE', forceHardware=True)
         # presentSettings['position'] = self.getConfigParam('HORIZONTAL:MAIN:POSITION', forceHardware=True)
         presentSettings['nPts'] = self.getConfigParam(self._recLenParam, forceHardware=True)
         return presentSettings
-
 
     def __scaleData(self, voltRaw):
         ''' Scale to second and voltage units.

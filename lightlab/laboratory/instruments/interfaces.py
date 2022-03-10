@@ -36,8 +36,7 @@ class SourceMeter(Instrument):
 class Keithley(SourceMeter):
     ''' Usage: :ref:`/ipynbs/Hardware/Keithley.ipynb` '''
     essentialMethods = SourceMeter.essentialMethods + \
-        ['setPort',
-         'setCurrentMode',
+        ['setCurrentMode',
          'setVoltageMode',
          'setVoltage',
          'getVoltage',

@@ -255,7 +255,6 @@ class PrologixGPIBObject(InstrumentSessionBase):
         ''' Closes the connection with the instrument.
         Side effect: disconnects prologix socket controller'''
         self._prologix_rm.disconnect()
-        return
 
     def write(self, writeStr):
         with self._prologix_rm.connected() as pconn:
