@@ -444,7 +444,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
 
         from scipy.signal import correlate
         self_ordi, other_ordi = self(new_abscissa), other(new_abscissa)
-        self_ordi_norm = (self_ordi - np.mean(self_ordi)) / np.std(self_ordi)
+        self_ordi_norm = (self_ordi - np.mean(self_ordi))
         self_ordi_norm /= np.linalg.norm(self_ordi_norm)
         other_ordi_norm = (other_ordi - np.mean(other_ordi))
         other_ordi_norm /= np.linalg.norm(other_ordi_norm)
