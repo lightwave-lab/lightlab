@@ -530,7 +530,7 @@ class NdSweeper(Sweeper):
         for k in xKeys + yKeys:
             if k not in fullData.keys():
                 raise KeyError(k + ' not found in data keys. ' +
-                               'Available data are ' + ', '.join(fullData.keys()))
+                               'Available data are: ' + ', '.join('"{}"'.format(k) for k in fullData.keys()))
 
         # Make grid of axes based on number of pairs of variables
         plotArrShape = np.array([len(yKeys), len(xKeys)])

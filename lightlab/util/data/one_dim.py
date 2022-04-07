@@ -444,7 +444,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
 
         from scipy.signal import correlate
         self_ordi, other_ordi = self(new_abscissa), other(new_abscissa)
-        self_ordi_norm = (self_ordi - np.mean(self_ordi)) / np.std(self_ordi)
+        self_ordi_norm = (self_ordi - np.mean(self_ordi))
         self_ordi_norm /= np.linalg.norm(self_ordi_norm)
         other_ordi_norm = (other_ordi - np.mean(other_ordi))
         other_ordi_norm /= np.linalg.norm(other_ordi_norm)
@@ -848,7 +848,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         return self.__mul__(other)
 
     def __truediv__(self, other):
-        return self * (1 / other)
+        return self * other ** (-1)
 
     def __eq__(self, other):
         if isinstance(self, type(other)):

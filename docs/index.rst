@@ -48,8 +48,8 @@ pyvisa
 
     Proceed with enjoying lightlab once you have the following output::
 
-        >>> import visa
-        >>> rm = visa.ResourceManager()
+        >>> import pyvisa
+        >>> rm = pyvisa.ResourceManager()
         >>> print(rm.list_resources())
         ('GPIB0::20::INSTR', 'GPIB1::24::INSTR', 'ASRL1::INSTR', 'ASRL2::INSTR', 'ASRL3::INSTR', 'ASRL4::INSTR')
 

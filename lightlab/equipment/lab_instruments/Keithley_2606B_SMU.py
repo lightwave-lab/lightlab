@@ -368,6 +368,12 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
         self.write("{smuX}.source.autorange{Y} = 1".format(smuX=self.smu_full_string, Y=source_mode_letter))
         self.write("{smuX}.measure.autorange{Y} = 1".format(smuX=self.smu_full_string, Y=measure_mode_letter))
 
+    def _smu_write(self, string):
+        return self.write("{smuX}.{string}".format(smuX=self.smu_full_string, string=string))
+
+    def _smu_query(self, string):
+        return self.query_print("{smuX}.{string}".format(smuX=self.smu_full_string, string=string))
+
     def setVoltageMode(self, protectionCurrent=0.05):
         self.enable(False)
         self.__setSourceMode(isCurrentSource=False)
