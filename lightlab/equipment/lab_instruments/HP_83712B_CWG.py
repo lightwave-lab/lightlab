@@ -39,3 +39,15 @@ class HP_83712B_CWG(VISAInstrumentDriver, Configurable):
     # Unit of dBm
     def set_power(self, power):
         self.write(f"POW {power}")
+
+    # TO BE TESTED - need to do in person
+    def is_enabled(self):
+        if float(self.query("OUTP?")):
+            return True
+        return False
+    
+    def set_enabled(self, enabled):
+        if enabled:
+            self.write(f"OUTP ON")
+        else:
+            self.write(f"OUTP OFF")
