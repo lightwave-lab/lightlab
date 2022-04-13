@@ -27,7 +27,15 @@ class HP_83712B_CWG(VISAInstrumentDriver, Configurable):
         self.write('*RST')
 
     def get_frequency(self):
-        return(self.query("FREQ?"))
+        return(float(self.query("FREQ?")))
 
+    # Unit of hertz
     def set_frequency(self, frequency):
         self.write(f"FREQ {frequency}")
+
+    def get_power(self):
+        return(float(self.query("POW?")))
+    
+    # Unit of dBm
+    def set_power(self, power):
+        self.write(f"POW {power}")
