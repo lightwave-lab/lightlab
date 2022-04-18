@@ -1,4 +1,4 @@
-from lightlab.equipment.visa_bases import ZMQSerial
+from lightlab.equipment.visa_bases import ZMQSerial_driver
 
 import numpy as np
 from IPython.display import clear_output
@@ -13,7 +13,7 @@ y = "y"
 z = "z"
 
 
-class MDT693B_OLPC(ZMQSerial):
+class MDT693B_OLPC(ZMQSerial_driver):
     ''' A MDT693B - 3-Channel, Open-Loop Piezo Controller 
 
     Uses the remote serial interface
@@ -31,7 +31,7 @@ class MDT693B_OLPC(ZMQSerial):
                 voltStep (float): amount to step if ramping in voltage mode. Default (None) is no ramp
                 rampStepTime (float): time to wait on each ramp step point
         '''
-        ZMQSerial.__init__(self, name=name, server_user=server_user, server_address=server_address, **kwargs)
+        ZMQSerial_driver.__init__(self, name=name, server_user=server_user, server_address=server_address, **kwargs)
 
 
 # # send command and return the controller's response
