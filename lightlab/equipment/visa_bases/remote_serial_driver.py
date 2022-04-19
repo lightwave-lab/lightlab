@@ -30,7 +30,8 @@ class ZMQclient():
                 server_filename='~/tmp/server.py', # script name to save to remote
                 # ZMQ settings
                 zmq_port=5556, # TCP socket that zmq will use to relay commands
-                zmq_timeout=30, # timeout for server <--> client communication
+                zmq_timeout=15, # timeout for server <--> client communication
+                zmq_retries=3,
                 # Serial equipment settings
                 serial_port="/dev/ttyACM0", # Serial port the instrument is connected to on the server (e.g. COM0, "/dev/ttyACM0", etc.)
                 serial_baud=115200, # serial baud rate
@@ -50,6 +51,7 @@ class ZMQclient():
         # zmq settings
         self.zmq_port = zmq_port
         self.zmq_timeout = zmq_timeout
+        self.zmq_retries = zmq_retries
 
         # Serial settings
         self.serial_port = serial_port
@@ -59,7 +61,7 @@ class ZMQclient():
         # If the ZMQ server is not already up, start it
         # if not self.ping():
             # First destroy any identically-named tmux sessions
-        print("Spawning server")
+        print(f"Starting server {self.zmq_port} on {self.server_user}:{self.server_address}")
         self.create_server()
 
     def create_server(self):
@@ -92,15 +94,27 @@ class ZMQclient():
         socket = context.socket(zmq.REQ)
         socket.connect("tcp://{0}:{1}".format(self.server_address, self.zmq_port))
 
-        try:
-            # Send command
-            socket.send(str.encode(f"{header}{self.separator}{command}"))
-            # Wait for and return response
-            reply = socket.recv()
-            reply_str = reply.decode()
-        except:
-            reply_str = "Communication failed"
-            pass
+        # Using Lazy Pirate strategy: https://zguide.zeromq.org/docs/chapter4/
+        socket.send(str.encode(f"{header}{self.separator}{command}"))
+
+        # Wait for an answer
+        retries_left = self.zmq_retries
+        while True:
+            # If get an answer:
+            if (socket.poll(self.zmq_timeout*1000) & zmq.POLLIN) != 0:
+                # Wait for and return response
+                reply = socket.recv()
+                break
+            # If no answer, decrement tries and try again
+            retries_left -= 1
+            socket.setsockopt(zmq.LINGER, 0)
+            socket.close()
+            # If out of tries, return False:
+            if retries_left == 0:
+                return 0
+
+        # Parse response
+        reply_str = reply.decode()
         
         # Clean communication exit
         socket.close()
@@ -114,20 +128,17 @@ class ZMQclient():
             Args:
                 command (str): command to execute on the server
             Returns:
-                (bool): 1 if the command successfully executed
+                (int): 1 if the command successfully executed
         '''
-        try:
-            reply_str = self.request(command, header=3)
-            return 1
-        except:
-            return 0
+        return int(self.request(command, header=3))
 
     def ping(self):
         ''' True (1) if specified server is already active
+
+        Hack to catch all zeromq errors
         '''
         try:
-            reply_str = self.request('', header=1)
-            return 1
+            return int(self.request('', header=1))
         except:
             return 0
 
@@ -135,11 +146,7 @@ class ZMQclient():
         ''' Shuts down the specified server (if any)
             True if successful
         '''
-        try:
-            reply_str = self.request('', header=0)
-            return 1
-        except:
-            return 0
+        return int(self.request('', header=0))
 
 
 class ZMQserver():
