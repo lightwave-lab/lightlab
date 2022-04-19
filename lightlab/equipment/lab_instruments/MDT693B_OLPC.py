@@ -27,11 +27,12 @@ class MDT693B_OLPC(ZMQclient):
     def __init__(self, name=None, server_user=None, server_address=None, **kwargs):
         '''
             Args:
-                currStep (float): amount to step if ramping in current mode. Default (None) is no ramp
-                voltStep (float): amount to step if ramping in voltage mode. Default (None) is no ramp
-                rampStepTime (float): time to wait on each ramp step point
         '''
-        ZMQclient.__init__(self, name=name, server_user=server_user, server_address=server_address, **kwargs)
+        ZMQclient.__init__(self, 
+                            name=name, 
+                            server_user=server_user, 
+                            server_address=server_address, 
+                            **kwargs)
 
 
     def get_volt(self, axis):
@@ -61,3 +62,6 @@ if __name__ == '__main__':
     stage = MDT693B_OLPC(name='stage', server_address='128.112.50.75', server_user='pi')
     print(stage.set_volt('x', 12))
     print(stage.get_volt('x'))
+    print(stage.ping())
+    print(stage.terminate())
+    print(stage.ping())
