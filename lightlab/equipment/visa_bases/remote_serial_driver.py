@@ -9,8 +9,10 @@ import serial
 import sys
 import os
 
+from datetime import datetime
 
-class ZMQSerial_driver():
+
+class ZMQclient():
     '''
         Generic class for a serial driver interfaced with a "server" machine (e.g.  RPi), while the user issues commands from a "client" machine (e.g. laboratory instrumentation server), using ZMQ for client-server communication
 
@@ -26,7 +28,6 @@ class ZMQSerial_driver():
                 server_user=None, # Username for login on the server
                 server_address=None, # IP address of the server
                 server_filename='~/tmp/server.py', # script name to save to remote
-                server_OS_type='debian', # debian (Ubuntu, Raspbian, etc.), ...
                 # ZMQ settings
                 zmq_port=5556, # TCP socket that zmq will use to relay commands
                 zmq_timeout=30, # timeout for server <--> client communication
@@ -34,13 +35,15 @@ class ZMQSerial_driver():
                 serial_port="/dev/ttyACM0", # Serial port the instrument is connected to on the server (e.g. COM0, "/dev/ttyACM0", etc.)
                 serial_baud=115200, # serial baud rate
                 serial_timeout=5, # timeout for server <--> instrument communication
+                # Server session setting
+                tmux_session_name='zmq', # by default will concatenate this with zmq_port #
             ):
 
         # Server settings
         self.server_user = server_user
         self.server_address = server_address
         self.server_filename = server_filename      
-        self.server_OS_type = server_OS_type  
+        self.tmux_session_name = tmux_session_name  
 
         # zmq settings
         self.zmq_port = zmq_port
@@ -53,47 +56,22 @@ class ZMQSerial_driver():
 
         # If the ZMQ server is not already up, start it
         if not self.ping_server():
-            self.spawn_server(server_user, server_address, server_OS_type)
+            # First destroy any identically-named tmux sessions
+            print("Spawning server")
+            self.spawn_server(server_user, server_address, tmux_session_name)
+
 
     def ping_server(self):
         '''
-        Returns whether the ZMQ server is already running on the server
+        Returns whether the requested ZMQ server is already running on the server
         '''
-        return False # self.request(self, 'ping')
+        return True # self.request(self, 'ping')
 
-    def spawn_server(self, server_user, server_address, server_OS_type):
+    def spawn_server(self, server_user, server_address, tmux_session_name):
         '''
         Spawns the server process on the server machine
         '''
         # Upload the server code on the server
-        # try:
-        # From https://stackoverflow.com/questions/20499074/run-local-python-script-on-remote-server
-        # Connect to remote host
-        # import paramiko
-        # client = paramiko.SSHClient()
-        # client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        # TODO: figure out key situation. For now, just request password:
-        # import getpass
-        # server_password = getpass.getpass()
-        # client.connect(hostname=server_address,
-        #                     username=server_user,
-        #                     password=server_password)
-        # Setup sftp connection and transmit this script
-        # sftp = client.open_sftp()
-        # try:
-        #     sftp.stat('./tmp')
-        # except FileNotFoundError:
-        #     sftp.mkdir('./tmp')
-        # sftp.put(__file__, './tmp/serial_server.py', confirm=False)
-        # sftp.close()
-        # Run the transmitted script remotely without args and show its output.
-        # SSHClient.exec_command() returns the tuple (stdin,stdout,stderr)
-        # client.exec_command('tmux new-session -s zeromq',  get_pty=True)
-        # stdout = client.exec_command(f'tmux new-session -s -d \"zeromq\" python ~/tmp/serial_server.py {self.zmq_port} {self.zmq_timeout} {self.serial_port} {self.serial_baud} {self.serial_timeout} > ~/tmp/serial_server.log')[1]
-        # # client.exec_command('tmux detach')
-        # client.close()
-        # sys.exit(0)
-
         from fabric import Connection
         from patchwork.files import exists
 
@@ -102,7 +80,8 @@ class ZMQSerial_driver():
                c.run("mkdir ./tmp")
             c.put(__file__, './tmp/serial_server.py')
             c.run("tmux new -d -s zeromq")
-            c.run(f"tmux send-keys -t zeromq.0 \"python ~/tmp/serial_server.py {self.zmq_port} {self.zmq_timeout} {self.serial_port} {self.serial_baud} {self.serial_timeout} > ./tmp/serial_server.log\" ENTER")
+            c.run(f"tmux send-keys -t zeromq.0 \"python ~/tmp/serial_server.py {self.zmq_port} {self.zmq_timeout} {self.serial_port} {self.serial_baud} {self.serial_timeout}\" ENTER")
+            # c.run(f"tmux send-keys -t zeromq.0 \"python ~/tmp/serial_server.py {self.zmq_port} {self.zmq_timeout} {self.serial_port} {self.serial_baud} {self.serial_timeout} > ./tmp/serial_server.log\" ENTER")
 
     def request(self, command):
         ''' General-purpose Request-Reply with client
@@ -132,6 +111,21 @@ class ZMQSerial_driver():
         context.destroy()
         return reply_str
 
+    def write(self, command):
+        ''' Wrapper around request for commands that don't require a response from the equipment
+        The difference between request and write is implemented on the server
+        
+            Args:
+                command (str): command to execute on the server
+            Returns:
+                (bool): True if the command successfully executed
+        '''
+        try:
+            self.request(command)
+            return 1
+        except:
+            return 0
+
 
 class ZMQserver():
     '''
@@ -141,7 +135,7 @@ class ZMQserver():
     def __init__(self, 
                 # ZMQ settings
                 zmq_port=5556, # TCP socket that zmq will use to relay commands
-                zmq_timeout=30, # timeout for server <--> client communication
+                zmq_timeout=10, # timeout for server <--> client communication
                 # Serial equipment settings
                 serial_port="/dev/ttyACM0", # Serial port the instrument is connected to on the server (e.g. COM0, "/dev/ttyACM0", etc.)
                 serial_baud=115200, # serial baud rate
@@ -154,18 +148,22 @@ class ZMQserver():
         self.serial_baud = serial_baud
         self.serial_timeout = serial_timeout
 
-        print("Creating zmq")
         context = zmq.Context()
         socket = context.socket(zmq.REP)
+        socket.setsockopt(zmq.LINGER, zmq_timeout)
         socket.bind(f"tcp://*:{zmq_port}")
         # Run server
+        print("running server")
         self.run(socket)
+        print("not running server anymore")
         # Clean exit if "run" function is interrupted and returns
         socket.close()
         context.destroy()
+        # os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
 
-    def command(self, cmd):
+    def serial_command(self, cmd):
         cmd += "\n"
+        print(f"Serial command {cmd}")
         with serial.Serial(self.serial_port, self.serial_baud, timeout=self.serial_timeout) as ser:
             ser.write(cmd.encode())
             recv = ser.readlines()
@@ -179,17 +177,15 @@ class ZMQserver():
         Start running the zeromq server on the host machine
         '''  
 
-        print("Starting server")        
-        try:    
+        print(f"Starting server with zmq socket {self.zmq_port}")        
+        try:
             while True:
-                print("In loop")
-                cmd = socket.recv()
+                cmd = socket.recv().decode()
                 print("Received command: %s" % cmd)
                 
                 try:
                     # Execute command
-                    cmd += "\n"
-                    output = self.command(cmd)
+                    output = self.serial_command(cmd)
                     #  Send reply back to client
                     socket.send(str.encode(output))
                 # If manuel interruption, clean exit
@@ -198,8 +194,7 @@ class ZMQserver():
                     return
                 # If communication error
                 except Exception as e:
-                    print("Communication error!")
-                    # os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
+                    print("Communication error from zmq server to client")
                     print(e)
                     return
 
@@ -207,8 +202,7 @@ class ZMQserver():
         except Exception as e:
             # Exit to clean exit command
             print(e)
-            print("Server exiting; shutting down tmux session")
-            # os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
+            print("Server exiting")
             return
 
 
@@ -226,9 +220,9 @@ if __name__ == '__main__':
     parser.add_argument('serial_timeout', type=str, help='Timeout for the serial connection')
     args = parser.parse_args()
 
-    server = ZMQserver(zmq_port=args.zmq_port,
-                        zmq_timeout=args.zmq_timeout,
+    server = ZMQserver(zmq_port=int(args.zmq_port),
+                        zmq_timeout=float(args.zmq_timeout),
                         # Serial equipment settings
-                        serial_port=args.serial_port,
-                        serial_baud=args.serial_baud, 
-                        serial_timeout=args.serial_timeout)
+                        serial_port=str(args.serial_port),
+                        serial_baud=int(args.serial_baud), 
+                        serial_timeout=float(args.serial_timeout))
