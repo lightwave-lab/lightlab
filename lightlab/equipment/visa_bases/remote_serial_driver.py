@@ -59,10 +59,11 @@ class ZMQclient():
         self.serial_timeout = serial_timeout
 
         # If the ZMQ server is not already up, start it
-        # if not self.ping():
-            # First destroy any identically-named tmux sessions
-        print(f"Starting server {self.zmq_port} on {self.server_user}:{self.server_address}")
-        self.create_server()
+        if not self.ping():
+            print(f"Starting server {self.zmq_port} on {self.server_user}:{self.server_address}")
+            self.create_server()
+        else:
+            print(f"Successfully pinged {self.zmq_port} on {self.server_user}:{self.server_address}")
 
     def create_server(self):
         '''
@@ -181,7 +182,7 @@ class ZMQserver():
         # Clean exit if "run" function is interrupted and returns
         socket.close()
         context.destroy()
-        # os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
+        os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
 
     def serial_request(self, cmd, timeout):
         cmd += "\n"

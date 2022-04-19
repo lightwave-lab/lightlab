@@ -61,9 +61,9 @@ if __name__ == '__main__':
     import time
     import sys
     stage = MDT693B_OLPC(name='stage', server_address='128.112.50.75', server_user='pi')
-    # print(stage.set_volt('x', 12))
-    # print(stage.get_volt('x'))
-    # print(stage.ping())
-    # print(stage.terminate())
+    print(stage.set_volt('x', 12))
+    print(stage.get_volt('x'))
+    print(stage.ping())
+    print(stage.terminate())
     print(stage.ping())
     sys.exit()
