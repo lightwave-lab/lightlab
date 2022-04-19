@@ -102,7 +102,7 @@ class ZMQSerial_driver():
                c.run("mkdir ./tmp")
             c.put(__file__, './tmp/serial_server.py')
             c.run("tmux new -d -s zeromq")
-            c.run(f"tmux send-keys -t zeromq.0 \"python ~/tmp/serial_server.py {self.zmq_port} {self.zmq_timeout} {self.serial_port} {self.serial_baud} {self.serial_timeout} > ~/tmp/serial_server.log\" ENTER")
+            c.run(f"tmux send-keys -t zeromq.0 \"python ~/tmp/serial_server.py {self.zmq_port} {self.zmq_timeout} {self.serial_port} {self.serial_baud} {self.serial_timeout} > ./tmp/serial_server.log\" ENTER")
 
     def request(self, command):
         ''' General-purpose Request-Reply with client
@@ -183,7 +183,7 @@ class ZMQserver():
         try:    
             while True:
                 print("In loop")
-                cmd = self.zmq_port.recv()
+                cmd = socket.recv()
                 print("Received command: %s" % cmd)
                 
                 try:
@@ -199,15 +199,16 @@ class ZMQserver():
                 # If communication error
                 except Exception as e:
                     print("Communication error!")
-                    os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
+                    # os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
                     print(e)
+                    return
 
         # If server fails for any other reason (including KeyboardInterrupt)
         except Exception as e:
             # Exit to clean exit command
             print(e)
             print("Server exiting; shutting down tmux session")
-            os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
+            # os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
             return
 
 
