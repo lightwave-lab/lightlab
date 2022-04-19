@@ -136,6 +136,7 @@ class ZMQSerial_driver():
 class ZMQserver():
     '''
         Actual class implementing the ZMQ server, to be executed on the remote machine
+        Receives messages from the ZMQ client, and forwards them to the Serial instrument
     '''
     def __init__(self, 
                 # ZMQ settings
@@ -153,6 +154,7 @@ class ZMQserver():
         self.serial_baud = serial_baud
         self.serial_timeout = serial_timeout
 
+        print("Creating zmq")
         context = zmq.Context()
         socket = context.socket(zmq.REP)
         socket.bind(f"tcp://*:{zmq_port}")
@@ -180,7 +182,7 @@ class ZMQserver():
         print("Starting server")        
         try:    
             while True:
-            
+                print("In loop")
                 cmd = self.zmq_port.recv()
                 print("Received command: %s" % cmd)
                 
@@ -197,11 +199,15 @@ class ZMQserver():
                 # If communication error
                 except Exception as e:
                     print("Communication error!")
+                    os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
                     print(e)
 
         # If server fails for any other reason (including KeyboardInterrupt)
-        except:
+        except Exception as e:
             # Exit to clean exit command
+            print(e)
+            print("Server exiting; shutting down tmux session")
+            os.system('tmux kill-session -t $(tmux display-message -p \'#S\')')
             return
 
 
