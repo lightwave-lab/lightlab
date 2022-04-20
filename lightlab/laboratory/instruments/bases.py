@@ -633,7 +633,7 @@ class Instrument(Node):
         try:
             driver = self.driver_object
             query_id = driver.instrID()
-            logger.info("Found %s in %s.", self.name, self.address)
+            logger.info("Found instrument in %s.", self.address)
             if self.id_string is not None:
                 if self.id_string == query_id:
                     logger.info("id_string of %s is accurate", self.name)
@@ -643,7 +643,7 @@ class Instrument(Node):
                                    query_id, self.id_string)
                     return False
             else:
-                logger.debug("Cannot authenticate %s in %s.",
+                logger.debug("Missing id_string, cannot confirm that %s is in %s.",
                              self.name, self.address)
                 return True
         except pyvisa.VisaIOError as err:

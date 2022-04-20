@@ -52,7 +52,7 @@ def main():
         ),
         install_requires=[
             'dpath',
-            'jsonpickle',
+            'jsonpickle>=1.4.1',
             'matplotlib',
             'IPython',
             'PyVISA',
