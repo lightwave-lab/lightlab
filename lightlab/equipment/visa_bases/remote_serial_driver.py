@@ -17,9 +17,6 @@ class ZMQclient():
         Generic class for a serial driver interfaced with a "server" machine (e.g.  RPi), while the user issues commands from a "client" machine (e.g. laboratory instrumentation server), using ZMQ for client-server communication
 
         User <--> [Client] <--ZMQ--> [Server] <--Serial--> Instrument
-
-        - This class provides the utilities that will spawn a zmq process on the server and relay commands from the client
-        - SSH password needs to be input during function call if passwordless connection is not setup
     '''
 
     def __init__(self, 
@@ -27,25 +24,47 @@ class ZMQclient():
                 # Server SSH settings
                 server_user=None, # Username for login on the server
                 server_address=None, # IP address of the server
-                server_filename='~/tmp/server.py', # script name to save to remote
                 # ZMQ settings
                 zmq_port=5556, # TCP socket that zmq will use to relay commands
                 zmq_timeout=15, # timeout for server <--> client communication
                 zmq_retries=3,
+                server_filename='./tmp/serial_server.py', # script name to save to remote
+                tmux_session_prefix='zmq', # by default will concatenate this with zmq_port #
+                separator='___', # separator between command header and command
                 # Serial equipment settings
                 serial_port="/dev/ttyACM0", # Serial port the instrument is connected to on the server (e.g. COM0, "/dev/ttyACM0", etc.)
                 serial_baud=115200, # serial baud rate
                 serial_timeout=5, # timeout for server <--> instrument communication
-                # Server session setting
-                tmux_session_name='zmq', # by default will concatenate this with zmq_port #
-                separator='___' # separator between command header and command
             ):
+        '''
+            Args:
+                name=None,
+                
+                Server SSH settings
+                server_user (str): username for login on the server. Default: None
+                server_address (str): IP address of the server. Default: None
+                server_filename (str): script name to save to remote. Default: '~/tmp/server.py'
+                
+                ZMQ settings
+                zmq_port (int): TCP socket that zmq will use to relay commands. Default: 5556
+                zmq_timeout (float?): timeout for server <--> client communication, in seconds. Default: 15
+                zmq_retries (int): number of server-client reconnection attempts. Default: 3
+
+                Serial equipment settings
+                serial_port (str): Serial port the instrument is connected to on the server (e.g. COM0, "/dev/ttyACM0", etc.). Default: "/dev/ttyACM0"
+                serial_baud (int): Serial baud rate. Default: 115200
+                serial_timeout (float?): Timeout for server <--> instrument communication, in seconds. Default: 5
+
+                # Server session settings
+                tmux_session_prefix (str): string prefixing the tmux session on the remote server, concatenated with zmq_zmq_port. Default: 'zmq'
+                separator (str): separator between command header and command. Default: '___'
+        '''
 
         # Server settings
         self.server_user = server_user
         self.server_address = server_address
         self.server_filename = server_filename      
-        self.tmux_session_name = tmux_session_name 
+        self.tmux_session_prefix = tmux_session_prefix 
         self.separator = separator 
 
         # zmq settings
@@ -66,9 +85,12 @@ class ZMQclient():
             print(f"Successfully pinged {self.zmq_port} on {self.server_user}:{self.server_address}")
 
     def create_server(self):
-        '''
-        Spawns the server process on the server machine
-        The process is composed of a tmux session + this python script
+        ''' create_server
+
+        Initializes the zmq server on the remote server:
+            * uploads a copy of this script to the server
+            * creates a tmux session
+            * runs a copy of this Python script in that session
         '''
         # Upload the server code on the server
         from fabric import Connection
@@ -77,18 +99,26 @@ class ZMQclient():
         with Connection(f'{self.server_user}@{self.server_address}') as c:
             if not exists(c, "./tmp"):
                c.run("mkdir ./tmp")
-            c.put(__file__, './tmp/serial_server.py')
-            c.run(f"tmux new -d -s {self.tmux_session_name}_{self.zmq_port}")
-            c.run(f"tmux send-keys -t {self.tmux_session_name}_{self.zmq_port}.0 \"python ~/tmp/serial_server.py {self.zmq_port} {self.zmq_timeout} {self.serial_port} {self.serial_baud} {self.serial_timeout} {self.separator}\" ENTER")
+            c.put(__file__, f"{self.server_filename}")
+            c.run(f"tmux new -d -s {self.tmux_session_prefix}_{self.zmq_port}")
+            c.run(f"tmux send-keys -t {self.tmux_session_prefix}_{self.zmq_port}.0 \"python {self.server_filename} {self.zmq_port} {self.zmq_timeout} {self.serial_port} {self.serial_baud} {self.serial_timeout} {self.separator}\" ENTER")
             # c.run(f"tmux send-keys -t zeromq.0 \"python ~/tmp/serial_server.py {self.zmq_port} {self.zmq_timeout} {self.serial_port} {self.serial_baud} {self.serial_timeout} > ./tmp/serial_server.log\" ENTER")
 
     def request(self, command, header=2):
-        ''' General-purpose Request-Reply with client
-        
-            Args:
-                command (str): command to execute on server
-            Returns:
-                (str): output of the command on server side
+        ''' request
+
+        General-purpose Request-Reply with client
+            * uploads a copy of this script to the server
+            * creates a tmux session
+            * runs a copy of this Python script in that session
+
+        Args:
+            command (str): command to upload to the server
+            header (int): header to append to the command (defined server-side)
+
+        Returns:
+            (str): server reply
+            (0 if communication fails)
         '''
         # Establish connection
         context = zmq.Context()
@@ -123,20 +153,28 @@ class ZMQclient():
         return reply_str
 
     def write(self, command):
-        ''' Wrapper around request for commands that don't require a response from the equipment
-        Request has a custom timeout, whereas write has short timeout (implemented on server)
-        
-            Args:
-                command (str): command to execute on the server
-            Returns:
-                (int): 1 if the command successfully executed
+        ''' write
+
+        A request that does not require a response (faster)
+        By default, header=3
+
+        Args:
+            command (str): command to upload to the server
+
+        Returns:
+            (int): 1 for success, 0 for failure
         '''
         return int(self.request(command, header=3))
 
     def ping(self):
-        ''' True (1) if specified server is already active
+        ''' ping
 
-        Hack to catch all zeromq errors
+        Queries whether the requested server is live
+
+        Args:
+
+        Returns:
+            (int): 1 for success, 0 for failure
         '''
         try:
             return int(self.request('', header=1))
@@ -144,8 +182,14 @@ class ZMQclient():
             return 0
 
     def terminate(self):
-        ''' Shuts down the specified server (if any)
-            True if successful
+        ''' terminate
+
+        Shuts dows the specified server
+
+        Args:
+
+        Returns:
+            (int): 1 for success, 0 for failure
         '''
         return int(self.request('', header=0))
 
@@ -199,7 +243,7 @@ class ZMQserver():
         ''' 
         Run the zeromq server on the host machine
 
-        Dedicated commands:
+        Dedicated command headers:
         0 - terminate
         1 - ping
         2 - "request" w/ self.serial_timeout
@@ -237,6 +281,7 @@ class ZMQserver():
                         print("Received write (header 3) command: %s" % cmd)
                         self.serial_request(cmd, 1E-3)
                         output = '1'
+                    # OTHER
                     else:
                         print(f"Received (non-implemented) command header {cmd_header} with command {cmd}. Server still running.")
                         output = '0'
