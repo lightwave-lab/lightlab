@@ -51,7 +51,7 @@ class Keithley_2400_SM_v2(VISAInstrumentDriver, Configurable):
         self.write(f'SOURCE:FUNC {sourceStr}')
         self.write('SOURCE:{}:MODE FIXED'.format(sourceStr))
         self.write('SENSE:FUNCTION:OFF:ALL')
-        self.write('SENSE:FUNCTION:ON {}'.format(meterStr))
+        self.write('SENSE:FUNCTION "{}"'.format(meterStr))
         self.write('SENSE:{}:RANGE:AUTO ON'.format(meterStr))
         self.write('RES:MODE MAN')  # Manual resistance ranging
 
@@ -88,25 +88,10 @@ class Keithley_2400_SM_v2(VISAInstrumentDriver, Configurable):
         self._latestVoltageVal = voltVolts
 
     def setCurrent(self, currAmps):
-        ''' This leaves the output on indefinitely '''
-        currTemp = self._latestCurrentVal
-        if not self.enable() or self.currStep is None:
-            self._configCurrent(currAmps)
-        else:
-            nSteps = int(np.floor(abs(currTemp - currAmps) / self.currStep))
-            for curr in np.linspace(currTemp, currAmps, 1 + nSteps)[1:]:
-                self._configCurrent(curr)
-                time.sleep(self.rampStepTime)
+        self._configCurrent(currAmps)
 
     def setVoltage(self, voltVolts):
-        voltTemp = self._latestVoltageVal
-        if not self.enable() or self.voltStep is None:
-            self._configVoltage(voltVolts)
-        else:
-            nSteps = int(np.floor(abs(voltTemp - voltVolts) / self.voltStep))
-            for volt in np.linspace(voltTemp, voltVolts, 1 + nSteps)[1:]:
-                self._configVoltage(volt)
-                time.sleep(self.rampStepTime)
+        self._configVoltage(voltVolts)
 
     def getCurrent(self):
         return float(self.query('SOURCE:CURR?'))
@@ -121,10 +106,10 @@ class Keithley_2400_SM_v2(VISAInstrumentDriver, Configurable):
         self.write(f'CURR:PROT {protectionCurrent}')
 
     def measVoltage(self):
-        return float(self.query('MEASURE:VOLT?')) 
+        return float(self.query('MEASURE:VOLT?').split(",")[0]) 
 
     def measCurrent(self):
-        return float(self.query('MEASURE:CURR?'))
+        return float(self.query('MEASURE:CURR?').split(",")[1])
 
     def enable(self, activity=True):
         self.write(f'OUTP:STATE {1 if activity else 0}')
