@@ -141,10 +141,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
     def query(self, queryStr, expected_talker=None):
         ret = self._query(queryStr)
         if expected_talker is not None:
-            if ret != expected_talker:
-                log_function = logger.warning
-            else:
-                log_function = logger.debug
+            log_function = logger.warning if ret != expected_talker else logger.debug
             log_function(
                 "'%s' returned '%s', expected '%s'", queryStr, ret, str(expected_talker)
             )
@@ -167,9 +164,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
         elif self.channel.upper() == "B":
             return "smub"
         else:
-            raise RuntimeError(
-                "Unexpected channel: {}, should be 'A' or 'B'".format(self.channel)
-            )
+            raise RuntimeError(f"Unexpected channel: {self.channel}, should be 'A' or 'B'")
 
     @property
     def smu_full_string(self):
@@ -177,7 +172,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
 
     def query_print(self, query_string, expected_talker=None):
         time.sleep(0.01)
-        query_string = "print(" + query_string + ")"
+        query_string = f"print({query_string})"
         return self.query(query_string, expected_talker=expected_talker)
 
     def smu_reset(self):
@@ -237,13 +232,7 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
 
     def set_sense_mode(self, sense_mode="local"):
         ''' Set sense mode. Defaults to local sensing. '''
-        if sense_mode == "remote":
-            sense_mode = 1  # 1 or smuX.SENSE_REMOTE: Selects remote sense (4-wire)
-        elif sense_mode == "local":
-            sense_mode = 0  # 0 or smuX.SENSE_LOCAL: Selects local sense (2-wire)
-        else:
-            sense_mode = 0  # 0 or smuX.SENSE_LOCAL: Selects local sense (2-wire)
-
+        sense_mode = 1 if sense_mode == "remote" else 0
         self.write("{smuX}.sense = {sense_mode}".format(smuX=self.smu_full_string, sense_mode=sense_mode))
 
     # SourceMeter Essential methods

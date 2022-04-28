@@ -41,10 +41,10 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
         '''
         if amp is not None:
             if amp > 30:
-                print('Warning: R&S ony goes up to +30dBm, given {}dBm.'.format(amp))
+                print(f'Warning: R&S ony goes up to +30dBm, given {amp}dBm.')
                 amp = 15
             if amp < -145:
-                print('Warning: R&S ony goes down to -145dBm, given {}dBm.'.format(amp))
+                print(f'Warning: R&S ony goes down to -145dBm, given {amp}dBm.')
                 amp = -145
             self.setConfigParam('POW', amp)
         return self.getConfigParam('POW')
@@ -134,7 +134,7 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
         self.setConfigParam('BB:DM:SOUR', 'PATT')
         bitArray = np.array(bitArray, dtype=int)
         onesAndZeros = ''.join([str(b) for b in bitArray])
-        pStr = '#B' + onesAndZeros + ',' + str(len(bitArray))
+        pStr = f'#B{onesAndZeros},{len(bitArray)}'
         self.setConfigParam('BB:DM:PATT', pStr)
 
     def digiMod(self, enaState=True, symbRate=None, amExtinct=None):
@@ -199,11 +199,14 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
 
         typMod = typMod.upper()
         if typMod not in allMods:
-            raise Exception(typMod + ' is not a valid kind of carrier modulation: am, fm, or pm')
+            raise Exception(
+                f'{typMod} is not a valid kind of carrier modulation: am, fm, or pm'
+            )
+
         # Generic parameter setup
-        self.setConfigParam(typMod + ':SOUR', 'INT')
+        self.setConfigParam(f'{typMod}:SOUR', 'INT')
         if typMod in ['PM', 'FM']:
-            self.setConfigParam(typMod + ':MODE', 'HDEV')
+            self.setConfigParam(f'{typMod}:MODE', 'HDEV')
         # Specifiable parameter setup
         if deviation is not None:
             self.setConfigParam(typMod, deviation)
@@ -213,9 +216,9 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
         if enaState is not None:
             for mod in allMods:
                 if mod != typMod:
-                    self.__enaBlock(mod + ':STAT', False)
+                    self.__enaBlock(f'{mod}:STAT', False)
         # Enabling
-        return self.__enaBlock(typMod + ':STAT', enaState)
+        return self.__enaBlock(f'{typMod}:STAT', enaState)
 
     def listEnable(self, enaState=True, freqs=None, amps=None, isSlave=False, dwell=None):
         ''' Sets up list mode.
@@ -257,10 +260,9 @@ class RandS_SMBV100A_VG(VISAInstrumentDriver, Configurable):
                 amps = amps * np.ones(len(freqs))
             elif np.isscalar(freqs):
                 freqs = freqs * np.ones(len(amps))
-            else:
-                if len(amps) != len(freqs):
-                    raise ValueError(
-                        'amps and freqs must have equal lengths, or one/both can be scalars or None')
+            elif len(amps) != len(freqs):
+                raise ValueError(
+                    'amps and freqs must have equal lengths, or one/both can be scalars or None')
             self.setConfigParam('LIST:FREQ', ', '.join([str(int(f)) for f in freqs]))
             self.setConfigParam('LIST:POW', ', '.join([str(int(a)) for a in amps]))
 

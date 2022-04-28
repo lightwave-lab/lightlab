@@ -1,16 +1,18 @@
 ''' Tests whether all the visa drivers included in lightlab are properly
 coded. All tests should be safe to run locally.'''
 
+
 import pytest
 from mock import patch
 from lightlab.equipment import lab_instruments
 from lightlab.equipment.lab_instruments import VISAInstrumentDriver
 import inspect
 
-classes = []  # All classes that inherit VISAInstrumentDriver
-for name, obj in inspect.getmembers(lab_instruments):
-    if inspect.isclass(obj) and issubclass(obj, VISAInstrumentDriver):
-        classes.append(obj)
+classes = [
+    obj
+    for name, obj in inspect.getmembers(lab_instruments)
+    if inspect.isclass(obj) and issubclass(obj, VISAInstrumentDriver)
+]
 
 class OpenError(RuntimeError):
     pass

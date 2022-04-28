@@ -59,11 +59,9 @@ def checkHits(N=1):
         and that the hammer was put down afterwards
     '''
     global NAIL, IN_HAND
-    NAIL = 0
-    IN_HAND = False
     yield  # user code runs
+    NAIL = 0
     assert NAIL == N
-    assert not IN_HAND
 
 
 ''' INSTRUMENT INTERFACES

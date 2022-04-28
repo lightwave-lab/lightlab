@@ -53,7 +53,7 @@ class Host(Node):
         '''
         if self.hostname is not None:
             logger.debug("Pinging %s...", self.hostname)
-            response = os.system("ping -c 1 {}".format(self.hostname))
+            response = os.system(f"ping -c 1 {self.hostname}")
             if response != 0:
                 logger.warning("%s is not reachable via ping.", self)
             return response == 0
@@ -69,7 +69,7 @@ class Host(Node):
             Returns:
                 (str)
         '''
-        return 'visa://{}/'.format(self.hostname)
+        return f'visa://{self.hostname}/'
 
     def gpib_port_to_address(self, port, board=0):
         '''
@@ -80,7 +80,7 @@ class Host(Node):
             Returns:
                 (str): the address that can be used in an initializer
         '''
-        localSerialStr = 'GPIB{}::{}::INSTR'.format(board, port)
+        localSerialStr = f'GPIB{board}::{port}::INSTR'
         return self._visa_prefix() + localSerialStr
 
     def list_resources_info(self, use_cached=True):
@@ -96,15 +96,13 @@ class Host(Node):
         """
         if self.__cached_list_resources_info is None:
             use_cached = False
-        if use_cached:
-            return self.__cached_list_resources_info
-        else:
-            list_query = self._visa_prefix() + "?*::INSTR"
+        if not use_cached:
+            list_query = f"{self._visa_prefix()}?*::INSTR"
             rm = pyvisa.ResourceManager()
             logger.debug("Caching resource list in %s", self)
             self.__cached_list_resources_info = rm.list_resources_info(
                 query=list_query)
-            return self.__cached_list_resources_info
+        return self.__cached_list_resources_info
 
     def list_gpib_resources_info(self, use_cached=True):
         """ Like :meth:`list_resources_info`, but only returns gpib
@@ -139,18 +137,17 @@ class Host(Node):
             use_cached = False
         if use_cached:
             return self.__cached_gpib_instrument_list
-        else:
-            gpib_instrument_list = dict()
-            logger.debug("Caching GPIB instrument list in %s", self)
-            for gpib_address in gpib_resources.keys():
-                visa_object = VISAObject(gpib_address, tempSess=True)
-                try:
-                    instr_id = visa_object.instrID()
-                    gpib_instrument_list[gpib_address] = instr_id
-                except pyvisa.VisaIOError as err:
-                    logger.error(err)
-            self.__cached_gpib_instrument_list = gpib_instrument_list
-            return gpib_instrument_list
+        gpib_instrument_list = {}
+        logger.debug("Caching GPIB instrument list in %s", self)
+        for gpib_address in gpib_resources.keys():
+            visa_object = VISAObject(gpib_address, tempSess=True)
+            try:
+                instr_id = visa_object.instrID()
+                gpib_instrument_list[gpib_address] = instr_id
+            except pyvisa.VisaIOError as err:
+                logger.error(err)
+        self.__cached_gpib_instrument_list = gpib_instrument_list
+        return gpib_instrument_list
 
     def findGpibAddressById(self, id_string_search, use_cached=True):
         """ Finds a gpib address using :meth:`get_all_gpib_id`, given
@@ -173,8 +170,7 @@ class Host(Node):
                 logger.info("Found %s in %s.", id_string_search, gpib_address)
                 return gpib_address
         logger.warning("%s not found in %s", id_string_search, self)
-        raise NotFoundError(
-            "{} not found in {}".format(id_string_search, self))
+        raise NotFoundError(f"{id_string_search} not found in {self}")
 
     def addInstrument(self, *instruments):
         r""" Adds an instrument to lab.instruments if it is not already present.
@@ -222,17 +218,19 @@ class Host(Node):
         return all_live
 
     def __str__(self):
-        return "Host {}".format(self.name)
+        return f"Host {self.name}"
 
     def display(self):
         """ Displays the host's instrument table in a nice format."""
-        lines = ["{}".format(self)]
-        lines.append("===========")
-        lines.append("Instruments")
-        lines.append("===========")
+        lines = [f"{self}", "===========", "Instruments", "==========="]
         if len(self.instruments) > 0:
-            lines.extend(["   {} ({})".format(str(instrument), str(instrument.host))
-                          for instrument in self.instruments])
+            lines.extend(
+                [
+                    f"   {str(instrument)} ({str(instrument.host)})"
+                    for instrument in self.instruments
+                ]
+            )
+
         else:
             lines.append("   No instruments.")
         lines.append("***")
@@ -360,27 +358,27 @@ class Bench(Node):
 
     def display(self):
         """ Displays the bench's table in a nice format."""
-        lines = ["{}".format(self)]
-        lines.append("===========")
-        lines.append("Instruments")
-        lines.append("===========")
+        lines = [f"{self}", "===========", "Instruments", "==========="]
         if len(self.instruments) > 0:
-            lines.extend(["   {} ({})".format(str(instrument), str(instrument.host))
-                          for instrument in self.instruments])
+            lines.extend(
+                [
+                    f"   {str(instrument)} ({str(instrument.host)})"
+                    for instrument in self.instruments
+                ]
+            )
+
         else:
             lines.append("   No instruments.")
-        lines.append("=======")
-        lines.append("Devices")
-        lines.append("=======")
+        lines.extend(("=======", "Devices", "======="))
         if len(self.devices) > 0:
-            lines.extend(["   {}".format(str(device)) for device in self.devices])
+            lines.extend([f"   {str(device)}" for device in self.devices])
         else:
             lines.append("   No devices.")
         lines.append("***")
         print("\n".join(lines))
 
     def __str__(self):
-        return "Bench {}".format(self.name)
+        return f"Bench {self.name}"
 
 
 class Instrument(Node):
@@ -443,11 +441,11 @@ class Instrument(Node):
 
     @property
     def implementedOptionals(self):
-        implementedOptionals = list()
-        for opAttr in self.optionalAttributes:
-            if hasattr(self._driver_class, opAttr):
-                implementedOptionals.append(opAttr)
-        return implementedOptionals
+        return [
+            opAttr
+            for opAttr in self.optionalAttributes
+            if hasattr(self._driver_class, opAttr)
+        ]
 
     # These control feedthroughs to the driver
     def __getattr__(self, attrName):
@@ -477,10 +475,9 @@ class Instrument(Node):
                 + self.implementedOptionals:
             setattr(self.driver, attrName, newVal)
         else:
-            if attrName == 'address':  # Reinitialize the driver
-                if self.__driver_object is not None:
-                    self.__driver_object.close()
-                    self.__driver_object.address = newVal
+            if attrName == 'address' and self.__driver_object is not None:
+                self.__driver_object.close()
+                self.__driver_object.address = newVal
             super().__setattr__(mangle(attrName, self.__class__.__name__), newVal)
 
     def __delattr__(self, attrName):
@@ -537,11 +534,10 @@ class Instrument(Node):
         This way the object knows how to instantiate a driver instance
         from the labstate.
         """
-        if self._driver_class is None:
-            logger.warning("Using default driver for %s.", self)
-            return DefaultDriver
-        else:
+        if self._driver_class is not None:
             return self._driver_class
+        logger.warning("Using default driver for %s.", self)
+        return DefaultDriver
 
     @property
     def driver_object(self):
@@ -550,7 +546,7 @@ class Instrument(Node):
             try:
                 kwargs = self.driver_kwargs
             except AttributeError:  # Fall back to the jank version where we try to guess what is important
-                kwargs = dict()
+                kwargs = {}
                 for kwarg in ["useChans", "elChans", "dfbChans", "stateDict", "sourceMode"]:
                     try:
                         kwargs[kwarg] = getattr(self, kwarg)
@@ -585,38 +581,42 @@ class Instrument(Node):
         return self._id_string
 
     def __str__(self):
-        return "{}".format(self.name)
+        return f"{self.name}"
 
     def __repr__(self):
-        return "<{} name={}, address={}, id={}>".format(self.__class__.__name__,
-                                                        self.name, self.address, id(self))
+        return f"<{self.__class__.__name__} name={self.name}, address={self.address}, id={id(self)}>"
 
     def display(self):
         """ Displays the instrument's info table in a nice format."""
-        lines = ["{}".format(self)]
-        lines.append("Bench: {}".format(self.bench))
-        lines.append("Host: {}".format(self.host))
-        lines.append("address: {}".format(self.address))
-        lines.append("id_string: {}".format(self.id_string))
+        lines = [
+            f"{self}",
+            f"Bench: {self.bench}",
+            f"Host: {self.host}",
+            f"address: {self.address}",
+            f"id_string: {self.id_string}",
+        ]
+
         if not self.id_string:
             lines.append("The id_string should match the value returned by"
                          " self.driver.instrID(), and is checked by the command"
                          " self.isLive() in order to authenticate that the intrument"
                          " in that address is the intended one.")
-        lines.append("driver_class: {}".format(self.driver_class.__name__))
-        lines.append("=====")
-        lines.append("Ports")
-        lines.append("=====")
+        lines.extend(
+            (
+                f"driver_class: {self.driver_class.__name__}",
+                "=====",
+                "Ports",
+                "=====",
+            )
+        )
+
         if len(self.ports) > 0:
-            lines.extend(["   {}".format(str(port)) for port in self.ports])
+            lines.extend([f"   {str(port)}" for port in self.ports])
         else:
             lines.append("   No ports.")
         if hasattr(self, 'driver_kwargs'):
-            lines.append("=====")
-            lines.append("Driver kwargs")
-            lines.append("=====")
-            for k, v in self.driver_kwargs.items():
-                lines.append("   {} = {}".format(str(k), str(v)))
+            lines.extend(("=====", "Driver kwargs", "====="))
+            lines.extend(f"   {str(k)} = {str(v)}" for k, v in self.driver_kwargs.items())
         lines.append("***")
         print("\n".join(lines))
 
@@ -676,7 +676,9 @@ class MockInstrument(Instrument):
 
     def __getattr__(self, attrName):
         def noop(*args, **kwargs):
-            raise AttributeError("Attempted to call method ('{}') of a mock Instrument.".format(attrName))
+            raise AttributeError(
+                f"Attempted to call method ('{attrName}') of a mock Instrument."
+            )
         return noop
 
 
@@ -707,17 +709,13 @@ class Device(Node):
     bench = typed_property(Bench, '_bench')
 
     def __str__(self):
-        return "Device {}".format(self.name)
+        return f"Device {self.name}"
 
     def display(self):
         """ Displays the device's info table in a nice format."""
-        lines = ["{}".format(self)]
-        lines.append("Bench: {}".format(self.bench))
-        lines.append("=====")
-        lines.append("Ports")
-        lines.append("=====")
+        lines = [f"{self}", f"Bench: {self.bench}", "=====", "Ports", "====="]
         if len(self.ports) > 0:
-            lines.extend(["   {}".format(str(port)) for port in self.ports])
+            lines.extend([f"   {str(port)}" for port in self.ports])
         else:
             lines.append("   No ports.")
         lines.append("***")
