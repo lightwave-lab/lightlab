@@ -116,7 +116,9 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
                 if isinstance(arr, np.ndarray):
                     if arr.ndim > 1:
                         raise ValueError(
-                            'Must be a one dimensional array. Got shape ' + str(arr.shape))
+                            f'Must be a one dimensional array. Got shape {str(arr.shape)}'
+                        )
+
                     if arr.ndim == 0:
                         arr = np.array([arr])
                     checkVals[iv] = arr.copy()
@@ -125,8 +127,13 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
                 elif np.isscalar(arr):
                     checkVals[iv] = np.array([arr])
                 else:
-                    raise TypeError('Unsupported type: ' + str(type(arr)) +
-                                    '. Need np.ndarray, scalar, list, or tuple')
+                    raise TypeError(
+                        (
+                            f'Unsupported type: {str(type(arr))}'
+                            + '. Need np.ndarray, scalar, list, or tuple'
+                        )
+                    )
+
             self.absc, self.ordi = tuple(checkVals)
             if self.absc.shape != self.ordi.shape:
                 raise ValueError('Shapes do not match. Got ' +
@@ -151,7 +158,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         return len(self.absc)
 
     def __iter__(self):
-        raise TypeError("{} is not iterable".format(self.__class__.__qualname__))
+        raise TypeError(f"{self.__class__.__qualname__} is not iterable")
 
     def __getitem__(self, sl):
         ''' Slice this function.
@@ -403,10 +410,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
                 MeasuredFunction: new object
         '''
         dxes = np.diff(self.absc)
-        if all(dxes == dxes[0]):
-            return self
-        else:
-            return self.resample(len(self))
+        return self if all(dxes == dxes[0]) else self.resample(len(self))
 
     def addPoint(self, xyPoint):
         ''' Adds the (x, y) point to the stored absc and ordi
@@ -476,13 +480,22 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         '''
         if windowWidth is None:
             windowWidth = (max(self.absc) - min(self.absc)) / 10
-        dx = abs(np.diff(self.absc[0:2])[0])
+        dx = abs(np.diff(self.absc[:2])[0])
         windPts = np.int(windowWidth / dx)
         if windPts % 2 == 0:  # Make sure windPts is odd so that basis doesn't shift
             windPts += 1
         if windPts >= np.size(self.ordi):
-            raise Exception('windowWidth is ' + str(windPts) +
-                            ' wide, which is bigger than the data itself (' + str(np.size(self.ordi)) + ')')
+            raise Exception(
+                (
+                    (
+                        f'windowWidth is {str(windPts)}'
+                        + ' wide, which is bigger than the data itself ('
+                    )
+                    + str(np.size(self.ordi))
+                    + ')'
+                )
+            )
+
 
         filt = np.ones(windPts) / windPts
         invalidIndeces = int((windPts - 1) / 2)
@@ -631,31 +644,21 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         maxInd = np.argmax(self.ordi)
         minInd = np.argmin(self.ordi)
         if directionToDescend is None:
-            if minInd < maxInd:
-                directionToDescend = 'left'
-            else:
-                directionToDescend = 'right'
-        if np.isscalar(yVals):
-            yValArr = np.array([yVals])
-        else:
-            yValArr = yVals
+            directionToDescend = 'left' if minInd < maxInd else 'right'
+        yValArr = np.array([yVals]) if np.isscalar(yVals) else yVals
         xValArr = np.zeros(yValArr.shape)
         for iVal, y in enumerate(yValArr):
             xValArr[iVal] = interpInverse(*self.getData(),
                                           startIndex=maxInd,
                                           direction=directionToDescend,
                                           threshVal=y)
-        if np.isscalar(yVals):
-            return xValArr[0]
-        else:
-            return xValArr
+        return xValArr[0] if np.isscalar(yVals) else xValArr
 
     def centerOfMass(self):
         ''' Returns abscissa point where mass is centered '''
         deb = self.debias().clip(0, None)
         weighted = np.multiply(*deb.getData())
-        com = np.sum(weighted) / np.sum(deb.ordi)
-        return com
+        return np.sum(weighted) / np.sum(deb.ordi)
 
     def moment(self, order=2, relativeGauss=False):
         ''' The order'th moment of the function
@@ -778,8 +781,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         dxb = np.mean(np.abs(np.diff(np.sort(fb.absc))))
         new_dx = min(dxa, dxb)
 
-        newAbsc = np.arange(min_absc, max_absc + new_dx, new_dx)
-        return newAbsc
+        return np.arange(min_absc, max_absc + new_dx, new_dx)
 
     @staticmethod
     def _maxAbsc(fa, fb):
@@ -796,8 +798,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         dxb = np.mean(np.abs(np.diff(np.sort(fb.absc))))
         new_dx = min(dxa, dxb)
 
-        newAbsc = np.arange(min_absc, max_absc + new_dx, new_dx)
-        return newAbsc
+        return np.arange(min_absc, max_absc + new_dx, new_dx)
 
     def __sub__(self, other):
         ''' Returns the subtraction of the two functions, in the domain of the shortest abscissa object.
@@ -840,7 +841,7 @@ class MeasuredFunction(object):  # pylint: disable=eq-without-hash
         try:
             new_ordi = ordi ** power  # uses numpy's power overload
         except ValueError as err:
-            raise ValueError("Invalid power {} (not a number)".format(power)) from err
+            raise ValueError(f"Invalid power {power} (not a number)") from err
 
         return self.__newOfSameSubclass(absc, new_ordi)
 
@@ -898,10 +899,13 @@ class Spectrum(MeasuredFunction):
             Returns:
                 Spectrum: new object
         '''
-        if not self.inDbm:
-            return type(self)(self.absc.copy(), self.ordi.copy(), inDbm=False)
-        else:
-            return type(self)(self.absc.copy(), 10 ** (self.ordi.copy() / 10), inDbm=False)
+        return (
+            type(self)(
+                self.absc.copy(), 10 ** (self.ordi.copy() / 10), inDbm=False
+            )
+            if self.inDbm
+            else type(self)(self.absc.copy(), self.ordi.copy(), inDbm=False)
+        )
 
     def db(self):
         ''' The spectrum in decibel units
@@ -911,9 +915,8 @@ class Spectrum(MeasuredFunction):
         '''
         if self.inDbm:
             return type(self)(self.absc.copy(), self.ordi.copy(), inDbm=True)
-        else:
-            clippedOrdi = np.clip(self.ordi, 1e-12, None)
-            return type(self)(self.absc.copy(), 10 * np.log10(clippedOrdi), inDbm=True)
+        clippedOrdi = np.clip(self.ordi, 1e-12, None)
+        return type(self)(self.absc.copy(), 10 * np.log10(clippedOrdi), inDbm=True)
 
     def __binMathHelper(self, other):
         ''' Adds a check to make sure lin/db is in the same state '''
@@ -926,7 +929,7 @@ class Spectrum(MeasuredFunction):
         '''
         super().simplePlot(*args, livePlot=livePlot, **kwargs)
         plt.xlabel('Wavelength (nm)')
-        plt.ylabel('Transmission ({})'.format('dB' if self.inDbm else 'lin'))
+        plt.ylabel(f"Transmission ({'dB' if self.inDbm else 'lin'})")
 
     # Peak and trough related
 
@@ -959,18 +962,12 @@ class Spectrum(MeasuredFunction):
         useFilts = filtShapes.copy()
         if type(self) == Spectrum:
             # For Spectrum objects only
-            if isPeak:
-                spectFun = self.lin()
-            else:
-                spectFun = 1 - self.lin()
+            spectFun = self.lin() if isPeak else 1 - self.lin()
             for i in range(len(filtShapes)):
                 if type(filtShapes[i]).__name__ != 'Spectrum':
                     raise Exception(
                         'If calling object is Spectrum, the filter shapes must also be Spectrum types')
-                if isPeak:
-                    useFilts[i] = filtShapes[i].lin()
-                else:
-                    useFilts[i] = 1 - filtShapes[i].lin()
+                useFilts[i] = filtShapes[i].lin() if isPeak else 1 - filtShapes[i].lin()
         else:
             spectFun = self
 
@@ -1028,7 +1025,7 @@ class SpectrumGHz(Spectrum):
         '''
         super().simplePlot(*args, livePlot=livePlot, **kwargs)
         plt.xlabel('Frequency (GHz)')
-        plt.ylabel('Transmission ({})'.format('dB' if self.inDbm else 'lin'))
+        plt.ylabel(f"Transmission ({'dB' if self.inDbm else 'lin'})")
 
     def nm(self):
         ''' Convert to Spectrum'''

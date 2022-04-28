@@ -105,9 +105,8 @@ class TCPSocketConnection(object):
         self._termination = termination
 
     def _send(self, socket, value):
-        encoded_value = (('%s' % value) + self._termination).encode('ascii')
-        sent = socket.sendall(encoded_value)
-        return sent
+        encoded_value = (f'{value}' + self._termination).encode('ascii')
+        return socket.sendall(encoded_value)
 
     def _recv(self, socket, msg_length=2048):
         received_value = socket.recv(msg_length)
@@ -140,9 +139,7 @@ class TCPSocketConnection(object):
                 elapsed_time_ms = 1e3 * (final_time - init_time)
                 logger.debug("Connected. Time elapsed: %s msec", '{:.2f}'.format(elapsed_time_ms))
                 self._socket = s
-            return self._socket
-        else:
-            return self._socket
+        return self._socket
 
     def disconnect(self):
         ''' If connected, disconnects and kills the socket.'''

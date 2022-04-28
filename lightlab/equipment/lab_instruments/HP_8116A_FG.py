@@ -73,8 +73,7 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
             try:
                 iTok = tokens.index(newWave)
             except ValueError:
-                raise ValueError(
-                    newWave + ' is not a valid sync source: ' + str(tokens))
+                raise ValueError(f'{newWave} is not a valid sync source: {tokens}')
             self.setConfigParam('W', iTok)
         return tokens[int(self.getConfigParam('W'))]
 
@@ -99,14 +98,14 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
         amplitude = np.clip(amplitude, *self.amplitudeRange)
 
         if amplitude is not None:
-            self.setConfigParam('AMP', '{} V'.format(amplitude))
+            self.setConfigParam('AMP', f'{amplitude} V')
         try:
             ampl = float(self.getConfigParam('AMP').split(' ')[0])
         except VisaIOError:
             logger.error('unable to get the amplitude')
             ampl = None
         if offset is not None:
-            self.setConfigParam('OFS', '{} V'.format(offset))
+            self.setConfigParam('OFS', f'{offset} V')
         try:
             offs = float(self.getConfigParam('OFS').split(' ')[0])
         except VisaIOError:
@@ -117,6 +116,6 @@ class HP_8116A_FG(VISAInstrumentDriver, Configurable):
     def duty(self, duty=None):
         ''' duty is in percentage '''
         if duty is not None:
-            self.setConfigParam('DTY', '{} %'.format(duty))
+            self.setConfigParam('DTY', f'{duty} %')
 
         return self.getConfigParam('DTY')

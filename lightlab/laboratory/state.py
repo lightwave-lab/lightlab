@@ -113,7 +113,7 @@ class LabState(Hashable):
     def __init__(self, filename=None):
         self.hosts = TypedList(Host)
         self.benches = TypedList(Bench)
-        self.connections = list()
+        self.connections = []
         self.devices = TypedList(Device)
         self.instruments = TypedList(Instrument)
         if filename is None:
@@ -370,8 +370,12 @@ class LabState(Hashable):
         sha256 = json_state.pop("__sha256__")
         jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)
         if validateHash and sha256 != hash_sha256(json.encode(json_state)):
-            raise JSONDecodeError("Labstate is corrupted. expected: {} vs actual: {}.".format(
-                sha256, hash_sha256(json.encode(json_state))), str(filename), 0)
+            raise JSONDecodeError(
+                f"Labstate is corrupted. expected: {sha256} vs actual: {hash_sha256(json.encode(json_state))}.",
+                str(filename),
+                0,
+            )
+
 
         # Compare versions of file vs. class
         version = json_state.pop("__version__")
@@ -426,10 +430,7 @@ class LabState(Hashable):
     @property
     def filename(self):
         """ Filename used to serialize labstate."""
-        if self.__filename__ is None:
-            return _filename
-        else:
-            return self.__filename__
+        return _filename if self.__filename__ is None else self.__filename__
 
     @filename.setter
     def filename(self, fname):
@@ -460,13 +461,12 @@ class LabState(Hashable):
             self._saveState(fname, save_backup=False)
             return
         except JSONDecodeError:
-            if os.stat(fname).st_size == 0:
-                logger.warning("%s is empty. Saving for the first time.", _filename)
-                self._saveState(fname, save_backup=False)
-                return
-            else:
+            if os.stat(fname).st_size != 0:
                 raise
 
+            logger.warning("%s is empty. Saving for the first time.", _filename)
+            self._saveState(fname, save_backup=False)
+            return
         if not self.__sha256__:
             logger.debug("Attempting to compare fabricated labstate vs. preloaded one.")
             self.__sha256__ = self.__toJSON()["__sha256__"]
@@ -489,13 +489,14 @@ class LabState(Hashable):
         filepath = Path(fname).resolve()
 
         # it is good to backup this file in caseit exists
-        if save_backup:
-            if filepath.exists():  # pylint: disable=no-member
+        if save_backup and filepath.exists():
                 # gets folder/filename.* and transforms into folder/filename_{timestamp}.json
-                filepath_backup = Path(filepath).with_name(
-                    "{}_{}.json".format(filepath.stem, timestamp_string()))
-                logger.debug("Backup %s to %s", filepath, filepath_backup)
-                shutil.copy2(filepath, filepath_backup)
+            filepath_backup = Path(filepath).with_name(
+                f"{filepath.stem}_{timestamp_string()}.json"
+            )
+
+            logger.debug("Backup %s to %s", filepath, filepath_backup)
+            shutil.copy2(filepath, filepath_backup)
 
         # save to filepath, overwriting
         filepath.touch()  # pylint: disable=no-member
@@ -514,13 +515,6 @@ def init_module(module):
     except (OSError) as e:
         logger.error("%s: %s.", e.__class__.__name__, e)
         empty_lab = True
-    except JSONDecodeError as e:
-        if os.stat(_filename).st_size == 0:
-            logger.warning("%s is empty.", _filename)
-        else:
-            logger.error("%s: %s is corrupted. %s.", e.__class__.__name__, _filename, e)
-        empty_lab = True
-
     if empty_lab:
         logger.warning("Starting fresh new LabState(). "
                        "Save for the first time with lab._saveState()")

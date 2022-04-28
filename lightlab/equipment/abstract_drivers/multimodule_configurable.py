@@ -32,7 +32,7 @@ class ConfigModule(Configurable):
         ''' Writes a selector message that contains
             its prefix and its channel number
         '''
-        self.bank.write('{} {}'.format(self.selectPrefix, self.channel))
+        self.bank.write(f'{self.selectPrefix} {self.channel}')
 
     def write(self, writeStr):
         ''' Regular write in the enclosing bank, except preceded by select self
@@ -78,16 +78,18 @@ class MultiModuleConfigurable(AbstractDriver):
         '''
         if useChans is None:
             logger.warning('No useChans specified for MultiModuleConfigurable')
-            useChans = list()
+            useChans = []
         self.useChans = useChans
         # Check that the requested channels are available to be blocked out
-        if self.maxChannel is not None:
-            if any(ch > self.maxChannel - 1 for ch in self.useChans):
-                raise ChannelError('Requested channel is more than there are available')
+        if self.maxChannel is not None and any(
+            ch > self.maxChannel - 1 for ch in self.useChans
+        ):
+            raise ChannelError('Requested channel is more than there are available')
 
-        self.modules = []
-        for chan in self.useChans:
-            self.modules.append(configModule_klass(channel=chan, bank=self))
+        self.modules = [
+            configModule_klass(channel=chan, bank=self) for chan in self.useChans
+        ]
+
         super().__init__(**kwargs)
 
     def getConfigArray(self, cStr):
@@ -100,11 +102,8 @@ class MultiModuleConfigurable(AbstractDriver):
                 (np.ndarray): values for all modules,
                 ordered based on the ordering of ``useChans``
         '''
-        retVals = []
-        for module in self.modules:
-            retVals.append(module.getConfigParam(cStr))
-        retArr = np.array(retVals)
-        return retArr
+        retVals = [module.getConfigParam(cStr) for module in self.modules]
+        return np.array(retVals)
 
     def setConfigArray(self, cStr, newValArr, forceHardware=False):
         ''' Iterate over modules setting the parameter to
@@ -122,9 +121,16 @@ class MultiModuleConfigurable(AbstractDriver):
                 (bool): did any require hardware write?
         '''
         if len(newValArr) != len(self.modules):
-            raise ChannelError('Wrong number of channels in array. ' +
-                               'Got {}, '.format(len(newValArr)) +
-                               'Expected {}.'.format(len(self.useChans)))
+            raise ChannelError(
+                (
+                    (
+                        'Wrong number of channels in array. '
+                        + f'Got {len(newValArr)}, '
+                    )
+                    + f'Expected {len(self.useChans)}.'
+                )
+            )
+
         bankWroteToHardware = False
         for module, val in zip(self.modules, newValArr):
             moduleWroteToHardware = module.setConfigParam(cStr, val, forceHardware=forceHardware)
@@ -140,7 +146,7 @@ class MultiModuleConfigurable(AbstractDriver):
                 (dict): parameter on all the channels, keyed by channel number
         '''
         stateArr = self.getConfigArray(cStr)
-        dictOfStates = dict()
+        dictOfStates = {}
         for ch in self.useChans:
             virtualIndex = self.useChans.index(ch)
             dictOfStates[ch] = stateArr[virtualIndex]
@@ -158,9 +164,13 @@ class MultiModuleConfigurable(AbstractDriver):
         '''
         for chan in newValDict.keys():
             if chan not in self.useChans:
-                raise ChannelError('Channel index not blocked out. ' +
-                                   'Requested {}, '.format(chan) +
-                                   'Available {}.'.format(self.useChans))
+                raise ChannelError(
+                    (
+                        ('Channel index not blocked out. ' + f'Requested {chan}, ')
+                        + f'Available {self.useChans}.'
+                    )
+                )
+
         setArrayBuilder = self.getConfigArray(cStr)
         for iCh, chan in enumerate(self.useChans):
             if chan in newValDict.keys():

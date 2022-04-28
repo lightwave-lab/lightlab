@@ -54,17 +54,14 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
             intVal = np.sum(bt * 2 ** np.arange(8))
             pStr += chr(intVal)
             # Switch to other endian
-            if i % 2 == 0:
-                ind = i + 1
-            else:
-                ind = i - 1
+            ind = i + 1 if i % 2 == 0 else i - 1
             intList[ind] = intVal
         byteList = bytes(intList)
 
         self.setConfigParam('PTS', 1)  # We only care to set data patterns
         # self.setConfigParam('DLN', 8*nBytes, forceHardware=True)
         self.setConfigParam('DLN', len(bitArray), forceHardware=True)
-        preamble = 'WRT {}, 0'.format(nBytes)
+        preamble = f'WRT {nBytes}, 0'
         self.write(preamble)
         self.open()
         self.mbSession.write_raw(byteList)
@@ -100,8 +97,7 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
             try:
                 iTok = tokens.index(src)
             except ValueError:
-                raise ValueError(
-                    src + ' is not a valid sync source: ' + str(tokens))
+                raise ValueError(f'{src} is not a valid sync source: {tokens}')
             self.setConfigParam('SOP', iTok)
         return tokens[int(self.getConfigParam('SOP'))]
 
@@ -230,15 +226,15 @@ class Anritsu_MP1763B_PPG(VISAInstrumentDriver, Configurable):
             polynomial = 0b1000000000000011  # 1+X14+X15
             seed = 0b000000000000001
         elif order == 20:
-            polynomial = (1 << 20) + (1 << 20 - 3) + (1 << 20 - 20)  # 1+X3+X20
+            polynomial = (1 << 20) + (1 << 20 - 3) + (1 << 0)
             seed = 0b00111000111000111000
         elif order == 23:
-            polynomial = (1 << 23) + (1 << 23 - 18) + (1 << 23 - 23)  # 1+X18+X23
+            polynomial = (1 << 23) + (1 << 23 - 18) + (1 << 0)
             seed = 0b1111100 << 16
         elif order == 31:
-            polynomial = (1 << 31) + (1 << 31 - 28) + (1 << 31 - 31)  # 1+X28+X31
+            polynomial = (1 << 31) + (1 << 31 - 28) + (1 << 0)
             seed = 0b1110000 << 24
         else:
-            raise NotImplementedError("PRBS{} not implemented.".format(order))
+            raise NotImplementedError(f"PRBS{order} not implemented.")
 
         return prbs_pattern(polynomial, seed)

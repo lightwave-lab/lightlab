@@ -36,10 +36,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
                 (list[str]): tokens of currently active measurements
         '''
         actWinStr = self.getConfigParam('DISP:WIND:ACT:MEAS', forceHardware=True)
-        activeWindows = []
-        for aws in actWinStr.split(','):
-            activeWindows.append(aws.strip('" '))
-        return activeWindows
+        return [aws.strip('" ') for aws in actWinStr.split(',')]
 
     def setMeasurement(self, measType='SPEC', append=False):
         ''' Turns on a measurement type
@@ -92,10 +89,6 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
             raise Exception(
                 'Spectrogram is not being recorded. Did you forget to call sgramInit()?')
 
-        # def qg(subParam):
-            # for Quick Get '''
-            # return float(self.getConfigParam('SGR:' + subParam, forceHardware=True))
-
         # Create data structure with proper size
         trialLine = self.__sgramLines([0])[0]
         nFreqs = len(trialLine)
@@ -113,7 +106,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         downsample = int(duration / estTimePerLine / nLines)
         if downsample < 1:
             nLines = int(duration / estTimePerLine)
-            print('Warning: line density too high. You will get {} lines.'.format(nLines))
+            print(f'Warning: line density too high. You will get {nLines} lines.')
             downsample = 1
         lineNos = np.arange(nLines, dtype=int) * downsample
 
@@ -133,10 +126,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         fBasis = np.linspace(fStart, fStop, nFreqs)
         tBasis = np.linspace(0, duration, nLines)
 
-        # Put this in some kind of 2-D measured function structure.
-        gram = Spectrogram([fBasis, tBasis], sgramMat)
-
-        return gram
+        return Spectrogram([fBasis, tBasis], sgramMat)
 
     def __sgramLines(self, lineNos, container=None, debugEvery=None):
         if container is None:
@@ -145,7 +135,7 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
         for i, lno in enumerate(lineNos):
             if debugEvery is not None and i % debugEvery == 0:
                 logger.debug('Transferring %s / %s', lno, lineNos[-1])
-            self.write('TRAC:SGR:SEL:LINE {}'.format(lno))
+            self.write(f'TRAC:SGR:SEL:LINE {lno}')
             for _ in range(2):  # Sometimes the query just fails so we try again
                 rawLine = self.mbSession.query_binary_values('FETCH:SGR?')
                 if len(rawLine) > 0:
@@ -225,5 +215,5 @@ class Tektronix_RSA6120B_RFSA(VISAInstrumentDriver, Configurable):
             self.write('TRACE1:SPEC:COUN:RESET')
             self.write('TRACE1:SPEC:COUN:ENABLE')
         elif typAvg != 'NONE':
-            raise Exception(typAvg + ' is not a valid type of averaging')
+            raise Exception(f'{typAvg} is not a valid type of averaging')
         self.setConfigParam('TRACE1:SPEC:FUNC', typAvg)

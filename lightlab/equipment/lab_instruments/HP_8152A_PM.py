@@ -55,9 +55,9 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
         # there is an ambiguity when there are two digits, so we assume they are both intended
         onesHundredthsVals = [0] * 2
         for i, s in enumerate(onesHundredthsStrs):
-            if len(s) in [1, 2]:
+            if len(s) in {1, 2}:
                 onesHundredthsVals[i] = float(s)
-            elif len(s) in [3, 4]:  # at least one has been repeated, so skip the middle (3) or seconds (4)
+            elif len(s) in {3, 4}:  # at least one has been repeated, so skip the middle (3) or seconds (4)
                 onesHundredthsVals[i] = float(s[::2])
             else:
                 raise ValueError('Too many digits one one side of the decimal point')
@@ -67,14 +67,11 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
             val *= -1
         return str(val)
 
-    def robust_query(self, *args, **kwargs):  # pylint: disable=arguments-differ
+    def robust_query(self, *args, **kwargs):    # pylint: disable=arguments-differ
         ''' Conditionally check for read character doubling
         '''
         retRaw = self.query(*args, **kwargs)  # pylint: disable=arguments-differ
-        if self.doReadDoubleCheck:
-            return self.proccessWeirdRead(retRaw)
-        else:
-            return retRaw
+        return self.proccessWeirdRead(retRaw) if self.doReadDoubleCheck else retRaw
 
     def powerDbm(self, channel=1):
         ''' The detected optical power in dB on the specified channel
@@ -88,7 +85,7 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
         self.validateChannel(channel)
         trial = 0
         while trial < 10:  # Sometimes it gets out of range, so we have to try a few times
-            self.write('CH' + str(channel))
+            self.write(f'CH{str(channel)}')
             powStr = self.robust_query('TRG')
             v = float(powStr)
             if abs(v) < 999:  # check if it's reasonable
@@ -97,6 +94,5 @@ class HP_8152A_PM(VISAInstrumentDriver, PowerMeterAbstract):
                 # continue
                 trial += 1
         else:
-            raise Exception('Power meter values are unreasonable.'
-                            ' Got {}'.format(v))
+            raise Exception(f'Power meter values are unreasonable. Got {v}')
         return v

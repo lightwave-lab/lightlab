@@ -1,5 +1,6 @@
 '''Tests whether the functionality of the laboratory module is working properly.'''
 
+
 import pytest
 import lightlab.laboratory.state as labstate
 from lightlab.laboratory.instruments import LocalHost, Host, Bench, Instrument, Keithley
@@ -13,7 +14,7 @@ import os
 import logging
 
 logging.disable(logging.CRITICAL)
-filename = 'test_{}.json'.format(int(time.time()))
+filename = f'test_{int(time.time())}.json'
 labstate._filename = filename
 
 # Shared objects
@@ -178,9 +179,7 @@ def test_bench_iteration(lab):
         benches_items.append(bench)
         benches_names.append(bench_name)
 
-    benches_values = []
-    for bench in lab.benches.values():
-        benches_values.append(bench)
+    benches_values = list(lab.benches.values())
     assert benches_items == benches_values
 
     assert benches_names == [bench.name for bench in benches_values]
