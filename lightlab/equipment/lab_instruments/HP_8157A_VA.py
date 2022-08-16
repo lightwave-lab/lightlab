@@ -78,19 +78,19 @@ class HP_8157A_VA(VISAInstrumentDriver):
     def sendToHardware(self, sleepTime=None):
         if sleepTime is None:
             sleepTime = self.safeSleepTime
-        self.write('ATT ' + str(self.attenDB) + 'DB')
+        self.write(f'ATT {str(self.attenDB)}DB')
         time.sleep(sleepTime)  # Let it settle
 
     @calibration.setter
     def calibration(self, cal_factor, sleepTime=None):   # cal_factor is in dB
         if sleepTime is None:
             sleepTime = self.safeSleepTime
-        self.write('CAL ' + str(cal_factor) + 'DB')
+        self.write(f'CAL {str(cal_factor)}DB')
         time.sleep(sleepTime)  # Let it settle
 
     @wavelength.setter
     def wavelength(self, wl, sleepTime=None):   # wl can be in m, mm, um, or nm. here we choose nm.
         if sleepTime is None:
             sleepTime = self.safeSleepTime
-        self. write('WVL' + str(wl) + 'NM')
+        self. write(f'WVL{str(wl)}NM')
         time.sleep(sleepTime)

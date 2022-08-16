@@ -44,10 +44,7 @@ class Experiment(Virtualizable):
 
     @property
     def lab(self):
-        if self._lab is None:
-            return labstate.lab
-        else:
-            return self._lab
+        return labstate.lab if self._lab is None else self._lab
 
     @lab.setter
     def lab(self, value):
@@ -70,17 +67,11 @@ class Experiment(Virtualizable):
 
     def __init__(self, instruments=None, devices=None, **kwargs):
         super().__init__()
-        if instruments is not None:
-            self.instruments = instruments
-        else:
-            self.instruments = list()
-        self.instruments_requirements = list()
-        if devices is not None:
-            self.devices = devices
-        else:
-            self.devices = list()
-        self.validate_exprs = list()
-        self.connections = list()
+        self.instruments = instruments if instruments is not None else list()
+        self.instruments_requirements = []
+        self.devices = devices if devices is not None else list()
+        self.validate_exprs = []
+        self.connections = []
 
         self.name = kwargs.pop("name", None)
         self.startup(**kwargs)
@@ -180,9 +171,8 @@ class Experiment(Virtualizable):
             def connection_present(connection=connection, connections=self.lab.connections):
                 if connection in connections:
                     return True
-                else:
-                    logger.error("Connection {} is not compatible with lab %s", connection)
-                    return False
+                logger.error("Connection {} is not compatible with lab %s", connection)
+                return False
             self.validate_exprs.append(connection_present)
 
     def validate(self):
@@ -204,35 +194,37 @@ class Experiment(Virtualizable):
 
     def __str__(self):
         if self.name is not None:
-            return "Experiment {}".format(self.name)
-        return "Experiment {}".format(self.__class__.__name__)
+            return f"Experiment {self.name}"
+        return f"Experiment {self.__class__.__name__}"
 
     def display(self):
-        lines = ["{}".format(self)]
+        lines = [f"{self}"]
         if self.valid:
             lines.append("Experiment is online!")
         else:
             lines.append("Experiment is offline.")
-        lines.append("===========")
-        lines.append("Expected Instruments")
-        lines.append("===========")
+        lines.extend(("===========", "Expected Instruments", "==========="))
         if len(self.instruments_requirements) > 0:
-            lines.extend(["   {} in ({}, {})".format(str(instrument), str(host), str(bench))
-                          for instrument, host, bench
-                          in self.instruments_requirements])
+            lines.extend(
+                [
+                    f"   {str(instrument)} in ({str(host)}, {str(bench)})"
+                    for instrument, host, bench in self.instruments_requirements
+                ]
+            )
+
         else:
             lines.append("   No instruments.")
-        lines.append("=======")
-        lines.append("Expected Connections")
-        lines.append("=======")
+        lines.extend(("=======", "Expected Connections", "======="))
         if len(self.connections) > 0:
             for connection in self.connections:
                 connection_items = list(connection.items())
                 from_dev, from_port = tuple(connection_items[0])
                 to_dev, to_port = tuple(connection_items[1])
 
-                lines.append("   {}/{} <-> {}/{}".format(str(from_dev), str(from_port),
-                                                         str(to_dev), str(to_port)))
+                lines.append(
+                    f"   {str(from_dev)}/{str(from_port)} <-> {str(to_dev)}/{str(to_port)}"
+                )
+
         else:
             lines.append("   No connections.")
         lines.append("***")

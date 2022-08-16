@@ -32,8 +32,10 @@ class Tektronix_DPO4032_Oscope(Tektronix_DPO4034_Oscope):
             self.setConfigParam('DATA:START', 1)
             self.setConfigParam('DATA:STOP', int(duration * 2.5e9))
 
-        presentSettings = dict()
-        presentSettings['avgCnt'] = self.getConfigParam('ACQUIRE:NUMAVG', forceHardware=True)
+        presentSettings = {
+            'avgCnt': self.getConfigParam('ACQUIRE:NUMAVG', forceHardware=True)
+        }
+
         presentSettings['duration'] = self.getConfigParam(
             'HORIZONTAL:MAIN:SCALE', forceHardware=True)
         # presentSettings['position'] = self.getConfigParam('HORIZONTAL:MAIN:POSITION', forceHardware=True)
@@ -59,7 +61,10 @@ class Tektronix_DPO4032_Oscope(Tektronix_DPO4034_Oscope):
                 YZERO, the reference voltage, YOFF, the offset position, and
                 YSCALE, the conversion factor between position and voltage.
         '''
-        get = lambda param: float(self.getConfigParam('WFMOUTPRE:' + param, forceHardware=True))
+        get = lambda param: float(
+            self.getConfigParam(f'WFMOUTPRE:{param}', forceHardware=True)
+        )
+
         voltage = (np.array(voltRaw) - get('YOFF')) \
             * get(self._yScaleParam) \
             + get('YZERO')
@@ -98,13 +103,19 @@ class Tektronix_DPO4032_Oscope(Tektronix_DPO4034_Oscope):
 
         for c in chans:
             if c > self.totalChans:
-                raise Exception('Received channel: ' + str(c) +
-                                '. Max channels of this scope is ' + str(self.totalChans))
+                raise Exception(
+                    (
+                        f'Received channel: {str(c)}'
+                        + '. Max channels of this scope is '
+                    )
+                    + str(self.totalChans)
+                )
+
 
         # Channel select
         for ich in range(1, 1 + self.totalChans):
             thisState = 1 if ich in chans else 0
-            self.setConfigParam('SELECT:CH' + str(ich), thisState)
+            self.setConfigParam(f'SELECT:CH{str(ich)}', thisState)
 
         isSampling = kwargs.get('avgCnt', 0) == 1
         self._setupSingleShot(isSampling)
@@ -139,7 +150,7 @@ class Tektronix_DPO4032_Oscope(Tektronix_DPO4034_Oscope):
             Todo:
                 Make this binary transfer to go even faster
         '''
-        chStr = 'CH' + str(chan)
+        chStr = f'CH{str(chan)}'
         self.setConfigParam('DATA:ENCDG', 'ASCII')
         self.setConfigParam('DATA:SOURCE', chStr)
         self.open()

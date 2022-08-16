@@ -44,6 +44,6 @@ class Advantest_Q8221_PM(VISAInstrumentDriver, PowerMeterAbstract):
                 (double): Power in dB or dBm
         '''
         self.validateChannel(channel)
-        self.write('CH' + str(channel))
-        powStr = self.query('CH' + str(channel))
+        self.write(f'CH{str(channel)}')
+        powStr = self.query(f'CH{str(channel)}')
         return float(powStr[3:])
