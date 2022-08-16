@@ -36,9 +36,10 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
         self.traceNum = 1
         self.auxTrigNum = 1
         self.swpRange = None
+        self.measType = 'S21'
 
     def startup(self):
-        self.measurementSetup('S21')
+        self.measurementSetup(self.measType)
 
     def amplitude(self, amp=None):
         ''' Amplitude is in dBm
@@ -192,21 +193,23 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
         self.setConfigParam(
             f'CALC{self.chanNum}:PAR:MNUM', self.chanNum, forceHardware=changed
         )
-
         # self.setConfigParam('CALC{}:PAR:SEL'.format(self.chanNum), self.chanNum, forceHardware=changed)
         # wait for changes to take effect
         # This could be improved by something like *OPC? corresponding to the end
         # of the first sweep
         time.sleep(self.getSwpDuration())
+        self.measType = measType
 
     def spectrum(self):
         # raise NotImplementedError('not working')
         # self.setConfigParam('SENS:SWE:GRO:COUN', nGroups)
+
         self.setConfigParam('SENS:SWE:MODE', 'HOLD')
         self.write('SENS:SWE:MODE SING')
         self.query('*OPC?')
 
         self.setConfigParam('FORM', 'ASC')
+
         self.open()
         dbm = self.query_ascii_values(f'CALC{self.chanNum}:DATA? FDATA')
         self.close()

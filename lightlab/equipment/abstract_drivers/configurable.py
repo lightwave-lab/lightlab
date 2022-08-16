@@ -80,7 +80,7 @@ class TekConfig(object):
         if success != 1:  # it doesn't exist yet
             try:
                 dpath.util.new(self.dico, *cmd, separator=self.separator)
-            except ValueError:
+            except (ValueError, dpath.exceptions.PathNotFound):
                 # We probably have an integer leaf where we would also like to have a directory
                 parent = self.separator.join(cmd[0].split(self.separator)[:-1])
                 try:
