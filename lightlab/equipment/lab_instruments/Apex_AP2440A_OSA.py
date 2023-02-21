@@ -99,7 +99,10 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
     def query(self, queryStr, expected_talker=None):
         ret = self._query(queryStr)
         if expected_talker is not None:
-            log_function = logger.warning if ret != expected_talker else logger.debug
+            if ret != expected_talker:
+                log_function = logger.warning
+            else:
+                log_function = logger.debug
             log_function("'%s' returned '%s', expected '%s'", queryStr, ret, str(expected_talker))
         else:
             logger.debug("'%s' returned '%s'", queryStr, ret)
@@ -155,8 +158,8 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         newRangeClipped = np.clip(newRange, a_min=1505.765, a_max=1572.418)
         if np.any(newRange != newRangeClipped):
             print('Warning: Requested OSA wlRange out of range. Got', newRange)
-        self.write(f'SPSTRTWL{str(np.max(newRangeClipped))}')
-        self.write(f'SPSTOPWL{str(np.min(newRangeClipped))}')
+        self.write('SPSTRTWL' + str(np.max(newRangeClipped)))
+        self.write('SPSTOPWL' + str(np.min(newRangeClipped)))
         self.__wlRange = newRangeClipped
 
     def triggerAcquire(self):
@@ -202,17 +205,18 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         """Take a new sweep and return the new data. This is the primary user function of this class
         """
 
-        if type(average_count) != int or average_count <= 0:
-            raise RuntimeError(
-                f'average_count must be positive integer, used {average_count}'
-            )
-
+        if not (type(average_count) == int and average_count > 0):
+            raise RuntimeError('average_count must be positive integer, used {}'.format(average_count))
 
         for i in range(average_count):
             self.triggerAcquire()
             nm, dbm = self.transferData()
 
-            dbmAvg = dbm / average_count if i == 0 else dbmAvg + dbm / average_count
+            if i == 0:
+                dbmAvg = dbm / average_count
+            else:
+                dbmAvg = dbmAvg + dbm / average_count
+
         return Spectrum(nm, dbmAvg, inDbm=True)
 
     # TLS access methods currently not implemented
@@ -233,7 +237,7 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
             if isinstance(newState, bool):
                 newState = (newState != 0)
             writeVal = '1' if newState else '0'
-            self.write(f'TLSON {writeVal}')
+            self.write('TLSON ' + writeVal)
 
     @property
     def tlsWl(self):
@@ -246,4 +250,4 @@ class Apex_AP2440A_OSA(VISAInstrumentDriver):
         """newState is a float in units of nm
         """
         if newState:
-            self.write(f'TLSwl {str(newState)}')
+            self.write('TLSwl ' + str(newState))

@@ -1,7 +1,6 @@
 ''' Tests whether all the visa drivers included in lightlab are properly
 coded. All tests should be safe to run locally.'''
 
-
 import pytest
 from mock import patch
 from lightlab.equipment import lab_instruments

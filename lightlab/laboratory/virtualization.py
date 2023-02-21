@@ -32,7 +32,7 @@ class Virtualizable(object):
     synced = None
 
     def __init__(self):
-        self.synced = []
+        self.synced = list()
 
     def synchronize(self, *newVirtualizables):
         r''' Adds another object that this one will put in the same virtual
@@ -56,7 +56,7 @@ class Virtualizable(object):
             Returns:
                 (list): the previous virtual states
         '''
-        old_values = []
+        old_values = list()
         for sub in ([self] + self.synced):
             old_values.append(sub._virtual)  # pylint: disable=protected-access
             sub._virtual = toVirtual  # pylint: disable=protected-access
@@ -202,21 +202,18 @@ class DualInstrument(Virtualizable):
         self.real_obj = real_obj
         self.virt_obj = virt_obj
         if real_obj is not None and virt_obj is not None:
+            violated = []
             allowed = real_obj.essentialMethods + \
                 real_obj.essentialProperties + dir(VirtualInstrument)
-            if violated := [
-                attr
-                for attr in dir(type(virt_obj))
-                if attr not in allowed and '__' not in attr
-            ]:
-                logger.warning(
-                    (
-                        f'Virtual instrument ({type(virt_obj).__name__}) violates '
-                        + f'interface of the real one ({type(real_obj).__name__})'
-                    )
-                )
-
+            for attr in dir(type(virt_obj)):
+                if attr not in allowed \
+                        and '__' not in attr:
+                    violated.append(attr)
+            if len(violated) > 0:
+                logger.warning('Virtual instrument ({}) violates '.format(type(virt_obj).__name__) +
+                               'interface of the real one ({})'.format(type(real_obj).__name__))
                 logger.warning('Got: ' + ', '.join(violated))  # pylint: disable=logging-not-lazy
+                # logger.warning('Allowed: ' + ', '.join(filter(lambda x: '__' not in x, allowed)))
         self.synced = []
         super().__init__()
 

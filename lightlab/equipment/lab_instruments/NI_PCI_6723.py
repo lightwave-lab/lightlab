@@ -93,7 +93,10 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
     def query(self, queryStr, expected_talker=None):
         ret = self._query(queryStr)
         if expected_talker is not None:
-            log_function = logger.warning if ret != expected_talker else logger.debug
+            if ret != expected_talker:
+                log_function = logger.warning
+            else:
+                log_function = logger.debug
             log_function("'%s' returned '%s', expected '%s'", queryStr, ret, str(expected_talker))
         else:
             logger.debug("'%s' returned '%s'", queryStr, ret)
@@ -112,19 +115,19 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
         return 'Current Source'
 
     def tcpTest(self, num=2):
-        print(f'x = {str(num)}')
+        print('x = ' + str(num))
         # self.open()
-        ret = self.query(f'Test: {str(num)} {str(num + .5)}')
+        ret = self.query('Test: ' + str(num) + ' ' + str(num + .5))
         # self.close()
         retNum = [0] * len(ret.split())
         for i, s in enumerate(ret.split(' ')):
             retNum[i] = float(s) + .01
-        print(f'[x+1, x+1.5] = {str(retNum)}')
+        print('[x+1, x+1.5] = ' + str(retNum))
 
     def setChannelTuning(self, chanValDict, mode, waitTime=None):  # pylint: disable=arguments-differ
         oldState = self.getChannelTuning(mode)
         # Check range and convert to base units
-        chanBaseDict = {}
+        chanBaseDict = dict()
         for ch, val in chanValDict.items():
             try:
                 enforced = self.enforceRange(val, mode)
@@ -137,7 +140,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
         super().setChannelTuning(chanBaseDict)
 
         # Was there a change
-        if oldState != self.getChannelTuning(mode):
+        if not oldState == self.getChannelTuning(mode):
             self.sendToHardware(waitTime)
         else:
             self.wake()
@@ -170,7 +173,7 @@ class NI_PCI_6723(VISAInstrumentDriver, MultiModalSource, MultiChannelSource):
         # Then write a TCPIP packet
         writeStr = 'Set:'
         for v in fullVoltageState:
-            writeStr += f' {str(v)}'
+            writeStr += ' ' + str(v)
         # self.open()
         retStr = self.query(writeStr)
         # self.close()

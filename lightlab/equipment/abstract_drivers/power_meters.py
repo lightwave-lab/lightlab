@@ -15,11 +15,9 @@ class PowerMeterAbstract(AbstractDriver):
         '''
         if channel not in self.channelDescriptions.keys():
             raise ChannelError(
-                (
-                    'Not a valid PowerMeter channel. Use '
-                    + ' '.join(f'{k} ({v})' for k, v in self.channelDescriptions)
-                )
-            )
+                'Not a valid PowerMeter channel. Use ' + ' '.join(
+                    ('{} ({})'.format(k, v)
+                     for k, v in self.channelDescriptions)))
 
     def powerLin(self, channel=1):
         return 10 ** (self.powerDbm(channel) / 10)

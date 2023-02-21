@@ -139,30 +139,32 @@ def _is_valid_ip_address(ip_address):
 
 
 def _validate_hostname(hostname):
-    return bool(_is_valid_hostname(hostname) or _is_valid_ip_address(hostname))
+    if _is_valid_hostname(hostname) or _is_valid_ip_address(hostname):
+        return True
+    else:
+        return False
 
 
 def _sanitize_address(address):
     '''Takes in an address of the form 'prologix://prologix_ip_address/gpib_primary_address[:gpib_secondary_address]'
     and returns prologix_ip_address, gpib_primary_address, gpib_secondary_address.
     If secondary address is not given, gpib_secondary_address = None'''
-    if not address.startswith('prologix://'):
-        raise RuntimeError(f'invalid address: {address}')
-    _, address = address.split('prologix://', maxsplit=1)
-    ip_address, gpib_address = address.split('/', maxsplit=1)
-    if not _validate_hostname(ip_address):
-        raise RuntimeError(f"invalid ip address: '{ip_address}'")
-    try:
-        if ':' in gpib_address:
-            gpib_pad, gpib_sad = gpib_address.split(':', maxsplit=1)
-            gpib_pad, gpib_sad = int(gpib_pad), int(gpib_sad)
-        else:
-            gpib_pad, gpib_sad = int(gpib_address), None
-    except ValueError:
-        raise RuntimeError(
-            f"invalid gpib format '{gpib_address}', should be like '10[:0]'"
-        )
-
+    if address.startswith('prologix://'):
+        _, address = address.split('prologix://', maxsplit=1)
+        ip_address, gpib_address = address.split('/', maxsplit=1)
+        if not _validate_hostname(ip_address):
+            raise RuntimeError("invalid ip address: '{}'".format(ip_address))
+        try:
+            if ':' in gpib_address:
+                gpib_pad, gpib_sad = gpib_address.split(':', maxsplit=1)
+                gpib_pad, gpib_sad = int(gpib_pad), int(gpib_sad)
+            else:
+                gpib_pad, gpib_sad = int(gpib_address), None
+        except ValueError:
+            raise RuntimeError(
+                "invalid gpib format '{}', should be like '10[:0]'".format(gpib_address))
+    else:
+        raise RuntimeError('invalid address: {}'.format(address))
     return ip_address, gpib_pad, gpib_sad
 
 
@@ -177,7 +179,7 @@ class PrologixGPIBObject(InstrumentSessionBase):
         '''
 
         if type(address) != str:
-            raise RuntimeError(f"Invalid address: {address}")
+            raise RuntimeError("Invalid address: {}".format(address))
 
         self.tempSess = tempSess
         self.address = address
@@ -207,8 +209,9 @@ class PrologixGPIBObject(InstrumentSessionBase):
         '''Return status byte of the instrument.'''
 
         gpib_addr = self._prologix_gpib_addr_formatted()
-        spoll = self._prologix_rm.query(f'++spoll {gpib_addr}')
-        return int(spoll.rstrip())
+        spoll = self._prologix_rm.query('++spoll {}'.format(gpib_addr))
+        status_byte = int(spoll.rstrip())
+        return status_byte
 
     def LLO(self):
         '''This command disables front panel operation of the currently addressed instrument.'''
@@ -245,9 +248,9 @@ class PrologixGPIBObject(InstrumentSessionBase):
         elif value == '':
             eos = 3
         else:
-            print(f"Invalid termination: {repr(value)}")
+            print("Invalid termination: {}".format(repr(value)))
         if eos is not None:
-            self._prologix_rm.send(f'++eos {eos}')
+            self._prologix_rm.send('++eos {}'.format(eos))
 
     def open(self):
         ''' Open connection with instrument.
@@ -265,7 +268,7 @@ class PrologixGPIBObject(InstrumentSessionBase):
 
     def write(self, writeStr):
         with self._prologix_rm.connected() as pconn:
-            pconn.send(f'++addr {self._prologix_gpib_addr_formatted()}')
+            pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
             pconn.send(self._prologix_escape_characters(writeStr))
     
 #     def read(self, withTimeout=None):
@@ -290,7 +293,7 @@ class PrologixGPIBObject(InstrumentSessionBase):
     def clear(self):
         '''This command sends the Selected Device Clear (SDC) message to the currently specified GPIB address.'''
         with self._prologix_rm.connected() as pconn:
-            pconn.send(f'++addr {self._prologix_gpib_addr_formatted()}')
+            pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
             pconn.send('++clr')
             
     def query_raw_binary(self, queryStr, withTimeout=None):
@@ -299,7 +302,7 @@ class PrologixGPIBObject(InstrumentSessionBase):
            are stripped. Also no decoding.'''
 
         with self._prologix_rm.connected() as pconn:
-            pconn.send(f'++addr {self._prologix_gpib_addr_formatted()}')
+            pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
             pconn.send(self._prologix_escape_characters(queryStr))
 
         if withTimeout is not None:

@@ -99,11 +99,12 @@ def peakSearch(evalPointFun, startBounds, nSwarm=3, xTol=0., yTol=0., livePlot=F
 def doesMFbracket(targetY, twoPointMF):
     yRange = twoPointMF.getRange()
     if targetY < yRange[0]:
-        return 'low'
+        outOfRangeDirection = 'low'
     elif targetY > yRange[1]:
-        return 'high'
+        outOfRangeDirection = 'high'
     else:
-        return 'in-range'
+        outOfRangeDirection = 'in-range'
+    return outOfRangeDirection
 
 
 def bracketSearch(evalPointFun, targetY, startBounds, xTol, hardConstrain=False, livePlot=False):

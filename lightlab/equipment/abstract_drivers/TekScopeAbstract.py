@@ -67,10 +67,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             self.setConfigParam('DATA:START', 1)
             self.setConfigParam('DATA:STOP', nPts)
 
-        presentSettings = {
-            'avgCnt': self.getConfigParam('ACQUIRE:NUMAVG', forceHardware=True)
-        }
-
+        presentSettings = dict()
+        presentSettings['avgCnt'] = self.getConfigParam('ACQUIRE:NUMAVG', forceHardware=True)
         presentSettings['duration'] = self.getConfigParam('HORIZONTAL:MAIN:SCALE', forceHardware=True)
         presentSettings['position'] = self.getConfigParam('HORIZONTAL:MAIN:POSITION', forceHardware=True)
         presentSettings['nPts'] = self.getConfigParam(self._recLenParam, forceHardware=True)
@@ -103,19 +101,13 @@ class TekScopeAbstract(Configurable, AbstractDriver):
 
         for c in chans:
             if c > self.totalChans:
-                raise Exception(
-                    (
-                        f'Received channel: {str(c)}'
-                        + '. Max channels of this scope is '
-                    )
-                    + str(self.totalChans)
-                )
-
+                raise Exception('Received channel: ' + str(c) +
+                                '. Max channels of this scope is ' + str(self.totalChans))
 
         # Channel select
         for ich in range(1, 1 + self.totalChans):
             thisState = 1 if ich in chans else 0
-            self.setConfigParam(f'SELECT:CH{str(ich)}', thisState)
+            self.setConfigParam('SELECT:CH' + str(ich), thisState)
 
         isSampling = kwargs.get('avgCnt', 0) == 1
         self._setupSingleShot(isSampling)
@@ -184,11 +176,12 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             Todo:
                 Make this binary transfer to go even faster
         '''
-        chStr = f'CH{str(chan)}'
+        chStr = 'CH' + str(chan)
         self.setConfigParam('DATA:ENCDG', 'ASCII')
         self.setConfigParam('DATA:SOURCE', chStr)
 
-        return self.query_ascii_values('CURV?')
+        voltRaw = self.query_ascii_values('CURV?')
+        return voltRaw
 
     def __scaleData(self, voltRaw):
         ''' Scale to second and voltage units.
@@ -209,10 +202,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 YZERO, the reference voltage, YOFF, the offset position, and
                 YSCALE, the conversion factor between position and voltage.
         '''
-        get = lambda param: float(
-            self.getConfigParam(f'WFMOUTPRE:{param}', forceHardware=True)
-        )
-
+        get = lambda param: float(self.getConfigParam('WFMOUTPRE:' + param, forceHardware=True))
         voltage = (np.array(voltRaw) - get('YOFF')) \
             * get(self._yScaleParam) \
             + get('YZERO')
@@ -273,13 +263,10 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         '''
         if measIndex == 0:
             raise ValueError('measIndex is 1-indexed')
-        measSubmenu = f'MEASUREMENT:MEAS{str(measIndex)}:'
-        self.setConfigParam(
-            measSubmenu + self._measurementSourceParam, f'CH{str(chan)}'
-        )
-
-        self.setConfigParam(f'{measSubmenu}TYPE', measType.upper())
-        self.setConfigParam(f'{measSubmenu}STATE', 1)
+        measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
+        self.setConfigParam(measSubmenu + self._measurementSourceParam, 'CH' + str(chan))
+        self.setConfigParam(measSubmenu + 'TYPE', measType.upper())
+        self.setConfigParam(measSubmenu + 'STATE', 1)
 
     def measure(self, measIndex):
         '''
@@ -289,8 +276,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             Returns:
                 (float)
         '''
-        measSubmenu = f'MEASUREMENT:MEAS{str(measIndex)}:'
-        return float(self.getConfigParam(f'{measSubmenu}VALUE', forceHardware=True))
+        measSubmenu = 'MEASUREMENT:MEAS' + str(measIndex) + ':'
+        return float(self.getConfigParam(measSubmenu + 'VALUE', forceHardware=True))
 
     def autoAdjust(self, chans):
         ''' Adjusts offsets and scaling so that waveforms are not clipped '''
@@ -298,7 +285,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         self.saveConfig(dest='+autoAdjTemp', subgroup='MEASUREMENT')
 
         for ch in chans:
-            chStr = f'CH{str(ch)}'
+            chStr = 'CH' + str(ch)
 
             # Set up measurements
             self.setMeasurement(1, ch, 'pk2pk')
@@ -312,8 +299,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 pk2pk = self.measure(1)
                 mean = self.measure(2)
 
-                span = float(self.getConfigParam(f'{chStr}:SCALE'))
-                offs = float(self.getConfigParam(f'{chStr}:OFFSET'))
+                span = float(self.getConfigParam(chStr + ':SCALE'))
+                offs = float(self.getConfigParam(chStr + ':OFFSET'))
 
                 # Check if scale is correct within the tolerance
                 newSpan = None
@@ -323,7 +310,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                 elif pk2pk > 0.8 * span:
                     newSpan = 2 * span
                 if newSpan < 0.1 or newSpan > 100:
-                    raise Exception(f'Scope channel {chStr} could not be adjusted.')
+                    raise Exception('Scope channel ' + chStr + ' could not be adjusted.')
 
                 # Check if offset is correct within the tolerance
                 if abs(mean) > 0.05 * span:
@@ -334,8 +321,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
                     break
 
                 # Adjust settings
-                self.setConfigParam(f'{chStr}:SCALE', newSpan / 10)
-                self.setConfigParam(f'{chStr}:OFFSET', newOffs)
+                self.setConfigParam(chStr + ':SCALE', newSpan / 10)
+                self.setConfigParam(chStr + ':OFFSET', newOffs)
 
         # Recover the measurement setup from before adjustment
         self.loadConfig(source='+autoAdjTemp', subgroup='MEASUREMENT')

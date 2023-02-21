@@ -11,7 +11,7 @@ from IPython import display
 from .data import FunctionBundle
 
 
-def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=True):    # pylint: disable=W0613
+def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=True):  # pylint: disable=W0613
     ''' Looks at a sense variable at different delays after calling an actuate function.
         Good for determining the time needed to wait for settling.
         Calls each function once per delay point to construct a picture like the strobe experiment, or a sampling scope
@@ -29,7 +29,10 @@ def strobeTest(fActuate, fSense, fReset=None, nPts=10, maxDelay=1, visualize=Tru
 
     # Figure out if sense is scalar or array; wrap accordingly
     testV = fSense()
-    w = 1 if np.isscalar(testV) else len(testV)
+    if np.isscalar(testV):
+        w = 1
+    else:
+        w = len(testV)
     fWrapped = lambda: np.reshape(np.array(fSense()), (1, w))
 
     t = np.zeros((nPts, 1))
@@ -142,7 +145,10 @@ def monitorVariable(fValue, sleepSec=0, nReps=100, plotEvery=1):
     curves = None
 
     testV = fValue()
-    w = 1 if np.isscalar(testV) else len(testV)
+    if np.isscalar(testV):
+        w = 1
+    else:
+        w = len(testV)
     fWrapped = lambda: np.reshape(np.array(fValue()), (1, w))
     t0 = time.time()
     timeFun = lambda: time.time() - t0

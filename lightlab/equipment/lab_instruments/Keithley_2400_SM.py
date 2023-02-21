@@ -49,12 +49,15 @@ class Keithley_2400_SM(VISAInstrumentDriver, Configurable):
             self.setConfigParam('ROUT:TERM', 'REAR')
 
     def __setSourceMode(self, isCurrentSource):
-        sourceStr, meterStr = ('CURR', 'VOLT') if isCurrentSource else ('VOLT', 'CURR')
+        if isCurrentSource:
+            sourceStr, meterStr = ('CURR', 'VOLT')
+        else:
+            sourceStr, meterStr = ('VOLT', 'CURR')
         self.setConfigParam('SOURCE:FUNC', sourceStr)
-        self.setConfigParam(f'SOURCE:{sourceStr}:MODE', 'FIXED')
+        self.setConfigParam('SOURCE:{}:MODE'.format(sourceStr), 'FIXED')
         self.setConfigParam('SENSE:FUNCTION:OFF:ALL')
-        self.setConfigParam('SENSE:FUNCTION:ON', f'"{meterStr}"')
-        self.setConfigParam(f'SENSE:{meterStr}:RANGE:AUTO', 'ON')
+        self.setConfigParam('SENSE:FUNCTION:ON', '"{}"'.format(meterStr))
+        self.setConfigParam('SENSE:{}:RANGE:AUTO'.format(meterStr), 'ON')
         self.setConfigParam('RES:MODE', 'MAN')  # Manual resistance ranging
 
     def setVoltageMode(self, protectionCurrent=0.05):
