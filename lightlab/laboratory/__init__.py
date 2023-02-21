@@ -45,18 +45,22 @@ class Hashable(object):
 
     No instance variables starting with "__" will be serialized.
     """
-    context = jsonpickle.pickler.Pickler(
-        unpicklable=True, warn=True, keys=True)
+
+
+    def __json_self(self):
+        context = jsonpickle.pickler.Pickler(
+            unpicklable=True, warn=True, keys=True)
+        jsonpickle.set_encoder_options('json', sort_keys=True)
+        json_self = context.flatten(self, reset=True)
+        return json_self
 
     def __eq__(self, other):
-        jsonpickle.set_encoder_options('json', sort_keys=True)
-        json_self = self.context.flatten(self, reset=True)
-        json_other = self.context.flatten(other, reset=True)
+        json_self = self.__json_self()
+        json_other = Hashable.__json_self(other)
         return json_self == json_other
 
     def __hash__(self):
-        jsonpickle.set_encoder_options('json', sort_keys=True)
-        json_self = self.context.flatten(self, reset=True)
+        json_self = self.__json_self()
         return hash(jsonpickle.json.encode(json_self))
 
     def __init__(self, **kwargs):

@@ -12,6 +12,7 @@ import json
 import time
 import os
 import logging
+from freezegun import freeze_time
 
 logging.disable(logging.CRITICAL)
 filename = f'test_{int(time.time())}.json'
@@ -207,7 +208,7 @@ def test_savestate(lab):
     lab.updateHost(h1)
     lab.saveState(filename, save_backup=False)
 
-
+@freeze_time("2023-02-21")
 def test_reloadlabstate(lab):
     ''' Saves and reloads LabState and asserts equality '''
     lab2 = labstate.LabState.loadState(filename=filename)
