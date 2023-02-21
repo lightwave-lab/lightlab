@@ -4,13 +4,14 @@ coded. All tests should be safe to run locally.'''
 import pytest
 from mock import patch
 from lightlab.equipment import lab_instruments
-from lightlab.equipment.lab_instruments import VISAInstrumentDriver
+from lightlab.equipment.lab_instruments import VISAInstrumentDriver, experimental_instruments
 import inspect
 
-classes = []  # All classes that inherit VISAInstrumentDriver
-for name, obj in inspect.getmembers(lab_instruments):
-    if inspect.isclass(obj) and issubclass(obj, VISAInstrumentDriver):
-        classes.append(obj)
+classes = [
+    obj
+    for name, obj in inspect.getmembers(lab_instruments)
+    if inspect.isclass(obj) and issubclass(obj, VISAInstrumentDriver) and name not in experimental_instruments
+]
 
 class OpenError(RuntimeError):
     pass

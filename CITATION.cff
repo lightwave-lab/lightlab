@@ -1,0 +1,18 @@
+# YAML 1.2
+---
+abstract: "A python library for remote laboratory control."
+authors: 
+  -
+    family-names: Tait
+    given-names: Alex
+  -
+    family-names: "Ferreira de Lima"
+    given-names: Thomas
+cff-version: "1.1.0"
+date-released: 2019-06-28
+license: MIT
+message: "If you use this software, please cite it using these metadata."
+repository-code: "https://github.com/lightwave-lab/lightlab"
+title: Lightlab
+version: "1.0.7"
+...

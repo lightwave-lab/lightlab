@@ -45,18 +45,22 @@ class Hashable(object):
 
     No instance variables starting with "__" will be serialized.
     """
-    context = jsonpickle.pickler.Pickler(
-        unpicklable=True, warn=True, keys=True)
+
+
+    def __json_self(self):
+        context = jsonpickle.pickler.Pickler(
+            unpicklable=True, warn=True, keys=True)
+        jsonpickle.set_encoder_options('json', sort_keys=True)
+        json_self = context.flatten(self, reset=True)
+        return json_self
 
     def __eq__(self, other):
-        jsonpickle.set_encoder_options('json', sort_keys=True)
-        json_self = self.context.flatten(self, reset=True)
-        json_other = self.context.flatten(other, reset=True)
+        json_self = self.__json_self()
+        json_other = Hashable.__json_self(other)
         return json_self == json_other
 
     def __hash__(self):
-        jsonpickle.set_encoder_options('json', sort_keys=True)
-        json_self = self.context.flatten(self, reset=True)
+        json_self = self.__json_self()
         return hash(jsonpickle.json.encode(json_self))
 
     def __init__(self, **kwargs):
@@ -212,7 +216,7 @@ class NamedList(MutableSequence, Hashable):
                     # Renaming instrument to conform to the dict's key
                     # named_list['name1'] = Instrument('name2')
                     # Instrument will be renamed to name1 prior to insertion
-                    v.name = i
+                    v._name = i  # pylint: disable=protected-access
 
                 # special case when v is already in the list, in
                 # which case one must do nothing.
@@ -228,23 +232,23 @@ class NamedList(MutableSequence, Hashable):
         # Append will call this method with self.insert(len(self), value)
         if self.read_only:
             raise RuntimeError("attempting to insert item to read-only list")
-        else:
-            self.check(value)
-            conflicts = self.check_presence(value.name)
-            if len(conflicts) > 0:
-                raise RuntimeError(f"{value.name} already exists in list[{conflicts[0]}].")
-            if isinstance(index, str):
-                # this code should normally never be run. but just in case,
-                # it should add value right before index's position
-                index_list = self.check_presence(index)
-                assert len(index_list) <= 1
-                if len(index_list) == 1:
-                    index = index_list[0]
-                    self.list.insert(index, value)
-                else:
-                    self[value.name] = value
-            else:
+
+        self.check(value)
+        conflicts = self.check_presence(value.name)
+        if len(conflicts) > 0:
+            raise RuntimeError(f"{value.name} already exists in list[{conflicts[0]}].")
+        if isinstance(index, str):
+            # this code should normally never be run. but just in case,
+            # it should add value right before index's position
+            index_list = self.check_presence(index)
+            assert len(index_list) <= 1
+            if len(index_list) == 1:
+                index = index_list[0]
                 self.list.insert(index, value)
+            else:
+                self[value.name] = value
+        else:
+            self.list.insert(index, value)
 
     def __str__(self):
         return str(self.list)

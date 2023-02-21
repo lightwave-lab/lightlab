@@ -1,5 +1,4 @@
 import numpy as np
-import pyvisa
 
 from lightlab import logger
 from lightlab.util.data import Waveform, FunctionBundle
@@ -154,7 +153,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         if timeout is None:
             timeout = self.timeout / 1e3
         if timeout > 60:
-            logger.warning(f'Long timeout {timeout} specified, testing')
+            logger.warning('Long timeout %s specified, testing', timeout)
             old_avgCnt = self.timebaseConfig()['avgCnt']
             self.timebaseConfig(avgCnt=2)
             self._triggerAcquire(timeout=10)
@@ -180,17 +179,8 @@ class TekScopeAbstract(Configurable, AbstractDriver):
         chStr = 'CH' + str(chan)
         self.setConfigParam('DATA:ENCDG', 'ASCII')
         self.setConfigParam('DATA:SOURCE', chStr)
-        self.open()
-        try:
-            voltRaw = self.mbSession.query_ascii_values('CURV?')
-        except pyvisa.VisaIOError as err:
-            logger.error('Problem during query_ascii_values(\'CURV?\')')
-            try:
-                self.close()
-            except pyvisa.VisaIOError:
-                logger.error('Failed to close! %s', self.address)
-            raise err
-        self.close()
+
+        voltRaw = self.query_ascii_values('CURV?')
         return voltRaw
 
     def __scaleData(self, voltRaw):
@@ -217,7 +207,7 @@ class TekScopeAbstract(Configurable, AbstractDriver):
             * get(self._yScaleParam) \
             + get('YZERO')
 
-        timeDivision = float(self.getConfigParam('HORIZONTAL:MAIN:SCALE'))
+        timeDivision = float(self.getConfigParam('HORIZONTAL:MAIN:SCALE', forceHardware=True))
         time = np.linspace(-1, 1, len(voltage)) / 2 * timeDivision * 10
 
         return time, voltage

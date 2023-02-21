@@ -48,8 +48,8 @@ pyvisa
 
     Proceed with enjoying lightlab once you have the following output::
 
-        >>> import visa
-        >>> rm = visa.ResourceManager()
+        >>> import pyvisa
+        >>> rm = pyvisa.ResourceManager()
         >>> print(rm.list_resources())
         ('GPIB0::20::INSTR', 'GPIB1::24::INSTR', 'ASRL1::INSTR', 'ASRL2::INSTR', 'ASRL3::INSTR', 'ASRL4::INSTR')
 
@@ -66,7 +66,7 @@ You can install the lightlab package like any other python package::
 
 If you are new to python programming, jupyter notebooks, you might want to sit down and patiently read the :ref:`getting-started` Pages. If you want to develop and write drivers, good for you. It's on `github <https://github.com/lightwave-lab/lightlab>`__ along with guides on contributing and can be cloned by::
 
-    git clone git@github.com:lightwave-lab/lightlab.git
+    git clone https://github.com/lightwave-lab/lightlab.git
 
 Your environment will be slightly different if you're developing, described :ref:`here <basic_environment>`.
 

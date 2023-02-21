@@ -4,6 +4,7 @@ Lightlab
 .. image:: https://zenodo.org/badge/131508614.svg
    :target: https://zenodo.org/badge/latestdoi/131508614
 
+
 A python library for remote laboratory control. Laboratory remoting facilitates experimental research:
 
 * access from anywhere
@@ -32,13 +33,13 @@ From PyPI:
 
     pip install lightlab
 
-From source:
+From source (developer mode):
 
 ::
 
-    git clone git@github.com:lightwave-lab/lightlab.git
+    git clone https://github.com/lightwave-lab/lightlab.git
     cd lightlab
-    make venv
+    pip install -e .  # install in editable mode.
 
 Getting started
 ---------------
@@ -60,3 +61,7 @@ Server: Mac OS and Linux running ≥python3.6; not tested on Windows (to do).
 
 Auxiliary hosts: Mac OS, Linux, Windows
 
+Acknowledgements
+----------------
+
+This  material  is  based  in part upon  work  supported  by  the  National Science Foundation under Grant Number E2CDA-1740262. Any  opinions,  findings,  and  conclusions  or  recommendations expressed  in  this  material  are  those  of  the  author(s)  and  do  not necessarily reflect the views of the National Science Foundation.

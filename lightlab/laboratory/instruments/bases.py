@@ -17,7 +17,7 @@ import pyvisa
 class Host(Node):
     """ Computer host, from which GPIB/VISA commands are issued.
     """
-    name = None
+    _name = None
     hostname = None
     mac_address = None
     os = "linux-ubuntu"  # linux-ubuntu, linux-centos, windows, mac etc.
@@ -30,8 +30,12 @@ class Host(Node):
             logger.warning("Hostname not set. isLive and list_resources not functional.")
 
         self.hostname = hostname
-        self.name = name
+        self._name = name
         super().__init__(**kwargs)
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def instruments(self):
@@ -464,7 +468,7 @@ class Instrument(Node):
         # set obj.__mangled_variable = 'something'
         try:
             return self.__dict__[mangle(attrName, self.__class__.__name__)]
-        except KeyError as _:
+        except KeyError:
             raise AttributeError(errorText)
 
     def __setattr__(self, attrName, newVal):
@@ -629,7 +633,7 @@ class Instrument(Node):
         try:
             driver = self.driver_object
             query_id = driver.instrID()
-            logger.info("Found %s in %s.", self.name, self.address)
+            logger.info("Found instrument in %s.", self.address)
             if self.id_string is not None:
                 if self.id_string == query_id:
                     logger.info("id_string of %s is accurate", self.name)
@@ -639,7 +643,7 @@ class Instrument(Node):
                                    query_id, self.id_string)
                     return False
             else:
-                logger.debug("Cannot authenticate %s in %s.",
+                logger.debug("Missing id_string, cannot confirm that %s is in %s.",
                              self.name, self.address)
                 return True
         except pyvisa.VisaIOError as err:
@@ -666,6 +670,14 @@ class Instrument(Node):
     #     # TODO untreated error when there is no device with that address!
     #     id_string = visa_object.instrID()
     #     return cls(id_string, gpib_address=gpib_address)
+
+
+class MockInstrument(Instrument):
+
+    def __getattr__(self, attrName):
+        def noop(*args, **kwargs):
+            raise AttributeError("Attempted to call method ('{}') of a mock Instrument.".format(attrName))
+        return noop
 
 
 class NotFoundError(RuntimeError):

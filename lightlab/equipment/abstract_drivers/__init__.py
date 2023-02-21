@@ -2,7 +2,6 @@
 class AbstractDriver(object):
     ''' In case there is future functionality
     '''
-    pass
 
 
 from .configurable import Configurable, TekConfig, AccessException  # noqa

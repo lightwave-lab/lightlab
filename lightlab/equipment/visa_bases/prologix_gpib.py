@@ -2,6 +2,7 @@
 import socket
 import time
 import re
+from lightlab import visalogger as logger
 from .driver_base import InstrumentSessionBase, TCPSocketConnection
 
 
@@ -87,11 +88,25 @@ class PrologixResourceManager(TCPSocketConnection):
 
         Args:
             query_msg (str): query message.
-            msg_length (int): maximum message length.
+            msg_length (int): maximum message length. If the received
+                message does not contain a '\n', it triggers another
+                socket recv command with the same message length.
         '''
         with self.connected():
-            self._send(self._socket, query_msg)
-            recv = self._recv(self._socket, msg_length)
+            recv = ""
+            try:
+                n_read = 0
+                self._send(self._socket, query_msg)
+                recv = self._recv(self._socket, msg_length)
+                n_read += 1
+#                 print(n_read, end=' ')
+                while not recv.endswith('\n'):
+                    recv += self._recv(self._socket, msg_length)
+                    n_read += 1
+#                     print(n_read, end=' ')
+            except:
+#                 print(recv)
+                print(n_read)
         return recv
 
 
@@ -250,26 +265,37 @@ class PrologixGPIBObject(InstrumentSessionBase):
         ''' Closes the connection with the instrument.
         Side effect: disconnects prologix socket controller'''
         self._prologix_rm.disconnect()
-        return
 
     def write(self, writeStr):
         with self._prologix_rm.connected() as pconn:
             pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
             pconn.send(self._prologix_escape_characters(writeStr))
+    
+#     def read(self, withTimeout=None):
+#         logger.debug('%s - Q - %s', self.address, queryStr)
+#         retStr = self.query_raw_binary(queryStr, withTimeout)
+#         logger.debug('Query Read - %s', repr(retStr))
+#         return retStr.rstrip()
+        
 
     def query(self, queryStr, withTimeout=None):
         '''Read the unmodified string sent from the instrument to the
            computer.
         '''
+        logger.debug('%s - Q - %s', self.address, queryStr)
         retStr = self.query_raw_binary(queryStr, withTimeout)
+        logger.debug('Query Read - %s', repr(retStr))
         return retStr.rstrip()
+
+    def wait(self, bigMsTimeout=10000):
+        self.query('*OPC?', withTimeout=bigMsTimeout)
 
     def clear(self):
         '''This command sends the Selected Device Clear (SDC) message to the currently specified GPIB address.'''
         with self._prologix_rm.connected() as pconn:
             pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
             pconn.send('++clr')
-
+            
     def query_raw_binary(self, queryStr, withTimeout=None):
         '''Read the unmodified string sent from the instrument to the
            computer. In contrast to query(), no termination characters
@@ -279,24 +305,38 @@ class PrologixGPIBObject(InstrumentSessionBase):
             pconn.send('++addr {}'.format(self._prologix_gpib_addr_formatted()))
             pconn.send(self._prologix_escape_characters(queryStr))
 
-        if withTimeout is None:
-            withTimeout = self.timeout
+        if withTimeout is not None:
+            logger.warn("withTimeout option is deprecated: no effect")
+        
+        # TODO guard against socket error and throw nice error message
+        retStr = self._prologix_rm.query('++read eoi')
+        return retStr.rstrip()
 
-        # checking if message is available in small increments
-        currenttime = time.time()
-        expirationtime = currenttime + withTimeout
-        while time.time() < expirationtime:
-            # self.timeout = newTimeout
-            status_byte = self.spoll()
-            # MAV indicates that the message is available
-            MAV = (status_byte >> 4) & 1
-            if MAV:
-                retStr = self._prologix_rm.query('++read eoi')
-                return retStr.rstrip()
-            # ask for the message in small increments
-            time.sleep(0.1)
+        ## WARNING
+        # The code below is for instruments that implement the message available
+        # assert bit in the STATUS BYTE. Not all instruments implement it.
+        # So it is best to deactivate it here for now.
+        # That means that if you query something and the instrument doesn't send anything,
+        # you will receive a cryptic socket timeout error.
 
-        raise RuntimeError('Query timed out')
+        # if withTimeout is None:
+        #     withTimeout = self.timeout
+
+        # # checking if message is available in small increments
+        # currenttime = time.time()
+        # expirationtime = currenttime + withTimeout
+        # while time.time() < expirationtime:
+        #     # self.timeout = newTimeout
+        #     status_byte = self.spoll()
+        #     # MAV indicates that the message is available
+        #     MAV = (status_byte >> 4) & 1
+        #     if MAV == 1:
+        #         retStr = self._prologix_rm.query('++read eoi')
+        #         return retStr.rstrip()
+        #     # ask for the message in small increments
+        #     time.sleep(0.1)
+
+        # raise RuntimeError('Query timed out')
 
     @property
     def timeout(self):

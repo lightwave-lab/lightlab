@@ -75,7 +75,7 @@ except OSError as error:
     if isinstance(error, PermissionError):
         logger.warning("You don't have permission to read/access %s.", _filename)
     new_filename = 'labstate-local.json'
-    logger.warning(f"{_filename} not available. Fallback to local {new_filename}.")
+    logger.warning("%s not available. Fallback to local %s.", _filename, new_filename)
     _filename = Path(new_filename)
 
 
@@ -150,14 +150,14 @@ class LabState(Hashable):
                 # Check for localhost clash
                 if new_host.name != localhost_name:
                     logger.warning('Localhost is already present: ' +
-                                   f'{localhost_name}\n' +
-                                   f'Not updating host {new_host.name}!')
+                                   '%s\n' +
+                                   'Not updating host %s!', localhost_name, new_host.name)
                     continue
                 else:
                     localhost_name = new_host.name
             # Will an update happen?
             if new_host.name in old_hostnames:
-                logger.info(f'Overwriting host: {new_host.name}')
+                logger.info('Overwriting host: %s', new_host.name)
                 # Will it end up removing the localhost?
                 if (new_host.name == localhost_name and
                         not isinstance(new_host, LocalHost)):
@@ -212,10 +212,10 @@ class LabState(Hashable):
         """
         self.instruments.append(instrument)
         if instrument.bench and instrument.bench not in self.benches:
-            logger.warning(f"Insterting *new* bench {instrument.bench.name}")
+            logger.warning("Insterting *new* bench %s", instrument.bench.name)
             self.benches.append(instrument.bench)
         if instrument.host and instrument.host not in self.hosts:
-            logger.warning(f"Inserting *new* host {instrument.host.name}")
+            logger.warning("Inserting *new* host %s", instrument.host.name)
             self.hosts.append(instrument.host)
 
     def insertDevice(self, device):
@@ -231,7 +231,7 @@ class LabState(Hashable):
         """
         self.devices.append(device)
         if device.bench and device.bench not in self.benches:
-            logger.warning(f"Insterting *new* bench {device.bench.name}")
+            logger.warning("Insterting *new* bench %s", device.bench.name)
             self.benches.append(device.bench)
 
     def updateConnections(self, *connections):
@@ -392,7 +392,7 @@ class LabState(Hashable):
 
         try:
             for i in range(version, cls.__version__):
-                logger.warning(f"Attempting patch {i} -> {cls.__version__}")
+                logger.warning("Attempting patch %s -> %s", i, cls.__version__)
                 restored_object = patch_labstate(i, restored_object)
         except NotImplementedError as e:
             logger.exception(e)
@@ -456,7 +456,7 @@ class LabState(Hashable):
         try:
             loaded_lab = LabState.loadState(fname)
         except FileNotFoundError:
-            logger.debug(f"File not found: {fname}. Saving for the first time.")
+            logger.debug("File not found: %s. Saving for the first time.", fname)
             self._saveState(fname, save_backup=False)
             return
         except JSONDecodeError:
@@ -494,7 +494,7 @@ class LabState(Hashable):
                 # gets folder/filename.* and transforms into folder/filename_{timestamp}.json
                 filepath_backup = Path(filepath).with_name(
                     "{}_{}.json".format(filepath.stem, timestamp_string()))
-                logger.debug(f"Backup {filepath} to {filepath_backup}")
+                logger.debug("Backup %s to %s", filepath, filepath_backup)
                 shutil.copy2(filepath, filepath_backup)
 
         # save to filepath, overwriting

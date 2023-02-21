@@ -17,7 +17,7 @@ default: help ;
 
 venv: venv/bin/activate
 venv/bin/activate:
-	test -e venv/bin/activate || virtualenv -p python3 --prompt "(lightlab-venv) " --distribute venv
+	test -e venv/bin/activate || virtualenv -p python3 --prompt "(lightlab-venv) " venv
 	touch venv/bin/activate
 
 devbuild: venvinfo/devreqs~

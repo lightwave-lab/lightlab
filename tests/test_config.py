@@ -42,19 +42,19 @@ def test_walk_default(config_default):
 
 
 def test_exceptions(config_default):
-    with pytest.raises(config.InvalidSection, message="failed to detect invalid section"):
+    with pytest.raises(config.InvalidSection):
         config.get_config_param('invalid_section')
         config.print_config_param('invalid_section')
 
     first_section = next(iter(default_config.keys()))
 
-    with pytest.raises(config.InvalidOption, message="failed to detect invalid option"):
+    with pytest.raises(config.InvalidOption):
         config.get_config_param(f"{first_section}.invalid_option")
 
-    with pytest.raises(config.InvalidOption, message="failed to detect invalid option"):
+    with pytest.raises(config.InvalidOption):
         config.print_config_param(f"{first_section}.invalid_option")
 
-    with pytest.raises(config.InvalidOption, message="failed to detect invalid option"):
+    with pytest.raises(config.InvalidOption):
         config.get_config_param(f"{first_section}")  # just the section
 
 
@@ -135,10 +135,10 @@ def test_command_line(config_default, capsys):
     captured1 = capsys.readouterr()
     assert "labstate.filepath: ~/.lightlab/labstate.json\n" == captured1.out
 
-    with pytest.raises(SystemExit, message="invalid syntax"):
+    with pytest.raises(SystemExit):
         execute("set")
 
-    with pytest.raises(config.InvalidOption, message="invalid syntax"):
+    with pytest.raises(config.InvalidOption):
         execute("set labstate 123")
 
     execute("set labstate.filepath 123")
@@ -148,10 +148,10 @@ def test_command_line(config_default, capsys):
     captured1 = capsys.readouterr()
     assert "labstate.filepath: 123\n" == captured1.out
 
-    with pytest.raises(SystemExit, message="invalid syntax"):
+    with pytest.raises(SystemExit):
         execute("reset")
 
-    with pytest.raises(SystemExit, message="invalid syntax"):
+    with pytest.raises(SystemExit):
         execute("reset labstate.filepath test_section")
 
     execute("reset labstate")
