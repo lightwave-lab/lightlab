@@ -3,6 +3,12 @@ import sys
 from configparser import ConfigParser
 from pathlib import Path
 import argparse
+try:
+    from os import getuid
+except ImportError:
+    # User is on windows
+    def getuid():
+        return 1
 
 user_config_path = os.path.expanduser("~") + "/.lightlab" + "/config.conf"
 user_config_path = Path(user_config_path).resolve()
@@ -26,7 +32,7 @@ def get_config():
         read_files.append(system_config_path)
     if os.path.isfile(user_config_path):
         read_files.append(user_config_path)
-    if read_files:
+    if len(read_files) > 0:
         config.read(read_files)
     return config
 
@@ -37,9 +43,9 @@ def parse_param(param):
     split_param = param.split(".")
     section, item = None, None
     if len(split_param) > 0:
-        section = split_param[0] or None
+        section = split_param[0] if split_param[0] else None
     if len(split_param) > 1:
-        item = split_param[1] or None
+        item = split_param[1] if split_param[1] else None
     return (section, item)
 
 
@@ -80,7 +86,7 @@ def print_config_param(param):
     if section is not None and item is not None:
         gotten_param = get_config_param(param)
         print(f"{section}.{item}: {gotten_param}")
-    elif section is not None:
+    elif section is not None and item is None:
         for key, value in config[section].items():
             print(f"{section}.{key}: {value}")
     else:
@@ -108,7 +114,7 @@ def reset_config_param(param):
     if section is not None and item is not None:
         config.remove_option(section, item)
         print(f"{section}.{item} reset.")
-    elif section is not None:
+    elif section is not None and item is None:
         config.remove_section(section)
         print(f"{section}.* reset.")
     config_save(config)
@@ -122,24 +128,18 @@ def config_save(config, omit_default=True):
         unset_items = []
         for section in config.sections():
             if section in default_config.keys():
-                unset_items.extend(
-                    (section, option)
-                    for option in config[section].keys()
-                    if option in default_config[section].keys()
-                    and config[section][option]
-                    == default_config[section][option]
-                )
-
+                for option in config[section].keys():
+                    if option in default_config[section].keys():
+                        if config[section][option] == default_config[section][option]:
+                            unset_items.append((section, option))
         for section, item in unset_items:
             config.remove_option(section, item)
 
         # remove all sections that are default
-        unset_sections = [
-            section
-            for section in config.sections()
-            if len(config[section].keys()) == 0
-        ]
-
+        unset_sections = []
+        for section in config.sections():
+            if len(config[section].keys()) == 0:
+                unset_sections.append(section)
         for section in unset_sections:
             config.remove_section(section)
 
@@ -154,7 +154,7 @@ def config_save(config, omit_default=True):
         config.write(user_config_file)
         print(f'----saving {user_config_path}----', file=sys.stderr)
         config.write(sys.stderr)
-        print(f'----{"-" * len(f"saving {user_config_path}")}----', file=sys.stderr)
+        print('----{}----'.format("-" * len(f"saving {user_config_path}")), file=sys.stderr)
     return True
 
 
@@ -174,11 +174,14 @@ config_cmd_parser.add_argument('params', nargs=argparse.REMAINDER)
 def config_main(args):
     config_args = config_cmd_parser.parse_args(args)
 
+    def is_root():
+        return getuid() == 0
+
     # If --system is set, change system_config_path
     if config_args.system:
         global user_config_path  # pylint: disable=W0603
         user_config_path = system_config_path
-    elif os.getuid() == 0 and not os.environ.get('DOCKER'):
+    elif is_root() and not os.environ.get('DOCKER'):
         raise SystemExit("Do not run as root except with --system flag.")
 
     params = config_args.params
@@ -192,16 +195,17 @@ def config_main(args):
         else:
             print_config_param(None)
     elif config_args.action == 'set':
-        if len(params) != 2:
-            raise SystemExit("Invalid syntax. Use lightlab config set section.item value.")
-        param = params[0]
-        set_value = params[1]
-        set_config_param(param, set_value)
+        if len(params) == 2:
+            param = params[0]
+            set_value = params[1]
+            set_config_param(param, set_value)
+        else:
+            raise SystemExit(f"Invalid syntax. Use lightlab config set section.item value.")
     elif config_args.action == 'reset':
         if len(params) == 1:
             param = params[0]
             reset_config_param(param)
         else:
-            raise SystemExit("Invalid syntax. Use lightlab config reset section[.item]")
+            raise SystemExit(f"Invalid syntax. Use lightlab config reset section[.item]")
     else:
         config_cmd_parser.print_help()

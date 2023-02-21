@@ -42,7 +42,7 @@ class MultiModalSource(object):
         ''' Returns mode in lower case
         '''
         if mode not in cls.supportedModes:
-            raise TypeError(f'Invalid mode: {str(mode)}. Valid: {str(cls.supportedModes)}')
+            raise TypeError('Invalid mode: ' + str(mode) + '. Valid: ' + str(cls.supportedModes))
 
         return mode.lower()
 
@@ -58,7 +58,7 @@ class MultiModalSource(object):
         valueWasDict = isinstance(value, dict)
         if not valueWasDict:
             value = {-1: value}
-        baseVal = {}
+        baseVal = dict()
         for ch, vEl in value.items():
             if mode == 'baseunit':
                 baseVal[ch] = vEl
@@ -72,7 +72,10 @@ class MultiModalSource(object):
                 baseVal[ch] = cls.val2baseUnit(np.sign(vEl) * np.sqrt(abs(vEl)), 'amp')
             elif mode == 'mwperohm':
                 baseVal[ch] = cls.val2baseUnit(vEl / 1e3, 'wattperohm')
-        return baseVal if valueWasDict else baseVal[-1]
+        if valueWasDict:
+            return baseVal
+        else:
+            return baseVal[-1]
 
     @classmethod
     def baseUnit2val(cls, baseVal, mode):
@@ -86,7 +89,7 @@ class MultiModalSource(object):
         baseValWasDict = isinstance(baseVal, dict)
         if not baseValWasDict:
             baseVal = {-1: baseVal}
-        value = {}
+        value = dict()
         for ch, bvEl in baseVal.items():
             if mode == 'baseunit':
                 value[ch] = bvEl
@@ -100,7 +103,10 @@ class MultiModalSource(object):
                 value[ch] = np.sign(bvEl) * (cls.baseUnit2val(bvEl, 'amp')) ** 2
             elif mode == 'mwperohm':
                 value[ch] = cls.baseUnit2val(bvEl, 'wattperohm') * 1e3
-        return value if baseValWasDict else value[-1]
+        if baseValWasDict:
+            return value
+        else:
+            return value[-1]
 
 
 class MultiChannelSource(object):
@@ -115,16 +121,15 @@ class MultiChannelSource(object):
     def __init__(self, useChans=None, **kwargs):
         if useChans is None:
             logger.warning('No useChans specified for MultichannelSource')
-            useChans = []
+            useChans = list()
         self.useChans = useChans
         self.stateDict = dict([ch, 0] for ch in self.useChans)
 
         # Check that the requested channels are available to be blocked out
-        if self.maxChannel is not None and any(
-            ch > self.maxChannel - 1 for ch in self.useChans
-        ):
-            raise ChannelError(
-                'Requested channel is more than there are available')
+        if self.maxChannel is not None:
+            if any(ch > self.maxChannel - 1 for ch in self.useChans):
+                raise ChannelError(
+                    'Requested channel is more than there are available')
         super().__init__(**kwargs)
 
     @property

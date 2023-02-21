@@ -32,11 +32,11 @@ class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
         '''
         if amp is not None and chan in self.__channels:
             time.sleep(self.__waitTime)
-            cmd = str(f':VOLT{str(chan)}:POS {str(amp)}V')
+            cmd = str(':VOLT' + str(chan) + ':POS ' + str(amp) + 'V')
             self.setConfigParam(cmd, None, True)
         if offset is not None:
             time.sleep(self.__waitTime)
-            cmd = str(f':VOLT{str(chan)}:POS:OFFS {str(offset)}V')
+            cmd = str(':VOLT' + str(chan) + ':POS:OFFS ' + str(offset) + 'V')
             self.setConfigParam(cmd, None, True)
 
     def __setPatternType(self, chan=None, ptype=None):
@@ -48,7 +48,7 @@ class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
                 logger.exception('Wrong Pattern Type!')
             else:
                 time.sleep(self.__waitTime)
-                cmd = str(f':DIG{str(chan)}:PATT:TYPE {str(ptype)}')
+                cmd = str(':DIG' + str(chan) + ':PATT:TYPE ' + str(ptype))
                 self.setConfigParam(cmd, None, True)
 
     def setDataRate(self, rate=None):
@@ -60,7 +60,7 @@ class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
                 logger.exception('Invalid Data Rate!')
             else:
                 time.sleep(self.__waitTime)
-                cmd = str(f':FREQ {str(rate)}e9')
+                cmd = str(':FREQ ' + str(rate) + 'e9')
                 self.setConfigParam(cmd, None, True)
 
     def setMainParam(self, chan=None, amp=None, offset=None, ptype=None):
@@ -76,7 +76,7 @@ class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
         if div is not None:
             if (div in self.__ClockDivider):
                 time.sleep(self.__waitTime)
-                cmd = str(f':OUTP:CLOC:DIV {str(div)}')
+                cmd = str(':OUTP:CLOC:DIV ' + str(div))
                 self.setConfigParam(cmd, None, True)
             else:
                 logger.exception('Wrong Clock Divider Value!')
@@ -84,7 +84,7 @@ class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
     def setDataMemory(self, chan=None, startAddr=None, bit=None, data=None):
         if chan is not None and chan in self.__channels:
             time.sleep(self.__waitTime)
-            cmd = str(f':DIG{str(chan)}:PATT:DATA {str(startAddr)},{str(bit)},{str(data)}')
+            cmd = str(':DIG' + str(chan) + ':PATT:DATA ' + str(startAddr) + ',' + str(bit) + ',' + str(data))
             self.setConfigParam(cmd, None, True)
         else:
             logger.exception('Please choose Channel 1 or 2!')
@@ -92,10 +92,7 @@ class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
     def setHexDataMemory(self, chan=None, startAddr=None, bit=None, Hdata=None):
         if chan is not None and chan in self.__channels:
             time.sleep(self.__waitTime)
-            cmd = str(
-                f':DIG{str(chan)}:PATT:HDAT {str(startAddr)},{str(bit)},{str(Hdata)}'
-            )
-
+            cmd = str(':DIG' + str(chan) + ':PATT:HDAT ' + str(startAddr) + ',' + str(bit) + ',' + str(Hdata))
             self.setConfigParam(cmd, None, True)
         else:
             logger.exception('Please choose Channel 1 or 2!')
@@ -103,7 +100,7 @@ class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
     def channelOn(self, chan=None):
         if chan is not None and chan in self.__channels:
             time.sleep(self.__waitTime)
-            cmd = str(f':OUTP{str(chan)} ON')
+            cmd = str(':OUTP' + str(chan) + ' ON')
             self.setConfigParam(cmd, None, True)
         else:
             logger.exception('Please choose Channel 1 or 2!')
@@ -111,25 +108,25 @@ class Tektronix_PPG3202(VISAInstrumentDriver, Configurable):
     def channelOff(self, chan=None):
         if chan is not None and chan in self.__channels:
             time.sleep(self.__waitTime)
-            cmd = str(f':OUTP{str(chan)} OFF')
+            cmd = str(':OUTP' + str(chan) + ' OFF')
             self.setConfigParam(cmd, None, True)
         else:
             logger.exception('Please choose Channel 1 or 2!')
 
     def getAmplitude(self, chan=None):
         if chan is not None and chan in self.__channels:
-            return self.query(f':VOLT{str(chan)}:POS?')
+            return self.query(':VOLT' + str(chan) + ':POS?')
 
     def getOffset(self, chan=None):
         if chan is not None and chan in self.__channels:
-            return self.query(f':VOLT{str(chan)}:POS:OFFS?')
+            return self.query(':VOLT' + str(chan) + ':POS:OFFS?')
 
     def getDataRate(self):
         return self.query(':FREQ?')
 
     def getPatternType(self, chan=None):
         if chan is not None and chan in self.__channels:
-            return self.query(f':DIG{str(chan)}:PATT:TYPE?')
+            return self.query(':DIG' + str(chan) + ':PATT:TYPE?')
 
     def getClockDivider(self):
         return self.query(':OUTP:CLOC:DIV?')

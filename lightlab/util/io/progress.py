@@ -21,8 +21,10 @@ def printWait(*args):
         Args:
             \*args (Tuple(str)): Strings that will be written
     '''
-    msg = ''.join(str(a) for a in args)
-    print(f"{msg}... ", end='')
+    msg = ''
+    for a in args:
+        msg += str(a)
+    print(msg + "... ", end='')
     sys.stdout.flush()
 
 
@@ -34,7 +36,9 @@ def printProgress(*args):
     Args:
         *args (str, Tuple(str)): Arguments that will be written
     '''
-    msg = ''.join(str(a) for a in args)
+    msg = ''
+    for a in args:
+        msg += str(a)
     sys.stdout.write('\b' * 1000)
     sys.stdout.flush()
     sys.stdout.write(msg)
@@ -91,7 +95,7 @@ class ProgressWriter(object):
         def print_string():
             prntStr = self.name + "\n"
             for iterDim, _ in enumerate(self.size):
-                prntStr += f'Dim-{str(iterDim)}...'
+                prntStr += 'Dim-' + str(iterDim) + '...'
             return prntStr
 
         if True:
@@ -126,12 +130,13 @@ class ProgressWriter(object):
                 port = int(fx.readline())
         except FileNotFoundError:
             port = 'null'
-        return prefix + host + ':' + port
+        return prefix + host + ':' + str(port)
 
     def __tag(self, bodytext, autorefresh=False):
         ''' Do the HTML tags '''
         if not hasattr(self, '__tagHead') or self.__tagHead is None:
-            t = '<!DOCTYPE html>\n' + '<html>\n'
+            t = '<!DOCTYPE html>\n'
+            t += '<html>\n'
             t += '<head>\n'
             t += '<title>'
             t += 'Sweep Progress Monitor'
@@ -139,11 +144,12 @@ class ProgressWriter(object):
             if autorefresh:
                 t += '<meta http-equiv="refresh" content="5" />\n'  # Autorefresh every 5 seconds
             t += '<body>\n'
-            t += f'<h1>{self.name}' + '</h1>\n'
+            t += '<h1>' + self.name + '</h1>\n'
             t += r'<hr \>\\n'
             self.__tagHead = t
         if not hasattr(self, '__tagFoot') or self.__tagFoot is None:
-            t = '</body>\n' + '</html>\n'
+            t = '</body>\n'
+            t += '</html>\n'
             self.__tagFoot = t
         return self.__tagHead + bodytext + self.__tagFoot
 
@@ -155,7 +161,7 @@ class ProgressWriter(object):
         self.__tagHead = None
         self.__tagFoot = None
         body = '<h2>Sweep completed!</h2>\n'
-        body += ptag(f'At {ProgressWriter.tims(time.time())}')
+        body += ptag('At ' + ProgressWriter.tims(time.time()))
         htmlText = self.__tag(body, autorefresh=False)
         with self.filePath.open('w') as fx:  # pylint: disable=no-member
             fx.write(htmlText)
@@ -175,7 +181,7 @@ class ProgressWriter(object):
         body = ''
         for i, p in enumerate(self.currentPnt):
             dimStr = i * 'sub-' + 'dimension[' + str(i) + '] : '
-            dimStr += f'{str(p + 1)} of {str(self.size[i])}'
+            dimStr += str(p + 1) + ' of ' + str(self.size[i])
             body += ptag(dimStr)
         body += r'<hr \>\\n'
 
@@ -189,7 +195,7 @@ class ProgressWriter(object):
                      ProgressWriter.tims(self.startTime))
         body += ptag('(Latest Update)        ' +
                      ProgressWriter.tims(currentTime))
-        body += ptag(f'(Expected Completion)  {ProgressWriter.tims(endTime)}')
+        body += ptag('(Expected Completion)  ' + ProgressWriter.tims(endTime))
 
         # Say where the files are hosted
         body += ptag('This monitor service is hosted in the directory:')
@@ -212,14 +218,17 @@ class ProgressWriter(object):
                 self.__writeHtml()
             if self.printing:
                 self.__writeStdio()
-            self.tempfile.write(self._get_std_string() + "\n")
+            if True:
+                self.tempfile.write(self._get_std_string() + "\n")
+                self.tempfile.flush()
         else:
             if self.serving:
                 self.__writeHtmlEnd()
             if self.printing:
                 self.__writeStdioEnd()
-            self.tempfile.write("End." + "\n")
-        self.tempfile.flush()
+            if True:
+                self.tempfile.write("End." + "\n")
+                self.tempfile.flush()
 
     def __updateOneInternal(self):
         for i in range(len(self.size)):
@@ -238,4 +247,4 @@ class ProgressWriter(object):
 
 
 def ptag(s):
-    return f'<p>{s}' + '</p>\n'
+    return '<p>' + s + '</p>\n'

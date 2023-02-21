@@ -28,9 +28,9 @@ class Agilent_33220_FG(VISAInstrumentDriver, Configurable):
         # self.write('D0')  # enable output
 
     def enable(self, enaState=None):
+        wordMap = {True: 'ON', False: 'OFF'}
         trueWords = [True, 1, '1', 'ON']
         if enaState is not None:
-            wordMap = {True: 'ON', False: 'OFF'}
             self.setConfigParam('OUTP', wordMap[enaState])
         return self.getConfigParam('OUTP') in trueWords
 
@@ -50,7 +50,7 @@ class Agilent_33220_FG(VISAInstrumentDriver, Configurable):
                     self.setConfigParam('FUNC', tok.upper())
                     break
             else:
-                raise ValueError(f'{newWave} is not a valid waveform: {tokens}')
+                raise ValueError(newWave + ' is not a valid waveform: ' + str(tokens))
         return self.getConfigParam('FUNC').lower()
 
     def setArbitraryWaveform(self, wfm):
@@ -109,6 +109,5 @@ class Agilent_33220_FG(VISAInstrumentDriver, Configurable):
                 self.setConfigParam('FUNC:RAMP:SYMMETRY', duty)
             return self.getConfigParam('FUNC:RAMP:SYMMETRY')
         else:
-            raise ValueError(
-                f'Duty cycles are not supported with the currently selected type of waveform ({self.waveform()})'
-            )
+            raise ValueError('Duty cycles are not supported with the currently selected '
+                             'type of waveform ({})'.format(self.waveform()))

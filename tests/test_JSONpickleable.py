@@ -137,7 +137,9 @@ def expJSONfile():
 
 def test_JSONpickleableWithFile(expJSONfile):
     global INSTANTIATION_COUNTER
+    INSTANTIATION_COUNTER = 0
     loadedExp = SomeVirtualizedExperiment.load(expJSONfile)
+    assert INSTANTIATION_COUNTER == 0  # __init__ is not called again
     validate(loadedExp)
 
 

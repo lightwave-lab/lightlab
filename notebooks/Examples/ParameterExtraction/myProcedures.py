@@ -32,7 +32,8 @@ def extractThreshold_2(source_meter_instr):
         for iDv, dv in enumerate(dvArr):
             source_meter_instr.setVoltage(centerVolt + dv)
             diArr[iDv] = source_meter_instr.measCurrent()
-        return diArr[0] - 2 * diArr[1] + diArr[2]
+        d2idv2 = diArr[0] - 2 * diArr[1] + diArr[2]
+        return d2idv2
 
     foundThresh, _ = peakSearch(dither, [-1, 3], livePlot=True, nSwarm=5)
     return foundThresh

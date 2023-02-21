@@ -52,10 +52,10 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
         '''
         if amp is not None:
             if amp > 30:
-                print(f'Warning: PNA ony goes up to +30dBm, given {amp}dBm.')
+                print('Warning: PNA ony goes up to +30dBm, given {}dBm.'.format(amp))
                 amp = 30
             if amp < -30:
-                print(f'Warning: R&S ony goes down to -30dBm, given {amp}dBm.')
+                print('Warning: R&S ony goes down to -30dBm, given {}dBm.'.format(amp))
                 amp = -30
             self.setConfigParam('SOUR:POW', amp)
         return self.getConfigParam('SOUR:POW')
@@ -74,7 +74,7 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
         '''
         if freq is not None:
             if freq > 26e9:
-                print(f'Warning: Agilent N5183 ony goes up to 40GHz, given {freq / 1e9}GHz.')
+                print('Warning: Agilent N5183 ony goes up to 40GHz, given {}GHz.'.format(freq / 1e9))
                 freq = 26e9
             if freq == self.getConfigParam('SENS:FREQ:CW'):
                 return freq
@@ -145,11 +145,11 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
         pass
 
     def triggerSetup(self, useAux=None, handshake=None, isSlave=False):
-        prefix = f'TRIG:CHAN{self.chanNum}:AUX{self.auxTrigNum}'
-        self.setConfigParam(f'{prefix}:INT', 'SWE')
-        self.setConfigParam(f'{prefix}:POS', 'BEF')
+        prefix = 'TRIG:CHAN{}:AUX{}'.format(self.chanNum, self.auxTrigNum)
+        self.setConfigParam(prefix + ':INT', 'SWE')
+        self.setConfigParam(prefix + ':POS', 'BEF')
         self.setConfigParam('TRIG:SOUR', 'EXT' if isSlave else 'IMM')
-        self.__enaBlock(f'{prefix}:HAND', handshake)
+        self.__enaBlock(prefix + ':HAND', handshake)
         return self.__enaBlock(prefix, useAux)
 
     def getSwpDuration(self, forceHardware=False):
@@ -160,7 +160,7 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
             chanNum = self.chanNum
         traceNum = chanNum
         # First let's see the measurements already on this channel
-        retStr = self.query(f'CALC{chanNum}:PAR:CAT:EXT?').strip('"')
+        retStr = self.query('CALC{}:PAR:CAT:EXT?'.format(chanNum)).strip('"')
         if retStr == 'NO CATALOG':
             activeMeasTypes = []
             activeMeasNames = []
@@ -168,31 +168,24 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
             activeMeasTypes = retStr.split(',')[1::2]
             activeMeasNames = retStr.split(',')[::2]
 
-        newMeasName = f'ANT{chanNum}_{measType}'
+        newMeasName = 'ANT{}_{}'.format(chanNum, measType)
         if len(activeMeasTypes) == 1 and measType == activeMeasTypes[0] and newMeasName == activeMeasNames[0]:
             # It is already set up
             changed = False
         else:
             # Clear them
             for mName in activeMeasNames:
-                self.write(f"CALC{chanNum}:PAR:DEL '{mName}'")
+                self.write("CALC{}:PAR:DEL '{}'".format(chanNum, mName))
             # make a new measurement
-            self.setConfigParam(
-                f"CALC{chanNum}:PAR:EXT",
-                f"'{newMeasName}', '{measType}'",
-                forceHardware=True,
-            )
-
-            self.setConfigParam(
-                f'DISP:WIND:TRACE{traceNum}:FEED',
-                f"'{newMeasName}'",
-                forceHardware=True,
-            )
-
+            self.setConfigParam("CALC{}:PAR:EXT".format(chanNum), "'{}', '{}'".format(
+                newMeasName, measType), forceHardware=True)
+            self.setConfigParam('DISP:WIND:TRACE{}:FEED'.format(traceNum),
+                                "'{}'".format(newMeasName), forceHardware=True)
             changed = True
-        self.setConfigParam(
-            f'CALC{self.chanNum}:PAR:MNUM', self.chanNum, forceHardware=changed
-        )
+        self.setConfigParam('CALC{}:PAR:MNUM'.format(self.chanNum),
+                            self.chanNum, forceHardware=changed)
+
+        retStr = self.query('CALC{}:PAR:CAT:EXT?'.format(chanNum)).strip('"')
         # self.setConfigParam('CALC{}:PAR:SEL'.format(self.chanNum), self.chanNum, forceHardware=changed)
         # wait for changes to take effect
         # This could be improved by something like *OPC? corresponding to the end
@@ -211,7 +204,7 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
         self.setConfigParam('FORM', 'ASC')
 
         self.open()
-        dbm = self.query_ascii_values(f'CALC{self.chanNum}:DATA? FDATA')
+        dbm = self.query_ascii_values('CALC{}:DATA? FDATA'.format(self.chanNum))
         self.close()
 
         fStart = float(self.getConfigParam('SENS:FREQ:STAR'))
@@ -231,7 +224,7 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
                 display.clear_output()
                 display.display(plt.gcf())
             else:
-                print(f'Took spectrum {iSpect + 1} of {nSpect}')
+                print('Took spectrum {} of {}'.format(iSpect + 1, nSpect))
         print('done.')
         return bund
 

@@ -6,7 +6,7 @@ from pathlib import Path
 from lightlab import config
 from configparser import ConfigParser
 
-filename = f'testconfig_{int(time.time())}.conf'
+filename = 'testconfig_{}.conf'.format(int(time.time()))
 user_config_path = Path(filename).resolve()
 
 default_config = config.default_config

@@ -56,7 +56,7 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
             useChans = kwargs.pop('dfbChans')
         if useChans is None:
             logger.warning('No useChans specified for ILX_7900B_LS')
-            useChans = []
+            useChans = list()
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         MultiModuleConfigurable.__init__(self, useChans=useChans, configModule_klass=ILX_Module)
 
@@ -83,9 +83,8 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
             This adds sleep functionality, only when there is a change,
             for an amount determined by the ``sleepOn`` class attribute.
         '''
-        if wroteToHardware := super().setConfigArray(
-            cStr, newValArr, forceHardware=forceHardware
-        ):
+        wroteToHardware = super().setConfigArray(cStr, newValArr, forceHardware=forceHardware)
+        if wroteToHardware:
             print('DFB settling for', self.sleepOn[cStr], 'seconds.')
             time.sleep(self.sleepOn[cStr])
             print('done.')
@@ -109,7 +108,8 @@ class ILX_7900B_LS(VISAInstrumentDriver, MultiModuleConfigurable):
 
         for ena in newState:
             if ena not in [0, 1]:
-                raise ValueError(('Laser states can only be 0 or 1. ' + f'Got {newState}'))
+                raise ValueError('Laser states can only be 0 or 1. ' +
+                                 'Got {}'.format(newState))
         self.setConfigArray('OUT', newState)
 
     def setChannelEnable(self, chanEnableDict):

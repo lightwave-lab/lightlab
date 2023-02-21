@@ -32,12 +32,12 @@ class Agilent_N5183A_VG(VISAInstrumentDriver, Configurable):
         '''
         if amp is not None:
             if amp > 15:
-                print(f'Warning: Agilent N5183 ony goes up to +15dBm, given {amp}dBm.')
+                print('Warning: Agilent N5183 ony goes up to +15dBm, given {}dBm.'.format(amp))
                 amp = 15
             if amp < -20:
-                print(f'Warning: Agilent N5183 ony goes down to -20dBm, given {amp}dBm.')
+                print('Warning: Agilent N5183 ony goes down to -20dBm, given {}dBm.'.format(amp))
                 amp = -20
-            self.setConfigParam('POW:AMPL', f'{amp} dBm')
+            self.setConfigParam('POW:AMPL', '{} dBm'.format(amp))
         retStr = self.getConfigParam('POW:AMPL')
         return float(retStr.split(' ')[0])
 

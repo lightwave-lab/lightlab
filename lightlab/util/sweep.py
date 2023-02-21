@@ -36,8 +36,8 @@ class Sweeper(object):
     def __init__(self):
         self.data = None
         self.savefile = None
-        self.plotOptions = {}
-        self.monitorOptions = {}
+        self.plotOptions = dict()
+        self.monitorOptions = dict()
 
     def gather(self):
         print('gather method must be overloaded in subclass')
@@ -184,7 +184,7 @@ class NdSweeper(Sweeper):
         new.addActuation('trial', lambda a: None, np.arange(nTrials))
         return new
 
-    def gather(self, soakTime=None, autoSave=False, returnToStart=False):    # pylint: disable=arguments-differ
+    def gather(self, soakTime=None, autoSave=False, returnToStart=False):  # pylint: disable=arguments-differ
         ''' Perform the sweep
 
             Args:
@@ -235,7 +235,7 @@ class NdSweeper(Sweeper):
                     if iDim == self.actuDims - 1 or index[iDim + 1] == 0 or actuObj.doOnEveryPoint:
                         y = actuObj.function(x)  # The actual function call occurs here
                         if y is not None:
-                            pointData[f'{actuKey}-return'] = y
+                            pointData[actuKey + '-return'] = y
 
                 # Do the measurement, store return values
                 for measKey, measFun in self.measure.items():
@@ -274,7 +274,7 @@ class NdSweeper(Sweeper):
                         display.clear_output(wait=True)
                 # Progress report
                 prog.update()
-                # End of the main loop
+            # End of the main loop
 
         except Exception as err:
             logger.error('Error while sweeping. Keeping data. %s', err)
@@ -403,18 +403,9 @@ class NdSweeper(Sweeper):
         if np.isscalar(contents):
             contents *= np.ones(self.swpShape)
         if np.any(contents.shape != self.swpShape):
-            raise ValueError(
-                (
-                    (
-                        (f'Static data {name} is wrong shape for sweep.' + 'Need ')
-                        + str(self.swpShape)
-                        + '. Got '
-                    )
-                    + str(contents.shape)
-                    + 'The order that actuations and static data are added matter.'
-                )
-            )
-
+            raise ValueError('Static data ' + name + ' is wrong shape for sweep.' +
+                             'Need ' + str(self.swpShape) + '. Got ' + str(contents.shape) +
+                             'The order that actuations and static data are added matter.')
         self.static[name] = contents
 
     def subsume(self, other, useMinorOptions=False):

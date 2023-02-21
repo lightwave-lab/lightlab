@@ -19,7 +19,7 @@ def _makeFileExist(filename):
     rp = _getFileDir(filename)
     os.makedirs(_getFileDir(), mode=0o775, exist_ok=True)
     rp.touch()
-    print(f"Saving to file: {rp}")
+    print("Saving to file: {}".format(rp))
     return rp
 
 
@@ -54,7 +54,7 @@ def pprintFileDir(*, generate=False):
     childNames = list(map(lambda x: x.name, childrenFiles))
     sortedChildren = [x for _, x in sorted(zip(childNames, childrenFiles))]
     for child in sortedChildren:
-        justified = f'{child.name.rjust(maxStrLen)}   '
+        justified = child.name.rjust(maxStrLen) + '   '
         if child.name.endswith('.pkl'):
             print(justified, f'io.loadPickle(\'{child.stem}\')')
         elif child.name.endswith('.gz'):
@@ -71,7 +71,10 @@ def _endingWith(filerootname, suffix):
     froot = str(filerootname)
     if suffix[0] != '.':
         suffix = f'.{suffix}'
-    return froot if froot.endswith(suffix) else froot + suffix
+    if froot.endswith(suffix):
+        return froot
+    else:
+        return froot + suffix
 
 
 def savePickle(filename, dataTuple):

@@ -63,7 +63,7 @@ class HP_8156A_VA(VISAInstrumentDriver):
     def sendToHardware(self, sleepTime=None):
         if sleepTime is None:
             sleepTime = self.safeSleepTime
-        self.write(f'INP:ATT {str(self.attenDB)}DB')
+        self.write('INP:ATT ' + str(self.attenDB) + 'DB')
         time.sleep(sleepTime)  # Let it settle
 
     @property

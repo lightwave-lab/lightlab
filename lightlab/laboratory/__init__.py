@@ -45,18 +45,22 @@ class Hashable(object):
 
     No instance variables starting with "__" will be serialized.
     """
-    context = jsonpickle.pickler.Pickler(
-        unpicklable=True, warn=True, keys=True)
+
+
+    def __json_self(self):
+        context = jsonpickle.pickler.Pickler(
+            unpicklable=True, warn=True, keys=True)
+        jsonpickle.set_encoder_options('json', sort_keys=True)
+        json_self = context.flatten(self, reset=True)
+        return json_self
 
     def __eq__(self, other):
-        jsonpickle.set_encoder_options('json', sort_keys=True)
-        json_self = self.context.flatten(self, reset=True)
-        json_other = self.context.flatten(other, reset=True)
+        json_self = self.__json_self()
+        json_other = Hashable.__json_self(other)
         return json_self == json_other
 
     def __hash__(self):
-        jsonpickle.set_encoder_options('json', sort_keys=True)
-        json_self = self.context.flatten(self, reset=True)
+        json_self = self.__json_self()
         return hash(jsonpickle.json.encode(json_self))
 
     def __init__(self, **kwargs):
@@ -70,14 +74,18 @@ class Hashable(object):
         serialization. Variables named as such are actually stored
         different in self.__dict__. Check PEP 8.
         '''
-        klassnames = [self.__class__.__name__.lstrip('_')]
-        klassnames.extend(base.__name__.lstrip('_') for base in self.__class__.mro())
+        klassnames = []
+        klassnames.append(self.__class__.__name__.lstrip('_'))
+
+        for base in self.__class__.mro():
+            klassnames.append(base.__name__.lstrip('_'))
+
         state = self.__dict__.copy()
         keys_to_delete = set()
         for key in state.keys():
             if isinstance(key, str):
                 for klassname in klassnames:
-                    if key.startswith(f"_{klassname}__"):
+                    if key.startswith("_{}__".format(klassname)):
                         keys_to_delete.add(key)
                     if key.startswith("__"):
                         keys_to_delete.add(key)
@@ -145,7 +153,7 @@ class NamedList(MutableSequence, Hashable):
     read_only = False
 
     def __init__(self, *args, read_only=False):  # pylint: disable=super-init-not-called
-        self.list = []
+        self.list = list()
         self.extend(list(args))
         self.read_only = read_only
 
@@ -169,13 +177,17 @@ class NamedList(MutableSequence, Hashable):
             raise TypeError(f"{type(value)} does not have name.")
 
     def check_presence(self, name):
-        return [idx for idx, elem in enumerate(self) if elem.name == name]
+        matching_idxs = [idx for idx, elem in enumerate(
+            self) if elem.name == name]
+        return matching_idxs
 
     def __len__(self):
         return len(self.list)
 
     def __getitem__(self, i):
-        return self.dict[i] if isinstance(i, str) else self.list[i]
+        if isinstance(i, str):
+            return self.dict[i]
+        return self.list[i]
 
     def __delitem__(self, i):
         if self.read_only:

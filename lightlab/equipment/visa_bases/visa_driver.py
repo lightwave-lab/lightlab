@@ -15,16 +15,11 @@ class _AttrGetter(object):
     # https://stackoverflow.com/questions/28861064/super-object-has-no-attribute-getattr-in-python3
 
     def __getattr__(self, name):
-        raise AttributeError(f"'{str(self)}' has no attribute '{name}'")
+        raise AttributeError("'{}' has no attribute '{}'".format(str(self), name))
 
 
-_InstrumentSessionBase_methods = [
-    name
-    for name, _ in inspect.getmembers(
-        InstrumentSessionBase,
-        lambda o: inspect.isfunction(o) or isinstance(o, property),
-    )
-]
+_InstrumentSessionBase_methods = list(name for name, _ in inspect.getmembers(
+    InstrumentSessionBase, lambda o: inspect.isfunction(o) or isinstance(o, property)))
 
 
 class InstrumentSession(_AttrGetter):
@@ -66,38 +61,37 @@ class InstrumentSession(_AttrGetter):
     def __getattr__(self, name):
         if name in ('_session_object'):
             return super().__getattr__(name)
-        try:
-            return_attr = getattr(self._session_object, name)
-        except AttributeError:
-            return_attr = super().__getattr__(name)  # pylint: disable=assignment-from-no-return
         else:
-            if name not in _InstrumentSessionBase_methods:
-                visalogger.warning("Access to %s.%s will be deprecated soon. "
-                                   "Please include it in InstrumentSessionBase. "
-                                   "", type(self._session_object).__name__, name)
+            try:
+                return_attr = getattr(self._session_object, name)
+            except AttributeError:
+                return_attr = super().__getattr__(name)  # pylint: disable=assignment-from-no-return
+            else:
+                if name not in _InstrumentSessionBase_methods:
+                    visalogger.warning("Access to %s.%s will be deprecated soon. "
+                                       "Please include it in InstrumentSessionBase. "
+                                       "", type(self._session_object).__name__, name)
 
-        return return_attr
+            return return_attr
 
     def __dir__(self):
         return set(super().__dir__() + list(_InstrumentSessionBase_methods))
 
     def __setattr__(self, name, value):
-        if (
-            name in ('_session_object')
-            or name not in 'address'
-            and not hasattr(self._session_object, name)
-        ):
+        if name in ('_session_object'):
             super().__setattr__(name, value)
-        elif name in 'address':
+        elif name in ('address'):
             super().__setattr__(name, value)
             if self._session_object is not None and self._session_object.address != value:
                 tempSess = self._session_object.tempSess
                 self.reinstantiate_session(address=value, tempSess=tempSess)
-        else:
+        elif hasattr(self._session_object, name):
             setattr(self._session_object, name, value)
             # also change in local dictionary if possible
             if name in self.__dict__:
                 self.__dict__[name] = value
+        else:
+            super().__setattr__(name, value)
 
 
 class IncompleteClass(Exception):
@@ -124,14 +118,8 @@ class DriverMeta(type):
             inst_klass = cls.instrument_category
             for essential in inst_klass.essentialMethods + inst_klass.essentialProperties:
                 if essential not in dir(cls):
-                    raise IncompleteClass(
-                        (
-                            cls.__name__
-                            + f' does not implement {essential}, '
-                            + f'which is essential for {inst_klass.__name__}'
-                        )
-                    )
-
+                    raise IncompleteClass(cls.__name__ + ' does not implement {}, '.format(essential) +
+                                          'which is essential for {}'.format(inst_klass.__name__))
         super().__init__(name, bases, dct)
 
     def __call__(cls, name=None, address=None, *args, **kwargs):

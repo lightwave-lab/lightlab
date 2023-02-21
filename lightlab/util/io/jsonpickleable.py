@@ -77,17 +77,19 @@ class JSONpickleable(Hashable):
                 if key in allNotPickled:
                     keys_to_delete.add(key)
 
+                # 2. hardware placeholders
                 elif (val.__class__.__name__ == 'VISAObject' or
                       any(base.__name__ == 'VISAObject' for base in val.__class__.mro())):
                     klassname = val.__class__.__name__
                     logger.warning('Not pickling %s = %s.', key, klassname)
-                    state[key] = HardwareReference(f'Reference to a {klassname}')
+                    state[key] = HardwareReference('Reference to a ' + klassname)
 
+                # 3. functions that are not available in modules - saves the code text
                 elif jsonpickle.util.is_function(val) and not jsonpickle.util.is_module_function(val):
-                    state[f'{key}_dilled'] = dill.dumps(val)
+                    state[key + '_dilled'] = dill.dumps(val)
                     keys_to_delete.add(key)
 
-                        # 4. double underscore attributes have already been removed
+                # 4. double underscore attributes have already been removed
         for key in keys_to_delete:
             del state[key]
         return state
@@ -121,17 +123,10 @@ class JSONpickleable(Hashable):
             err.args = (newm,) + err.args[1:]
             raise
 
-        if (
-            not isinstance(restored_object, cls)
-            and type(restored_object).__name__ != cls.__name__
-        ):
-            raise TypeError(
-                (
-                    'Loaded class is different than intended.\n'
-                    + f'Got {type(restored_object).__name__}, needed {cls.__name__}.'
-                )
-            )
-
+        if not isinstance(restored_object, cls):  # This is likely to happen if lightlab has been reloaded
+            if type(restored_object).__name__ != cls.__name__:  # This is not ok
+                raise TypeError('Loaded class is different than intended.\n' +
+                                'Got {}, needed {}.'.format(type(restored_object).__name__, cls.__name__))
 
         for a in cls.notPickled:
             setattr(restored_object, a, None)

@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lightlab"
+authors = [
+    {name = "Alex Tait", email = "atait@ieee.org"},
+    {name = "Thomas Ferreira de Lima", email = "github@tlima.me"},
+]
+maintainers = [
+    {name = "Thomas Ferreira de Lima", email = "github@tlima.me"}
+]
+description = "Lightwave Lab instrument automation tools"
+readme = "README.rst"
+requires-python = ">=3.7"
+keywords = ["gpib", "visa", "instrument control"]
+license = {file = "LICENSE"}
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: System :: Hardware :: Hardware Drivers",
+    "Framework :: Jupyter",
+]
+dependencies = [
+    'dpath',
+    'jsonpickle>=1.4.1',
+    'matplotlib',
+    'IPython',
+    'PyVISA',
+    'scipy',
+    'scikit-learn',
+    'dill',
+]
+dynamic = ["version"]
+
+[project.urls]
+repository = "https://github.com/lightwave-lab/lightlab"
+
+[project.scripts]
+lightlab = "lightlab.command_line:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "version.version"}
+
+[tool.setuptools]
+packages = ["lightlab"]

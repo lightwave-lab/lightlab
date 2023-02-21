@@ -46,7 +46,8 @@ class SpectrumMeasurementAssistant(object):
         bg = self.getBgSpect(bgType)
         if bgType is None and type(bg) is float and bg == 0:
             self.setBgSmoothed(raw)
-        return raw - bg
+        unbiased = raw - bg
+        return unbiased
 
     def resonances(self, spect=None, avgCnt=1):
         ''' Returns the current wavelengths of detected peaks in order sorted by wavelength.
@@ -158,7 +159,5 @@ class SpectrumMeasurementAssistant(object):
             except KeyError:
                 raise KeyError('Background of type \'' + bgType + '\' has not been taken yet.')
         else:
-            raise ValueError(
-                (f'Invalid background token: {bgType}' + '. Need ')
-                + ', '.join(preferredOrder)
-            )
+            raise ValueError('Invalid background token: ' + bgType +
+                             '. Need ' + str(', '.join(preferredOrder)))

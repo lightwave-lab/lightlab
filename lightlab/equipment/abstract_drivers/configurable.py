@@ -1,7 +1,7 @@
 from lightlab import visalogger as logger
 from pyvisa import VisaIOError
 from contextlib import contextmanager
-import dpath.util
+import dpath
 import json
 from numpy import floor
 from pathlib import Path
@@ -32,7 +32,7 @@ class TekConfig(object):
 
     def __init__(self, initDict=None):
         if initDict is None:
-            initDict = {}
+            initDict = dict()
         self.dico = initDict.copy()
 
     def __str__(self):
@@ -55,18 +55,21 @@ class TekConfig(object):
                 asCmd (bool): if true, returns a tuple representing a command. Otherwise returns just the value
         '''
         try:
-            val = dpath.util.get(self.dico, cStr, separator=self.separator)
+            val = dpath.get(self.dico, cStr, separator=self.separator)
         except KeyError:
-            raise KeyError(f'{cStr} is not present in this TekConfig instance')
+            raise KeyError(cStr + ' is not present in this TekConfig instance')
         if type(val) is dict and '&' in val.keys():
             val = val['&']
-        return (cStr, str(val)) if asCmd else val
+        if not asCmd:
+            return val
+        else:
+            return (cStr, str(val))
 
     def set(self, cStr, val):
         ''' Takes the value only, not a dictionary '''
         # First check that it does not exist as a subdir
         try:
-            ex = dpath.util.get(self.dico, cStr, separator=self.separator)
+            ex = dpath.get(self.dico, cStr, separator=self.separator)
         except KeyError:
             # doesn't exist, we are good to go
             pass
@@ -76,20 +79,20 @@ class TekConfig(object):
                 cStr = cStr + self.separator + '&'
 
         cmd = (cStr, val)
-        success = dpath.util.set(self.dico, *cmd, separator=self.separator)
+        success = dpath.set(self.dico, *cmd, separator=self.separator)
         if success != 1:  # it doesn't exist yet
             try:
-                dpath.util.new(self.dico, *cmd, separator=self.separator)
+                dpath.new(self.dico, *cmd, separator=self.separator)
             except (ValueError, dpath.exceptions.PathNotFound):
                 # We probably have an integer leaf where we would also like to have a directory
                 parent = self.separator.join(cmd[0].split(self.separator)[:-1])
                 try:
                     oldV = self.get(parent, asCmd=False)
                 except KeyError:
-                    print(f'dpath did not take {cmd}')
+                    print('dpath did not take ' + str(cmd))
                     raise
-                dpath.util.set(self.dico, parent, {'&': oldV}, separator=self.separator)
-                dpath.util.new(self.dico, *cmd, separator=self.separator)
+                dpath.set(self.dico, parent, {'&': oldV}, separator=self.separator)
+                dpath.new(self.dico, *cmd, separator=self.separator)
 
     def getList(self, subgroup='', asCmd=True):
         ''' Deep crawler that goes in and generates a command for every leaf.
@@ -102,7 +105,7 @@ class TekConfig(object):
                 list: list of valid commands (cstr, val) on the subgroup subdirectory
         '''
         cList = []
-        children = dpath.util.search(
+        children = dpath.search(
             self.dico, f'{subgroup}*', yielded=True, separator=self.separator
         )
 
@@ -116,13 +119,14 @@ class TekConfig(object):
                 cList += self.getList(subgroup=cmd[0] + self.separator)
         if asCmd:
             return cList
-        writeList = [None] * len(cList)
-        for i, cmd in enumerate(cList):
-            cStr, val = cmd
-            if cStr[-1] == '&':  # check for tokens
-                cStr = cStr[:-2]
-            writeList[i] = f'{cStr} {str(val)}'
-        return writeList
+        else:
+            writeList = [None] * len(cList)
+            for i, cmd in enumerate(cList):
+                cStr, val = cmd
+                if cStr[-1] == '&':  # check for tokens
+                    cStr = cStr[:-2]
+                writeList[i] = cStr + ' ' + str(val)
+            return writeList
 
     def setList(self, cmdList):
         ''' The inverse of getList '''
@@ -144,7 +148,7 @@ class TekConfig(object):
         elif type(source) is type(self):
             sCon = source
         else:
-            raise Exception(f'Invalid source for transfer. Got {str(type(source))}')
+            raise Exception('Invalid source for transfer. Got ' + str(type(source)))
         commands = sCon.getList(subgroup=subgroup)
         self.setList(commands)
         return self
@@ -169,7 +173,7 @@ class TekConfig(object):
         cmdGrp = None
         for i in range(len(pairs)):
             words = pairs[i].split(' ')
-            cmdLeaf, val = words[:2]
+            cmdLeaf, val = words[0:2]
             if len(words) > 2:
                 print('Warning 2-value returns not handled by TekConfig class. Ignoring...')
                 print(*words)
@@ -192,9 +196,10 @@ class TekConfig(object):
         full.setList(commandList)
         if subgroup == '':
             return full
-        ret = cls()
-        ret.transfer(full, subgroup=subgroup)
-        return ret
+        else:
+            ret = cls()
+            ret.transfer(full, subgroup=subgroup)
+            return ret
 
     def save(self, fname, subgroup='', overwrite=False):
         ''' Saves dictionary parameters in json format. Merges if there's something already there, unless overwrite is True.
@@ -247,7 +252,8 @@ class Configurable(AbstractDriver):
         self.colon = precedingColon
         self.space = interveningSpace
 
-        self.config = {'default': None}
+        self.config = dict()
+        self.config['default'] = None
         self.config['init'] = TekConfig()
         self.config['live'] = TekConfig()
         self.separator = self.config['live'].separator
@@ -347,7 +353,8 @@ class Configurable(AbstractDriver):
                 (str): the default filename
         '''
         info = self.instrID().split(',')
-        return defaultFileDir / '-'.join(info[:3]) + '.json'
+        deffile = defaultFileDir / '-'.join(info[:3]) + '.json'
+        return deffile
 
     def saveConfig(self, dest='+user', subgroup='', overwrite=False):
         '''
@@ -441,14 +448,17 @@ class Configurable(AbstractDriver):
                 cStr = cStr[:-2]
 
             try:
-                ret = self.query(f'{cStr}?')
+                ret = self.query(cStr + '?')
             except VisaIOError:
                 logger.error('Problematic parameter was %s.\n'
                              'Likely it does not exist in this instrument command structure.', cStr)
                 raise
             logger.debug('Queried %s, got %s', cStr, ret)
 
-            val = ret.split(' ')[-1] if self.header else ret
+            if self.header:
+                val = ret.split(' ')[-1]
+            else:
+                val = ret
             # Type detection
             try:
                 val = float(val)
@@ -501,9 +511,12 @@ class Configurable(AbstractDriver):
         cfgBuild = TekConfig()
 
         for cmd in allSetCmds:
-            cStr = cmd[0] if cmd[0][-1] != '&' else cmd[0][:-2]
+            if cmd[0][-1] != '&':  # handle the sibling subdir token
+                cStr = cmd[0]
+            else:
+                cStr = cmd[0][:-2]
             try:
-                val = self.query(f'{cStr}?', withTimeout=1000)
+                val = self.query(cStr + '?', withTimeout=1000)
                 cfgBuild.set(cStr, val)
                 logger.info(cStr, '<--', val)
             except VisaIOError:

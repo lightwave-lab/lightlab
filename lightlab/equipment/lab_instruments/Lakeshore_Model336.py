@@ -102,10 +102,10 @@ class Lakeshore_Model336(VISAInstrumentDriver):
         except socket.error:
             logger.error('Lakeshore communication test failed. Sent: \'*IDN?\'')
             raise
-            
+
     def reset(self):
         self.write('*RST')
-        
+
 #     def setHeaterRange(self, output, range_val):
 #         outputs = [1,2,3,4]
 #         range_vals_12 = [0,1,2,3]
@@ -119,43 +119,43 @@ class Lakeshore_Model336(VISAInstrumentDriver):
 #         else:
 #             print('RANGE {},{}\r\n'.format(output, range_val))
 #             return self.write('RANGE {},{}\r\n'.format(output, range_val))
-        
+
     def getHeaterRange(self, output):
         outputs = [1,2,3,4]
         if output not in outputs:
             raise ValueError('output is {} but must be integer 1, 2, 3, or 4'.format(output))
         else:
             return self.query('RANGE? {0}'.format(output))
-        
+
     def analogOutParamQuery(self, output):
         outputs = [3,4]
         if output not in outputs:
             raise ValueError('output is {} but must be integer 3, or 4'.format(output))
         else:
             return self.query('ANALOG? {0}'.format(output))
-        
+
     def getHeaterOutputQuery(self, output):
         outputs = [1,2]
         if output not in outputs:
             raise ValueError('output is {} but must be integer 1, or 2'.format(output))
         else:
             return self.query('HTR? {}'.format(output))
-        
+
     def heaterSetup(self, output):
         outputs = [1,2]
         if output not in outputs:
             raise ValueError('output is {} but must be integer 1, or 2'.format(output))
         else:
             return self.query('HTRSET? {}'.format(output))
-        
-     def heaterSet(self, output, resistance, maxcurrent, maxcurrentuser, currentPower):
-         outputs = [1,2]
-            resistance = [1,2]
-            maxcurrent = [0,1,2,3,4]
-            currentPower = [1,2]
-            
-        
-         if output not in outputs:
+
+    def heaterSet(self, output, resistance, maxcurrent, maxcurrentuser, currentPower):
+        outputs = [1,2]
+        resistance = [1,2]
+        maxcurrent = [0,1,2,3,4]
+        currentPower = [1,2]
+
+
+        if output not in outputs:
              raise ValueError('output is {} but must be integer 1, or 2'.format(output))
         elif resistance not in resistance:
             raise ValueError('resistance is {} but must be integer 1, or 2'.format(output))
@@ -163,59 +163,58 @@ class Lakeshore_Model336(VISAInstrumentDriver):
             raise ValueError('resistance is {} but must be integer 0, 1, 2, 3, or 4'.format(output))
         elif currentPower not in currentPower:
             raise ValueError('resistance is {} but must be integer 1, or 2'.format(output))
-            
-        elif (maxcurrent not 0): 
+        elif (maxcurrent != 0):
             maxcurrentuser = 0
-        elif (maxcurrent = 0)
-            maxcurrentuser = maxcurrentuser 
-         else:
+        elif (maxcurrent == 0):
+            maxcurrentuser = maxcurrentuser
+        else:
              return self.query('HTRSET {} {} {} {} {}'.format(output, resistance, maxcurrent, maxcurrentuser, currentPower))
-        
+
     def heaterStatus(self, output):
         outputs = [1,2]
         if output not in outputs:
             raise ValueError('output is {} but must be integer 1, or 2'.format(output))
         else:
             return self.query('HTRST? {}'.format(output))
-        
+
     def getOutputMode(self, output):
         outputs = [1,2,3,4]
         if output not in outputs:
             raise ValueError('output is {} but must be integer 1, 2, 3, or 4'.format(output))
         else:
             return self.query('OUTMODE? {}'.format(output))
-        
+
     def getAnalogOutData(self, output):
         outputs = [3,4]
         if output not in outputs:
             raise ValueError('output is {} but must be integer 3, or 4'.format(output))
         else:
             return self.query('AOUT? {}'.format(output))
-        
+
     def getCelciusReading(self, output):
         outputs = ["A","B","C","D"]
         if output not in outputs:
             raise ValueError('output is {} but must be A, B, C, D'.format(output))
         else:
             return self.query('CRDG? {}'.format(output))
-    
+
     def tempLimitQuery(self, output):
         outputs = ["A","B","C","D"]
         if output not in outputs:
             raise ValueError('output is {} but must be A, B, C, D'.format(output))
         else:
             return self.query('TLIMIT? {}'.format(output))
-        
+
         #page 130,,  data points curve?
-        
-    
-        
+
+
+
     def warmupSupply(self, output):
         outputs = [3,4]
         if output not in outputs:
             raise ValueError('output is {} but must be integer 3, or 4'.format(output))
         else:
             return self.query('WARMUP? {}'.format(output))
-        
+
     def junctionTempQuery(self):
         self.query('TEMP?')

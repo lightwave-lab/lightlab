@@ -8,7 +8,7 @@ class DynamicLine(object):
     ''' A line that can refresh when called
     '''
 
-    def __init__(self, formatStr='b-', existing=None, geometry=[(0, 0), (4, 4)]):    # pylint: disable=dangerous-default-value
+    def __init__(self, formatStr='b-', existing=None, geometry=[(0, 0), (4, 4)]):  # pylint: disable=dangerous-default-value
         '''
             Args:
                 formatStr (str): plotting line format
@@ -28,9 +28,7 @@ class DynamicLine(object):
             # Geometry is ignored here
         self.lines, = self.ax.plot([], [], formatStr)
         plt.get_current_fig_manager().window.wm_geometry(
-            f'+{str(geometry[0][0])}+{str(geometry[0][1])}'
-        )
-
+            '+' + str(geometry[0][0]) + '+' + str(geometry[0][1]))
         # Autoscale on unknown axis and known lims on the other
         self.ax.set_autoscaley_on(True)
         # Other stuff

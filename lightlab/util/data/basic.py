@@ -16,11 +16,8 @@ def verifyListOfType(arg, checkType):
     if isinstance(arg, (list, tuple)):
         for a in arg:
             if not isinstance(a, checkType):
-                raise Exception(
-                    (f'Incorrect type, expecting {str(checkType)}' + '. Got ')
-                    + str(type(a))
-                )
-
+                raise Exception('Incorrect type, expecting ' + str(checkType) +
+                                '. Got ' + str(type(a)))
     return arg
 
 
@@ -82,7 +79,7 @@ def mangle(name, klass):
     try:
         i = 0
         while klass[i] == '_':
-            i += 1
+            i = i + 1
     except IndexError:
         return name
     klass = klass[i:]
@@ -91,7 +88,7 @@ def mangle(name, klass):
     if tlen > MANGLE_LEN:
         klass = klass[:MANGLE_LEN - tlen]
 
-    return f"_{klass}{name}"
+    return "_%s%s" % (klass, name)
 
 
 # Simple common array operations

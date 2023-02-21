@@ -224,17 +224,8 @@ class FunctionBundle(Hashable):  # pylint: disable=eq-without-hash
                 TypeError: if the type of ``testFun`` is different than the others in this FunctionalBasis
         '''
         if type(testFun).__name__ is not self.memberType.__name__:
-            raise TypeError(
-                (
-                    (
-                        f'This FunctionalBasis expects {str(self.memberType)}'
-                        + ', but was given '
-                    )
-                    + str(type(testFun))
-                    + '.'
-                )
-            )
-
+            raise TypeError('This FunctionalBasis expects ' + str(self.memberType) +
+                            ', but was given ' + str(type(testFun)) + '.')
         # Check time base
         if np.any(testFun.absc != self.absc):
             # logger.warning('Warning: Basis signal time abscissa are different. Interpolating...')
@@ -256,7 +247,8 @@ class FunctionBundle(Hashable):  # pylint: disable=eq-without-hash
         if axList is None:
             _, axList = plt.subplots(nrows=len(self), figsize=(14, 14))
         if len(axList) != len(self):
-            raise ValueError(f'Wrong number of axes. Got {len(axList)}, need {len(self)}.')
+            raise ValueError('Wrong number of axes. Got {}, need {}.'.format(
+                len(axList), len(self)))
         for i, ax in enumerate(axList):
             plt.sca(ax)
             self[i].simplePlot(*args, **kwargs)
@@ -316,7 +308,10 @@ class FunctionBundle(Hashable):  # pylint: disable=eq-without-hash
         byDim = np.zeros(len(self))
         for iDim in range(len(self)):
             byDim[iDim] = self[iDim].moment(order, relativeGauss=relativeGauss)
-        return np.mean(byDim) if allDims else byDim
+        if allDims:
+            return np.mean(byDim)
+        else:
+            return byDim
 
     def componentAnalysis(self, *args, pcaIca=True, lNorm=2, expectedComponents=None, **kwargs):
         ''' Gives the waveform representing the principal component of the order
@@ -360,7 +355,10 @@ class FunctionBundle(Hashable):  # pylint: disable=eq-without-hash
         for iDim, oSig in enumerate(otherBundle):
             if maintainOrder:
                 sSig = self[iDim]
-                newWfm = sSig if (sSig * oSig).getMean() > 0 else -1 * sSig
+                if (sSig * oSig).getMean() > 0:
+                    newWfm = sSig
+                else:
+                    newWfm = -1 * sSig
             else:
                 permCorrs = np.zeros(len(self))
                 for jDim, sSig in enumerate(self):
@@ -397,7 +395,8 @@ class FunctionalBasis(FunctionBundle):
         '''
         tvec = self._putInTimebase(trial)
         tmat = np.tile(tvec, (self.nDims, 1))
-        return np.sum(np.multiply(tmat, self.ordiMat), axis=1).A1
+        products = np.sum(np.multiply(tmat, self.ordiMat), axis=1).A1
+        return products
 
     def magnitudes(self):
         ''' The inner product of the basis with itself
@@ -504,7 +503,10 @@ class MeasuredSurface(object):
         if np.isscalar(index):
             assert(dim is not None)
             newAbsc = self.absc[dim]
-            newOrdi = self.ordi[index, :] if dim == 0 else self.ordi[:, index]
+            if dim == 0:
+                newOrdi = self.ordi[index, :]
+            else:
+                newOrdi = self.ordi[:, index]
             return MeasuredFunction(newAbsc, newOrdi)
         else:
             assert(len(index) == 2)
@@ -561,7 +563,8 @@ class MeasuredErrorField(object):
     def invert(self, desiredVec):
         reflectedVec = desiredVec - self.errorAt(desiredVec)
         avgErr = (self.errorAt(desiredVec) + self.errorAt(reflectedVec)) / 2
-        return desiredVec - avgErr
+        commandVec = desiredVec - avgErr
+        return commandVec
 
     def zeroCenteredSquareSize(self):
         ''' Very stupid, just look at corner points
@@ -577,7 +580,8 @@ class MeasuredErrorField(object):
 
         def zcSz(grid, corner):
             cornerVec = grid[(corner + (slice(None), ))]
-            return np.min(np.abs(cornerVec))
+            sqSide = np.min(np.abs(cornerVec))
+            return sqSide
 
         nomiCornerInds = [cornerInd(self.nomiGrid, m) for m in [True, False]]
         nomiSq = np.min([zcSz(self.nomiGrid, nomiCornerInds[i]) for i in range(2)])
