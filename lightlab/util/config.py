@@ -6,7 +6,9 @@ import argparse
 try:
     from os import getuid
 except ImportError:
-    from ctypes import windll
+    # User is on windows
+    def getuid():
+        return 1
 
 user_config_path = os.path.expanduser("~") + "/.lightlab" + "/config.conf"
 user_config_path = Path(user_config_path).resolve()
@@ -172,11 +174,8 @@ config_cmd_parser.add_argument('params', nargs=argparse.REMAINDER)
 def config_main(args):
     config_args = config_cmd_parser.parse_args(args)
 
-    def is_root(): # this function is used everywhere, so it's better to put it here
-        try:
-            return getuid() == 0
-        except Exception as e:
-            return windll.shell32.IsUserAnAdmin() == 1
+    def is_root():
+        return getuid() == 0
 
     # If --system is set, change system_config_path
     if config_args.system:
