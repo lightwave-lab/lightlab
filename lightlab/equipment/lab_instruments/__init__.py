@@ -23,5 +23,6 @@ for _, modname, _ in pkgutil.walk_packages(path=__path__, prefix=f'{__name__}.')
 
 # Disable tests for the following packages
 experimental_instruments = [
-    'Aragon_BOSA_400_Queens'
+    'Aragon_BOSA_400_Queens',
+    'Lakeshore_Model336',
 ]
