@@ -2,7 +2,7 @@ from . import VISAInstrumentDriver
 
 import numpy as np
 from lightlab.util.data import Spectrum
-import visa
+import pyvisa as visa
 import time
 import logging
 import struct
@@ -30,12 +30,12 @@ def patch_startup(func):
     def new_func(self, *args, **kwargs):
         func(self, *args, **kwargs)
         with self.connected():
-            self.send('++eot_enable 1')  # Append user defined character when EOI detected 
+            self.send('++eot_enable 1')  # Append user defined character when EOI detected
             self.send('++eot_char 10')  # Append \n (ASCII 10) when EOI is detected
     return new_func
 
 class Aragon_BOSA_400 (VISAInstrumentDriver):
-    
+
     __apps = np.array(['BOSA', 'TLS', 'CA', 'MAIN'])
     __wlRange = None
     __currApp = None
@@ -51,7 +51,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         kwargs['tempSess'] = kwargs.pop('tempSess', True)
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
         self.interface = self._session_object
-        
+
         if True: # TODO: detect if using prologix
             old_startup = self.interface._prologix_rm.startup
             self.interface._prologix_rm.startup = patch_startup(old_startup)
@@ -62,7 +62,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
             self.write('SENS:SWITCH OFF')
         else:
             self.write('INST:STAT:RUN 0')
-        
+
     def start(self):
         self.__currApp = str(self.ask('INST:STAT:MODE?'))
         if (self.__currApp == 'TLS'):
@@ -100,7 +100,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         log.debug("All data readed!")
         log.debug("Data received: " + message)
         return message
-        
+
     def ask(self, command):
 
         """ writes and reads data"""
@@ -108,7 +108,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         data = ""
         data = self.query(command)
         return data
-        
+
     def application(self, app=None):
         if app is not None and app in self.__apps:
             try:
@@ -163,7 +163,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         data = self.query("TRAC?", withTimeout)
 #         data = self.query("IDN?")
         return data
-        
+
     def ask_TRACE_REAL(self):
         data = ""
         self.write("FORM REAL")
@@ -171,11 +171,11 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         self.write("TRAC?")
         data = self.read_TRACE_REAL_GPIB(NumPoints)
         return data
-        
+
     def read_TRACE_ASCII(self):
 
         """ read something from device"""
-        
+
         log.debug("Reading data using GPIB interface...")
         while(1):
             try:
@@ -208,7 +208,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
                 print(e)
                 raise e
         return Trace
-        
+
     def spectrum(self, form='REAL'):
         x=list()
         y=list()
@@ -242,7 +242,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
                 raise e
         else:
             log.exception("\nFor average count, please choose from ['4','8','12','32','CONT']\nFor speed mode, please choose from ['HR','HS']")
-    
+
     def CAInput(self, meas='IL', pol='1'):
         if meas in self.__CAmeasurement and pol in self.__CAPolarization:
             try:
@@ -254,7 +254,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
                 raise e
         else:
             print("\nFor measurement type, please choose from ['IL', 'RL', 'IL&RL']\nFor polarization, please choose from ['1', '2', 'INDEP', 'SIMUL']")
-    
+
     def TLSwavelength(self, waveLength=None):
         if waveLength is not None and self.__currApp == 'TLS':
             try:
