@@ -1,5 +1,24 @@
 # CHANGELOG
 
+1.1.1:
+    - Bug fixes (including security fixes)
+    - SR830 lockin amplifier driver
+    - Create CITATION.cff
+    - Experimental BOSA driver (by Zhimu)
+    - CI deployment via github
+
+1.1.0:
+    - Bug fixes in various instruments
+    - Included PRBS algorithms for the Anritsu PPG
+    - Improvements to MeasuredFunction
+    - Adding support for Keithley 2606B
+    - PRBS functionality in one_dim
+
+1.0.7:
+    - Bugfixes in PPG3202, DPO4032, and HP_8152A_PM
+    - Housekeeping in test environments
+    - Making DSA8300 work with Prologix driver
+
 1.0.6:
     - Major bug in Prologix driver
     - Minor improvement to APEX driver

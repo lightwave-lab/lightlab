@@ -1,7 +1,7 @@
 from lightlab import visalogger as logger
 from pyvisa import VisaIOError
 from contextlib import contextmanager
-import dpath.util
+import dpath
 import json
 from numpy import floor
 from pathlib import Path
@@ -55,7 +55,7 @@ class TekConfig(object):
                 asCmd (bool): if true, returns a tuple representing a command. Otherwise returns just the value
         '''
         try:
-            val = dpath.util.get(self.dico, cStr, separator=self.separator)
+            val = dpath.get(self.dico, cStr, separator=self.separator)
         except KeyError:
             raise KeyError(cStr + ' is not present in this TekConfig instance')
         if type(val) is dict and '&' in val.keys():
@@ -69,7 +69,7 @@ class TekConfig(object):
         ''' Takes the value only, not a dictionary '''
         # First check that it does not exist as a subdir
         try:
-            ex = dpath.util.get(self.dico, cStr, separator=self.separator)
+            ex = dpath.get(self.dico, cStr, separator=self.separator)
         except KeyError:
             # doesn't exist, we are good to go
             pass
@@ -79,11 +79,11 @@ class TekConfig(object):
                 cStr = cStr + self.separator + '&'
 
         cmd = (cStr, val)
-        success = dpath.util.set(self.dico, *cmd, separator=self.separator)
+        success = dpath.set(self.dico, *cmd, separator=self.separator)
         if success != 1:  # it doesn't exist yet
             try:
-                dpath.util.new(self.dico, *cmd, separator=self.separator)
-            except ValueError:
+                dpath.new(self.dico, *cmd, separator=self.separator)
+            except (ValueError, dpath.exceptions.PathNotFound):
                 # We probably have an integer leaf where we would also like to have a directory
                 parent = self.separator.join(cmd[0].split(self.separator)[:-1])
                 try:
@@ -91,8 +91,8 @@ class TekConfig(object):
                 except KeyError:
                     print('dpath did not take ' + str(cmd))
                     raise
-                dpath.util.set(self.dico, parent, {'&': oldV}, separator=self.separator)
-                dpath.util.new(self.dico, *cmd, separator=self.separator)
+                dpath.set(self.dico, parent, {'&': oldV}, separator=self.separator)
+                dpath.new(self.dico, *cmd, separator=self.separator)
 
     def getList(self, subgroup='', asCmd=True):
         ''' Deep crawler that goes in and generates a command for every leaf.
@@ -105,8 +105,10 @@ class TekConfig(object):
                 list: list of valid commands (cstr, val) on the subgroup subdirectory
         '''
         cList = []
-        children = dpath.util.search(self.dico, subgroup + '*',
-                                     yielded=True, separator=self.separator)
+        children = dpath.search(
+            self.dico, f'{subgroup}*', yielded=True, separator=self.separator
+        )
+
         for cmd in children:
             s, v = cmd
             if type(v) is not dict:

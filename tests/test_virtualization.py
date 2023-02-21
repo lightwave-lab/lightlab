@@ -289,4 +289,3 @@ def test_dualWeilding():
 
     with pytest.raises(VirtualizationError):
         complicatedProcedure_resultingIn3hits(dual1, dual2)
-

@@ -48,8 +48,8 @@ pyvisa
 
     Proceed with enjoying lightlab once you have the following output::
 
-        >>> import visa
-        >>> rm = visa.ResourceManager()
+        >>> import pyvisa
+        >>> rm = pyvisa.ResourceManager()
         >>> print(rm.list_resources())
         ('GPIB0::20::INSTR', 'GPIB1::24::INSTR', 'ASRL1::INSTR', 'ASRL2::INSTR', 'ASRL3::INSTR', 'ASRL4::INSTR')
 
@@ -95,6 +95,13 @@ API
 
     This documentation contains ipython notebooks. It is possible to open them with a jupyter kernel and run them interactively to play with knobs and see more plotting features.
 
+Citing
+------
+
+.. image:: https://zenodo.org/badge/131508614.svg
+   :target: https://zenodo.org/badge/latestdoi/131508614
+
+Then you can download as BibTeX.
 
 * :ref:`genindex`
 * :ref:`modindex`

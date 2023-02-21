@@ -3,6 +3,12 @@ import sys
 from configparser import ConfigParser
 from pathlib import Path
 import argparse
+try:
+    from os import getuid
+except ImportError:
+    # User is on windows
+    def getuid():
+        return 1
 
 user_config_path = os.path.expanduser("~") + "/.lightlab" + "/config.conf"
 user_config_path = Path(user_config_path).resolve()
@@ -168,11 +174,14 @@ config_cmd_parser.add_argument('params', nargs=argparse.REMAINDER)
 def config_main(args):
     config_args = config_cmd_parser.parse_args(args)
 
+    def is_root():
+        return getuid() == 0
+
     # If --system is set, change system_config_path
     if config_args.system:
         global user_config_path  # pylint: disable=W0603
         user_config_path = system_config_path
-    elif os.getuid() == 0 and not os.environ.get('DOCKER'):
+    elif is_root() and not os.environ.get('DOCKER'):
         raise SystemExit("Do not run as root except with --system flag.")
 
     params = config_args.params
