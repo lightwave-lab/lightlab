@@ -125,21 +125,22 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 
         self.getSwpDuration(forceHardware=True)
 
-    def sweepEnable(self, swpState=None):
+    def sweepEnable(self, swpState=None, swpType='LOG'):
         ''' Switches between sweeping (True) and CW (False) modes
 
             Args:
                 swpState (bool): If None, only gets, doesn't set.
+                swpType (bool): LOGARITHMIC (LOG), LINEAR (LIN), POWER (POW), CONTINUOUS WAVE (CW), SEGMENT (SEG), PHASE (PHAS)
 
             Returns:
                 (bool): is the output sweeping
         '''
         if swpState is not None:
-            self.setConfigParam('SENS:SWE:TYPE', 'LIN' if swpState else 'CW')
+            self.setConfigParam('SENS:SWE:TYPE', swpType if swpState else 'CW')
             if self.swpRange is not None:
                 self.setConfigParam('SENS:FREQ:STAR', self.swpRange[0], forceHardware=True)  # Hack
                 self.setConfigParam('SENS:FREQ:STOP', self.swpRange[1], forceHardware=True)  # Hack
-        return self.getConfigParam('SENS:SWE:TYPE') == 'LIN'
+        return self.getConfigParam('SENS:SWE:TYPE') == swpType
 
     def normalize(self):
         pass
@@ -209,7 +210,14 @@ class Agilent_N5222A_NA(VISAInstrumentDriver, Configurable):
 
         fStart = float(self.getConfigParam('SENS:FREQ:STAR'))
         fStop = float(self.getConfigParam('SENS:FREQ:STOP'))
-        freqs = np.linspace(fStart, fStop, len(dbm))
+
+        swpType = self.getConfigParam('SENS:SWE:TYPE')
+
+        if swpType == 'LOG':
+            freqs = np.logspace(np.log10(fStart), np.log10(fStop), len(dbm))
+        else:
+            freqs = np.linspace(fStart, fStop, len(dbm))
+
 #       return freqs, dbm
         return Spectrum(freqs, dbm)
 
