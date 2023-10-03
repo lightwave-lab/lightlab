@@ -10,10 +10,6 @@ class Thorlabs_PM5020(VISAInstrumentDriver):
 
     def __init__(self, name='Red Power Meter', address=None, **kwargs):
         VISAInstrumentDriver.__init__(self, name=name, address=address, **kwargs)
-
-    def startup(self):
-        for channel in [1, 2]:
-            self.set_dbm(channel)
     
     def set_dbm(self, channel=1):
         self._set_unit(channel, "DBM")
@@ -25,9 +21,9 @@ class Thorlabs_PM5020(VISAInstrumentDriver):
         """Sets dBm as the unit"""
         self.write(f"SENS{channel}:POW:UNIT {unit}")
         unit = self.query(f"SENS{channel}:POW:UNIT?")
-        print(f"Unit set as {unit}")
         
     def getPowerDbm(self, channel=1):
+        self.set_dbm(channel)
         return float(self.query(f"MEAS{channel}?"))
         
         
