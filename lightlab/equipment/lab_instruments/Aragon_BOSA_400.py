@@ -2,7 +2,7 @@ from . import VISAInstrumentDriver
 
 import numpy as np
 from lightlab.util.data import Spectrum
-import visa
+import pyvisa
 import time
 import logging
 WIDEST_WLRANGE = [1525, 1565]
