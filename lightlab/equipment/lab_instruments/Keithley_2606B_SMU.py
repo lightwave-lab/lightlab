@@ -379,3 +379,44 @@ class Keithley_2606B_SMU(VISAInstrumentDriver):
         self.__setSourceMode(isCurrentSource=True)
         self.setProtectionVoltage(protectionVoltage)
         self._configCurrent(0)
+        
+    # Yusuf's code
+    def print_filter_state(self):
+        filters = ['', 'Repeat Average', 'Moving Average', 'Median']
+        # type
+        filter_type = self.query_print(f"{self.smu_full_string}.measure.filter.type")
+        try:
+            ftype = int(float(filter_type))
+            print(f"type:\t\t {filters[ftype]}")
+        except:
+            print("Could not convert return value of filter type to int")
+            print(f'Filter type returned: {filter_type}')
+        # avg count
+        current_count = self.query_print(f"{self.smu_full_string}.measure.filter.count")
+        try:
+            c_count = int(float(current_count))
+            print(f"avg. count:\t {c_count}")
+        except:
+            print("Could not convert return value of average count to int")
+            print(f'Filter average count returned: {current_count}')
+        # filter enable
+        is_filter_on = self.query_print(f"{self.smu_full_string}.measure.filter.enable")
+        try:
+            fon = int(float(is_filter_on))
+            print(f"enabled:\t {'True' if fon else 'False'}")
+        except:
+            print("Could not convert return value of filter enable to int")
+            print(f'Filter enable returned: {is_filter_on}')
+            
+    # Filter
+    def set_filter(self, count, set_avg_count):
+        print("\nCurrent Filter State: ")
+        self.print_filter_state()
+        # Set filter
+        if set_avg_count:
+            self.write(f"{self.smu_full_string}.measure.filter.count = {str(count)}")
+            self.write(f"{self.smu_full_string}.measure.filter.type = {self.smu_full_string}.FILTER_REPEAT_AVG")
+            self.write(f"{self.smu_full_string}.measure.filter.enable = {self.smu_full_string}.FILTER_ON")
+            print("\nFilter State After Setting: ")
+            self.print_filter_state()
+        return
