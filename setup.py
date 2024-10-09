@@ -57,7 +57,7 @@ def main():
             'IPython',
             'PyVISA',
             'scipy',
-            'sklearn',
+            'scikit-learn',
             'dill',
         ],
         entry_points={
