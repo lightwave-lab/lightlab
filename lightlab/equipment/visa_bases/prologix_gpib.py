@@ -83,7 +83,7 @@ class PrologixResourceManager(TCPSocketConnection):
             self.send('++eos 0')  # append CR+LF after every GPIB
             self.send('++savecfg 0')  # Disable saving of configuration parameters in EPROM
 
-    def query(self, query_msg, msg_length=2048):
+    def query(self, query_msg, msg_length=2056):
         ''' Sends a query and receives a string from the controller. Auto-connects if necessary.
 
         Args:
@@ -310,7 +310,7 @@ class PrologixGPIBObject(InstrumentSessionBase):
         
         # TODO guard against socket error and throw nice error message
         retStr = self._prologix_rm.query('++read eoi')
-        return retStr.rstrip()
+        return retStr
 
         ## WARNING
         # The code below is for instruments that implement the message available

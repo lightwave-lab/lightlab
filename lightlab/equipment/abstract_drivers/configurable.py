@@ -1,7 +1,7 @@
 from lightlab import visalogger as logger
 from pyvisa import VisaIOError
 from contextlib import contextmanager
-import dpath
+import dpath.util
 import json
 from numpy import floor
 from pathlib import Path
@@ -55,7 +55,7 @@ class TekConfig(object):
                 asCmd (bool): if true, returns a tuple representing a command. Otherwise returns just the value
         '''
         try:
-            val = dpath.get(self.dico, cStr, separator=self.separator)
+            val = dpath.util.get(self.dico, cStr, separator=self.separator)
         except KeyError:
             raise KeyError(cStr + ' is not present in this TekConfig instance')
         if type(val) is dict and '&' in val.keys():

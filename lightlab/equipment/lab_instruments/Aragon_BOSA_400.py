@@ -161,8 +161,8 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         self.write("FORM ASCII")
         self.write("TRAC?")
         data = self.read_TRACE_ASCII()
-        data = self.query("TRAC?", withTimeout)
-#         data = self.query("IDN?")
+        # data = self.query("TRAC?", withTimeout)
+        # data = self.query("IDN?")
         return data
 
     def ask_TRACE_REAL(self):
@@ -173,6 +173,7 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
         data = self.read_TRACE_REAL_GPIB(NumPoints)
         return data
 
+    
     def read_TRACE_ASCII(self):
 
         """ read something from device"""
@@ -210,15 +211,20 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
                 raise e
         return Trace
 
+    # def spectrum(self, form='REAL'):
+    #     data = ""
+    #     data = self.interface.query("TRAC?")
+    #     return data
+
     def spectrum(self, form='REAL'):
         x=list()
         y=list()
         if(form=='ASCII'):
             data = self.ask_TRACE_ASCII()
-#             data = self.ask_TRACE_ASCII()
-#             for i in range(0,len(data),2):
-#                 x.append(data[i])
-#                 y.append(data[i+1])
+            # data = self.ask_TRACE_ASCII()
+            # for i in range(0,len(data),2):
+            #     x.append(data[i])
+            #     y.append(data[i+1])
         elif(form=='REAL'):
             data = self.ask_TRACE_REAL()
             for i in range(0,len(data),1):
@@ -226,8 +232,8 @@ class Aragon_BOSA_400 (VISAInstrumentDriver):
                 y.append(data[i][1])
         else:
             log.exception("Please choose form 'REAL' or 'ASCII'")
-#         return Spectrum(x, y, inDbm=True)
-        return data
+
+        return Spectrum(x, y, inDbm=True)
 
     def CAParam(self, avgCount='CONT', sMode='HR', noiseZero=False):
         if self.__currApp == 'CA' and avgCount in self.__avg and sMode in self.__sMode:
